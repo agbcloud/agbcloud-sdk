@@ -67,6 +67,7 @@ class CreateSessionResponse:
         success: bool,
         json_data: Optional[Dict[str, Any]] = None,
         text: Optional[str] = None,
+        error: Optional[str] = None,
         request_id: Optional[str] = None
     ):
         self.status_code = status_code
@@ -75,6 +76,7 @@ class CreateSessionResponse:
         self.success = success
         self.json_data = json_data
         self.text = text
+        self.error = error
         self.request_id = request_id
 
         # Parse fields from JSON data
@@ -124,6 +126,8 @@ class CreateSessionResponse:
 
     def get_error_message(self) -> str:
         """Get error message"""
+        if self.error:
+            return self.error
         if self.data and self.data.err_msg:
             return self.data.err_msg
         if self.message:
@@ -144,6 +148,8 @@ class CreateSessionResponse:
             result['json'] = self.json_data
         if self.text:
             result['text'] = self.text
+        if self.error:
+            result['error'] = self.error
 
         return result
 

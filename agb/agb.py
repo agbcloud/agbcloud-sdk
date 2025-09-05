@@ -12,7 +12,6 @@ from threading import Lock
 from agb.api.client import Client as mcp_client
 from agb.api.models import (
     CreateSessionRequest,
-    GetMcpResourceRequest,
     ReleaseSessionRequest,
     CreateSessionResponse,
 )
@@ -50,8 +49,8 @@ class AGB:
         self.config = load_config(cfg)
 
         self.api_key = api_key
-        self.endpoint = self.config .endpoint
-        self.timeout_ms = self.config .timeout_ms
+        self.endpoint = self.config.endpoint
+        self.timeout_ms = self.config.timeout_ms
 
         # Initialize the HTTP API client with the complete config
         self.client = mcp_client(self.config)
@@ -76,13 +75,18 @@ class AGB:
 
             request = CreateSessionRequest(authorization=f"Bearer {self.api_key}")
 
-            # Use default image if no image_id specified
-            if not params.image_id:
-                params.image_id = "code_latest"
-            else:
+            if params.image_id:
                 request.image_id = params.image_id
 
             response : CreateSessionResponse = self.client.create_mcp_session(request)
+
+            # Check if response is empty
+            if response is None:
+                return SessionResult(
+                    request_id="",
+                    success=False,
+                    error_message="OpenAPI client returned None response",
+                )
 
             try:
                 print("Response body:")

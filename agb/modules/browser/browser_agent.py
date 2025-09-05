@@ -115,16 +115,7 @@ class BrowserAgent(BaseService):
                 # Map snake_case keys to ActResult members
                 message = data.get("message", "")
                 action = data.get("action", "")
-
-                # Parse the message to extract the actual success status
-                # Format: "is_done=False success=True extracted_content='...'"
-                if message:
-                    # Check if message contains success=True
-                    if "success=True" in message:
-                        success = True
-                    elif "success=False" in message:
-                        success = False
-                    # If success=None, keep the original value
+                success = data.get("success", False)
 
                 return ActResult(success=success, message=message, action=action)
             else:
@@ -173,15 +164,7 @@ class BrowserAgent(BaseService):
                 # Map snake_case keys to ActResult members
                 message = data.get("message", "")
                 action = data.get("action", "")
-
-                # Parse the message to extract the actual success status
-                # Format: "is_done=True success=True extracted_content='...'"
-                if message:
-                    # Extract success value from message
-                    if "success=True" in message:
-                        success = True
-                    elif "is_done=False" in message or "error=" in message:
-                        success = False
+                success = data.get("success", False)
 
                 return ActResult(success=success, message=message, action=action)
             else:

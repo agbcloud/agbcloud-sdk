@@ -106,7 +106,7 @@ session.oss.upload("bucket", "key", "path")     # Cloud storage
 - ✅ **Type Safety**: Strongly typed sessions and response objects
 
 **vs Other Cloud Services**:
-- ✅ **Multi-language Support**: Python + JavaScript
+- ✅ **Multi-language Support**: Python + JavaScript + Java + R
 - ✅ **Complete File System**: More than just code execution
 - ✅ **Integrated Cloud Storage**: Built-in OSS support
 - ✅ **Command Line Access**: Full shell environment

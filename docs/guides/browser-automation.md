@@ -27,7 +27,7 @@ AGB Browser Automation provides a managed platform for running headless/non-head
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - AGB API key (set as `AGB_API_KEY` environment variable)
 - Playwright installed: `pip install playwright && python -m playwright install chromium`
 
@@ -47,35 +47,35 @@ async def main():
     # Initialize AGB client
     api_key = os.getenv("AGB_API_KEY")
     agb = AGB(api_key=api_key)
-    
+
     # Create a session with browser support
     params = CreateSessionParams(image_id="agb-browser-use-1")
     result = agb.create(params)
-    
+
     if not result.success:
         raise RuntimeError(f"Failed to create session: {result.error_message}")
-    
+
     session = result.session
-    
+
     # Initialize browser
     success = await session.browser.initialize_async(BrowserOption())
     if not success:
         raise RuntimeError("Browser initialization failed")
-    
+
     # Get CDP endpoint and connect Playwright
     endpoint_url = session.browser.get_endpoint_url()
-    
+
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(endpoint_url)
         page = await browser.new_page()
-        
+
         # Navigate and interact
         await page.goto("https://example.com")
         title = await page.title()
         print(f"Page title: {title}")
-        
+
         await browser.close()
-    
+
     # Clean up
     agb.delete(session)
 
@@ -91,7 +91,7 @@ The `BrowserOption` class provides comprehensive configuration for your browser 
 
 ```python
 from agb.modules.browser import (
-    BrowserOption, BrowserViewport, BrowserScreen, 
+    BrowserOption, BrowserViewport, BrowserScreen,
     BrowserFingerprint, BrowserProxy
 )
 
@@ -303,7 +303,7 @@ stealth_option = BrowserOption(
 # Check browser status
 if session.browser.is_initialized():
     print("Browser is ready")
-    
+
 # Get current configuration
 current_option = session.browser.get_option()
 if current_option:
@@ -319,14 +319,14 @@ try:
     success = await session.browser.initialize_async(option)
     if not success:
         raise BrowserError("Failed to initialize browser")
-        
+
     act_result = await session.browser.agent.act_async(page, ActOptions(
         action="Click the submit button"
     ))
-    
+
     if not act_result.success:
         print(f"Action failed: {act_result.message}")
-        
+
 except BrowserError as e:
     print(f"Browser error: {e}")
 except Exception as e:
@@ -398,10 +398,10 @@ async def retry_action(agent, page, action_options, max_retries=3):
             print(f"Attempt {attempt + 1} failed: {result.message}")
         except Exception as e:
             print(f"Attempt {attempt + 1} error: {e}")
-        
+
         if attempt < max_retries - 1:
             await asyncio.sleep(2)  # Wait before retry
-    
+
     raise BrowserError(f"Action failed after {max_retries} attempts")
 ```
 
@@ -473,4 +473,4 @@ logging.basicConfig(level=logging.DEBUG)
 - Explore the [API Reference](../api-reference/modules/browser.md) for detailed method documentation
 - Check out [Browser Examples](../examples/browser/README.md) for practical use cases
 - Learn about [Session Management](session-management.md) for advanced session handling
-- Review [Best Practices](best-practices.md) for production deployments 
+- Review [Best Practices](best-practices.md) for production deployments

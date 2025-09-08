@@ -189,7 +189,7 @@ class Client:
 
     async def call_api_async_with_requests(url, method="GET", headers=None, params=None, data=None, json=None, timeout=30):
         """
-        使用 aiohttp 实现异步 HTTP 请求，模拟 requests 的用法。
+        Implement async HTTP requests using aiohttp, mimicking requests usage.
         """
         async with aiohttp.ClientSession() as session:
             req_method = getattr(session, method.lower())
@@ -202,7 +202,7 @@ class Client:
                 timeout=timeout
             ) as resp:
                 resp_data = await resp.text()
-                # 你可以根据需要返回 resp.json() 或 resp.read()
+                # You can return resp.json() or resp.read() as needed
                 return {
                     "status_code": resp.status,
                     "headers": dict(resp.headers),

@@ -230,6 +230,51 @@ if result.success:
     print("File edited successfully")
 ```
 
+#### `watch_directory(path, callback, interval=1.0, stop_event=None)`
+
+Monitor a directory for file changes and execute a callback function when changes are detected.
+
+**Parameters:**
+- `path` (str): Directory path to monitor for changes.
+- `callback` (Callable): Function to call when changes are detected. Receives a list of `FileChangeEvent` objects.
+- `interval` (float, optional): Polling interval in seconds. Default is 1.0.
+- `stop_event` (threading.Event, optional): Event to stop monitoring. If not provided, a new Event is created.
+
+**Returns:**
+- `threading.Thread`: Monitoring thread. Call `thread.start()` to begin monitoring and `thread.stop_event.set()` to stop.
+
+**Example:**
+```python
+import threading
+import time
+
+# Create session with image_id
+from agb.session_params import CreateSessionParams
+session_params = CreateSessionParams(image_id="agb-code-space-2")
+session = agb.create(session_params).session
+
+# Define callback function
+def handle_changes(events):
+    for event in events:
+        print(f"{event.event_type}: {event.path} ({event.path_type})")
+
+# Start monitoring
+monitor_thread = session.file_system.watch_directory(
+    path="/tmp/watch_folder",
+    callback=handle_changes,
+    interval=0.5  # Check every 0.5 seconds
+)
+monitor_thread.start()
+
+# Do some work...
+session.file_system.write_file("/tmp/watch_folder/test.txt", "content")
+time.sleep(2)
+
+# Stop monitoring
+monitor_thread.stop_event.set()
+monitor_thread.join()
+```
+
 
 
 ## Response Types
@@ -240,6 +285,39 @@ For detailed information about response objects, see:
 - **[FileInfoResult](../responses/filesystem-results.md#fileinforesult)** - File metadata and information
 - **[MultipleFileContentResult](../responses/filesystem-results.md#multiplefilecontentresult)** - Multiple file contents
 - **[FileSearchResult](../responses/filesystem-results.md#filesearchresult)** - File search results
+
+### FileChangeEvent
+
+Represents a single file change event from directory monitoring.
+
+```python
+class FileChangeEvent:
+    event_type: str              # Type of change ("create", "modify", "delete")
+    path: str                    # Full path of the changed file/directory
+    path_type: str               # Type of path ("file" or "directory")
+```
+
+**Methods:**
+- `to_dict()`: Convert to dictionary representation
+- `from_dict(data)`: Create from dictionary (class method)
+
+### FileChangeResult
+
+Result object for file change monitoring operations.
+
+```python
+class FileChangeResult(ApiResponse):
+    request_id: str                    # Unique request identifier
+    success: bool                      # Operation success status
+    events: List[FileChangeEvent]      # List of detected changes
+    error_message: str                 # Error description if failed
+```
+
+**Methods:**
+- `has_changes()`: Returns True if any changes were detected
+- `get_created_files()`: Returns list of created file paths
+- `get_modified_files()`: Returns list of modified file paths
+- `get_deleted_files()`: Returns list of deleted file paths
 
 ## Usage Patterns
 
@@ -483,6 +561,83 @@ Processing status: Complete
 file_processing_pipeline()
 ```
 
+### Directory Monitoring
+
+```python
+import threading
+import time
+from agb import AGB
+
+def directory_monitoring_example():
+    from agb.session_params import CreateSessionParams
+    
+    agb = AGB()
+    session_params = CreateSessionParams(image_id="agb-code-space-2")
+    session = agb.create(session_params).session
+    
+    try:
+        # Create directory to monitor
+        session.file_system.create_directory("/tmp/monitor_demo")
+        
+        # Track changes
+        changes_log = []
+        
+        def log_changes(events):
+            """Log all file changes with timestamps"""
+            timestamp = time.strftime("%H:%M:%S")
+            for event in events:
+                log_entry = f"[{timestamp}] {event.event_type.upper()}: {event.path}"
+                changes_log.append(log_entry)
+                print(log_entry)
+        
+        # Start monitoring
+        monitor_thread = session.file_system.watch_directory(
+            path="/tmp/monitor_demo",
+            callback=log_changes,
+            interval=0.5
+        )
+        monitor_thread.start()
+        print("🔍 Directory monitoring started")
+        
+        # Simulate file operations
+        print("\n📝 Creating files...")
+        for i in range(3):
+            filename = f"/tmp/monitor_demo/file_{i}.txt"
+            content = f"This is file {i}\nCreated at {time.strftime('%Y-%m-%d %H:%M:%S')}"
+            session.file_system.write_file(filename, content)
+            time.sleep(1)
+        
+        print("\n✏️ Modifying files...")
+        session.file_system.write_file(
+            "/tmp/monitor_demo/file_0.txt", 
+            "Modified content for file 0"
+        )
+        time.sleep(1)
+        
+        print("\n📁 Creating subdirectory...")
+        session.file_system.create_directory("/tmp/monitor_demo/subdir")
+        session.file_system.write_file(
+            "/tmp/monitor_demo/subdir/nested.txt", 
+            "Nested file content"
+        )
+        time.sleep(2)
+        
+        # Stop monitoring
+        print("\n🛑 Stopping monitoring...")
+        monitor_thread.stop_event.set()
+        monitor_thread.join()
+        
+        # Summary
+        print(f"\n📊 Summary: {len(changes_log)} changes detected")
+        for log_entry in changes_log:
+            print(f"  {log_entry}")
+        
+    finally:
+        agb.delete(session)
+
+directory_monitoring_example()
+```
+
 ## Best Practices
 
 ### 1. Always Check Operation Results
@@ -559,9 +714,46 @@ def with_temp_files(session, operation):
     finally:
         # Clean up temp files
         for temp_file in temp_files:
-            # Note: FileSystem module doesn't have delete_file method
-            # Use command module for cleanup
             session.command.execute_command(f"rm -f {temp_file}")
+```
+
+### 6. Directory Monitoring Best Practices
+
+```python
+# ✅ Good: Always stop monitoring threads properly
+def safe_directory_monitoring(session, directory_path):
+    """Safe directory monitoring with proper cleanup"""
+    
+    def handle_changes(events):
+        for event in events:
+            print(f"Change detected: {event.event_type} - {event.path}")
+    
+    monitor_thread = session.file_system.watch_directory(
+        path=directory_path,
+        callback=handle_changes,
+        interval=1.0
+    )
+    
+    try:
+        monitor_thread.start()
+        # Do your work here
+        time.sleep(10)
+    finally:
+        # Always stop the monitoring thread
+        monitor_thread.stop_event.set()
+        monitor_thread.join(timeout=5)  # Wait max 5 seconds
+        if monitor_thread.is_alive():
+            print("Warning: Monitor thread did not stop gracefully")
+
+# ✅ Good: Use appropriate polling intervals
+# Fast monitoring (0.1-0.5s) for real-time needs
+# Normal monitoring (1-2s) for general use
+# Slow monitoring (5-10s) for low-priority changes
+
+# ❌ Bad: Not stopping monitoring threads
+monitor_thread = session.file_system.watch_directory("/tmp", callback)
+monitor_thread.start()
+# Missing: monitor_thread.stop_event.set() and join()
 ```
 
 ## Error Handling

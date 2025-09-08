@@ -1,8 +1,53 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Callable
 import json
+import time
+import threading
+from collections import defaultdict
 
 from agb.api.base_service import BaseService
 from agb.model.response import ApiResponse, BoolResult
+
+
+class FileChangeEvent:
+    """Represents a single file change event."""
+
+    def __init__(
+        self,
+        event_type: str = "",
+        path: str = "",
+        path_type: str = "",
+    ):
+        """
+        Initialize a FileChangeEvent.
+
+        Args:
+            event_type (str): Type of the file change event (e.g., "modify", "create", "delete").
+            path (str): Path of the file or directory that changed.
+            path_type (str): Type of the path ("file" or "directory").
+        """
+        self.event_type = event_type
+        self.path = path
+        self.path_type = path_type
+
+    def __repr__(self):
+        return f"FileChangeEvent(event_type='{self.event_type}', path='{self.path}', path_type='{self.path_type}')"
+
+    def to_dict(self) -> Dict[str, str]:
+        """Convert to dictionary representation."""
+        return {
+            "eventType": self.event_type,
+            "path": self.path,
+            "pathType": self.path_type,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, str]) -> "FileChangeEvent":
+        """Create FileChangeEvent from dictionary."""
+        return cls(
+            event_type=data.get("eventType", ""),
+            path=data.get("path", ""),
+            path_type=data.get("pathType", ""),
+        )
 
 
 class FileInfoResult(ApiResponse):
@@ -145,6 +190,69 @@ class FileSearchResult(ApiResponse):
         self.success = success
         self.matches = matches or []
         self.error_message = error_message
+
+
+class FileChangeResult(ApiResponse):
+    """Result of file change detection operations."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        events: Optional[List[FileChangeEvent]] = None,
+        raw_data: str = "",
+        error_message: str = "",
+    ):
+        """
+        Initialize a FileChangeResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request.
+                Defaults to "".
+            success (bool, optional): Whether the operation was successful.
+                Defaults to False.
+            events (List[FileChangeEvent], optional): List of file change events.
+                Defaults to None.
+            raw_data (str, optional): Raw response data for debugging. Defaults to "".
+            error_message (str, optional): Error message if the operation failed.
+                Defaults to "".
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.events = events or []
+        self.raw_data = raw_data
+        self.error_message = error_message
+
+    def has_changes(self) -> bool:
+        """Check if there are any file changes."""
+        return len(self.events) > 0
+
+    def get_modified_files(self) -> List[str]:
+        """Get list of modified file paths."""
+        return [
+            event.path
+            for event in self.events
+            if event.event_type == "modify" and event.path_type == "file"
+        ]
+
+    def get_created_files(self) -> List[str]:
+        """Get list of created file paths."""
+        return [
+            event.path
+            for event in self.events
+            if event.event_type == "create" and event.path_type == "file"
+        ]
+
+    def get_deleted_files(self) -> List[str]:
+        """Get list of deleted file paths."""
+        return [
+            event.path
+            for event in self.events
+            if event.event_type == "delete" and event.path_type == "file"
+        ]
+
+    def __repr__(self):
+        return f"FileChangeResult(success={self.success}, events_count={len(self.events)})"
 
 
 class FileSystem(BaseService):
@@ -785,4 +893,193 @@ class FileSystem(BaseService):
                 success=False,
                 error_message=f"Failed to search files: {e}",
             )
+
+    def _get_file_change(self, path: str) -> FileChangeResult:
+        """
+        Get file change information for the specified directory path.
+
+        Args:
+            path: The directory path to monitor for file changes.
+
+        Returns:
+            FileChangeResult: Result object containing parsed file change events and
+                error message if any.
+        """
+
+        def parse_file_change_data(raw_data: str) -> List[FileChangeEvent]:
+            """
+            Parse the raw file change data into FileChangeEvent objects.
+
+            Args:
+                raw_data (str): Raw JSON string containing file change events.
+
+            Returns:
+                List[FileChangeEvent]: List of parsed file change events.
+            """
+            events = []
+            try:
+                # Parse the JSON array
+                change_data = json.loads(raw_data)
+                if isinstance(change_data, list):
+                    for event_dict in change_data:
+                        if isinstance(event_dict, dict):
+                            event = FileChangeEvent.from_dict(event_dict)
+                            events.append(event)
+                else:
+                    print(f"Warning: Expected list but got {type(change_data)}")
+            except json.JSONDecodeError as e:
+                print(f"Warning: Failed to parse JSON data: {e}")
+                print(f"Raw data: {raw_data}")
+            except Exception as e:
+                print(f"Warning: Unexpected error parsing file change data: {e}")
+            
+            return events
+
+        args = {"path": path}
+        try:
+            result = self._call_mcp_tool("get_file_change", args)
+            try:
+                print("Response body:")
+                print(
+                    json.dumps(
+                        getattr(result, "body", result), ensure_ascii=False, indent=2
+                    )
+                )
+            except Exception:
+                print(f"Response: {result}")
+
+            if result.success:
+                # Parse the file change events
+                events = parse_file_change_data(result.data)
+                return FileChangeResult(
+                    request_id=result.request_id,
+                    success=True,
+                    events=events,
+                    raw_data=result.data,
+                )
+            else:
+                return FileChangeResult(
+                    request_id=result.request_id,
+                    success=False,
+                    raw_data=getattr(result, 'data', ''),
+                    error_message=result.error_message or "Failed to get file change",
+                )
+        except Exception as e:
+            return FileChangeResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to get file change: {e}",
+            )
+
+    def watch_directory(
+        self,
+        path: str,
+        callback: Callable[[List[FileChangeEvent]], None],
+        interval: float = 1.0,
+        stop_event: Optional[threading.Event] = None,
+    ) -> threading.Thread:
+        """
+        Watch a directory for file changes and call the callback function when changes occur.
+
+        Args:
+            path: The directory path to monitor for file changes.
+            callback: Callback function that will be called with a list of FileChangeEvent
+                objects when changes are detected.
+            interval: Polling interval in seconds. Defaults to 1.0.
+            stop_event: Optional threading.Event to stop the monitoring. If not provided,
+                a new Event will be created and returned via the thread object.
+
+        Returns:
+            threading.Thread: The monitoring thread. Call thread.start() to begin monitoring.
+                Use the thread's stop_event attribute to stop monitoring.
+        """
+
+        def _monitor_directory():
+            """Internal function to monitor directory changes."""
+            last_events = []  # Track last batch of events for deduplication
+            
+            print(f"Starting directory monitoring for: {path}")
+            print(f"Polling interval: {interval} seconds")
+            
+            while not stop_event.is_set():
+                try:
+                    # Get current file changes
+                    result = self._get_file_change(path)
+                    
+                    if result.success:
+                        # Check if current events are different from last events
+                        current_events = result.events
+                        
+                        # Compare with last events to avoid duplicates
+                        if self._events_different(current_events, last_events):
+                            print(f"Detected {len(current_events)} file changes (different from last):")
+                            for event in current_events:
+                                print(f"  - {event}")
+                            
+                            try:
+                                callback(current_events)
+                            except Exception as e:
+                                print(f"Error in callback function: {e}")
+                            
+                            # Update last events
+                            last_events = current_events[:]
+                        else:
+                            print(f"Received {len(current_events)} events, but they are identical to last batch - skipping")
+                    
+                    else:
+                        print(f"Error monitoring directory: {result.error_message}")
+                    
+                    # Wait for the next poll
+                    stop_event.wait(interval)
+                    
+                except Exception as e:
+                    print(f"Unexpected error in directory monitoring: {e}")
+                    stop_event.wait(interval)
+            
+            print(f"Stopped monitoring directory: {path}")
+
+        # Create stop event if not provided
+        if stop_event is None:
+            stop_event = threading.Event()
+        
+        # Create and configure the monitoring thread
+        monitor_thread = threading.Thread(
+            target=_monitor_directory,
+            name=f"DirectoryWatcher-{path.replace('/', '_')}",
+            daemon=True
+        )
+        
+        # Add stop_event as an attribute to the thread for easy access
+        monitor_thread.stop_event = stop_event
+        
+        return monitor_thread
+
+    def _events_different(self, current_events: List[FileChangeEvent], last_events: List[FileChangeEvent]) -> bool:
+        """
+        Compare two lists of events to determine if they are different.
+        
+        Args:
+            current_events: Current batch of events
+            last_events: Previous batch of events
+            
+        Returns:
+            bool: True if events are different, False if they are the same
+        """
+        # If lengths are different, events are different
+        if len(current_events) != len(last_events):
+            return True
+        
+        # If both are empty, they are the same
+        if len(current_events) == 0:
+            return False
+        
+        # Compare each event
+        for current_event, last_event in zip(current_events, last_events):
+            if (current_event.event_type != last_event.event_type or
+                current_event.path != last_event.path or
+                current_event.path_type != last_event.path_type):
+                return True
+        
+        # All events are identical
+        return False
 

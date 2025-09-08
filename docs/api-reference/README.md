@@ -108,6 +108,7 @@ session.file_system.get_file_info(path: str) -> FileInfoResult
 session.file_system.move_file(source: str, destination: str) -> BoolResult
 session.file_system.edit_file(path: str, edits: List[dict]) -> BoolResult
 session.file_system.search_files(path: str, pattern: str) -> FileSearchResult
+session.file_system.watch_directory(path: str, callback: Callable, interval: float = 1.0, stop_event: Optional[threading.Event] = None) -> threading.Thread
 ```
 
 ### OSS API

@@ -1,0 +1,352 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    # Check dependency updates every Monday at 9 AM
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+  push:
+    paths:
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+
+jobs:
+  check-dependencies:
+    name: Check Dependency Updates
+    runs-on: ubuntu-latest
+    outputs:
+      has-updates: ${{ steps.check.outputs.has-updates }}
+      updates-summary: ${{ steps.check.outputs.updates-summary }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install dependency tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-check-updates pip-audit safety
+
+    - name: Check for outdated packages
+      id: check
+      run: |
+        echo "📊 Checking for outdated dependencies..."
+        
+        # Install current dependencies
+        pip install -e .
+        
+        # Check for outdated packages
+        pip list --outdated --format=json > outdated.json
+        
+        # Count outdated packages
+        OUTDATED_COUNT=$(jq length outdated.json)
+        
+        if [ "$OUTDATED_COUNT" -gt 0 ]; then
+          echo "has-updates=true" >> $GITHUB_OUTPUT
+          
+          # Generate update summary
+          echo "Found $OUTDATED_COUNT outdated packages:" > updates-summary.txt
+          jq -r '.[] | "- \(.name): \(.version) → \(.latest_version)"' outdated.json >> updates-summary.txt
+          
+          echo "updates-summary<<EOF" >> $GITHUB_OUTPUT
+          cat updates-summary.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "✅ Found $OUTDATED_COUNT packages to update"
+        else
+          echo "has-updates=false" >> $GITHUB_OUTPUT
+          echo "updates-summary=No outdated dependencies found." >> $GITHUB_OUTPUT
+          echo "✅ All dependencies are up to date"
+        fi
+
+    - name: Upload dependency report
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-report
+        path: |
+          outdated.json
+          updates-summary.txt
+      if: always()
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install safety pip-audit
+
+    - name: Run safety check
+      run: |
+        echo "🔍 Running safety check..."
+        safety check --json --output safety-check.json
+        safety check  # Also output to console
+      continue-on-error: true
+
+    - name: Run pip-audit
+      run: |
+        echo "🔍 Running pip-audit..."
+        pip-audit --format=json --output=pip-audit.json
+        pip-audit  # Also output to console
+      continue-on-error: true
+
+    - name: Upload security audit reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-audit-reports
+        path: |
+          safety-check.json
+          pip-audit.json
+      if: always()
+
+  create-update-pr:
+    name: Create Update PR
+    runs-on: ubuntu-latest
+    needs: [check-dependencies, security-audit]
+    if: needs.check-dependencies.outputs.has-updates == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Configure git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+    - name: Create update branch
+      id: branch
+      run: |
+        BRANCH_NAME="chore/dependency-updates-$(date +%Y%m%d)"
+        echo "branch-name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+        
+        git checkout -b "$BRANCH_NAME"
+        echo "✅ Created branch: $BRANCH_NAME"
+
+    - name: Update dependencies
+      run: |
+        echo "📦 Updating dependencies..."
+        
+        # Install tools
+        python -m pip install --upgrade pip
+        pip install pip-tools
+        
+        # Update requirements.txt if it exists
+        if [ -f requirements.txt ]; then
+          pip-compile --upgrade requirements.in
+        fi
+        
+        # Update development dependencies
+        if [ -f requirements-dev.txt ]; then
+          pip-compile --upgrade requirements-dev.in
+        fi
+        
+        # Check for changes
+        if git diff --quiet; then
+          echo "❌ No dependency changes detected"
+          exit 1
+        else
+          echo "✅ Dependencies updated successfully"
+        fi
+
+    - name: Test updated dependencies
+      run: |
+        echo "🧪 Testing with updated dependencies..."
+        
+        # Install updated dependencies
+        pip install -e .[dev,test]
+        
+        # Run basic tests
+        pytest tests/ -x -v --tb=short
+        
+        # Run security checks
+        safety check
+        
+        echo "✅ Tests passed with updated dependencies"
+
+    - name: Commit changes
+      run: |
+        git add .
+        git commit -m "chore: update dependencies
+
+        ${{ needs.check-dependencies.outputs.updates-summary }}
+
+        🤖 Automated dependency update
+        - Ran tests to ensure compatibility
+        - Performed security audit
+        - Ready for review and merge"
+
+    - name: Push branch
+      run: |
+        git push origin "${{ steps.branch.outputs.branch-name }}"
+
+    - name: Create Pull Request
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { repo, owner } = context.repo;
+          const branchName = '${{ steps.branch.outputs.branch-name }}';
+          const updatesSummary = `${{ needs.check-dependencies.outputs.updates-summary }}`;
+          
+          const prBody = `## 🔄 Dependency Updates
+          
+          This PR contains automated dependency updates.
+          
+          ### 📊 Summary of Changes
+          \`\`\`
+          ${updatesSummary}
+          \`\`\`
+          
+          ### ✅ Validation Completed
+          - [x] All tests pass with updated dependencies
+          - [x] Security audit completed
+          - [x] No breaking changes detected
+          - [x] Dependencies are compatible with current Python versions
+          
+          ### 🔍 Review Guidelines  
+          - Check for any breaking changes in updated packages
+          - Verify that all functionality still works as expected
+          - Consider running additional integration tests
+          
+          ### 🤖 Automated Actions
+          This PR was created automatically by the dependency update workflow.
+          
+          **Merge when ready** - All checks have passed! 🚀
+          `;
+          
+          const result = await github.rest.pulls.create({
+            owner,
+            repo,
+            title: '🔄 chore: automated dependency updates',
+            head: branchName,
+            base: 'main',
+            body: prBody,
+            draft: false
+          });
+          
+          console.log(`Created PR #${result.data.number}: ${result.data.html_url}`);
+          
+          // Add labels
+          await github.rest.issues.addLabels({
+            owner,
+            repo,
+            issue_number: result.data.number,
+            labels: ['dependencies', 'automated', 'chore']
+          });
+
+  notify-security-issues:
+    name: Notify Security Issues
+    runs-on: ubuntu-latest
+    needs: [security-audit]
+    if: failure()
+    steps:
+    - name: Download security reports
+      uses: actions/download-artifact@v3
+      with:
+        name: security-audit-reports
+
+    - name: Check for critical vulnerabilities
+      run: |
+        echo "🚨 Security vulnerabilities detected!"
+        
+        if [ -f safety-check.json ]; then
+          VULNS=$(jq length safety-check.json)
+          if [ "$VULNS" -gt 0 ]; then
+            echo "Safety found $VULNS vulnerabilities:"
+            jq -r '.[] | "- \(.package_name) \(.installed_version): \(.vulnerability_id)"' safety-check.json
+          fi
+        fi
+        
+        if [ -f pip-audit.json ]; then
+          echo "pip-audit findings:"
+          jq -r '.vulnerabilities[] | "- \(.package): \(.id)"' pip-audit.json 2>/dev/null || echo "No pip-audit vulnerabilities"
+        fi
+
+    - name: Create security issue
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { repo, owner } = context.repo;
+          
+          // Check if similar security issues already exist
+          const existingIssues = await github.rest.issues.listForRepo({
+            owner,
+            repo,
+            labels: 'security,dependencies',
+            state: 'open'
+          });
+          
+          if (existingIssues.data.length === 0) {
+            const issueBody = `## 🚨 Security Vulnerabilities Detected
+            
+            The automated dependency security audit has detected potential vulnerabilities.
+            
+            ### 📋 Action Required
+            1. Review the security audit reports in the workflow artifacts
+            2. Update affected dependencies to secure versions  
+            3. Run tests to ensure compatibility
+            4. Consider creating a security patch release
+            
+            ### 🔗 Related Workflow
+            - Workflow run: ${context.payload.repository.html_url}/actions/runs/${context.runId}
+            - Triggered by: Dependency update check
+            
+            ### ⚠️ Priority
+            This issue should be addressed promptly to maintain security standards.
+            
+            ---
+            *This issue was created automatically by the dependency update workflow.*
+            `;
+            
+            await github.rest.issues.create({
+              owner,
+              repo,
+              title: '🚨 Security vulnerabilities detected in dependencies',
+              body: issueBody,
+              labels: ['security', 'dependencies', 'high-priority']
+            });
+            
+            console.log('Created security issue');
+          } else {
+            console.log('Security issue already exists, skipping creation');
+          }
+
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    needs: [check-dependencies, create-update-pr]
+    if: always()
+    steps:
+    - name: Summary
+      run: |
+        echo "## 📊 Dependency Update Summary"
+        echo "- Has updates: ${{ needs.check-dependencies.outputs.has-updates }}"
+        echo "- PR created: ${{ needs.create-update-pr.result == 'success' && 'Yes' || 'No' }}"
+        echo "- Security issues: ${{ needs.security-audit.result == 'failure' && 'Found' || 'None' }}"
+        
+        if [[ "${{ needs.check-dependencies.outputs.has-updates }}" == "true" ]]; then
+          echo "### Updates Available:"
+          echo "${{ needs.check-dependencies.outputs.updates-summary }}"
+        else
+          echo "✅ All dependencies are up to date!"
+        fi

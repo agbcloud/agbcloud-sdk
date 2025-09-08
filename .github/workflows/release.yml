@@ -1,0 +1,347 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送 v* 标签时触发发布
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  id-token: write  # 用于 PyPI trusted publishing
+
+jobs:
+  validate-release:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Determine version
+      id: version
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          VERSION="${{ github.event.inputs.version }}"
+          IS_PRERELEASE="${{ github.event.inputs.prerelease }}"
+        else
+          VERSION="${GITHUB_REF#refs/tags/}"
+          # 检查是否为预发布版本 (包含 alpha, beta, rc)
+          if [[ $VERSION =~ (alpha|beta|rc) ]]; then
+            IS_PRERELEASE="true"
+          else
+            IS_PRERELEASE="false"
+          fi
+        fi
+        
+        echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+        echo "tag=${VERSION}" >> $GITHUB_OUTPUT
+        echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
+        
+        echo "Release version: ${VERSION#v}"
+        echo "Tag: ${VERSION}"
+        echo "Pre-release: ${IS_PRERELEASE}"
+
+    - name: Validate version format
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+([a-zA-Z0-9\-\.]+)?$ ]]; then
+          echo "❌ Invalid version format: $VERSION"
+          echo "Expected format: X.Y.Z or X.Y.Z-suffix"
+          exit 1
+        fi
+        echo "✅ Version format is valid: $VERSION"
+
+    - name: Check if tag exists
+      run: |
+        TAG="${{ steps.version.outputs.tag }}"
+        if git rev-parse "$TAG" >/dev/null 2>&1; then
+          echo "✅ Tag $TAG exists"
+        else
+          echo "❌ Tag $TAG does not exist"
+          exit 1
+        fi
+
+  test-before-release:
+    name: Pre-release Testing
+    runs-on: ubuntu-latest
+    needs: validate-release
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev,test]
+
+    - name: Run comprehensive tests
+      run: |
+        pytest tests/ -v --cov=agb --cov-fail-under=70
+
+    - name: Run security checks
+      run: |
+        bandit -r agb/ -ll
+        safety check
+      continue-on-error: true
+
+  build-package:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: [validate-release, test-before-release]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install build tools
+      run: |
+        python -m pip install --upgrade pip build twine
+
+    - name: Update version in pyproject.toml
+      run: |
+        VERSION="${{ needs.validate-release.outputs.version }}"
+        sed -i "s/version = \".*\"/version = \"$VERSION\"/" pyproject.toml
+        echo "Updated version to: $VERSION"
+        grep "version =" pyproject.toml
+
+    - name: Build package
+      run: |
+        python -m build
+
+    - name: Verify package
+      run: |
+        twine check dist/*
+        
+        # 检查包内容
+        echo "📦 Built packages:"
+        ls -la dist/
+        
+        # 验证包可以安装
+        pip install dist/*.whl
+        python -c "import agb; print(f'✅ Package imports successfully')"
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: python-package-${{ needs.validate-release.outputs.version }}
+        path: dist/
+        retention-days: 30
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate-release, build-package]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Download package artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: python-package-${{ needs.validate-release.outputs.version }}
+        path: dist/
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        TAG="${{ needs.validate-release.outputs.tag }}"
+        VERSION="${{ needs.validate-release.outputs.version }}"
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        
+        echo "Generating release notes for $TAG (previous: $PREV_TAG)"
+        
+        # 创建发布说明
+        cat > release_notes.md << EOF
+        # 🚀 AGB Cloud SDK v${VERSION}
+        
+        ## 📋 What's Changed
+        EOF
+        
+        if [[ -n "$PREV_TAG" ]]; then
+          echo "### 🔄 Changes since $PREV_TAG" >> release_notes.md
+          git log --pretty=format:"- %s (%h)" ${PREV_TAG}..HEAD >> release_notes.md
+        else
+          echo "### 🆕 Initial Release" >> release_notes.md
+          echo "- First release of AGB Cloud SDK" >> release_notes.md
+        fi
+        
+        cat >> release_notes.md << EOF
+        
+        ## 📦 Installation
+        
+        \`\`\`bash
+        pip install agbcloud-sdk==${VERSION}
+        \`\`\`
+        
+        ## 🔗 Links
+        
+        - 📚 [Documentation](https://github.com/agbcloud/agbcloud-sdk/blob/main/docs/README.md)
+        - 🚀 [Quick Start Guide](https://github.com/agbcloud/agbcloud-sdk/blob/main/docs/quickstart.md)
+        - 🐛 [Report Issues](https://github.com/agbcloud/agbcloud-sdk/issues)
+        
+        ## 📊 Package Information
+        
+        | File | Size | Type |
+        |------|------|------|
+        EOF
+        
+        # 添加包信息
+        for file in dist/*; do
+          if [[ -f "$file" ]]; then
+            filename=$(basename "$file")
+            size=$(ls -lh "$file" | awk '{print $5}')
+            if [[ "$filename" == *.whl ]]; then
+              type="Wheel"
+            else
+              type="Source"
+            fi
+            echo "| $filename | $size | $type |" >> release_notes.md
+          fi
+        done
+        
+        echo "release_notes_file=release_notes.md" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ needs.validate-release.outputs.tag }}
+        release_name: AGB Cloud SDK ${{ needs.validate-release.outputs.tag }}
+        draft: false
+        prerelease: ${{ needs.validate-release.outputs.is_prerelease }}
+        body_path: ${{ steps.release_notes.outputs.release_notes_file }}
+
+    - name: Upload wheel to release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/agbcloud_sdk-${{ needs.validate-release.outputs.version }}-py3-none-any.whl
+        asset_name: agbcloud_sdk-${{ needs.validate-release.outputs.version }}-py3-none-any.whl
+        asset_content_type: application/zip
+
+    - name: Upload source to release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/agbcloud_sdk-${{ needs.validate-release.outputs.version }}.tar.gz
+        asset_name: agbcloud_sdk-${{ needs.validate-release.outputs.version }}.tar.gz
+        asset_content_type: application/gzip
+
+  publish-to-pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [validate-release, build-package, create-github-release]
+    environment: pypi  # 使用环境保护
+    steps:
+    - name: Download package artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: python-package-${{ needs.validate-release.outputs.version }}
+        path: dist/
+
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        # 使用 Trusted Publishing (推荐) 或者 API token
+        # password: ${{ secrets.PYPI_API_TOKEN }}  # 如果使用 API token
+        verbose: true
+        print-hash: true
+
+  publish-to-test-pypi:
+    name: Publish to Test PyPI
+    runs-on: ubuntu-latest
+    needs: [validate-release, build-package]
+    if: needs.validate-release.outputs.is_prerelease == 'true'
+    steps:
+    - name: Download package artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: python-package-${{ needs.validate-release.outputs.version }}
+        path: dist/
+
+    - name: Publish to Test PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        # password: ${{ secrets.TEST_PYPI_API_TOKEN }}  # 如果使用 API token
+        verbose: true
+
+  post-release:
+    name: Post-release Tasks
+    runs-on: ubuntu-latest
+    needs: [validate-release, publish-to-pypi]
+    if: always()
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Update CHANGELOG
+      run: |
+        VERSION="${{ needs.validate-release.outputs.version }}"
+        TAG="${{ needs.validate-release.outputs.tag }}"
+        DATE=$(date '+%Y-%m-%d')
+        
+        # 如果 CHANGELOG.md 存在，更新它
+        if [[ -f CHANGELOG.md ]]; then
+          # 在第一行后插入新版本信息
+          sed -i "1a\\\\n## [$VERSION] - $DATE\\n" CHANGELOG.md
+          echo "✅ Updated CHANGELOG.md"
+        else
+          # 创建新的 CHANGELOG
+          cat > CHANGELOG.md << EOF
+        # Changelog
+        
+        All notable changes to this project will be documented in this file.
+        
+        ## [$VERSION] - $DATE
+        
+        - Initial release
+        EOF
+          echo "✅ Created CHANGELOG.md"
+        fi
+
+    - name: Notify success
+      if: needs.publish-to-pypi.result == 'success'
+      run: |
+        echo "🎉 Release ${{ needs.validate-release.outputs.tag }} published successfully!"
+        echo "📦 Available at: https://pypi.org/project/agbcloud-sdk/${{ needs.validate-release.outputs.version }}/"
+        
+    - name: Notify failure
+      if: failure()
+      run: |
+        echo "❌ Release process failed for ${{ needs.validate-release.outputs.tag }}"
+        echo "Please check the workflow logs and retry if necessary."

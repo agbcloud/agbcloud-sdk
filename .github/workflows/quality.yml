@@ -1,0 +1,278 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  code-formatting:
+    name: Code Formatting
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-quality-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-quality-
+
+    - name: Install formatting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort
+
+    - name: Check code formatting with Black
+      run: |
+        black --check --diff --color .
+        
+    - name: Check import sorting with isort
+      run: |
+        isort --check-only --diff --color .
+
+    - name: Auto-fix formatting (PR only)
+      if: github.event_name == 'pull_request'
+      run: |
+        black .
+        isort .
+        
+    - name: Create PR comment with formatting fixes
+      if: github.event_name == 'pull_request' && failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '🔧 **Code formatting issues detected!**\n\nRun the following commands to fix:\n```bash\nblack .\nisort .\n```'
+          })
+
+  linting:
+    name: Linting
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pylint
+
+    - name: Run Flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+
+    - name: Run Pylint
+      run: |
+        pylint agb/ --exit-zero --output-format=text --reports=yes | tee pylint-report.txt
+      continue-on-error: true
+
+    - name: Upload Pylint report
+      uses: actions/upload-artifact@v3
+      with:
+        name: pylint-report
+        path: pylint-report.txt
+
+  type-checking:
+    name: Type Checking
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+        pip install mypy
+
+    - name: Run MyPy type checking
+      run: |
+        mypy agb/ --ignore-missing-imports --show-error-codes --pretty
+      continue-on-error: true
+
+    - name: Generate MyPy report
+      run: |
+        mypy agb/ --ignore-missing-imports --html-report mypy-report --txt-report mypy-txt-report
+      continue-on-error: true
+
+    - name: Upload MyPy report
+      uses: actions/upload-artifact@v3
+      with:
+        name: mypy-report
+        path: |
+          mypy-report/
+          mypy-txt-report/
+      if: always()
+
+  complexity-analysis:
+    name: Complexity Analysis
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install analysis tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install radon xenon
+
+    - name: Run complexity analysis with Radon
+      run: |
+        echo "## Cyclomatic Complexity" > complexity-report.md
+        radon cc agb/ -s >> complexity-report.md
+        echo -e "\n## Maintainability Index" >> complexity-report.md
+        radon mi agb/ -s >> complexity-report.md
+        echo -e "\n## Raw Metrics" >> complexity-report.md
+        radon raw agb/ -s >> complexity-report.md
+
+    - name: Check complexity with Xenon
+      run: |
+        xenon agb/ --max-absolute B --max-modules A --max-average A
+      continue-on-error: true
+
+    - name: Upload complexity report
+      uses: actions/upload-artifact@v3
+      with:
+        name: complexity-report
+        path: complexity-report.md
+
+  documentation-quality:
+    name: Documentation Quality
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install documentation tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pydocstyle interrogate
+
+    - name: Check docstring style
+      run: |
+        pydocstyle agb/ --count --explain --source
+      continue-on-error: true
+
+    - name: Check docstring coverage
+      run: |
+        interrogate agb/ -v --ignore-init-method --ignore-magic --ignore-module --fail-under=60
+      continue-on-error: true
+
+  code-duplication:
+    name: Code Duplication
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install duplication detector
+      run: |
+        python -m pip install --upgrade pip
+        pip install jscpd
+
+    - name: Check for code duplication
+      run: |
+        npx jscpd agb/ --reporters json,html --output ./duplication-report
+      continue-on-error: true
+
+    - name: Upload duplication report
+      uses: actions/upload-artifact@v3
+      with:
+        name: duplication-report
+        path: duplication-report/
+      if: always()
+
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [code-formatting, linting, type-checking, complexity-analysis, documentation-quality]
+    if: always()
+    steps:
+    - name: Check quality gate
+      run: |
+        echo "Quality Gate Status:"
+        echo "- Code Formatting: ${{ needs.code-formatting.result }}"
+        echo "- Linting: ${{ needs.linting.result }}"
+        echo "- Type Checking: ${{ needs.type-checking.result }}"
+        echo "- Complexity Analysis: ${{ needs.complexity-analysis.result }}"
+        echo "- Documentation Quality: ${{ needs.documentation-quality.result }}"
+        
+        # 设置质量门限
+        failed_jobs=()
+        [[ "${{ needs.code-formatting.result }}" != "success" ]] && failed_jobs+=("code-formatting")
+        [[ "${{ needs.linting.result }}" != "success" ]] && failed_jobs+=("linting")
+        
+        if [ ${#failed_jobs[@]} -gt 0 ]; then
+          echo "❌ Quality gate failed. Failed jobs: ${failed_jobs[*]}"
+          exit 1
+        else
+          echo "✅ Quality gate passed!"
+        fi
+
+    - name: Create quality summary
+      if: always()
+      run: |
+        cat > quality-summary.md << 'EOF'
+        # 📊 Code Quality Report
+        
+        ## 🎯 Quality Metrics
+        | Check | Status |
+        |-------|--------|
+        | Code Formatting | ${{ needs.code-formatting.result == 'success' && '✅ Passed' || '❌ Failed' }} |
+        | Linting | ${{ needs.linting.result == 'success' && '✅ Passed' || '⚠️ Warning' }} |
+        | Type Checking | ${{ needs.type-checking.result == 'success' && '✅ Passed' || '⚠️ Warning' }} |
+        | Complexity Analysis | ${{ needs.complexity-analysis.result == 'success' && '✅ Passed' || '⚠️ Warning' }} |
+        | Documentation Quality | ${{ needs.documentation-quality.result == 'success' && '✅ Passed' || '⚠️ Warning' }} |
+        
+        ## 📝 Recommendations
+        - Run `black .` and `isort .` to fix formatting issues
+        - Check complexity reports for optimization opportunities
+        - Improve docstring coverage where needed
+        
+        EOF
+
+    - name: Upload quality summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: quality-summary
+        path: quality-summary.md

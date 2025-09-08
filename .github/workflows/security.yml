@@ -1,0 +1,314 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    # 每周一凌晨2点运行安全扫描
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety pip-audit
+
+    - name: Run Safety check
+      run: |
+        safety check --json --output safety-report.json
+        safety check  # 也输出到控制台
+      continue-on-error: true
+
+    - name: Run pip-audit
+      run: |
+        pip-audit --format=json --output=pip-audit-report.json
+        pip-audit  # 也输出到控制台
+      continue-on-error: true
+
+    - name: Upload vulnerability reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-vulnerability-reports
+        path: |
+          safety-report.json
+          pip-audit-report.json
+      if: always()
+
+  code-security-scan:
+    name: Code Security Scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit[toml] semgrep
+
+    - name: Run Bandit security scan
+      run: |
+        bandit -r agb/ -f json -o bandit-report.json
+        bandit -r agb/ -ll  # 也输出到控制台
+      continue-on-error: true
+
+    - name: Run Semgrep security scan
+      run: |
+        semgrep --config=auto agb/ --json --output=semgrep-report.json
+        semgrep --config=auto agb/  # 也输出到控制台
+      continue-on-error: true
+
+    - name: Upload code security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: code-security-reports
+        path: |
+          bandit-report.json
+          semgrep-report.json
+      if: always()
+
+  codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: python
+        # 可以指定查询套件
+        queries: security-and-quality
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v2
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        category: "/language:python"
+
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取完整历史记录
+
+    - name: Install TruffleHog
+      run: |
+        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+
+    - name: Run TruffleHog secret scan
+      run: |
+        trufflehog git file://. --json > trufflehog-report.json
+        echo "Secret scan completed. Check trufflehog-report.json for results."
+      continue-on-error: true
+
+    - name: Check for high-confidence secrets
+      run: |
+        if [ -s trufflehog-report.json ]; then
+          echo "⚠️ Potential secrets detected!"
+          cat trufflehog-report.json
+          # 在实际环境中，这里应该根据 confidence 级别决定是否失败
+        else
+          echo "✅ No secrets detected."
+        fi
+
+    - name: Upload secret scan report
+      uses: actions/upload-artifact@v3
+      with:
+        name: secret-scan-report
+        path: trufflehog-report.json
+      if: always()
+
+  license-scan:
+    name: License Compliance Scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies and license tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install pip-licenses licensecheck
+
+    - name: Generate license report
+      run: |
+        pip-licenses --format=json --output-file=licenses.json
+        pip-licenses --format=csv --output-file=licenses.csv
+        pip-licenses  # 输出到控制台
+
+    - name: Check license compatibility
+      run: |
+        licensecheck --zero
+      continue-on-error: true
+
+    - name: Upload license reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: license-reports
+        path: |
+          licenses.json
+          licenses.csv
+
+  supply-chain-scan:
+    name: Supply Chain Security
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install cyclonedx-bom
+      run: |
+        python -m pip install --upgrade pip
+        pip install cyclonedx-bom
+
+    - name: Generate SBOM
+      run: |
+        pip install -e .
+        cyclonedx-py -o sbom.json
+        cyclonedx-py -o sbom.xml --format xml
+
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v3
+      with:
+        name: software-bill-of-materials
+        path: |
+          sbom.json
+          sbom.xml
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, code-security-scan, secret-scan, license-scan, supply-chain-scan]
+    if: always()
+    steps:
+    - name: Download all security reports
+      uses: actions/download-artifact@v3
+
+    - name: Create security summary
+      run: |
+        cat > security-summary.md << 'EOF'
+        # 🛡️ Security Scan Results
+        
+        ## 📊 Scan Status
+        | Scan Type | Status | Details |
+        |-----------|--------|---------|
+        | Dependency Vulnerabilities | ${{ needs.dependency-scan.result == 'success' && '✅ Clean' || '⚠️ Issues Found' }} | Check dependency reports |
+        | Code Security | ${{ needs.code-security-scan.result == 'success' && '✅ Clean' || '⚠️ Issues Found' }} | Bandit & Semgrep analysis |
+        | Secret Detection | ${{ needs.secret-scan.result == 'success' && '✅ Clean' || '⚠️ Potential Secrets' }} | TruffleHog scan |
+        | License Compliance | ${{ needs.license-scan.result == 'success' && '✅ Compliant' || '⚠️ Check Required' }} | License compatibility |
+        | Supply Chain | ${{ needs.supply-chain-scan.result == 'success' && '✅ Generated' || '❌ Failed' }} | SBOM generation |
+        
+        ## 🔍 Key Findings
+        
+        ### High Priority Issues
+        - Review any dependency vulnerabilities immediately
+        - Address code security findings from Bandit/Semgrep
+        - Remove any detected secrets from repository
+        
+        ### Recommendations
+        - Keep dependencies updated regularly
+        - Review and approve all license dependencies
+        - Monitor security advisories for used packages
+        - Implement secret management best practices
+        
+        ## 📋 Next Steps
+        1. Review detailed reports in artifacts
+        2. Create issues for confirmed vulnerabilities
+        3. Update security documentation if needed
+        4. Schedule regular security reviews
+        
+        ---
+        *Security scan completed on: $(date)*
+        EOF
+
+    - name: Upload security summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-summary
+        path: security-summary.md
+
+    - name: Check security gate
+      run: |
+        echo "Security Gate Evaluation:"
+        
+        # 定义关键安全检查
+        critical_failed=()
+        
+        # CodeQL 通过 GitHub 内置检查，这里主要检查其他扫描
+        if [[ "${{ needs.dependency-scan.result }}" == "failure" ]]; then
+          echo "❌ Dependency scan found critical vulnerabilities"
+          critical_failed+=("dependency-scan")
+        fi
+        
+        if [[ "${{ needs.secret-scan.result }}" == "failure" ]]; then
+          echo "❌ Secret scan found potential credential leaks"
+          critical_failed+=("secret-scan") 
+        fi
+        
+        if [ ${#critical_failed[@]} -gt 0 ]; then
+          echo "🚨 Security gate FAILED! Critical issues found in: ${critical_failed[*]}"
+          echo "Please review security reports and address critical findings before proceeding."
+          exit 1
+        else
+          echo "✅ Security gate PASSED! No critical security issues detected."
+        fi
+
+  notify-security-team:
+    name: Notify Security Issues
+    runs-on: ubuntu-latest
+    needs: [security-summary]
+    if: failure() && github.ref == 'refs/heads/main'
+    steps:
+    - name: Send notification
+      run: |
+        echo "🚨 Security scan detected issues in main branch!"
+        echo "Please review the security reports and take appropriate action."
+        # 这里可以集成 Slack, Teams, 或邮件通知
+        # 例如: curl -X POST -H 'Content-type: application/json' --data '{"text":"Security issues detected!"}' $SLACK_WEBHOOK

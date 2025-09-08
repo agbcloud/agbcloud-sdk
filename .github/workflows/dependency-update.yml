@@ -261,7 +261,7 @@ jobs:
     if: failure()
     steps:
     - name: Download security reports
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v5
       with:
         name: security-audit-reports
 

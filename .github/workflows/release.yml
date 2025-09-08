@@ -164,7 +164,7 @@ jobs:
         fetch-depth: 0
 
     - name: Download package artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v5
       with:
         name: python-package-${{ needs.validate-release.outputs.version }}
         path: dist/
@@ -268,7 +268,7 @@ jobs:
     environment: pypi  # Use environment protection
     steps:
     - name: Download package artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v5
       with:
         name: python-package-${{ needs.validate-release.outputs.version }}
         path: dist/
@@ -288,7 +288,7 @@ jobs:
     if: needs.validate-release.outputs.is_prerelease == 'true'
     steps:
     - name: Download package artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v5
       with:
         name: python-package-${{ needs.validate-release.outputs.version }}
         path: dist/

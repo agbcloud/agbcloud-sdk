@@ -87,7 +87,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload Pylint report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: pylint-report
         path: pylint-report.txt
@@ -121,7 +121,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload MyPy report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: mypy-report
         path: |
@@ -161,7 +161,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload complexity report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: complexity-report
         path: complexity-report.md
@@ -216,7 +216,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload duplication report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: duplication-report
         path: duplication-report/
@@ -272,7 +272,7 @@ jobs:
         EOF
 
     - name: Upload quality summary
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: quality-summary
         path: quality-summary.md

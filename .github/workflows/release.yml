@@ -147,7 +147,7 @@ jobs:
         python -c "import agb; print(f'✅ Package imports successfully')"
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: python-package-${{ needs.validate-release.outputs.version }}
         path: dist/

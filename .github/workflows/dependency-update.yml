@@ -64,7 +64,7 @@ jobs:
         fi
 
     - name: Upload dependency report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dependency-report
         path: |
@@ -105,7 +105,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload security audit reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-audit-reports
         path: |

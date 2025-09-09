@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.2.0] - 2025-09-08
+
+### New Features
+- **Directory Monitoring API**: Added comprehensive directory watching functionality
+  - `watch_directory()` method for real-time file system monitoring
+  - Support for recursive directory watching
+  - File change event handling (create, modify, delete, move)
+  - Configurable watch patterns and filters
+  - Async support for directory monitoring operations
+
+### Infrastructure Improvements
+- **CI/CD Pipeline**: Complete GitHub Actions workflow setup
+  - Automated testing across multiple Python versions (3.10, 3.11, 3.12)
+  - Cross-platform testing (Ubuntu, macOS, Windows)
+  - Code quality checks with Black, isort, Flake8, and MyPy
+  - Security scanning with Bandit, Safety, and CodeQL
+  - Automated dependency updates with Dependabot
+  - Release automation with PyPI publishing
+- **Pre-commit Configuration**: Standardized code quality enforcement
+  - Python code formatting with Black
+  - Import sorting with isort
+  - Linting with Flake8 and security checks with Bandit
+  - YAML, TOML, and JSON validation
+  - Type checking with MyPy
+
+### Documentation
+- **Enhanced API Reference**: Updated filesystem module documentation
+- **New Examples**: Directory monitoring examples and usage patterns
+- **File Operations Guide**: Comprehensive guide for file system operations
+
+### Technical Improvements
+- Updated API client architecture for better extensibility
+- Enhanced error handling for directory monitoring operations
+- Comprehensive test coverage for new functionality
+
 ## [0.1.0] - 2025-08-30
 
 ### Initial Release

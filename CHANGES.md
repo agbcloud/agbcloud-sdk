@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.1] - 2025-09-10
+
+### Bug Fixes
+- **Directory Monitoring**: Fixed deduplication issue in watch directory functionality
+  - Removed unnecessary event deduplication that was causing missed file changes
+  - Improved callback handling to ensure all file events are properly reported
+  - Enhanced error handling in directory monitoring callbacks
+
+### Testing
+- Enhanced test coverage for directory monitoring functionality
+- Added comprehensive file modification monitoring tests
+- Improved integration test reliability
+
 ## [0.2.0] - 2025-09-08
 
 ### New Features

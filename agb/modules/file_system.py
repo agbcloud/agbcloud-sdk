@@ -996,8 +996,6 @@ class FileSystem(BaseService):
 
         def _monitor_directory():
             """Internal function to monitor directory changes."""
-            last_events = []  # Track last batch of events for deduplication
-            
             print(f"Starting directory monitoring for: {path}")
             print(f"Polling interval: {interval} seconds")
             
@@ -1007,24 +1005,17 @@ class FileSystem(BaseService):
                     result = self._get_file_change(path)
                     
                     if result.success:
-                        # Check if current events are different from last events
                         current_events = result.events
                         
-                        # Compare with last events to avoid duplicates
-                        if self._events_different(current_events, last_events):
-                            print(f"Detected {len(current_events)} file changes (different from last):")
-                            for event in current_events:
-                                print(f"  - {event}")
-                            
-                            try:
-                                callback(current_events)
-                            except Exception as e:
-                                print(f"Error in callback function: {e}")
-                            
-                            # Update last events
-                            last_events = current_events[:]
-                        else:
-                            print(f"Received {len(current_events)} events, but they are identical to last batch - skipping")
+                        # Always call callback with current events (no deduplication)
+                        print(f"Detected {len(current_events)} file changes:")
+                        for event in current_events:
+                            print(f"  - {event}")
+                        
+                        try:
+                            callback(current_events)
+                        except Exception as e:
+                            print(f"Error in callback function: {e}")
                     
                     else:
                         print(f"Error monitoring directory: {result.error_message}")
@@ -1054,32 +1045,5 @@ class FileSystem(BaseService):
         
         return monitor_thread
 
-    def _events_different(self, current_events: List[FileChangeEvent], last_events: List[FileChangeEvent]) -> bool:
-        """
-        Compare two lists of events to determine if they are different.
-        
-        Args:
-            current_events: Current batch of events
-            last_events: Previous batch of events
-            
-        Returns:
-            bool: True if events are different, False if they are the same
-        """
-        # If lengths are different, events are different
-        if len(current_events) != len(last_events):
-            return True
-        
-        # If both are empty, they are the same
-        if len(current_events) == 0:
-            return False
-        
-        # Compare each event
-        for current_event, last_event in zip(current_events, last_events):
-            if (current_event.event_type != last_event.event_type or
-                current_event.path != last_event.path or
-                current_event.path_type != last_event.path_type):
-                return True
-        
-        # All events are identical
-        return False
+
 

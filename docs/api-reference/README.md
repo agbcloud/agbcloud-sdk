@@ -13,7 +13,8 @@ from agb.session_params import CreateSessionParams
 agb = AGB()  # Uses AGB_API_KEY environment variable
 
 # Session lifecycle
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 session = result.session
 
 # Module usage
@@ -186,7 +187,8 @@ class ApiResponse:
 ### Error Handling Examples
 ```python
 # Session creation error handling
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if not result.success:
     print(f"Error: {result.error_message}")
     print(f"Request ID: {result.request_id}")

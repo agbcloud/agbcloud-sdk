@@ -8,9 +8,11 @@ This tutorial teaches you how to execute shell commands in the AGB cloud environ
 
 ```python
 from agb import AGB
+from agb.session_params import CreateSessionParams
 
 agb = AGB()
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 # Basic command execution
 result = session.command.execute_command("ls -la /tmp")
@@ -34,12 +36,13 @@ from agb import AGB
 
 # Initialize AGB and create session
 agb = AGB()
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 try:
     # Execute a simple command
     result = session.command.execute_command("echo 'Hello from AGB!'")
-    
+
     if result.success:
         print("Command succeeded!")
         print("Output:", result.output)
@@ -57,8 +60,9 @@ finally:
 ```python
 def get_system_info():
     agb = AGB()
-    session = agb.create().session
-    
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
+
     try:
         # System information commands
         commands = [
@@ -68,19 +72,19 @@ def get_system_info():
             ("date", "Current date and time"),
             ("uptime", "System uptime")
         ]
-        
+
         print("System Information Report")
         print("=" * 40)
-        
+
         for cmd, description in commands:
             result = session.command.execute_command(cmd)
-            
+
             print(f"\n{description}:")
             if result.success:
                 print(result.output.strip())
             else:
                 print(f"Error: {result.error_message}")
-    
+
     finally:
         agb.delete(session)
 
@@ -92,43 +96,44 @@ get_system_info()
 ```python
 def file_system_commands():
     agb = AGB()
-    session = agb.create().session
-    
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
+
     try:
         # Create a test directory
         result = session.command.execute_command("mkdir -p /tmp/command_test")
         if result.success:
             print("✅ Directory created")
-        
+
         # Create test files
         commands = [
             "echo 'File 1 content' > /tmp/command_test/file1.txt",
             "echo 'File 2 content' > /tmp/command_test/file2.txt",
             "echo 'File 3 content' > /tmp/command_test/file3.txt"
         ]
-        
+
         for cmd in commands:
             result = session.command.execute_command(cmd)
             if result.success:
                 print(f"✅ Executed: {cmd}")
-        
+
         # List directory contents
         result = session.command.execute_command("ls -la /tmp/command_test")
         if result.success:
             print("\n📁 Directory contents:")
             print(result.output)
-        
+
         # Count files
         result = session.command.execute_command("ls /tmp/command_test | wc -l")
         if result.success:
             print(f"\n📊 Number of files: {result.output.strip()}")
-        
+
         # Search in files
         result = session.command.execute_command("grep -r 'content' /tmp/command_test")
         if result.success:
             print("\n🔍 Search results:")
             print(result.output)
-    
+
     finally:
         agb.delete(session)
 
@@ -140,8 +145,9 @@ file_system_commands()
 ```python
 def advanced_commands():
     agb = AGB()
-    session = agb.create().session
-    
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
+
     try:
         # Create sample data
         sample_data = """apple
@@ -151,14 +157,14 @@ apple
 date
 banana
 elderberry"""
-        
+
         # Write data to file using command
         write_cmd = f"cat > /tmp/fruits.txt << 'EOF'\n{sample_data}\nEOF"
         result = session.command.execute_command(write_cmd)
-        
+
         if result.success:
             print("✅ Sample data created")
-            
+
             # Command chaining examples
             pipe_commands = [
                 ("cat /tmp/fruits.txt", "Show all fruits"),
@@ -167,20 +173,20 @@ elderberry"""
                 ("cat /tmp/fruits.txt | sort | uniq -c", "Count unique fruits"),
                 ("cat /tmp/fruits.txt | grep 'a' | wc -l", "Count fruits with 'a'")
             ]
-            
+
             print("\n🔗 Command Chaining Examples:")
             print("=" * 50)
-            
+
             for cmd, description in pipe_commands:
                 result = session.command.execute_command(cmd, timeout_ms=2000)
-                
+
                 print(f"\n{description}:")
                 print(f"Command: {cmd}")
                 if result.success:
                     print(f"Output: {result.output.strip()}")
                 else:
                     print(f"Error: {result.error_message}")
-    
+
     finally:
         agb.delete(session)
 
@@ -194,11 +200,12 @@ advanced_commands()
 ```python
 def data_processing_pipeline():
     agb = AGB()
-    session = agb.create().session
-    
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
+
     try:
         print("🚀 Starting Data Processing Pipeline")
-        
+
         # Step 1: Create sample CSV data
         csv_data = """name,age,city,salary
 Alice,25,New York,50000
@@ -207,20 +214,20 @@ Charlie,35,Paris,70000
 Diana,28,Tokyo,55000
 Eve,32,Berlin,65000
 Frank,27,Sydney,52000"""
-        
+
         # Write CSV data
         write_result = session.command.execute_command(f"""
 cat > /tmp/employees.csv << 'EOF'
 {csv_data}
 EOF
         """)
-        
+
         if not write_result.success:
             print("❌ Failed to create CSV data")
             return
-        
+
         print("✅ Step 1: CSV data created")
-        
+
         # Step 2: Basic data analysis using shell commands
         analysis_commands = [
             ("wc -l /tmp/employees.csv", "Count total lines"),
@@ -229,20 +236,20 @@ EOF
             ("cut -d',' -f1 /tmp/employees.csv | tail -n +2", "Extract names"),
             ("cut -d',' -f4 /tmp/employees.csv | tail -n +2 | sort -n", "Sort salaries")
         ]
-        
+
         print("\n📊 Step 2: Data Analysis")
         for cmd, description in analysis_commands:
             result = session.command.execute_command(cmd)
             if result.success:
                 print(f"{description}: {result.output.strip()}")
-        
+
         # Step 3: Advanced processing with awk
         awk_commands = [
             ("awk -F',' 'NR>1 {sum+=$4; count++} END {print \"Average salary: $\" sum/count}' /tmp/employees.csv", "Calculate average salary"),
             ("awk -F',' 'NR>1 && $4>55000 {print $1 \": $\" $4}' /tmp/employees.csv", "High earners"),
             ("awk -F',' 'NR>1 {cities[$3]++} END {for(city in cities) print city \": \" cities[city]}' /tmp/employees.csv", "Count by city")
         ]
-        
+
         print("\n🔍 Step 3: Advanced Analysis")
         for cmd, description in awk_commands:
             result = session.command.execute_command(cmd, timeout_ms=3000)
@@ -251,7 +258,7 @@ EOF
                 print(result.output)
             else:
                 print(f"Error in {description}: {result.error_message}")
-        
+
         # Step 4: Create summary report
         report_cmd = """
 awk -F',' '
@@ -278,18 +285,18 @@ END {
     for(age in ages) print "  " age "s: " ages[age]
 }' /tmp/employees.csv > /tmp/report.txt
         """
-        
+
         result = session.command.execute_command(report_cmd)
         if result.success:
             print("✅ Step 4: Summary report generated")
-            
+
             # Display the report
             display_result = session.command.execute_command("cat /tmp/report.txt")
             if display_result.success:
                 print("\n📋 Final Report:")
                 print("=" * 50)
                 print(display_result.output)
-        
+
     finally:
         agb.delete(session)
 
@@ -301,12 +308,13 @@ data_processing_pipeline()
 ```python
 def system_monitoring():
     agb = AGB()
-    session = agb.create().session
-    
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
+
     try:
         print("🖥️ System Monitoring Dashboard")
         print("=" * 40)
-        
+
         # System resource monitoring
         monitoring_commands = [
             ("free -h", "Memory Usage", "💾"),
@@ -315,17 +323,17 @@ def system_monitoring():
             ("netstat -tuln | head -10", "Network Connections", "🌐"),
             ("env | grep -E '^(PATH|HOME|USER|SHELL)' | sort", "Environment", "🔧")
         ]
-        
+
         for cmd, title, icon in monitoring_commands:
             result = session.command.execute_command(cmd, timeout_ms=3000)
-            
+
             print(f"\n{icon} {title}:")
             print("-" * 30)
             if result.success:
                 print(result.output)
             else:
                 print(f"Error: {result.error_message}")
-        
+
         # Create system health check
         health_check_script = """
 #!/bin/bash
@@ -354,14 +362,14 @@ echo "📊 Load average: $LOAD"
 
 echo "Health check completed at $(date)"
         """
-        
+
         # Write and execute health check script
         write_result = session.command.execute_command(f"""
 cat > /tmp/health_check.sh << 'EOF'
 {health_check_script}
 EOF
         """)
-        
+
         if write_result.success:
             # Make script executable and run it
             chmod_result = session.command.execute_command("chmod +x /tmp/health_check.sh")
@@ -371,7 +379,7 @@ EOF
                     print("\n🏥 System Health Check:")
                     print("=" * 40)
                     print(health_result.output)
-    
+
     finally:
         agb.delete(session)
 
@@ -383,11 +391,12 @@ system_monitoring()
 ```python
 def log_analysis():
     agb = AGB()
-    session = agb.create().session
-    
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
+
     try:
         print("📊 Log Analysis Tutorial")
-        
+
         # Create sample log data
         log_data = """2023-12-01 10:00:01 INFO User alice logged in from 192.168.1.100
 2023-12-01 10:00:15 INFO User bob logged in from 192.168.1.101
@@ -401,20 +410,20 @@ def log_analysis():
 2023-12-01 10:06:15 ERROR API timeout for endpoint /api/data
 2023-12-01 10:07:00 WARNING Failed login attempt for user charlie from 192.168.1.102
 2023-12-01 10:08:30 INFO User bob logged out"""
-        
+
         # Write log data
         write_result = session.command.execute_command(f"""
 cat > /tmp/app.log << 'EOF'
 {log_data}
 EOF
         """)
-        
+
         if not write_result.success:
             print("❌ Failed to create log data")
             return
-        
+
         print("✅ Sample log data created")
-        
+
         # Log analysis commands
         analysis_commands = [
             ("wc -l /tmp/app.log", "Total log entries"),
@@ -424,38 +433,38 @@ EOF
             ("grep 'logged in' /tmp/app.log | wc -l", "Login events"),
             ("grep 'Failed login' /tmp/app.log | wc -l", "Failed login attempts")
         ]
-        
+
         print("\n📈 Log Statistics:")
         for cmd, description in analysis_commands:
             result = session.command.execute_command(cmd)
             if result.success:
                 count = result.output.strip()
                 print(f"{description}: {count}")
-        
+
         # Advanced log analysis
         print("\n🔍 Detailed Analysis:")
-        
+
         # Extract unique users
         users_cmd = "grep -o 'User [a-zA-Z]*' /tmp/app.log | sort | uniq -c | sort -nr"
         result = session.command.execute_command(users_cmd)
         if result.success:
             print("User activity:")
             print(result.output)
-        
+
         # Extract IP addresses with failed logins
         failed_ips_cmd = "grep 'Failed login' /tmp/app.log | grep -o '[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+' | sort | uniq -c | sort -nr"
         result = session.command.execute_command(failed_ips_cmd)
         if result.success:
             print("Failed login IPs:")
             print(result.output)
-        
+
         # Time-based analysis
         hourly_cmd = "awk '{print $2}' /tmp/app.log | cut -d':' -f1 | sort | uniq -c"
         result = session.command.execute_command(hourly_cmd)
         if result.success:
             print("Activity by hour:")
             print(result.output)
-        
+
         # Generate security report
         security_report_cmd = """
 awk '
@@ -488,17 +497,17 @@ END {
     }
 }' /tmp/app.log > /tmp/security_report.txt
         """
-        
+
         result = session.command.execute_command(security_report_cmd)
         if result.success:
             print("\n🛡️ Security Report Generated")
-            
+
             # Display security report
             display_result = session.command.execute_command("cat /tmp/security_report.txt")
             if display_result.success:
                 print("=" * 40)
                 print(display_result.output)
-    
+
     finally:
         agb.delete(session)
 
@@ -544,7 +553,7 @@ if result.success:
     header = lines[0]
     processes = lines[1:]
     print(f"Found {len(processes)} processes")
-    
+
     # Process each line
     for process_line in processes[:5]:  # Show first 5
         fields = process_line.split()
@@ -594,8 +603,9 @@ result = session.command.execute_command("echo 'Current time: $(date)'")
 ```python
 def handle_common_errors():
     agb = AGB()
-    session = agb.create().session
-    
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
+
     try:
         # Test various error conditions
         error_tests = [
@@ -604,21 +614,21 @@ def handle_common_errors():
             ("cat /etc/shadow", "Permission denied"),
             ("sleep 10", "Timeout (with short timeout)")
         ]
-        
+
         for cmd, expected_error in error_tests:
             print(f"\nTesting: {expected_error}")
             print(f"Command: {cmd}")
-            
+
             # Use short timeout for sleep command
             timeout = 500 if "sleep" in cmd else 2000
             result = session.command.execute_command(cmd, timeout_ms=timeout)
-            
+
             if result.success:
                 print("✅ Unexpected success:", result.output[:100])
             else:
                 error_msg = result.error_message.lower()
                 print("❌ Expected error:", result.error_message)
-                
+
                 # Categorize error types
                 if "command not found" in error_msg:
                     print("   → Command doesn't exist")
@@ -630,7 +640,7 @@ def handle_common_errors():
                     print("   → Command timed out")
                 else:
                     print("   → Other error type")
-    
+
     finally:
         agb.delete(session)
 
@@ -642,11 +652,11 @@ handle_common_errors()
 ```python
 def robust_command_execution(session, command, max_retries=3, timeout_ms=5000):
     """Execute command with retry logic and comprehensive error handling"""
-    
+
     for attempt in range(max_retries):
         try:
             result = session.command.execute_command(command, timeout_ms=timeout_ms)
-            
+
             if result.success:
                 return {
                     "success": True,
@@ -656,7 +666,7 @@ def robust_command_execution(session, command, max_retries=3, timeout_ms=5000):
                 }
             else:
                 error_msg = result.error_message.lower()
-                
+
                 # Don't retry certain types of errors
                 non_retryable_errors = [
                     "command not found",
@@ -664,7 +674,7 @@ def robust_command_execution(session, command, max_retries=3, timeout_ms=5000):
                     "no such file",
                     "syntax error"
                 ]
-                
+
                 if any(error in error_msg for error in non_retryable_errors):
                     return {
                         "success": False,
@@ -672,7 +682,7 @@ def robust_command_execution(session, command, max_retries=3, timeout_ms=5000):
                         "error_type": "non_retryable",
                         "attempts": attempt + 1
                     }
-                
+
                 # Retry for potentially temporary errors
                 if attempt < max_retries - 1:
                     print(f"Attempt {attempt + 1} failed, retrying: {result.error_message}")
@@ -684,7 +694,7 @@ def robust_command_execution(session, command, max_retries=3, timeout_ms=5000):
                         "error_type": "max_retries_exceeded",
                         "attempts": attempt + 1
                     }
-                    
+
         except Exception as e:
             if attempt < max_retries - 1:
                 print(f"Exception on attempt {attempt + 1}: {e}")
@@ -696,7 +706,7 @@ def robust_command_execution(session, command, max_retries=3, timeout_ms=5000):
                     "error_type": "exception",
                     "attempts": attempt + 1
                 }
-    
+
     return {
         "success": False,
         "error": "Unexpected error in retry loop",
@@ -707,8 +717,9 @@ def robust_command_execution(session, command, max_retries=3, timeout_ms=5000):
 # Usage example
 def test_robust_execution():
     agb = AGB()
-    session = agb.create().session
-    
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
+
     try:
         commands_to_test = [
             "echo 'Hello World'",
@@ -716,11 +727,11 @@ def test_robust_execution():
             "nonexistent_command",
             "find /tmp -name '*.txt'"
         ]
-        
+
         for cmd in commands_to_test:
             print(f"\nTesting command: {cmd}")
             result = robust_command_execution(session, cmd)
-            
+
             if result["success"]:
                 print(f"✅ Success after {result['attempts']} attempts")
                 print(f"Output: {result['output'][:100]}...")
@@ -728,7 +739,7 @@ def test_robust_execution():
                 print(f"❌ Failed after {result['attempts']} attempts")
                 print(f"Error type: {result['error_type']}")
                 print(f"Error: {result['error']}")
-    
+
     finally:
         agb.delete(session)
 
@@ -742,8 +753,9 @@ test_robust_execution()
 ```python
 def command_code_integration():
     agb = AGB()
-    session = agb.create().session
-    
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
+
     try:
         # Use commands to set up environment
         setup_commands = [
@@ -753,15 +765,15 @@ def command_code_integration():
             "echo '2,200' >> /tmp/integration_test/input.csv",
             "echo '3,300' >> /tmp/integration_test/input.csv"
         ]
-        
+
         for cmd in setup_commands:
             result = session.command.execute_command(cmd)
             if not result.success:
                 print(f"Setup failed: {cmd}")
                 return
-        
+
         print("✅ Environment set up with commands")
-        
+
         # Process data with code
         processing_code = """
 import csv
@@ -793,26 +805,26 @@ with open('/tmp/integration_test/summary.txt', 'w') as f:
 print("Data processing completed")
 print(f"Processed {len(data)} records")
 """
-        
+
         code_result = session.code.run_code(processing_code, "python")
         if code_result.success:
             print("✅ Data processed with code")
             print(code_result.result)
-            
+
             # Use commands to verify results
             verify_commands = [
                 ("ls -la /tmp/integration_test/", "List files"),
                 ("cat /tmp/integration_test/summary.txt", "Show summary"),
                 ("wc -l /tmp/integration_test/input.csv", "Count input lines")
             ]
-            
+
             print("\n🔍 Verification with commands:")
             for cmd, description in verify_commands:
                 result = session.command.execute_command(cmd)
                 if result.success:
                     print(f"{description}:")
                     print(result.output)
-        
+
     finally:
         agb.delete(session)
 
@@ -825,4 +837,4 @@ command_code_integration()
 - **[Code Execution Guide](../guides/code-execution.md)** - Integrating commands with code
 - **[File Operations Tutorial](file-operations.md)** - File management with commands
 - **[Session Management Guide](../guides/session-management.md)** - Managing command execution sessions
-- **[Best Practices](../guides/best-practices.md)** - Production deployment patterns 
+- **[Best Practices](../guides/best-practices.md)** - Production deployment patterns

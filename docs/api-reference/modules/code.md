@@ -277,7 +277,8 @@ from agb import AGB
 
 def execute_simple_code():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Execute Python code
@@ -312,7 +313,8 @@ execute_simple_code()
 ```python
 def multi_step_execution():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Step 1: Setup data
@@ -361,7 +363,8 @@ multi_step_execution()
 ```python
 def code_with_files():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Create input file
@@ -406,7 +409,8 @@ code_with_files()
 ```python
 def robust_code_execution():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Code that will cause an error
@@ -457,7 +461,8 @@ robust_code_execution()
 ```python
 def timeout_example():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Long-running code with short timeout

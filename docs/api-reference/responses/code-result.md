@@ -24,7 +24,9 @@ from agb import AGB
 agb = AGB()
 
 # Create a session
-result = agb.create()
+from agb.session_params import CreateSessionParams
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if result.success:
     session = result.session
 

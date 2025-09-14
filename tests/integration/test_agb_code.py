@@ -49,7 +49,7 @@ def test_create_session():
         # Record session creation start time
         create_start_time = time.time()
 
-        params = CreateSessionParams(image_id="agb-code-space-2")
+        params = CreateSessionParams(image_id="agb-code-space-1")
         result = agb.create(params)
 
         # Record session creation end time

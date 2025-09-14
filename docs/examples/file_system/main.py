@@ -33,7 +33,8 @@ def main():
 
     # Create a session
     print("Creating a new session...")
-    session_result = agb.create()
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session_result = agb.create(params)
     session = session_result.session
     print(f"Session created with ID: {session.get_session_id()}")
     print(f"Request ID: {session_result.request_id}")

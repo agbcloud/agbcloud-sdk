@@ -167,7 +167,8 @@ from agb import AGB
 
 def basic_oss_operations():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Step 1: Initialize OSS environment
@@ -235,7 +236,8 @@ basic_oss_operations()
 ```python
 def anonymous_oss_operations():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Create test content
@@ -285,7 +287,8 @@ anonymous_oss_operations()
 ```python
 def batch_oss_operations():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Initialize OSS
@@ -366,7 +369,8 @@ batch_oss_operations()
 ```python
 def oss_data_pipeline():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Initialize OSS

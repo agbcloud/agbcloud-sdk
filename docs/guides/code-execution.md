@@ -8,9 +8,11 @@ The AGB SDK provides powerful code execution capabilities in the cloud. You can 
 
 ```python
 from agb import AGB
+from agb.session_params import CreateSessionParams
 
 agb = AGB()
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 # Execute Python code
 result = session.code.run_code("print('Hello, World!')", "python")
@@ -42,9 +44,11 @@ agb.delete(session)
 
 ```python
 from agb import AGB
+from agb.session_params import CreateSessionParams
 
 agb = AGB()
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 session = result.session
 
 # Python example
@@ -185,7 +189,8 @@ class CodeExecutor:
 
     def start_session(self):
         """Start a new code execution session"""
-        result = self.agb.create()
+        params = CreateSessionParams(image_id="agb-code-space-1")
+        result = self.agb.create(params)
         if result.success:
             self.session = result.session
             return True
@@ -259,7 +264,8 @@ executor.cleanup()
 ```python
 def execute_code_with_files(agb: AGB, code: str, input_files: dict = None, output_files: list = None):
     """Execute code with file input/output handling"""
-    result = agb.create()
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    result = agb.create(params)
     if not result.success:
         return {"success": False, "error": result.error_message}
 
@@ -349,7 +355,8 @@ from typing import List, Dict
 
 def execute_code_task(agb: AGB, task: Dict):
     """Execute a single code task"""
-    result = agb.create()
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    result = agb.create(params)
     if not result.success:
         return {"task_id": task["id"], "success": False, "error": result.error_message}
 
@@ -454,7 +461,8 @@ for package in packages:
 
 def execute_with_environment(agb: AGB, code: str, packages: List[str] = None):
     """Execute code with custom environment setup"""
-    result = agb.create()
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    result = agb.create(params)
     if not result.success:
         return {"success": False, "error": result.error_message}
 

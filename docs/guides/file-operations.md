@@ -8,9 +8,11 @@ The AGB SDK provides comprehensive file system operations through the `file_syst
 
 ```python
 from agb import AGB
+from agb.session_params import CreateSessionParams
 
 agb = AGB()
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 # Basic file operations
 session.file_system.write_file("/tmp/hello.txt", "Hello World!")
@@ -31,9 +33,11 @@ agb.delete(session)
 
 ```python
 from agb import AGB
+from agb.session_params import CreateSessionParams
 
 agb = AGB()
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 # Write a text file
 write_result = session.file_system.write_file(
@@ -121,7 +125,8 @@ def process_multiple_files(session, file_data):
 
 # Usage
 agb = AGB()
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 files_to_create = {
     "/tmp/file1.txt": "Content of file 1",
@@ -170,7 +175,8 @@ def file_processing_pipeline(session, input_file, output_file):
 
 # Usage example
 agb = AGB()
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 # Create input file
 session.file_system.write_file("/tmp/input.txt", "hello world\nthis is a test")
@@ -238,7 +244,8 @@ def handle_csv_file(session, filepath, data):
 
 # Usage examples
 agb = AGB()
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 # JSON example
 json_data = {"name": "John", "age": 30, "city": "New York"}
@@ -270,21 +277,21 @@ from agb import AGB
 def simple_directory_monitoring():
     """Basic directory monitoring example"""
     from agb.session_params import CreateSessionParams
-    
+
     agb = AGB()
-    session_params = CreateSessionParams(image_id="agb-code-space-2")
+    session_params = CreateSessionParams(image_id="agb-code-space-1")
     session = agb.create(session_params).session
-    
+
     # Create directory to monitor
     session.file_system.create_directory("/tmp/watch_demo")
-    
+
     # Define callback function
     def on_file_change(events):
         """Handle file change events"""
         print(f"Detected {len(events)} changes:")
         for event in events:
             print(f"  {event.event_type}: {event.path} ({event.path_type})")
-    
+
     try:
         # Start monitoring
         monitor_thread = session.file_system.watch_directory(
@@ -294,24 +301,24 @@ def simple_directory_monitoring():
         )
         monitor_thread.start()
         print("Directory monitoring started...")
-        
+
         # Simulate file operations
         print("Creating files...")
         session.file_system.write_file("/tmp/watch_demo/file1.txt", "Content 1")
         time.sleep(2)
-        
+
         session.file_system.write_file("/tmp/watch_demo/file2.txt", "Content 2")
         time.sleep(2)
-        
+
         print("Modifying file...")
         session.file_system.write_file("/tmp/watch_demo/file1.txt", "Modified content")
         time.sleep(2)
-        
+
         # Stop monitoring
         print("Stopping monitoring...")
         monitor_thread.stop_event.set()
         monitor_thread.join()
-        
+
     finally:
         agb.delete(session)
 
@@ -324,24 +331,24 @@ simple_directory_monitoring()
 def advanced_directory_monitoring():
     """Advanced monitoring with event processing and filtering"""
     from agb.session_params import CreateSessionParams
-    
+
     agb = AGB()
-    session_params = CreateSessionParams(image_id="agb-code-space-2")
+    session_params = CreateSessionParams(image_id="agb-code-space-1")
     session = agb.create(session_params).session
-    
+
     # Create monitoring directory
     session.file_system.create_directory("/tmp/project_watch")
-    
+
     # Event statistics
     event_stats = {"create": 0, "modify": 0, "delete": 0}
     processed_files = set()
-    
+
     def process_file_events(events):
         """Process and filter file events"""
         for event in events:
             # Update statistics
             event_stats[event.event_type] = event_stats.get(event.event_type, 0) + 1
-            
+
             # Only process .txt files
             if event.path.endswith('.txt'):
                 if event.event_type == "create":
@@ -352,12 +359,12 @@ def advanced_directory_monitoring():
                 elif event.event_type == "delete":
                     print(f"🗑️  Deleted: {event.path}")
                     processed_files.discard(event.path)
-        
+
         # Print current stats
         print(f"Stats - Create: {event_stats.get('create', 0)}, "
               f"Modify: {event_stats.get('modify', 0)}, "
               f"Delete: {event_stats.get('delete', 0)}")
-    
+
     try:
         # Start monitoring with custom interval
         monitor_thread = session.file_system.watch_directory(
@@ -366,27 +373,27 @@ def advanced_directory_monitoring():
             interval=0.5  # More frequent checking
         )
         monitor_thread.start()
-        
+
         # Simulate project work
         print("Simulating project work...")
-        
+
         # Create multiple files
         for i in range(3):
             session.file_system.write_file(f"/tmp/project_watch/doc{i}.txt", f"Document {i}")
             session.file_system.write_file(f"/tmp/project_watch/data{i}.json", f'{{"id": {i}}}')
             time.sleep(1)
-        
+
         # Modify some files
         session.file_system.write_file("/tmp/project_watch/doc0.txt", "Updated document 0")
         time.sleep(1)
-        
+
         print(f"Total processed .txt files: {len(processed_files)}")
         print(f"Final statistics: {event_stats}")
-        
+
         # Stop monitoring
         monitor_thread.stop_event.set()
         monitor_thread.join()
-        
+
     finally:
         agb.delete(session)
 

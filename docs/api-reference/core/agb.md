@@ -61,7 +61,8 @@ Create a new session in the AGB cloud environment.
 from agb.session_params import CreateSessionParams
 
 # Create with default parameters
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if result.success:
     session = result.session
     print(f"Created session: {session.session_id}")
@@ -107,7 +108,8 @@ Delete a session by session object.
 
 ```python
 # Create a session
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if result.success:
     session = result.session
 
@@ -186,7 +188,8 @@ default_config = {
 ### 1. Always Check Results
 
 ```python
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if result.success:
     # Proceed with session
     session = result.session
@@ -200,7 +203,8 @@ else:
 ```python
 # Always clean up sessions
 try:
-    result = agb.create()
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    result = agb.create(params)
     if result.success:
         session = result.session
         # ... use session ...
@@ -244,7 +248,8 @@ import time
 def create_session_with_retry(agb, max_retries=3):
     for attempt in range(max_retries):
         try:
-            result = agb.create()
+            params = CreateSessionParams(image_id="agb-code-space-1")
+    result = agb.create(params)
             if result.success:
                 return result
             else:

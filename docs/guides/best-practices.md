@@ -14,12 +14,13 @@ from agb.session_params import CreateSessionParams
 class AGBManager:
     def __init__(self):
         self.agb = AGB()  # Uses environment variable
-        
+
     def safe_execute(self, operation):
-        result = self.agb.create()
+        params = CreateSessionParams(image_id="agb-code-space-1")
+        result = self.agb.create(params)
         if not result.success:
             raise Exception(f"Session creation failed: {result.error_message}")
-            
+
         session = result.session
         try:
             return operation(session)
@@ -46,19 +47,20 @@ class ProductionAGBClient:
         api_key = os.getenv("AGB_API_KEY")
         if not api_key:
             raise ValueError("AGB_API_KEY environment variable is required")
-        
+
         # Configure for production
         config = Config(
             endpoint="your-custom-endpoint.com",
             timeout_ms=30000,
         )
-        
+
         self.agb = AGB(api_key=api_key, cfg=config)
-        
+
     def health_check(self):
         """Verify AGB service connectivity"""
         try:
-            result = self.agb.create()
+            params = CreateSessionParams(image_id="agb-code-space-1")
+        result = self.agb.create(params)
             if result.success:
                 self.agb.delete(result.session)
                 return True, "Service healthy"
@@ -87,23 +89,24 @@ class RobustAGBClient:
         self.agb = AGB()
         self.max_retries = max_retries
         self.base_delay = base_delay
-    
+
     def execute_with_retry(self, operation: Callable, *args, **kwargs) -> Any:
         """Execute operation with exponential backoff retry"""
         last_error = None
-        
+
         for attempt in range(self.max_retries):
             try:
-                result = self.agb.create()
+                params = CreateSessionParams(image_id="agb-code-space-1")
+        result = self.agb.create(params)
                 if not result.success:
                     raise Exception(f"Session creation failed: {result.error_message}")
-                
+
                 session = result.session
                 try:
                     return operation(session, *args, **kwargs)
                 finally:
                     self.agb.delete(session)
-                    
+
             except Exception as e:
                 last_error = e
                 if attempt < self.max_retries - 1:
@@ -113,7 +116,7 @@ class RobustAGBClient:
                     time.sleep(delay)
                 else:
                     print(f"All {self.max_retries} attempts failed")
-        
+
         raise last_error
 
 # Usage
@@ -139,14 +142,14 @@ from typing import Dict, Optional
 
 class SessionPool:
     """Thread-safe session pool for high-throughput applications"""
-    
+
     def __init__(self, max_sessions: int = 10, session_timeout: int = 300):
         self.agb = AGB()
         self.max_sessions = max_sessions
         self.session_timeout = session_timeout
         self.sessions: Dict[str, dict] = {}
         self.lock = threading.Lock()
-    
+
     @contextmanager
     def get_session(self):
         """Get a session from the pool"""
@@ -155,22 +158,23 @@ class SessionPool:
             yield session_info['session']
         finally:
             self._release_session(session_info['id'])
-    
+
     def _acquire_session(self):
         with self.lock:
             # Clean up expired sessions
             self._cleanup_expired_sessions()
-            
+
             # Try to reuse existing session
             for session_id, info in self.sessions.items():
                 if not info['in_use']:
                     info['in_use'] = True
                     info['last_used'] = time.time()
                     return info
-            
+
             # Create new session if under limit
             if len(self.sessions) < self.max_sessions:
-                result = self.agb.create()
+                params = CreateSessionParams(image_id="agb-code-space-1")
+        result = self.agb.create(params)
                 if result.success:
                     session_info = {
                         'id': result.session.session_id,
@@ -181,29 +185,29 @@ class SessionPool:
                     }
                     self.sessions[session_info['id']] = session_info
                     return session_info
-            
+
             raise Exception("No sessions available and pool is at maximum capacity")
-    
+
     def _release_session(self, session_id: str):
         with self.lock:
             if session_id in self.sessions:
                 self.sessions[session_id]['in_use'] = False
-    
+
     def _cleanup_expired_sessions(self):
         current_time = time.time()
         expired_sessions = []
-        
+
         for session_id, info in self.sessions.items():
             if not info['in_use'] and (current_time - info['last_used']) > self.session_timeout:
                 expired_sessions.append(session_id)
-        
+
         for session_id in expired_sessions:
             session_info = self.sessions.pop(session_id)
             try:
                 self.agb.delete(session_info['session'])
             except Exception as e:
                 print(f"Error cleaning up session {session_id}: {e}")
-    
+
     def cleanup_all(self):
         """Clean up all sessions in the pool"""
         with self.lock:
@@ -246,25 +250,26 @@ def batch_code_execution(session, code_snippets, language="python"):
     """Execute multiple code snippets efficiently"""
     # Combine multiple operations into a single execution
     combined_code = []
-    
+
     for i, code in enumerate(code_snippets):
         combined_code.append(f"# Task {i+1}")
         combined_code.append(code)
         combined_code.append(f"print(f'Task {i+1} completed')")
         combined_code.append("")  # Empty line for separation
-    
+
     full_code = "\n".join(combined_code)
-    
+
     result = session.code.run_code(full_code, language)
     return result
 
 # Usage
 agb = AGB()
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 code_snippets = [
     "x = 10 + 5",
-    "y = x * 2", 
+    "y = x * 2",
     "z = y / 3",
     "print(f'Final result: {z}')"
 ]
@@ -287,18 +292,18 @@ class ConcurrentAGBProcessor:
     def __init__(self, max_workers: int = 3):
         self.max_workers = max_workers
         self.agb = AGB()
-        
+
     def process_tasks_concurrently(self, tasks: List[dict], processor: Callable):
         """Process multiple tasks concurrently"""
         results = []
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all tasks
             future_to_task = {
-                executor.submit(self._process_single_task, task, processor): task 
+                executor.submit(self._process_single_task, task, processor): task
                 for task in tasks
             }
-            
+
             # Collect results as they complete
             for future in concurrent.futures.as_completed(future_to_task):
                 task = future_to_task[future]
@@ -315,15 +320,16 @@ class ConcurrentAGBProcessor:
                         'success': False,
                         'error': str(e)
                     })
-        
+
         return results
-    
+
     def _process_single_task(self, task: dict, processor: Callable):
         """Process a single task with its own session"""
-        result = self.agb.create()
+        params = CreateSessionParams(image_id="agb-code-space-1")
+        result = self.agb.create(params)
         if not result.success:
             raise Exception(f"Failed to create session: {result.error_message}")
-        
+
         session = result.session
         try:
             return processor(session, task)
@@ -335,7 +341,7 @@ def data_processing_task(session, task):
     """Process data using code execution"""
     data = task['data']
     operation = task['operation']
-    
+
     code = f"""
 import json
 data = {json.dumps(data)}
@@ -351,7 +357,7 @@ for item in data:
 
 print(json.dumps(result))
 """
-    
+
     code_result = session.code.run_code(code, "python")
     if code_result.success:
         import json
@@ -386,63 +392,64 @@ from typing import Any, Optional
 
 class CachedAGBClient:
     """AGB client with result caching for expensive operations"""
-    
+
     def __init__(self, cache_size: int = 100):
         self.agb = AGB()
         self.cache = {}
         self.cache_size = cache_size
         self.cache_order = []  # For LRU eviction
-    
+
     def execute_with_cache(self, code: str, language: str = "python") -> Any:
         """Execute code with caching based on content hash"""
         # Create cache key from code content
         cache_key = self._get_cache_key(code, language)
-        
+
         # Check cache first
         if cache_key in self.cache:
             print(f"Cache hit for operation")
             self._update_cache_order(cache_key)
             return self.cache[cache_key]
-        
+
         # Execute operation
-        result = self.agb.create()
+        params = CreateSessionParams(image_id="agb-code-space-1")
+        result = self.agb.create(params)
         if not result.success:
             raise Exception(f"Session creation failed: {result.error_message}")
-        
+
         session = result.session
         try:
             code_result = session.code.run_code(code, language)
-            
+
             # Cache successful results
             if code_result.success:
                 self._add_to_cache(cache_key, code_result)
-            
+
             return code_result
-            
+
         finally:
             self.agb.delete(session)
-    
+
     def _get_cache_key(self, code: str, language: str) -> str:
         """Generate cache key from code content"""
         content = f"{language}:{code}"
         return hashlib.md5(content.encode()).hexdigest()
-    
+
     def _add_to_cache(self, key: str, result: Any):
         """Add result to cache with LRU eviction"""
         # Remove oldest entry if cache is full
         if len(self.cache) >= self.cache_size and key not in self.cache:
             oldest_key = self.cache_order.pop(0)
             del self.cache[oldest_key]
-        
+
         self.cache[key] = result
         self._update_cache_order(key)
-    
+
     def _update_cache_order(self, key: str):
         """Update LRU order"""
         if key in self.cache_order:
             self.cache_order.remove(key)
         self.cache_order.append(key)
-    
+
     def clear_cache(self):
         """Clear all cached results"""
         self.cache.clear()
@@ -470,7 +477,7 @@ from typing import List
 
 class SecureAGBClient:
     """AGB client with security validations"""
-    
+
     DANGEROUS_PATTERNS = [
         r'import\s+os',
         r'import\s+subprocess',
@@ -480,24 +487,25 @@ class SecureAGBClient:
         r'open\s*\(',
         r'file\s*\(',
     ]
-    
+
     def __init__(self):
         self.agb = AGB()
-    
+
     def safe_execute_code(self, code: str, language: str = "python") -> Any:
         """Execute code with security validations"""
         # Validate input
         if not self._validate_code_safety(code):
             raise ValueError("Code contains potentially dangerous operations")
-        
+
         if len(code) > 10000:  # 10KB limit
             raise ValueError("Code too large - potential DoS attempt")
-        
+
         # Execute with timeout
-        result = self.agb.create()
+        params = CreateSessionParams(image_id="agb-code-space-1")
+        result = self.agb.create(params)
         if not result.success:
             raise Exception(f"Session creation failed: {result.error_message}")
-        
+
         session = result.session
         try:
             # Use shorter timeout for security
@@ -505,24 +513,25 @@ class SecureAGBClient:
             return code_result
         finally:
             self.agb.delete(session)
-    
+
     def _validate_code_safety(self, code: str) -> bool:
         """Check code for dangerous patterns"""
         code_lower = code.lower()
-        
+
         for pattern in self.DANGEROUS_PATTERNS:
             if re.search(pattern, code_lower):
                 print(f"Dangerous pattern detected: {pattern}")
                 return False
-        
+
         return True
-    
+
     def execute_trusted_code(self, code: str, language: str = "python") -> Any:
         """Execute code from trusted sources without validation"""
-        result = self.agb.create()
+        params = CreateSessionParams(image_id="agb-code-space-1")
+        result = self.agb.create(params)
         if not result.success:
             raise Exception(f"Session creation failed: {result.error_message}")
-        
+
         session = result.session
         try:
             return session.code.run_code(code, language)
@@ -573,7 +582,7 @@ logging.basicConfig(
 
 class MonitoredAGBClient:
     """AGB client with comprehensive monitoring"""
-    
+
     def __init__(self):
         self.agb = AGB()
         self.logger = logging.getLogger(__name__)
@@ -583,39 +592,40 @@ class MonitoredAGBClient:
             'failed_operations': 0,
             'total_execution_time': 0
         }
-    
+
     def execute_with_monitoring(self, operation_name: str, operation_func):
         """Execute operation with full monitoring"""
         start_time = time.time()
         operation_id = f"{operation_name}_{int(start_time)}"
-        
+
         self.logger.info(f"Starting operation: {operation_id}")
-        
+
         try:
             # Create session
-            result = self.agb.create()
+            params = CreateSessionParams(image_id="agb-code-space-1")
+        result = self.agb.create(params)
             if not result.success:
                 self.logger.error(f"Session creation failed for {operation_id}: {result.error_message}")
                 self.metrics['failed_operations'] += 1
                 raise Exception(f"Session creation failed: {result.error_message}")
-            
+
             self.metrics['total_sessions'] += 1
             session = result.session
-            
+
             self.logger.info(f"Session created for {operation_id}: {session.session_id}")
-            
+
             try:
                 # Execute operation
                 operation_result = operation_func(session)
-                
+
                 execution_time = time.time() - start_time
                 self.metrics['successful_operations'] += 1
                 self.metrics['total_execution_time'] += execution_time
-                
+
                 self.logger.info(f"Operation {operation_id} completed successfully in {execution_time:.2f}s")
-                
+
                 return operation_result
-                
+
             finally:
                 # Always clean up session
                 delete_result = self.agb.delete(session)
@@ -623,20 +633,20 @@ class MonitoredAGBClient:
                     self.logger.info(f"Session {session.session_id} cleaned up successfully")
                 else:
                     self.logger.warning(f"Failed to clean up session {session.session_id}: {delete_result.error_message}")
-                
+
         except Exception as e:
             execution_time = time.time() - start_time
             self.metrics['failed_operations'] += 1
-            
+
             self.logger.error(f"Operation {operation_id} failed after {execution_time:.2f}s: {e}")
             raise
-    
+
     def get_metrics(self):
         """Get current metrics"""
         avg_execution_time = (
             self.metrics['total_execution_time'] / max(self.metrics['successful_operations'], 1)
         )
-        
+
         return {
             **self.metrics,
             'success_rate': self.metrics['successful_operations'] / max(self.metrics['total_sessions'], 1),
@@ -668,4 +678,4 @@ for key, value in metrics.items():
 
 - **[Session Management](session-management.md)** - Session lifecycle and management patterns
 - **[Code Execution Guide](code-execution.md)** - Code execution best practices
-- **[API Reference](../api-reference/README.md)** - Complete API documentation 
+- **[API Reference](../api-reference/README.md)** - Complete API documentation

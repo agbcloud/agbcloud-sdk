@@ -34,7 +34,8 @@ def test_oss_integration():
         agb = AGB(api_key=api_key)
         # Create session
         print("\nCreating a new session...")
-        session_result = agb.create()
+        params = CreateSessionParams(image_id="agb-code-space-1")
+        session_result = agb.create(params)
         if not session_result.success or not session_result.session:
             print("Failed to create session")
             return

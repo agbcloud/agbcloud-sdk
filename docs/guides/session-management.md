@@ -3,16 +3,19 @@
 ## Overview
 
 Sessions are the core concept in AGB SDK. A session represents an isolated cloud environment where you can execute code, run commands, manage files, and interact with cloud storage. This guide covers everything you need to know about managing sessions effectively.
+**Important**: Image ID Management. When creating sessions, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account You can view and manage your available images in the [AGB Console Image Management](https://agb.cloud/console/image-management) page.
 
 ## Quick Reference (1 minute)
 
 ```python
 from agb import AGB
+from agb.session_params import CreateSessionParams
 
 agb = AGB()
 
 # Create session
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 session = result.session
 
 # Use session modules
@@ -36,7 +39,8 @@ from agb.session_params import CreateSessionParams
 agb = AGB()
 
 # Simple session creation
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if result.success:
     session = result.session
     print(f"Session created: {session.session_id}")
@@ -102,7 +106,7 @@ class SessionManager:
 
     def create_session(self, name: str, image_id: str = None):
         """Create a named session with optional image ID"""
-        params = CreateSessionParams(image_id=image_id)
+        params = CreateSessionParams(image_id=image_id or "agb-code-space-1")
         result = self.agb.create(params)
 
         if result.success:
@@ -130,8 +134,8 @@ class SessionManager:
 manager = SessionManager()
 
 # Create multiple sessions
-dev_session = manager.create_session("development", {"env": "dev"})
-test_session = manager.create_session("testing", {"env": "test"})
+dev_session = manager.create_session("development", "agb-code-space-1")
+test_session = manager.create_session("testing", "agb-code-space-1")
 
 # Use sessions
 dev_session.code.run_code("print('Development environment')", "python")
@@ -149,7 +153,7 @@ from typing import List, Dict, Any
 
 def create_session_with_task(agb: AGB, task_config: Dict[str, Any]):
     """Create session and execute a task"""
-    params = CreateSessionParams(image_id=task_config.get("image_id"))
+    params = CreateSessionParams(image_id=task_config.get("image_id", "agb-code-space-1"))
     result = agb.create(params)
 
     if not result.success:
@@ -229,7 +233,8 @@ class SessionMonitor:
 
 # Usage
 agb = AGB()
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 session = result.session
 
 monitor = SessionMonitor(session)
@@ -259,7 +264,8 @@ agb.delete(session)
 ```python
 # ✅ Good: Always delete sessions
 agb = AGB()
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 session = result.session
 
 try:
@@ -275,7 +281,8 @@ class SessionContext:
         self.session = None
 
     def __enter__(self):
-        result = self.agb.create()
+        params = CreateSessionParams(image_id="agb-code-space-1")
+        result = self.agb.create(params)
         if not result.success:
             raise Exception(f"Failed to create session: {result.error_message}")
         self.session = result.session
@@ -297,7 +304,8 @@ with SessionContext(agb) as session:
 ```python
 def safe_session_operation(agb: AGB, operation_func):
     """Safely execute an operation with proper error handling"""
-    result = agb.create()
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    result = agb.create(params)
     if not result.success:
         return {"success": False, "error": result.error_message}
 
@@ -356,7 +364,8 @@ def monitor_session_usage(session, operation_name: str):
 
 # Usage
 agb = AGB()
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 session = result.session
 
 with monitor_session_usage(session, "data_processing") as monitored_session:
@@ -371,7 +380,8 @@ agb.delete(session)
 
 **Session Creation Fails**
 ```python
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if not result.success:
     print(f"Error: {result.error_message}")
     # Common causes:
@@ -388,7 +398,8 @@ info_result = session.info()
 if not info_result.success:
     print("Session may be unresponsive, creating new session...")
     agb.delete(session)  # Clean up old session
-    result = agb.create()  # Create new session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    result = agb.create(params)  # Create new session
 ```
 
 **Memory or Resource Limits**
@@ -401,7 +412,8 @@ for task in tasks:
     if operation_count >= max_operations_per_session:
         # Recreate session to free resources
         agb.delete(session)
-        result = agb.create()
+        params = CreateSessionParams(image_id="agb-code-space-1")
+        result = agb.create(params)
         session = result.session
         operation_count = 0
 

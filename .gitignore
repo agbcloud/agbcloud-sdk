@@ -132,3 +132,4 @@ dmypy.json
 .cursor/
 CLAUDE.md
 .DS_Store
+.aoneci/

@@ -13,6 +13,7 @@ export AGB_API_KEY="your_key"
 ```
 
 ### 2. First Example
+**Important**: When using AGB, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account You can view and manage your available images in the [AGB Console Image Management](https://agb.cloud/console/image-management) page.
 
 ```python
 from agb import AGB
@@ -21,7 +22,8 @@ from agb import AGB
 agb = AGB()
 
 # Create code execution session
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 # Execute code
 result = session.code.run_code("print('Hello AGB!')", "python")
@@ -88,7 +90,9 @@ from agb.session_params import CreateSessionParams
 agb = AGB()
 
 # Type-safe session creation
-session = agb.create().session
+from agb.session_params import CreateSessionParams
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 # Modules included in all sessions
 session.code.run_code(code, "python")           # Code execution
@@ -130,7 +134,8 @@ else:
 # Batch operations
 sessions = []
 for i in range(3):
-    result = agb.create()
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    result = agb.create(params)
     if result.success:
         sessions.append(result.session)
 
@@ -145,7 +150,7 @@ for session in sessions:
 import os
 
 # Environment variable configuration
-agb = AGB()  # Automatically reads AGB_API_KEY
+agb = AGB()
 
 # Custom configuration
 from agb.config import Config

@@ -535,27 +535,27 @@ async def setup_browser():
     params = CreateSessionParams(image_id="agb-browser-use-1")
     result = agb.create(params)
     session = result.session
-    
+
     # Configure and initialize browser
     option = BrowserOption(
         use_stealth=True,
         viewport=BrowserViewport(width=1366, height=768)
     )
-    
+
     success = await session.browser.initialize_async(option)
     if not success:
         raise RuntimeError("Failed to initialize browser")
-    
+
     # Connect Playwright
     endpoint_url = session.browser.get_endpoint_url()
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(endpoint_url)
         page = await browser.new_page()
-        
+
         # Your automation code here
-        
+
         await browser.close()
-    
+
     agb.delete(session)
 ```
 
@@ -597,4 +597,4 @@ success, data = await session.browser.agent.extract_async(page, ExtractOptions(
 4. **Clean up resources** by closing browsers and deleting sessions
 5. **Use stealth mode** when needed to avoid detection
 6. **Configure proxies** for IP rotation when required
-7. **Implement retry logic** for critical operations 
+7. **Implement retry logic** for critical operations

@@ -149,7 +149,8 @@ from agb import AGB
 
 def execute_basic_commands():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         commands = [
@@ -179,7 +180,8 @@ execute_basic_commands()
 ```python
 def execute_piped_commands():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Create test data
@@ -213,7 +215,8 @@ execute_piped_commands()
 ```python
 def file_processing_pipeline():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Step 1: Create sample data
@@ -270,7 +273,8 @@ file_processing_pipeline()
 ```python
 def system_monitoring():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         monitoring_commands = [
@@ -304,7 +308,8 @@ system_monitoring()
 ```python
 def interactive_command_patterns():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Simulate interactive workflow
@@ -352,7 +357,8 @@ interactive_command_patterns()
 ```python
 def command_error_handling():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Commands that might fail

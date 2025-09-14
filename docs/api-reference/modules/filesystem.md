@@ -250,7 +250,7 @@ import time
 
 # Create session with image_id
 from agb.session_params import CreateSessionParams
-session_params = CreateSessionParams(image_id="agb-code-space-2")
+session_params = CreateSessionParams(image_id="agb-code-space-1")
 session = agb.create(session_params).session
 
 # Define callback function
@@ -328,7 +328,8 @@ from agb import AGB
 
 def basic_file_operations():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Create a file
@@ -362,7 +363,8 @@ basic_file_operations()
 ```python
 def directory_management():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Create directory structure
@@ -416,7 +418,8 @@ directory_management()
 ```python
 def batch_file_processing():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Create multiple test files
@@ -477,7 +480,8 @@ batch_file_processing()
 ```python
 def file_processing_pipeline():
     agb = AGB()
-    session = agb.create().session
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    session = agb.create(params).session
 
     try:
         # Step 1: Create input data
@@ -570,18 +574,18 @@ from agb import AGB
 
 def directory_monitoring_example():
     from agb.session_params import CreateSessionParams
-    
+
     agb = AGB()
-    session_params = CreateSessionParams(image_id="agb-code-space-2")
+    session_params = CreateSessionParams(image_id="agb-code-space-1")
     session = agb.create(session_params).session
-    
+
     try:
         # Create directory to monitor
         session.file_system.create_directory("/tmp/monitor_demo")
-        
+
         # Track changes
         changes_log = []
-        
+
         def log_changes(events):
             """Log all file changes with timestamps"""
             timestamp = time.strftime("%H:%M:%S")
@@ -589,7 +593,7 @@ def directory_monitoring_example():
                 log_entry = f"[{timestamp}] {event.event_type.upper()}: {event.path}"
                 changes_log.append(log_entry)
                 print(log_entry)
-        
+
         # Start monitoring
         monitor_thread = session.file_system.watch_directory(
             path="/tmp/monitor_demo",
@@ -598,7 +602,7 @@ def directory_monitoring_example():
         )
         monitor_thread.start()
         print("🔍 Directory monitoring started")
-        
+
         # Simulate file operations
         print("\n📝 Creating files...")
         for i in range(3):
@@ -606,32 +610,32 @@ def directory_monitoring_example():
             content = f"This is file {i}\nCreated at {time.strftime('%Y-%m-%d %H:%M:%S')}"
             session.file_system.write_file(filename, content)
             time.sleep(1)
-        
+
         print("\n✏️ Modifying files...")
         session.file_system.write_file(
-            "/tmp/monitor_demo/file_0.txt", 
+            "/tmp/monitor_demo/file_0.txt",
             "Modified content for file 0"
         )
         time.sleep(1)
-        
+
         print("\n📁 Creating subdirectory...")
         session.file_system.create_directory("/tmp/monitor_demo/subdir")
         session.file_system.write_file(
-            "/tmp/monitor_demo/subdir/nested.txt", 
+            "/tmp/monitor_demo/subdir/nested.txt",
             "Nested file content"
         )
         time.sleep(2)
-        
+
         # Stop monitoring
         print("\n🛑 Stopping monitoring...")
         monitor_thread.stop_event.set()
         monitor_thread.join()
-        
+
         # Summary
         print(f"\n📊 Summary: {len(changes_log)} changes detected")
         for log_entry in changes_log:
             print(f"  {log_entry}")
-        
+
     finally:
         agb.delete(session)
 
@@ -723,17 +727,17 @@ def with_temp_files(session, operation):
 # ✅ Good: Always stop monitoring threads properly
 def safe_directory_monitoring(session, directory_path):
     """Safe directory monitoring with proper cleanup"""
-    
+
     def handle_changes(events):
         for event in events:
             print(f"Change detected: {event.event_type} - {event.path}")
-    
+
     monitor_thread = session.file_system.watch_directory(
         path=directory_path,
         callback=handle_changes,
         interval=1.0
     )
-    
+
     try:
         monitor_thread.start()
         # Do your work here

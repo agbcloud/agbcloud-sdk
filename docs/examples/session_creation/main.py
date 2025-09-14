@@ -17,7 +17,8 @@ def create_session_with_default_params() -> None:
     agb = AGB(api_key=api_key)
 
     # Create a session with default parameters
-    result = agb.create()
+    params = CreateSessionParams(image_id="agb-code-space-1")
+    result = agb.create(params)
 
     if result.success and result.session:
         session = result.session

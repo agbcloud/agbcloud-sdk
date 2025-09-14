@@ -19,8 +19,11 @@ This directory contains practical examples demonstrating how to use the AGB SDK 
 # Quick code execution
 from agb import AGB
 
+from agb.session_params import CreateSessionParams
+
 agb = AGB()
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 result = session.code.run_code("""
 import sys
@@ -35,7 +38,8 @@ agb.delete(session)
 ### Data Processing
 ```python
 # File processing pipeline
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 # Upload data
 session.file_system.write_file("/tmp/data.csv", "name,age\nAlice,25\nBob,30")
@@ -57,7 +61,8 @@ print("Processed data:", result.content)
 ### Cloud Storage Integration
 ```python
 # OSS operations
-session = agb.create().session
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 # Upload to cloud storage
 upload_result = session.oss.upload_file(

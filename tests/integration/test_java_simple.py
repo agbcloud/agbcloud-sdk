@@ -41,7 +41,7 @@ def main():
 
         # Create session
         print("\nCreating session...")
-        params = CreateSessionParams(image_id="agb-code-space-2")
+        params = CreateSessionParams(image_id="agb-code-space-1")
         result = agb.create(params)
 
         if not result.success:

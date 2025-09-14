@@ -119,7 +119,8 @@ from agb import AGB
 agb = AGB(api_key="your_api_key")
 
 # Create a session
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if result.success:
     session = result.session
 
@@ -172,7 +173,8 @@ if info_result.success:
 ### Session Creation Errors
 
 ```python
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if not result.success:
     print(f"Session creation failed: {result.error_message}")
     if result.request_id:
@@ -212,7 +214,8 @@ else:
 ```python
 try:
     # Create session
-    result = agb.create()
+    params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
     if result.success:
         session = result.session
 
@@ -230,7 +233,8 @@ finally:
 ```python
 # Use context manager pattern (if available)
 def with_session(agb, operation):
-    result = agb.create()
+    params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
     if not result.success:
         raise Exception(f"Failed to create session: {result.error_message}")
 

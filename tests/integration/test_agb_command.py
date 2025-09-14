@@ -47,7 +47,7 @@ def test_create_session():
 
         # Call create() method without passing any parameters
         params = CreateSessionParams(
-            image_id="agb-code-space-2"
+            image_id="agb-code-space-1"
         )
         result = agb.create(params)
 

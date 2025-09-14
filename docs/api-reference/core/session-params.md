@@ -34,7 +34,8 @@ from agb.session_params import CreateSessionParams
 agb = AGB(api_key="your_api_key")
 
 # Create session with default parameters
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if result.success:
     session = result.session
     print(f"Created session: {session.session_id}")

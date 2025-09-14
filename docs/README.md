@@ -51,6 +51,8 @@ pip install agbcloud-sdk
 export AGB_API_KEY="your_api_key"
 ```
 
+**Important**: When using AGB, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account You can view and manage your available images in the [AGB Console Image Management](https://agb.cloud/console/image-management) page.
+
 ### First Example
 ```python
 from agb import AGB
@@ -59,7 +61,9 @@ from agb import AGB
 agb = AGB()
 
 # Create code execution session
-session = agb.create().session
+from agb.session_params import CreateSessionParams
+params = CreateSessionParams(image_id="agb-code-space-1")
+session = agb.create(params).session
 
 # Execute code
 result = session.code.run_code("print('Hello AGB!')", "python")

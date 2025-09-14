@@ -23,7 +23,9 @@ from agb import AGB
 agb = AGB()
 
 # Create a session first
-result = agb.create()
+from agb.session_params import CreateSessionParams
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if result.success:
     session = result.session
 
@@ -123,7 +125,8 @@ from agb import AGB
 agb = AGB()
 
 # Create session
-create_result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+create_result = agb.create(params)
 if create_result.success:
     session = create_result.session
     print(f"Created session: {session.session_id}")

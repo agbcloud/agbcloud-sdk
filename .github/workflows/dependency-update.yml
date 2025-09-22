@@ -201,7 +201,7 @@ jobs:
         git push origin "${{ steps.branch.outputs.branch-name }}"
 
     - name: Create Pull Request
-      uses: actions/github-script@v6
+      uses: actions/github-script@v8
       with:
         script: |
           const { repo, owner } = context.repo;
@@ -283,7 +283,7 @@ jobs:
         fi
 
     - name: Create security issue
-      uses: actions/github-script@v6
+      uses: actions/github-script@v8
       with:
         script: |
           const { repo, owner } = context.repo;

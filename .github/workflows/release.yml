@@ -30,7 +30,7 @@ jobs:
       is_prerelease: ${{ steps.version.outputs.is_prerelease }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
 
@@ -84,7 +84,7 @@ jobs:
     needs: validate-release
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -112,7 +112,7 @@ jobs:
     needs: [validate-release, test-before-release]
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -159,7 +159,7 @@ jobs:
     needs: [validate-release, build-package]
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: 0
 
@@ -307,7 +307,7 @@ jobs:
     if: always()
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Update CHANGELOG
       run: |

@@ -50,9 +50,6 @@ All sessions have access to the following modules:
 - **Type:** `FileSystem`
 - **Description:** File and directory operations module.
 
-#### `oss`
-- **Type:** `OSS`
-- **Description:** Object Storage Service module.
 
 ### Methods
 
@@ -144,7 +141,6 @@ All sessions have access to all modules:
 print(hasattr(session, 'code'))        # True
 print(hasattr(session, 'command'))     # True
 print(hasattr(session, 'file_system')) # True
-print(hasattr(session, 'oss'))         # True
 ```
 
 ### Session Information

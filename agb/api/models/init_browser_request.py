@@ -4,7 +4,7 @@ InitBrowserRequest model for browser initialization
 """
 
 import json
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional, Union
 
 
 class InitBrowserRequest:
@@ -17,7 +17,7 @@ class InitBrowserRequest:
         authorization: str,
         session_id: str,
         persistent_path: str,
-        browser_option: Optional[Dict[str, Any]] = None
+        browser_option: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize InitBrowserRequest
@@ -43,7 +43,6 @@ class InitBrowserRequest:
         return {}
 
     def get_params(self) -> Dict[str, Any]:
-
         """
         Get query parameters for the request
 
@@ -51,14 +50,14 @@ class InitBrowserRequest:
             Dict containing query parameters
         """
         # Convert browser_option to JSON string if it's a dict
-        browser_option_param = self.browser_option
+        browser_option_param: Union[Dict[str, Any], str] = self.browser_option
         if isinstance(self.browser_option, dict):
             browser_option_param = json.dumps(self.browser_option)
 
         return {
             "sessionId": self.session_id,
             "persistentPath": self.persistent_path,
-            "browserOption": browser_option_param
+            "browserOption": browser_option_param,
         }
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,5 +71,5 @@ class InitBrowserRequest:
             "authorization": self.authorization,
             "session_id": self.session_id,
             "persistent_path": self.persistent_path,
-            "browser_option": self.browser_option
+            "browser_option": self.browser_option,
         }

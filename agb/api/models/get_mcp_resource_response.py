@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 
 class DesktopInfo:
@@ -11,7 +11,7 @@ class DesktopInfo:
         connection_properties: Optional[str] = None,
         resource_id: Optional[str] = None,
         resource_type: Optional[str] = None,
-        ticket: Optional[str] = None
+        ticket: Optional[str] = None,
     ):
         self.app_id = app_id
         self.auth_code = auth_code
@@ -21,7 +21,7 @@ class DesktopInfo:
         self.ticket = ticket
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'DesktopInfo':
+    def from_dict(cls, data: Dict[str, Any]) -> "DesktopInfo":
         """Create DesktopInfo from dictionary"""
         return cls(
             app_id=data.get("appId"),
@@ -29,7 +29,7 @@ class DesktopInfo:
             connection_properties=data.get("connectionProperties"),
             resource_id=data.get("resourceId"),
             resource_type=data.get("resourceType"),
-            ticket=data.get("ticket")
+            ticket=data.get("ticket"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -40,7 +40,7 @@ class DesktopInfo:
             "connectionProperties": self.connection_properties,
             "resourceId": self.resource_id,
             "resourceType": self.resource_type,
-            "ticket": self.ticket
+            "ticket": self.ticket,
         }
 
 
@@ -51,14 +51,14 @@ class McpResourceData:
         self,
         desktop_info: Optional[DesktopInfo] = None,
         resource_url: Optional[str] = None,
-        session_id: Optional[str] = None
+        session_id: Optional[str] = None,
     ):
         self.desktop_info = desktop_info
         self.resource_url = resource_url
         self.session_id = session_id
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'McpResourceData':
+    def from_dict(cls, data: Dict[str, Any]) -> "McpResourceData":
         """Create McpResourceData from dictionary"""
         desktop_info = None
         if data.get("desktopInfo"):
@@ -67,12 +67,12 @@ class McpResourceData:
         return cls(
             desktop_info=desktop_info,
             resource_url=data.get("resourceUrl"),
-            session_id=data.get("sessionId")
+            session_id=data.get("sessionId"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
-        result = {}
+        result: Dict[str, Any] = {}
         if self.desktop_info:
             result["desktopInfo"] = self.desktop_info.to_dict()
         if self.resource_url:
@@ -94,7 +94,7 @@ class GetMcpResourceResponse:
         json_data: Optional[Dict[str, Any]] = None,
         text: Optional[str] = None,
         error: Optional[str] = None,
-        request_id: Optional[str] = None
+        request_id: Optional[str] = None,
     ):
         self.status_code = status_code
         self.url = url
@@ -106,7 +106,9 @@ class GetMcpResourceResponse:
         self.request_id = request_id
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> 'GetMcpResourceResponse':
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "GetMcpResourceResponse":
         """Create GetMcpResourceResponse from HTTP response dictionary"""
         json_data = response_dict.get("json", {})
 
@@ -123,7 +125,7 @@ class GetMcpResourceResponse:
             json_data=json_data,
             text=response_dict.get("text"),
             error=response_dict.get("error"),
-            request_id=request_id
+            request_id=request_id,
         )
 
     def is_successful(self) -> bool:
@@ -179,7 +181,7 @@ class GetMcpResourceResponse:
             "json_data": self.json_data,
             "text": self.text,
             "error": self.error,
-            "request_id": self.request_id
+            "request_id": self.request_id,
         }
 
     def __str__(self) -> str:

@@ -14,11 +14,13 @@ across multiple sessions. It shows the complete workflow of:
 import asyncio
 import os
 import time
+
+from playwright.async_api import async_playwright
+
 from agb import AGB
 from agb.config import Config
-from agb.session_params import CreateSessionParams
 from agb.modules.browser.browser import BrowserOption, BrowserViewport
-from playwright.async_api import async_playwright
+from agb.session_params import CreateSessionParams
 
 
 async def main():
@@ -31,14 +33,12 @@ async def main():
 
     # Initialize AGB client
     config = Config(
-        endpoint=os.getenv("AGB_ENDPOINT", "sdk-api.agb.cloud"),
-        timeout_ms=60000
+        endpoint=os.getenv("AGB_ENDPOINT", "sdk-api.agb.cloud"), timeout_ms=60000
     )
 
     # Create AGB instance
     agb = AGB(api_key=api_key, cfg=config)
     print("AGB client initialized")
-
 
     try:
         # Step 1: Create first session
@@ -61,7 +61,7 @@ async def main():
         browser_option = BrowserOption(
             use_stealth=True,
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            viewport=BrowserViewport(width=1366, height=768)
+            viewport=BrowserViewport(width=1366, height=768),
         )
         # Initialize browser
         init_success = await session1.browser.initialize_async(browser_option)
@@ -92,7 +92,7 @@ async def main():
                 "path": "/",
                 "httpOnly": False,
                 "secure": False,
-                "expires": int(time.time()) + 3600  # 1 hour from now
+                "expires": int(time.time()) + 3600,  # 1 hour from now
             },
             {
                 "name": "demo_cookie_2",
@@ -101,14 +101,16 @@ async def main():
                 "path": "/",
                 "httpOnly": False,
                 "secure": False,
-                "expires": int(time.time()) + 3600  # 1 hour from now
-            }
+                "expires": int(time.time()) + 3600,  # 1 hour from now
+            },
         ]
 
         # Connect with Playwright and set cookies
         async with async_playwright() as p:
             browser = await p.chromium.connect_over_cdp(endpoint_url)
-            context_p = browser.contexts[0] if browser.contexts else await browser.new_context()
+            context_p = (
+                browser.contexts[0] if browser.contexts else await browser.new_context()
+            )
             page = await context_p.new_page()
 
             # Navigate to test URL first (required before setting cookies)
@@ -122,14 +124,18 @@ async def main():
 
             # Verify cookies were set
             cookies = await context_p.cookies()
-            cookie_dict = {cookie.get('name', ''): cookie.get('value', '') for cookie in cookies}
+            cookie_dict = {
+                cookie.get("name", ""): cookie.get("value", "") for cookie in cookies
+            }
             print(f"Total cookies in first session: {len(cookies)}")
 
             # Check our test cookies
             for test_cookie in test_cookies:
                 cookie_name = test_cookie["name"]
                 if cookie_name in cookie_dict:
-                    print(f"✓ Test cookie '{cookie_name}' set successfully: {cookie_dict[cookie_name]}")
+                    print(
+                        f"✓ Test cookie '{cookie_name}' set successfully: {cookie_dict[cookie_name]}"
+                    )
                 else:
                     print(f"✗ Test cookie '{cookie_name}' not found")
 
@@ -144,7 +150,9 @@ async def main():
             print(f"Failed to delete first session: {delete_result.error_message}")
             return
 
-        print(f"First session deleted successfully (RequestID: {delete_result.request_id})")
+        print(
+            f"First session deleted successfully (RequestID: {delete_result.request_id})"
+        )
 
         # Wait a moment for cleanup
         print("Waiting for cleanup to complete...")
@@ -183,11 +191,17 @@ async def main():
         # Check cookies in second session
         async with async_playwright() as p:
             browser2 = await p.chromium.connect_over_cdp(endpoint_url2)
-            context2 = browser2.contexts[0] if browser2.contexts else await browser2.new_context()
+            context2 = (
+                browser2.contexts[0]
+                if browser2.contexts
+                else await browser2.new_context()
+            )
 
             # Read cookies directly from context (without opening any page)
             cookies2 = await context2.cookies()
-            cookie_dict2 = {cookie.get('name', ''): cookie.get('value', '') for cookie in cookies2}
+            cookie_dict2 = {
+                cookie.get("name", ""): cookie.get("value", "") for cookie in cookies2
+            }
 
             print(f"Total cookies in second session: {len(cookies2)}")
 
@@ -210,13 +224,19 @@ async def main():
                     actual_value = cookie_dict2.get(cookie_name, "")
 
                     if expected_value == actual_value:
-                        print(f"✓ Cookie '{cookie_name}' persisted correctly: {actual_value}")
+                        print(
+                            f"✓ Cookie '{cookie_name}' persisted correctly: {actual_value}"
+                        )
                     else:
-                        print(f"✗ Cookie '{cookie_name}' value mismatch. Expected: {expected_value}, Actual: {actual_value}")
+                        print(
+                            f"✗ Cookie '{cookie_name}' value mismatch. Expected: {expected_value}, Actual: {actual_value}"
+                        )
                         all_values_match = False
 
                 if all_values_match:
-                    print("🎉 Cookie persistence test PASSED! All cookies persisted correctly across sessions.")
+                    print(
+                        "🎉 Cookie persistence test PASSED! All cookies persisted correctly across sessions."
+                    )
                 else:
                     print("Cookie persistence test FAILED due to value mismatches")
 
@@ -228,7 +248,9 @@ async def main():
         delete_result2 = agb.delete(session2)
 
         if delete_result2.success:
-            print(f"Second session deleted successfully (RequestID: {delete_result2.request_id})")
+            print(
+                f"Second session deleted successfully (RequestID: {delete_result2.request_id})"
+            )
         else:
             print(f"Failed to delete second session: {delete_result2.error_message}")
 

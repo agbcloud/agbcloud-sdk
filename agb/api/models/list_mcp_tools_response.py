@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 
 class ListMcpToolsResponse:
@@ -13,7 +13,7 @@ class ListMcpToolsResponse:
         json_data: Optional[Dict[str, Any]] = None,
         text: Optional[str] = None,
         error: Optional[str] = None,
-        request_id: Optional[str] = None
+        request_id: Optional[str] = None,
     ):
         self.status_code = status_code
         self.url = url
@@ -25,11 +25,11 @@ class ListMcpToolsResponse:
         self.request_id = request_id
 
         if json_data:
-            self.api_success = json_data.get('success')
-            self.code = json_data.get('code')
-            self.message = json_data.get('message')
-            self.http_status_code = json_data.get('httpStatusCode')
-            self.data = json_data.get('data', {})
+            self.api_success = json_data.get("success")
+            self.code = json_data.get("code")
+            self.message = json_data.get("message")
+            self.http_status_code = json_data.get("httpStatusCode")
+            self.data = json_data.get("data", {})
         else:
             self.api_success = None
             self.code = None
@@ -38,7 +38,9 @@ class ListMcpToolsResponse:
             self.data = None
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> 'ListMcpToolsResponse':
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "ListMcpToolsResponse":
         """Create ListMcpToolsResponse from HTTP response dictionary"""
         json_data = response_dict.get("json", {})
 
@@ -55,16 +57,12 @@ class ListMcpToolsResponse:
             json_data=json_data,
             text=response_dict.get("text"),
             error=response_dict.get("error"),
-            request_id=request_id
+            request_id=request_id,
         )
 
     def is_successful(self) -> bool:
         """Check if the HTTP request was successful"""
-        return (
-            self.success and
-            self.status_code == 200 and
-            self.api_success is True
-        )
+        return self.success and self.status_code == 200 and self.api_success is True
 
     def get_error_message(self) -> Optional[str]:
         """Get error message from response"""
@@ -101,7 +99,7 @@ class ListMcpToolsResponse:
             "json_data": self.json_data,
             "text": self.text,
             "error": self.error,
-            "request_id": self.request_id
+            "request_id": self.request_id,
         }
 
     def __str__(self) -> str:

@@ -21,7 +21,6 @@ session = result.session
 session.code.run_code(code, language, timeout_s=300)
 session.command.execute_command(command, timeout_ms=1000)
 session.file_system.read_file(path)
-session.oss.upload(bucket, object, path)
 
 # Cleanup
 agb.delete(session)
@@ -44,7 +43,6 @@ agb.delete(session)
 | **[Code](modules/code.md)** | Code execution | Python, JavaScript, Java, R execution |
 | **[Command](modules/command.md)** | Shell commands | Command execution and output |
 | **[FileSystem](modules/filesystem.md)** | File operations | File and directory management |
-| **[OSS](modules/oss.md)** | Cloud storage | Object Storage Service integration |
 | **[Browser](modules/browser.md)** | Web automation | Browser automation and web scraping |
 
 ### 📊 Response Types
@@ -58,8 +56,6 @@ agb.delete(session)
 | **[FileContentResult](responses/filesystem-results.md#filecontentresult)** | File read results | File content and metadata |
 | **[DirectoryListResult](responses/filesystem-results.md#directorylistresult)** | Directory listing results | Directory entries and metadata |
 | **[FileInfoResult](responses/filesystem-results.md#fileinforesult)** | File info results | File metadata and properties |
-| **[OSSUploadResult](responses/oss-results.md#ossuploadresult)** | OSS upload results | Upload status and information |
-| **[OSSDownloadResult](responses/oss-results.md#ossdownloadresult)** | OSS download results | Download status and information |
 | **BoolResult** | Boolean operation results | Success/failure status for operations |
 
 
@@ -112,17 +108,6 @@ session.file_system.search_files(path: str, pattern: str) -> FileSearchResult
 session.file_system.watch_directory(path: str, callback: Callable, interval: float = 1.0, stop_event: Optional[threading.Event] = None) -> threading.Thread
 ```
 
-### OSS API
-```python
-# OSS module methods
-session.oss.env_init(access_key_id: str, access_key_secret: str,
-                    security_token: str, endpoint: str = None,
-                    region: str = None) -> OSSClientResult
-session.oss.upload(bucket: str, object: str, path: str) -> OSSUploadResult
-session.oss.download(bucket: str, object: str, path: str) -> OSSDownloadResult
-session.oss.upload_anonymous(url: str, path: str) -> OSSUploadResult
-session.oss.download_anonymous(url: str, path: str) -> OSSDownloadResult
-```
 
 ### Browser API
 ```python
@@ -170,7 +155,6 @@ All sessions provide access to the following modules:
 session.code         # ✅ Python, JavaScript, Java, R execution
 session.command      # ✅ Shell command execution
 session.file_system  # ✅ File & directory operations
-session.oss          # ✅ Object Storage Service
 session.browser      # ✅ Web browser automation
 ```
 
@@ -213,14 +197,12 @@ if not code_result.success:
 - **[Code Execution](modules/code.md)** - Python, JavaScript, Java, R execution
 - **[Command Execution](modules/command.md)** - Shell command operations
 - **[File System](modules/filesystem.md)** - File and directory management
-- **[OSS Integration](modules/oss.md)** - Cloud storage operations
 - **[Browser Automation](modules/browser.md)** - Web browser automation and scraping
 
 ### Response Types
 - **[Session Responses](responses/session-result.md)** - Session operation results
 - **[Execution Responses](responses/execution-results.md)** - Code and command results
 - **[File System Responses](responses/filesystem-results.md)** - File operation results
-- **[OSS Responses](responses/oss-results.md)** - Storage operation results
 
 ## 🔗 Related Documentation
 

@@ -4,8 +4,8 @@
 Test code for session.get_link method
 """
 
-import sys
 import os
+import sys
 import time
 
 # Add project root directory to Python path
@@ -36,25 +36,23 @@ def test_session_get_link():
     try:
         print("Initializing AGB client...")
         from agb.config import Config
+
         config = Config(
-            endpoint=os.getenv("AGB_ENDPOINT", "sdk-api.agb.cloud"),
-            timeout_ms=60000
+            endpoint=os.getenv("AGB_ENDPOINT", "sdk-api.agb.cloud"), timeout_ms=60000
         )
 
         # Create AGB instance
         agb = AGB(api_key=api_key, cfg=config)
         print(f"✅ AGB client initialized successfully")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Testing session.get_link method...")
-        print("="*60)
+        print("=" * 60)
 
         # Create a session to test get_link method
         print("\n0. Creating a test session...")
         try:
-            params = CreateSessionParams(
-                image_id="agb-browser-use-1"
-            )
+            params = CreateSessionParams(image_id="agb-browser-use-1")
             create_result = agb.create(params)
             if create_result.success:
                 session = create_result.session
@@ -103,8 +101,8 @@ def test_session_get_link():
         except Exception as e:
             print(f"   ❌ Error testing session.get_link: {e}")
             import traceback
-            traceback.print_exc()
 
+            traceback.print_exc()
 
         # Test 2: Test session.get_link with port parameter
         print("\n2. Testing session.get_link with port parameter:")
@@ -129,11 +127,14 @@ def test_session_get_link():
                 else:
                     print("   ⚠️  No link URL in result")
             else:
-                print(f"   ❌ Failed to get link with port: {link_result_port.error_message}")
+                print(
+                    f"   ❌ Failed to get link with port: {link_result_port.error_message}"
+                )
 
         except Exception as e:
             print(f"   ❌ Error testing session.get_link with port: {e}")
             import traceback
+
             traceback.print_exc()
 
         # Test 2.5: Test session.get_link with protocol_type parameter
@@ -164,11 +165,14 @@ def test_session_get_link():
                 else:
                     print("   ⚠️  No HTTPS link URL in result")
             else:
-                print(f"   ❌ Failed to get HTTPS link: {link_result_https.error_message}")
+                print(
+                    f"   ❌ Failed to get HTTPS link: {link_result_https.error_message}"
+                )
 
         except Exception as e:
             print(f"   ❌ Error testing session.get_link with protocol_type: {e}")
             import traceback
+
             traceback.print_exc()
 
         # Test 3: Test session.get_link with different session object
@@ -176,6 +180,7 @@ def test_session_get_link():
         try:
             # Create a new session object using the same session_id
             from agb.session import Session
+
             new_session = Session(agb, session_id)
 
             print("   Created new session object with same session_id")
@@ -200,11 +205,14 @@ def test_session_get_link():
                 if new_link_result.data:
                     print(f"     Link URL: {new_link_result.data}")
             else:
-                print(f"   ❌ New session object failed: {new_link_result.error_message}")
+                print(
+                    f"   ❌ New session object failed: {new_link_result.error_message}"
+                )
 
         except Exception as e:
             print(f"   ❌ Error testing new session object: {e}")
             import traceback
+
             traceback.print_exc()
 
         # Test 4: Test session.get_link error handling
@@ -237,6 +245,7 @@ def test_session_get_link():
         except Exception as e:
             print(f"   ❌ Error testing error handling: {e}")
             import traceback
+
             traceback.print_exc()
 
         # Test 5: Test session.get_link multiple times
@@ -268,6 +277,7 @@ def test_session_get_link():
         except Exception as e:
             print(f"   ❌ Error testing multiple calls: {e}")
             import traceback
+
             traceback.print_exc()
 
         # Test 6: Test session.get_link performance comparison
@@ -307,7 +317,9 @@ def test_session_get_link():
 
             # Test with both https and port
             start_time = time.time()
-            result_with_https_and_port = session.get_link(protocol_type="https", port=9222)
+            result_with_https_and_port = session.get_link(
+                protocol_type="https", port=9222
+            )
             end_time = time.time()
             duration_with_https_and_port = end_time - start_time
 
@@ -331,6 +343,7 @@ def test_session_get_link():
         except Exception as e:
             print(f"   ❌ Error testing performance comparison: {e}")
             import traceback
+
             traceback.print_exc()
 
         # Clean up: delete the test session
@@ -344,15 +357,16 @@ def test_session_get_link():
         except Exception as e:
             print(f"   ⚠️  Error deleting session: {e}")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("session.get_link method test completed!")
-        print("="*60)
+        print("=" * 60)
 
         return True
 
     except Exception as e:
         print(f"❌ Error in test: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -374,6 +388,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
         import traceback
+
         traceback.print_exc()
 
 

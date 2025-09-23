@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2] - 2025-09-23
+### Bug Fixes
+- remove oss related code and docs
+- fix async http request bug
+- Updated testing and documentation improvements
+
+
 ## [0.2.1] - 2025-09-10
 
 ### Bug Fixes
@@ -60,13 +67,11 @@ This is the first official release of the AGB SDK, providing a comprehensive Pyt
 - **Code Execution**: Execute Python code in isolated environments
 - **Command Execution**: Run shell commands and scripts
 - **File System Operations**: Manage files and directories
-- **OSS Integration**: Object storage service integration
 
 #### Core Modules
 - **Code Module**: Execute Python code with full environment access
 - **Command Module**: Run shell commands and system operations
 - **File System Module**: File and directory management operations
-- **OSS Module**: Object storage operations and management
 
 #### Technical Features
 - **Session-based Architecture**: Secure, isolated execution environments

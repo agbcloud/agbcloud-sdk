@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 import concurrent.futures
+from typing import Optional,Dict,Any
 from playwright.async_api import async_playwright
 from mcp import ClientSession, StdioServerParameters, stdio_client
 import json
@@ -14,7 +15,7 @@ from agb.modules.browser.browser_agent import BrowserAgent
 logger = logging.getLogger(__name__)
 
 class LocalMCPClient:
-    def __init__(self, server: str, command: str, args: list[str]):
+    def __init__(self, server: str, command: str, args: list[str])-> None:
         self.server = server
         self.command = command
         self.args = args
@@ -23,11 +24,11 @@ class LocalMCPClient:
         self._tool_call_queue: asyncio.Queue | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
 
-    def connect(self):
+    def connect(self) -> None:
         if (self.worker_thread is None):
-            promise = concurrent.futures.Future()
-            def thread_target():
-                async def _connect_and_list_tools():
+            promise: concurrent.futures.Future[bool] = concurrent.futures.Future()
+            def thread_target() -> None:
+                async def _connect_and_list_tools() -> None:
                     success = False
                     logger.info("Start connect to mcp server")
                     try:
@@ -56,15 +57,15 @@ class LocalMCPClient:
             self.worker_thread = concurrent.futures.ThreadPoolExecutor().submit(thread_target)
             promise.result()
 
-    async def call_tool(self, tool_name: str, arguments: dict):
+    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]):
         if not self.session or not self._tool_call_queue or not self._loop:
             raise RuntimeError("MCP client is not connected. Call connect() and ensure it returns True before calling callTool.")
         # Use a Future to get the result back from the interactive loop
-        future = concurrent.futures.Future()
+        future: concurrent.futures.Future[OperationResult] = concurrent.futures.Future()
         await self._tool_call_queue.put((tool_name, arguments, future))
         return future.result()
 
-    async def _interactive_loop(self):
+    async def _interactive_loop(self) -> None:
         """Run interactive loop."""
         while True:
             if self._tool_call_queue is not None:
@@ -119,15 +120,16 @@ class LocalPageAgent(BrowserAgent):
             args=[mcp_script]
         )
 
-    def initialize(self):
-        self.mcp_client.connect()
+    def initialize(self) -> None:
+        if self.mcp_client:
+            self.mcp_client.connect()
 
-    def _call_mcp_tool(self, name: str, args: dict, read_timeout: int = None, connect_timeout: int = None) -> OperationResult:
+    def _call_mcp_tool(self, name: str, args: Dict[str, Any], read_timeout: Optional[int] = None, connect_timeout: Optional[int] = None) -> OperationResult:
         if not self.mcp_client:
             raise RuntimeError("mcp_client is not set on LocalBrowserAgent.")
         try:
             mcp_client = self.mcp_client  # local reference to avoid race conditions
-            def thread_func():
+            def thread_func() -> OperationResult:
                 response = asyncio.run(mcp_client.call_tool(name, args))
                 #logger.info("LocalBrowserAgent call_mcp_tool got response ", response)
                 return response
@@ -142,14 +144,14 @@ class LocalBrowser(Browser):
         # Optionally skip calling super().__init__ if not needed for tests
         self.contexts = []
         self._cdp_port = 9222
-        self.agent = LocalPageAgent(session, self)
+        self.agent: LocalPageAgent = LocalPageAgent(session, self)
         self._worker_thread = None
 
-    async def initialize_async(self, options: BrowserOption):
+    async def initialize_async(self, options: BrowserOption) -> bool:
         if (self._worker_thread is None):
-            promise = concurrent.futures.Future()
-            def thread_target():
-                async def _launch_local_browser():
+            promise: concurrent.futures.Future[bool] = concurrent.futures.Future()
+            def thread_target() -> None:
+                async def _launch_local_browser() -> None:
                     success = False
                     logger.info("Start launching local browser")
                     try:
@@ -190,7 +192,7 @@ class LocalBrowser(Browser):
     def get_endpoint_url(self) -> str:
         return f"http://localhost:{self._cdp_port}"
 
-    async def _playwright_interactive_loop(self):
+    async def _playwright_interactive_loop(self) -> None:
         """Run interactive loop."""
         while True:
             #print("Local browser interactive loop")
@@ -201,5 +203,5 @@ class LocalSession(Session):
         super().__init__(None, "local_session")
         self.browser = LocalBrowser(self)
 
-    def delete(self, sync_context: bool = False):
+    def delete(self, sync_context: bool = False) -> None:
         pass

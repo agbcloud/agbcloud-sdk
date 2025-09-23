@@ -59,8 +59,6 @@ cmd_result = session.command.execute_command("ls -la")
 session.file_system.write_file("/tmp/test.txt", "Hello World!")
 file_result = session.file_system.read_file("/tmp/test.txt")
 
-# OSS cloud storage (requires configuration)
-# session.oss.upload("bucket", "key", "/tmp/test.txt")
 
 print("Code output:", code_result.result)
 print("Command output:", cmd_result.output)
@@ -74,7 +72,6 @@ agb.delete(session)
 - 📚 [Session Management Guide](guides/session-management.md) - Understanding session management
 - 🐍 [Code Execution Guide](guides/code-execution.md) - Deep dive into code execution
 - 💾 [File Operations Guide](guides/file-operations.md) - File and directory management
-- ☁️ [OSS Integration Guide](guides/oss-integration.md) - Cloud storage integration
 
 </details>
 
@@ -98,7 +95,6 @@ session = agb.create(params).session
 session.code.run_code(code, "python")           # Code execution
 session.command.execute_command("ls -la")       # Shell commands
 session.file_system.read_file("/path/file")     # File operations
-session.oss.upload("bucket", "key", "path")     # Cloud storage
 ```
 
 ### Key Differences
@@ -112,7 +108,6 @@ session.oss.upload("bucket", "key", "path")     # Cloud storage
 **vs Other Cloud Services**:
 - ✅ **Multi-language Support**: Python + JavaScript + Java + R
 - ✅ **Complete File System**: More than just code execution
-- ✅ **Integrated Cloud Storage**: Built-in OSS support
 - ✅ **Command Line Access**: Full shell environment
 
 ### Advanced Usage

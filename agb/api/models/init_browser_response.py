@@ -3,7 +3,7 @@
 InitBrowserResponse model for browser initialization response
 """
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 
 class InitBrowserResponse:
@@ -19,7 +19,7 @@ class InitBrowserResponse:
         json_data: Optional[Dict[str, Any]] = None,
         text: Optional[str] = None,
         success: bool = True,
-        error: Optional[str] = None
+        error: Optional[str] = None,
     ):
         """
         Initialize InitBrowserResponse
@@ -42,12 +42,13 @@ class InitBrowserResponse:
         self.error = error
 
         if json_data:
-            self.api_success = json_data.get('success')
-            self.code = json_data.get('code')
-            self.message = json_data.get('message')
-            self.http_status_code = json_data.get('httpStatusCode')
-            self.data = json_data.get('data', {})
-            self.port = self.data.get('port')
+            self.api_success = json_data.get("success")
+            self.code = json_data.get("code")
+            self.message = json_data.get("message")
+            self.http_status_code = json_data.get("httpStatusCode")
+            self.data = json_data.get("data", {})
+            # Handle case where data might be None
+            self.port = self.data.get("port") if self.data else None
 
         else:
             self.api_success = None
@@ -58,7 +59,7 @@ class InitBrowserResponse:
             self.port = None
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> 'InitBrowserResponse':
+    def from_http_response(cls, response_dict: Dict[str, Any]) -> "InitBrowserResponse":
         """
         Create InitBrowserResponse from HTTP response dictionary
 
@@ -75,7 +76,7 @@ class InitBrowserResponse:
             json_data=response_dict.get("json"),
             text=response_dict.get("text"),
             success=response_dict.get("success", False),
-            error=response_dict.get("error")
+            error=response_dict.get("error"),
         )
 
     def is_successful(self) -> bool:
@@ -85,11 +86,7 @@ class InitBrowserResponse:
         Returns:
             True if successful, False otherwise
         """
-        return (
-            self.success and
-            self.status_code == 200 and
-            self.api_success is True
-        )
+        return self.success and self.status_code == 200 and self.api_success is True
 
     def get_error_message(self) -> Optional[str]:
         """
@@ -129,5 +126,5 @@ class InitBrowserResponse:
             "headers": self.headers,
             "body": self.json_data or {},
             "success": self.success,
-            "error": self.error
+            "error": self.error,
         }

@@ -3,7 +3,7 @@
 Get link request model for HTTP client
 """
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 
 class GetLinkRequest:
@@ -13,10 +13,10 @@ class GetLinkRequest:
 
     def __init__(
         self,
-        authorization: str = None,
-        port: int = None,
-        protocol_type: str = None,
-        session_id: str = None,
+        authorization: Optional[str] = None,
+        port: Optional[int] = None,
+        protocol_type: Optional[str] = None,
+        session_id: Optional[str] = None,
     ):
         self.authorization = authorization
         self.port = port
@@ -32,11 +32,11 @@ class GetLinkRequest:
         """
         params = {}
         if self.session_id:
-            params['sessionId'] = self.session_id
+            params["sessionId"] = self.session_id
         if self.protocol_type:
-            params['protocolType'] = self.protocol_type
+            params["protocolType"] = self.protocol_type
         if self.port:
-            params['port'] = self.port
+            params["port"] = str(self.port)
         return params
 
     def get_body(self) -> Dict[str, Any]:
@@ -57,10 +57,10 @@ class GetLinkRequest:
             Dict[str, Any]: Dictionary representation
         """
         return {
-            'authorization': self.authorization,
-            'session_id': self.session_id,
-            'protocol_type': self.protocol_type,
-            'port': self.port
+            "authorization": self.authorization,
+            "session_id": self.session_id,
+            "protocol_type": self.protocol_type,
+            "port": self.port,
         }
 
     def validate(self) -> bool:
@@ -75,4 +75,3 @@ class GetLinkRequest:
         if not self.session_id:
             return False
         return True
-

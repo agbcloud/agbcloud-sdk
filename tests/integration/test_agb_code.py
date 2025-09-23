@@ -4,8 +4,8 @@
 AGB session creation test code (simplified version)
 """
 
-import sys
 import os
+import sys
 import time
 
 # Add project root directory to Python path
@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Direct import, completely bypass __init__.py
 import importlib.util
+
 from agb.agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -26,6 +27,7 @@ def get_api_key():
         )
 
     return api_key
+
 
 def test_create_session():
     """Test creating AGB session"""
@@ -63,9 +65,9 @@ def test_create_session():
             print("✅ Session created successfully!")
             print(f"   Request ID: {result.request_id}")
             print(f"   Session ID: {result.session.session_id}")
-            if hasattr(result.session, 'resource_url') and result.session.resource_url:
+            if hasattr(result.session, "resource_url") and result.session.resource_url:
                 print(f"   Resource URL: {result.session.resource_url}")
-            if hasattr(result.session, 'image_id') and result.session.image_id:
+            if hasattr(result.session, "image_id") and result.session.image_id:
                 print(f"   Image ID: {result.session.image_id}")
         else:
             print("❌ Session creation failed!")
@@ -78,6 +80,7 @@ def test_create_session():
     except Exception as e:
         print(f"❌ Error occurred during test: {e}")
         import traceback
+
         traceback.print_exc()
         return None, None, 0
 
@@ -329,23 +332,35 @@ print("This line won't execute")
 
         # Test case-insensitive language parameter
         print("\n6. Testing case-insensitive language parameter...")
-        
+
         # Test various case combinations for different languages
         test_cases = [
             ('print("Hello from Python!")', "PYTHON", "Python uppercase"),
             ('print("Hello from Python!")', "Python", "Python title case"),
             ('print("Hello from Python!")', "PyThOn", "Python mixed case"),
             ('print("Hello from Python!")', "python", "Python lowercase"),
-            ('console.log("Hello from JavaScript!");', "JAVASCRIPT", "JavaScript uppercase"),
-            ('console.log("Hello from JavaScript!");', "JavaScript", "JavaScript title case"),
-            ('console.log("Hello from JavaScript!");', "javascript", "JavaScript lowercase"),
+            (
+                'console.log("Hello from JavaScript!");',
+                "JAVASCRIPT",
+                "JavaScript uppercase",
+            ),
+            (
+                'console.log("Hello from JavaScript!");',
+                "JavaScript",
+                "JavaScript title case",
+            ),
+            (
+                'console.log("Hello from JavaScript!");',
+                "javascript",
+                "JavaScript lowercase",
+            ),
             ('cat("Hello from R!\\n")', "R", "R uppercase"),
             ('cat("Hello from R!\\n")', "r", "R lowercase"),
             ('System.out.println("Hello from Java!");', "JAVA", "Java uppercase"),
             ('System.out.println("Hello from Java!");', "Java", "Java title case"),
-            ('System.out.println("Hello from Java!");', "java", "Java lowercase")
+            ('System.out.println("Hello from Java!");', "java", "Java lowercase"),
         ]
-        
+
         for code, language_param, description in test_cases:
             print(f"   Testing {description}: '{language_param}'")
             result = session.code.run_code(code, language_param, timeout_s=30)
@@ -359,25 +374,29 @@ print("This line won't execute")
         unsupported_cases = [
             ("UNSUPPORTED", "uppercase unsupported"),
             ("Unsupported", "title case unsupported"),
-            ("unsupported", "lowercase unsupported")
+            ("unsupported", "lowercase unsupported"),
         ]
-        
+
         for language_param, description in unsupported_cases:
             print(f"   Testing {description}: '{language_param}'")
-            result = session.code.run_code('print("test")', language_param, timeout_s=30)
+            result = session.code.run_code(
+                'print("test")', language_param, timeout_s=30
+            )
             if result.success:
                 print(f"   ❌ Unexpected: {description} was accepted!")
             else:
-                print(f"   ✅ Expected: {description} was rejected: {result.error_message}")
+                print(
+                    f"   ✅ Expected: {description} was rejected: {result.error_message}"
+                )
 
         return True
 
     except Exception as e:
         print(f"❌ Error occurred during code execution test: {e}")
         import traceback
+
         traceback.print_exc()
         return False
-
 
 
 def main():
@@ -398,7 +417,7 @@ def main():
         print("Do you want to delete the created session? (y/n): ", end="")
         try:
             choice = input().strip().lower()
-            if choice in ['y', 'yes']:
+            if choice in ["y", "yes"]:
                 print("Deleting session...")
 
                 # Record session deletion start time
@@ -424,7 +443,9 @@ def main():
                 print("=" * 60)
                 print(f"Session Creation: {create_duration:.3f} seconds")
                 print(f"Session Deletion: {delete_duration:.3f} seconds")
-                print(f"Total API Time:  {create_duration + delete_duration:.3f} seconds")
+                print(
+                    f"Total API Time:  {create_duration + delete_duration:.3f} seconds"
+                )
                 print("=" * 60)
 
         except KeyboardInterrupt:

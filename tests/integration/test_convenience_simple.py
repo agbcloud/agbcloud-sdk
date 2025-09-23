@@ -4,15 +4,18 @@
 Test for AGB create and delete interfaces
 """
 
-import sys
 import os
+import sys
 
 # Add project root directory to Python path
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+project_root = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 sys.path.insert(0, project_root)
 print(f"Added project root to Python path: {project_root}")
 print(f"Current working directory: {os.getcwd()}")
 print(f"Python path: {sys.path[:3]}")  # Show first 3 entries
+
 
 def get_api_key():
     """Get API Key from environment variables"""
@@ -23,6 +26,7 @@ def get_api_key():
             "export AGB_API_KEY='your_api_key_here'"
         )
     return api_key
+
 
 def test_agb_create_and_delete():
     """Test AGB create and delete interfaces"""
@@ -45,9 +49,7 @@ def test_agb_create_and_delete():
         # Test session creation
         print("\n2. Testing session creation...")
         try:
-            params = CreateSessionParams(
-                image_id="agb-code-space-1"
-            )
+            params = CreateSessionParams(image_id="agb-code-space-1")
 
             result = agb.create(params)
 
@@ -65,10 +67,16 @@ def test_agb_create_and_delete():
                         print("✅ Session info retrieved successfully")
                         if info_result.data:
                             session_data = info_result.data
-                            print(f"   Session ID: {session_data.get('session_id', 'N/A')}")
-                            print(f"   Resource URL: {session_data.get('resource_url', 'N/A')}")
+                            print(
+                                f"   Session ID: {session_data.get('session_id', 'N/A')}"
+                            )
+                            print(
+                                f"   Resource URL: {session_data.get('resource_url', 'N/A')}"
+                            )
                     else:
-                        print(f"⚠️ Failed to get session info: {info_result.error_message}")
+                        print(
+                            f"⚠️ Failed to get session info: {info_result.error_message}"
+                        )
                 except Exception as e:
                     print(f"⚠️ Error getting session info: {e}")
 
@@ -91,12 +99,15 @@ def test_agb_create_and_delete():
                         print("✅ Session deleted successfully")
                         print(f"   Request ID: {delete_result.request_id}")
                     else:
-                        print(f"❌ Failed to delete session: {delete_result.error_message}")
+                        print(
+                            f"❌ Failed to delete session: {delete_result.error_message}"
+                        )
                         print(f"   Request ID: {delete_result.request_id}")
 
                 except Exception as e:
                     print(f"❌ Error deleting session: {e}")
                     import traceback
+
                     traceback.print_exc()
 
             else:
@@ -106,12 +117,15 @@ def test_agb_create_and_delete():
         except Exception as e:
             print(f"❌ Error creating session: {e}")
             import traceback
+
             traceback.print_exc()
 
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 def test_agb_with_custom_params():
     """Test AGB create with custom parameters"""
@@ -133,9 +147,7 @@ def test_agb_with_custom_params():
         # Create session with custom parameters
         print("\n2. Testing session creation with custom parameters...")
         try:
-            params = CreateSessionParams(
-                image_id="agb-code-space-1"
-            )
+            params = CreateSessionParams(image_id="agb-code-space-1")
 
             result = agb.create(params)
 
@@ -154,7 +166,9 @@ def test_agb_with_custom_params():
                     print("✅ Custom session deleted successfully")
                     print(f"   Request ID: {delete_result.request_id}")
                 else:
-                    print(f"❌ Failed to delete custom session: {delete_result.error_message}")
+                    print(
+                        f"❌ Failed to delete custom session: {delete_result.error_message}"
+                    )
 
             else:
                 print(f"❌ Custom session creation failed: {result.error_message}")
@@ -162,12 +176,15 @@ def test_agb_with_custom_params():
         except Exception as e:
             print(f"❌ Error creating custom session: {e}")
             import traceback
+
             traceback.print_exc()
 
     except Exception as e:
         print(f"❌ Custom parameters test failed: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     # Run basic create and delete test

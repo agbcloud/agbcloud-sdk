@@ -1,4 +1,4 @@
-from typing import Optional, Union, List, Dict, Any
+from typing import Any, Dict, List, Optional, Union
 
 
 class CreateSessionRequest:
@@ -22,7 +22,6 @@ class CreateSessionRequest:
             body["sessionId"] = self.session_id
 
         return body
-
 
     def get_params(self) -> Dict[str, Any]:
         """Get query parameters"""

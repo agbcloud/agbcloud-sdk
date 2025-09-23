@@ -7,7 +7,6 @@ This directory contains practical examples demonstrating how to use the AGB SDK 
 ### Basic Usage
 - **[Session Creation](session_creation/README.md)** - Creating and managing your first session
 - **[File Operations](file_system/README.md)** - File and directory management
-- **[OSS Integration](oss_management/README.md)** - Cloud storage operations
 
 ### Browser Automation
 - **[Browser Examples](browser/README.md)** - AI-powered browser automation examples
@@ -58,21 +57,6 @@ result = session.file_system.read_file("/tmp/processed.csv")
 print("Processed data:", result.content)
 ```
 
-### Cloud Storage Integration
-```python
-# OSS operations
-params = CreateSessionParams(image_id="agb-code-space-1")
-session = agb.create(params).session
-
-# Upload to cloud storage
-upload_result = session.oss.upload_file(
-    local_path="/tmp/local_file.txt",
-    remote_path="bucket/remote_file.txt"
-)
-
-if upload_result.success:
-    print("File uploaded successfully")
-```
 
 ## 📁 Directory Structure
 
@@ -90,9 +74,6 @@ examples/
 ├── file_system/                # File operations examples
 │   ├── main.py                 # File system operations
 │   └── README.md               # File operations guide
-└── oss_management/             # Cloud storage examples
-    ├── main.py                 # OSS operations
-    └── README.md               # OSS management guide
 ```
 
 ## 🎯 Getting Started
@@ -105,7 +86,6 @@ examples/
 - [Browser Automation](browser/README.md)
 
 **Experienced Developer?** Jump to:
-- [OSS Management](oss_management/README.md)
 - [Advanced Browser Examples](browser/README.md)
 - [Data Extraction](browser/README.md)
 
@@ -120,7 +100,6 @@ export AGB_API_KEY="your_api_key_here"
 # Run any example
 python docs/examples/session_creation/main.py
 python docs/examples/file_system/main.py
-python docs/examples/oss_management/main.py
 python docs/examples/browser/basic_navigation.py
 ```
 
@@ -148,12 +127,6 @@ Master file and directory operations:
 - File permissions and metadata
 - Batch file operations
 
-### OSS Management (`oss_management/`)
-Cloud storage integration patterns:
-- File uploads and downloads
-- Object metadata management
-- Batch operations
-- Error handling for cloud operations
 
 ## 🔧 Prerequisites
 

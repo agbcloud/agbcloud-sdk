@@ -4,14 +4,15 @@
 AGB filesystem test code
 """
 
-import sys
 import os
+import sys
 
 # Add project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Direct import, completely bypass __init__.py
 import importlib.util
+
 from agb.agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -45,9 +46,7 @@ def test_create_session():
 
         print("\nCreating session...")
 
-        params = CreateSessionParams(
-            image_id="code_latest"
-        )
+        params = CreateSessionParams(image_id="code_latest")
         result = agb.create(params)
 
         # Check result
@@ -55,9 +54,9 @@ def test_create_session():
             print("✅ Session created successfully!")
             print(f"   Request ID: {result.request_id}")
             print(f"   Session ID: {result.session.session_id}")
-            if hasattr(result.session, 'resource_url') and result.session.resource_url:
+            if hasattr(result.session, "resource_url") and result.session.resource_url:
                 print(f"   Resource URL: {result.session.resource_url}")
-            if hasattr(result.session, 'image_id') and result.session.image_id:
+            if hasattr(result.session, "image_id") and result.session.image_id:
                 print(f"   Image ID: {result.session.image_id}")
         else:
             print("❌ Session creation failed!")
@@ -70,6 +69,7 @@ def test_create_session():
     except Exception as e:
         print(f"❌ Error occurred during test: {e}")
         import traceback
+
         traceback.print_exc()
         return None, None
 
@@ -106,7 +106,9 @@ def test_filesystem_operations(session):
             if result.entries:
                 print(f"   Directory contents:")
                 for entry in result.entries:
-                    print(f"     - {entry.get('name', 'Unknown')} ({entry.get('type', 'Unknown')})")
+                    print(
+                        f"     - {entry.get('name', 'Unknown')} ({entry.get('type', 'Unknown')})"
+                    )
             else:
                 print("   Directory is empty")
         else:
@@ -120,10 +122,14 @@ def test_filesystem_operations(session):
 
         # Write file
         test_file = f"{test_dir}/test.txt"
-        test_content = "Hello AGB! This is a test file.\nCreated at: " + str(os.popen('date').read().strip())
+        test_content = "Hello AGB! This is a test file.\nCreated at: " + str(
+            os.popen("date").read().strip()
+        )
 
         print(f"\nWriting file: {test_file}")
-        result = session.file_system.write_file(test_file, test_content, mode="overwrite")
+        result = session.file_system.write_file(
+            test_file, test_content, mode="overwrite"
+        )
         if result.success:
             print("✅ File written successfully!")
             print(f"   Request ID: {result.request_id}")
@@ -246,7 +252,7 @@ def test_filesystem_operations(session):
         test_files = [
             f"{test_dir}/file1.txt",
             f"{test_dir}/file2.txt",
-            f"{test_dir}/file3.txt"
+            f"{test_dir}/file3.txt",
         ]
 
         for i, file_path in enumerate(test_files):
@@ -306,7 +312,7 @@ def test_filesystem_operations(session):
             f"{test_dir}/file2.txt",
             f"{test_dir}/file3.txt",
             f"{test_dir}/moved_file.txt",
-            f"{test_dir}/large_file.txt"
+            f"{test_dir}/large_file.txt",
         ]
 
         for file_path in cleanup_files:
@@ -329,6 +335,7 @@ def test_filesystem_operations(session):
     except Exception as e:
         print(f"❌ Error occurred during filesystem test: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -351,7 +358,7 @@ def main():
         print("Do you want to delete the recently created session? (y/n): ", end="")
         try:
             choice = input().strip().lower()
-            if choice in ['y', 'yes']:
+            if choice in ["y", "yes"]:
                 print("Deleting session...")
                 delete_result = agb.delete(result.session)
                 print("delete_result =", delete_result)

@@ -1,9 +1,10 @@
 import json
-import requests
-import time
 import random
 import string
-from typing import Any, Dict
+import time
+from typing import Any, Dict, Optional
+
+import requests
 
 from agb.api.models import CallMcpToolRequest
 from agb.exceptions import AGBError
@@ -39,7 +40,13 @@ class BaseService:
         """
         return e
 
-    def _call_mcp_tool(self, name: str, args: Dict[str, Any], read_timeout: int = None, connect_timeout: int = None) -> OperationResult:
+    def _call_mcp_tool(
+        self,
+        name: str,
+        args: Dict[str, Any],
+        read_timeout: Optional[int] = None,
+        connect_timeout: Optional[int] = None,
+    ) -> OperationResult:
         """
         Internal helper to call MCP tool and handle errors.
 
@@ -60,7 +67,9 @@ class BaseService:
                 name=name,
                 args=args_json,
             )
-            response = self.session.get_client().call_mcp_tool(request, read_timeout=read_timeout, connect_timeout=connect_timeout)
+            response = self.session.get_client().call_mcp_tool(
+                request, read_timeout=read_timeout, connect_timeout=connect_timeout
+            )
 
             # Check if response is empty
             if response is None:
@@ -73,7 +82,7 @@ class BaseService:
             request_id = response.request_id or ""
 
             # Check response type, if it's CallMcpToolResponse, use new parsing method
-            if hasattr(response, 'is_tool_successful'):
+            if hasattr(response, "is_tool_successful"):
                 # This is a CallMcpToolResponse object
                 try:
                     print("Response body:")
@@ -84,7 +93,9 @@ class BaseService:
                 if response.is_tool_successful():
                     # Tool execution successful
                     result = response.get_tool_result()
-                    return OperationResult(request_id=request_id, success=True, data=result)
+                    return OperationResult(
+                        request_id=request_id, success=True, data=result
+                    )
                 else:
                     # Tool execution failed
                     error_msg = response.get_error_message() or "Tool execution failed"
@@ -102,7 +113,6 @@ class BaseService:
                     success=False,
                     error_message=error_msg,
                 )
-
 
         except AGBError as e:
             handled_error = self._handle_error(e)

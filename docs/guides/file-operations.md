@@ -523,6 +523,5 @@ session.file_system.write_file(filepath, "content")
 ## Related Documentation
 
 - **[Code Execution Guide](code-execution.md)** - Using files in code execution
-- **[OSS Integration Guide](oss-integration.md)** - Cloud storage for persistent files
 - **[Session Management](session-management.md)** - Managing file system sessions
 - **[API Reference](../api-reference/modules/filesystem.md)** - Complete FileSystem API documentation

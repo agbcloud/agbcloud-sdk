@@ -3,7 +3,7 @@
 Get link response model for HTTP client
 """
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 
 class GetLinkResponse:
@@ -13,14 +13,14 @@ class GetLinkResponse:
 
     def __init__(
         self,
-        status_code: int = None,
-        url: str = None,
-        headers: Dict[str, str] = None,
+        status_code: Optional[int] = None,
+        url: Optional[str] = None,
+        headers: Optional[Dict[str, str]] = None,
         json_data: Optional[Dict[str, Any]] = None,
         text: Optional[str] = None,
         success: bool = True,
         error: Optional[str] = None,
-        request_id: Optional[str] = None
+        request_id: Optional[str] = None,
     ):
         self.status_code = status_code
         self.url = url
@@ -32,12 +32,14 @@ class GetLinkResponse:
         self.request_id = request_id
 
         if json_data:
-            self.api_success = json_data.get('success')
-            self.code = json_data.get('code')
-            self.message = json_data.get('message')
-            self.http_status_code = json_data.get('httpStatusCode')
+            self.api_success = json_data.get("success")
+            self.code = json_data.get("code")
+            self.message = json_data.get("message")
+            self.http_status_code = json_data.get("httpStatusCode")
             # 从 data.url 获取实际的 WebSocket URL
-            self.url_data = json_data.get('data', {}).get('url') if json_data.get('data') else None
+            self.url_data = (
+                json_data.get("data", {}).get("url") if json_data.get("data") else None
+            )
         else:
             self.api_success = None
             self.code = None
@@ -46,7 +48,7 @@ class GetLinkResponse:
             self.url_data = None
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> 'GetLinkResponse':
+    def from_http_response(cls, response_dict: Dict[str, Any]) -> "GetLinkResponse":
         """
         Create GetLinkResponse from HTTP response dictionary
 
@@ -56,16 +58,16 @@ class GetLinkResponse:
         Returns:
             GetLinkResponse: Response object
         """
-        json_data = response_dict.get('json', {})
+        json_data = response_dict.get("json", {})
         return cls(
-            status_code=response_dict.get('status_code', 0),
-            url=response_dict.get('url', ''),
-            headers=response_dict.get('headers', {}),
-            success=response_dict.get('success', False),
+            status_code=response_dict.get("status_code", 0),
+            url=response_dict.get("url", ""),
+            headers=response_dict.get("headers", {}),
+            success=response_dict.get("success", False),
             json_data=json_data,
-            text=response_dict.get('text'),
-            error=response_dict.get('error'),
-            request_id=response_dict.get('request_id') or json_data.get('requestId')
+            text=response_dict.get("text"),
+            error=response_dict.get("error"),
+            request_id=response_dict.get("request_id") or json_data.get("requestId"),
         )
 
     def is_successful(self) -> bool:
@@ -75,11 +77,7 @@ class GetLinkResponse:
         Returns:
             bool: True if successful, False otherwise
         """
-        return (
-            self.success and
-            self.status_code == 200 and
-            self.api_success is True
-        )
+        return self.success and self.status_code == 200 and self.api_success is True
 
     def get_error_message(self) -> Optional[str]:
         """
@@ -116,13 +114,12 @@ class GetLinkResponse:
             Dict[str, Any]: Dictionary representation
         """
         return {
-            'status_code': self.status_code,
-            'url': self.url,
-            'headers': self.headers,
-            'json_data': self.json_data,
-            'text': self.text,
-            'success': self.success,
-            'error': self.error,
-            'request_id': self.request_id
+            "status_code": self.status_code,
+            "url": self.url,
+            "headers": self.headers,
+            "json_data": self.json_data,
+            "text": self.text,
+            "success": self.success,
+            "error": self.error,
+            "request_id": self.request_id,
         }
-

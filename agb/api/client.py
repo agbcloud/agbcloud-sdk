@@ -3,25 +3,29 @@
 AGB API client implementation using HTTP client
 """
 
-from typing import Dict, Optional, Union, List, Any
+from typing import Any, Dict, List, Optional, Union
+
+import aiohttp
+
 from agb.api.models import (
-    CreateSessionResponse,
-    CallMcpToolResponse,
-    ListMcpToolsResponse,
-    GetMcpResourceResponse,
-    ReleaseSessionResponse,
-    CreateSessionRequest,
-    ReleaseSessionRequest,
     CallMcpToolRequest,
-    ListMcpToolsRequest,
-    GetMcpResourceRequest,
-    InitBrowserRequest,
-    InitBrowserResponse,
+    CallMcpToolResponse,
+    CreateSessionRequest,
+    CreateSessionResponse,
     GetLinkRequest,
     GetLinkResponse,
+    GetMcpResourceRequest,
+    GetMcpResourceResponse,
+    InitBrowserRequest,
+    InitBrowserResponse,
+    ListMcpToolsRequest,
+    ListMcpToolsResponse,
+    ReleaseSessionRequest,
+    ReleaseSessionResponse,
 )
+
 from .http_client import HTTPClient
-import aiohttp
+
 
 class Client:
     """
@@ -51,7 +55,9 @@ class Client:
         # Always create a new HTTP client for each request
         return HTTPClient(api_key=api_key, cfg=self.config)
 
-    def create_mcp_session(self, request: CreateSessionRequest) -> CreateSessionResponse:
+    def create_mcp_session(
+        self, request: CreateSessionRequest
+    ) -> CreateSessionResponse:
         """
         Create MCP session using HTTP client
         """
@@ -69,7 +75,9 @@ class Client:
             # Always close the HTTP client to release resources
             http_client.close()
 
-    def release_mcp_session(self, request: ReleaseSessionRequest) -> ReleaseSessionResponse:
+    def release_mcp_session(
+        self, request: ReleaseSessionRequest
+    ) -> ReleaseSessionResponse:
         """
         Release MCP session using HTTP client
         """
@@ -89,7 +97,12 @@ class Client:
             # Always close the HTTP client to release resources
             http_client.close()
 
-    def call_mcp_tool(self, request: CallMcpToolRequest, read_timeout: int = None, connect_timeout: int = None) -> CallMcpToolResponse:
+    def call_mcp_tool(
+        self,
+        request: CallMcpToolRequest,
+        read_timeout: Optional[int] = None,
+        connect_timeout: Optional[int] = None,
+    ) -> CallMcpToolResponse:
         """
         Call MCP tool using HTTP client
         """
@@ -100,7 +113,9 @@ class Client:
         http_client = self._get_http_client(request.authorization)
 
         try:
-            response = http_client.call_mcp_tool(request, read_timeout=read_timeout, connect_timeout=connect_timeout)
+            response = http_client.call_mcp_tool(
+                request, read_timeout=read_timeout, connect_timeout=connect_timeout
+            )
             return response
         finally:
             # Always close the HTTP client to release resources
@@ -123,7 +138,9 @@ class Client:
             # Always close the HTTP client to release resources
             http_client.close()
 
-    def get_mcp_resource(self, request: GetMcpResourceRequest) -> GetMcpResourceResponse:
+    def get_mcp_resource(
+        self, request: GetMcpResourceRequest
+    ) -> GetMcpResourceResponse:
         """
         Get MCP resource using HTTP client
         """
@@ -160,7 +177,6 @@ class Client:
             # Always close the HTTP client to release resources
             http_client.close()
 
-
     async def init_browser_async(
         self,
         request: InitBrowserRequest,
@@ -187,7 +203,9 @@ class Client:
         # Each request creates a new client that gets cleaned up automatically
         pass
 
-    async def call_api_async_with_requests(url, method="GET", headers=None, params=None, data=None, json=None, timeout=30):
+    async def call_api_async_with_requests(
+        url, method="GET", headers=None, params=None, data=None, json=None, timeout=30
+    ):
         """
         Implement async HTTP requests using aiohttp, mimicking requests usage.
         """
@@ -199,16 +217,15 @@ class Client:
                 params=params,
                 data=data,
                 json=json,
-                timeout=timeout
+                timeout=timeout,
             ) as resp:
                 resp_data = await resp.text()
                 # You can return resp.json() or resp.read() as needed
                 return {
                     "status_code": resp.status,
                     "headers": dict(resp.headers),
-                    "body": resp_data
+                    "body": resp_data,
                 }
-
 
     def get_link(
         self,

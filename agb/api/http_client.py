@@ -4,26 +4,28 @@ HTTP client interface implementation
 Provides HTTP communication functionality with AGB API
 """
 
-import json
-import requests
 import asyncio
-import aiohttp
-from typing import Dict, Any, Optional, List, Union
+import json
+from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urlencode
-from .models.create_session_response import CreateSessionResponse
-from .models.create_session_request import CreateSessionRequest
-from .models.release_session_request import ReleaseSessionRequest
-from .models.release_session_response import ReleaseSessionResponse
+
+import aiohttp
+import requests
+
 from .models.call_mcp_tool_request import CallMcpToolRequest
 from .models.call_mcp_tool_response import CallMcpToolResponse
+from .models.create_session_request import CreateSessionRequest
+from .models.create_session_response import CreateSessionResponse
+from .models.get_link_request import GetLinkRequest
+from .models.get_link_response import GetLinkResponse
 from .models.get_mcp_resource_request import GetMcpResourceRequest
 from .models.get_mcp_resource_response import GetMcpResourceResponse
 from .models.init_browser_request import InitBrowserRequest
 from .models.init_browser_response import InitBrowserResponse
 from .models.list_mcp_tools_request import ListMcpToolsRequest
 from .models.list_mcp_tools_response import ListMcpToolsResponse
-from .models.get_link_request import GetLinkRequest
-from .models.get_link_response import GetLinkResponse
+from .models.release_session_request import ReleaseSessionRequest
+from .models.release_session_response import ReleaseSessionResponse
 
 
 class HTTPClient:
@@ -78,26 +80,24 @@ class HTTPClient:
         self.session = requests.Session()
 
         # Add Authorization header
-        self.session.headers["Authorization"] = self.api_key
+        self.session.headers["authorization"] = self.api_key
 
         # Set default request headers
-        self.session.headers.update({
-            'Content-Type': 'application/json',
-        })
+        self.session.headers.update(
+            {
+                "Content-Type": "application/json",
+            }
+        )
 
     def _process_endpoint(self, endpoint: str):
         """Process endpoint logic"""
         # Use endpoint from config directly as base_url, ensure it includes http:// prefix
-        if endpoint and not endpoint.startswith(('http://', 'https://')):
+        if endpoint and not endpoint.startswith(("http://", "https://")):
             self.base_url = f"http://{endpoint}"
         else:
             self.base_url = endpoint
 
-
-
-    def create_session(
-        self, request: CreateSessionRequest
-    ) -> CreateSessionResponse:
+    def create_session(self, request: CreateSessionRequest) -> CreateSessionResponse:
         """
         HTTP request interface for creating session
 
@@ -108,7 +108,7 @@ class HTTPClient:
             CreateSessionResponse: Structured response object
         """
         # Build request headers
-        headers = {}
+        headers: Dict[str, str] = {}
 
         # Build query parameters
         params = request.get_params()
@@ -122,7 +122,7 @@ class HTTPClient:
             endpoint="/mcp/createSession",
             headers=headers,
             params=params,
-            json_data=body
+            json_data=body,
         )
 
         # Return structured response object
@@ -139,7 +139,7 @@ class HTTPClient:
             ReleaseSessionResponse: Structured response object
         """
         # Build request headers
-        headers = {}
+        headers: Dict[str, str] = {}
 
         # Build query parameters
         params = request.get_params()
@@ -153,13 +153,18 @@ class HTTPClient:
             endpoint="/mcp/releaseSession",
             headers=headers,
             params=params,
-            json_data=body
+            json_data=body,
         )
 
         # Return structured response object
         return ReleaseSessionResponse.from_http_response(response_dict)
 
-    def call_mcp_tool(self, request: CallMcpToolRequest, read_timeout: int = None, connect_timeout: int = None) -> CallMcpToolResponse:
+    def call_mcp_tool(
+        self,
+        request: CallMcpToolRequest,
+        read_timeout: Optional[int] = None,
+        connect_timeout: Optional[int] = None,
+    ) -> CallMcpToolResponse:
         """
         HTTP request interface for calling MCP tool
 
@@ -170,7 +175,7 @@ class HTTPClient:
             CallMcpToolResponse: Structured response object
         """
         # Build request headers
-        headers = {}
+        headers: Dict[str, str] = {}
 
         # Build query parameters
         params = request.get_params()
@@ -186,7 +191,7 @@ class HTTPClient:
             params=params,
             json_data=body,
             read_timeout=read_timeout,
-            connect_timeout=connect_timeout
+            connect_timeout=connect_timeout,
         )
 
         # Return structured response object
@@ -203,7 +208,7 @@ class HTTPClient:
             ListMcpToolsResponse: Structured response object
         """
         # Build request headers
-        headers = {}
+        headers: Dict[str, str] = {}
 
         # Build query parameters
         params = request.get_params()
@@ -217,13 +222,15 @@ class HTTPClient:
             endpoint="/mcp/listTools",
             headers=headers,
             params=params,
-            json_data=body
+            json_data=body,
         )
 
         # Return structured response object
         return ListMcpToolsResponse.from_http_response(response_dict)
 
-    def get_mcp_resource(self, request: GetMcpResourceRequest) -> GetMcpResourceResponse:
+    def get_mcp_resource(
+        self, request: GetMcpResourceRequest
+    ) -> GetMcpResourceResponse:
         """
         HTTP request interface for getting MCP resource
 
@@ -234,7 +241,7 @@ class HTTPClient:
             GetMcpResourceResponse: Structured response object
         """
         # Build request headers
-        headers = {}
+        headers: Dict[str, str] = {}
 
         # Build query parameters
         params = request.get_params()
@@ -248,7 +255,7 @@ class HTTPClient:
             endpoint="/mcp/getMcpResource",
             headers=headers,
             params=params,
-            json_data=body
+            json_data=body,
         )
 
         # Return structured response object
@@ -265,7 +272,7 @@ class HTTPClient:
             InitBrowserResponse: Structured response object
         """
         # Build request headers
-        headers = {}
+        headers: Dict[str, str] = {}
 
         # Build query parameters
         params = request.get_params()
@@ -279,13 +286,15 @@ class HTTPClient:
             endpoint="/browser/init",
             headers=headers,
             params=params,
-            json_data=body
+            json_data=body,
         )
 
         # Return structured response object
         return InitBrowserResponse.from_http_response(response_dict)
 
-    async def init_browser_async(self, request: InitBrowserRequest) -> InitBrowserResponse:
+    async def init_browser_async(
+        self, request: InitBrowserRequest
+    ) -> InitBrowserResponse:
         """
         Async HTTP request interface for initializing browser
 
@@ -296,7 +305,7 @@ class HTTPClient:
             InitBrowserResponse: Structured response object
         """
         # Build request headers
-        headers = {}
+        headers: Dict[str, str] = {}
 
         # Build query parameters
         params = request.get_params()
@@ -310,7 +319,7 @@ class HTTPClient:
             endpoint="/browser/init",
             headers=headers,
             params=params,
-            json_data=body
+            json_data=body,
         )
 
         # Return structured response object
@@ -327,17 +336,14 @@ class HTTPClient:
             GetLinkResponse: Structured response object
         """
         # Build request headers
-        headers = {}
+        headers: Dict[str, str] = {}
 
         # Build query parameters
         params = request.get_params()
 
         # Call _make_request
         response_dict = self._make_request(
-            method="GET",
-            endpoint="/internet/getLink",
-            headers=headers,
-            params=params
+            method="GET", endpoint="/internet/getLink", headers=headers, params=params
         )
 
         # Return structured response object
@@ -354,17 +360,14 @@ class HTTPClient:
             GetLinkResponse: Structured response object
         """
         # Build request headers
-        headers = {}
+        headers: Dict[str, str] = {}
 
         # Build query parameters
         params = request.get_params()
 
         # Call async _make_request
         response_dict = await self._make_request_async(
-            method="GET",
-            endpoint="/mcp/getLink",
-            headers=headers,
-            params=params
+            method="GET", endpoint="/mcp/getLink", headers=headers, params=params
         )
 
         # Return structured response object
@@ -378,8 +381,8 @@ class HTTPClient:
         params: Optional[Dict[str, Any]] = None,
         json_data: Optional[Dict[str, Any]] = None,
         data: Optional[Dict[str, Any]] = None,
-        read_timeout: int = None,
-        connect_timeout: int = None
+        read_timeout: Optional[int] = None,
+        connect_timeout: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Execute HTTP request
@@ -397,8 +400,10 @@ class HTTPClient:
         """
         url = f"{self.base_url}{endpoint}"
 
-        # Merge request headers
-        request_headers = self.session.headers.copy()
+        # Merge request headers and ensure all values are strings
+        request_headers: Dict[str, str] = {}
+        for key, value in self.session.headers.items():
+            request_headers[str(key)] = str(value)
 
         # Add Authorization header
         request_headers["authorization"] = self.api_key
@@ -409,7 +414,10 @@ class HTTPClient:
         # Determine timeout values
         if read_timeout is not None and connect_timeout is not None:
             # Use separate connect and read timeouts
-            timeout = (connect_timeout / 1000, read_timeout / 1000)  # Convert ms to seconds
+            timeout = (
+                connect_timeout / 1000,
+                read_timeout / 1000,
+            )  # Convert ms to seconds
             timeout_display = f"connect={connect_timeout}ms, read={read_timeout}ms"
         else:
             # Use default timeout
@@ -439,10 +447,7 @@ class HTTPClient:
             # Execute request
             if method.upper() == "GET":
                 response = self.session.get(
-                    url,
-                    headers=request_headers,
-                    params=params,
-                    timeout=timeout
+                    url, headers=request_headers, params=params, timeout=timeout
                 )
             elif method.upper() == "POST":
                 if json_data:
@@ -451,7 +456,7 @@ class HTTPClient:
                         headers=request_headers,
                         params=params,
                         json=json_data,
-                        timeout=timeout
+                        timeout=timeout,
                     )
                 else:
                     response = self.session.post(
@@ -460,7 +465,7 @@ class HTTPClient:
                         params=params,
                         data=data,
                         json={},
-                        timeout=timeout
+                        timeout=timeout,
                     )
             elif method.upper() == "PUT":
                 response = self.session.put(
@@ -468,14 +473,11 @@ class HTTPClient:
                     headers=request_headers,
                     params=params,
                     json=json_data,
-                    timeout=timeout
+                    timeout=timeout,
                 )
             elif method.upper() == "DELETE":
                 response = self.session.delete(
-                    url,
-                    headers=request_headers,
-                    params=params,
-                    timeout=timeout
+                    url, headers=request_headers, params=params, timeout=timeout
                 )
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
@@ -485,7 +487,7 @@ class HTTPClient:
                 "status_code": response.status_code,
                 "url": response.url,
                 "headers": dict(response.headers),
-                "success": response.status_code < 400
+                "success": response.status_code < 400,
             }
 
             # Try to parse JSON response
@@ -497,7 +499,9 @@ class HTTPClient:
 
             # Print response information
             print("\n=== HTTP Response Information ===")
-            print(f"Response Body: {result.get('json', result.get('text', 'No content'))}")
+            print(
+                f"Response Body: {result.get('json', result.get('text', 'No content'))}"
+            )
             print("=" * 50)
 
             return result
@@ -510,12 +514,7 @@ class HTTPClient:
             print(f"Request URL: {url}")
             print("=" * 50)
 
-            return {
-                "success": False,
-                "error": str(e),
-                "status_code": None,
-                "url": url
-            }
+            return {"success": False, "error": str(e), "status_code": None, "url": url}
 
     async def _make_request_async(
         self,
@@ -524,7 +523,7 @@ class HTTPClient:
         headers: Optional[Dict[str, str]] = None,
         params: Optional[Dict[str, Any]] = None,
         json_data: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None
+        data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Execute async HTTP request using aiohttp
@@ -542,11 +541,10 @@ class HTTPClient:
         """
         url = f"{self.base_url}{endpoint}"
 
-        # Merge request headers
-        request_headers = {
-            'Content-Type': 'application/json',
-            'authorization': self.api_key
-        }
+        # Merge request headers and ensure all values are strings
+        request_headers: Dict[str, str] = {}
+        for key, value in self.session.headers.items():
+            request_headers[str(key)] = str(value)
 
         if headers:
             request_headers.update(headers)
@@ -573,20 +571,19 @@ class HTTPClient:
         try:
             # Create aiohttp session and execute request
             timeout = aiohttp.ClientTimeout(total=self.timeout)
-            async with aiohttp.ClientSession(timeout=timeout) as session:
+            # Pass the merged headers to aiohttp session
+            async with aiohttp.ClientSession(
+                timeout=timeout, headers=request_headers
+            ) as session:
                 if method.upper() == "GET":
-                    async with session.get(
-                        url,
-                        headers=request_headers,
-                        params=params
-                    ) as response:
+                    async with session.get(url, params=params) as response:
                         response_text = await response.text()
                         response_dict = {
                             "status_code": response.status,
                             "url": str(response.url),
                             "headers": dict(response.headers),
                             "text": response_text,
-                            "success": response.status < 400
+                            "success": response.status < 400,
                         }
 
                         # Try to parse JSON response
@@ -595,15 +592,19 @@ class HTTPClient:
                         except:
                             response_dict["json"] = None
 
+                        # Print response information (like sync version)
+                        print("\n=== Async HTTP Response Information ===")
+                        print(
+                            f"Response Body: {response_dict.get('json', response_dict.get('text', 'No content'))}"
+                        )
+                        print("=" * 50)
+
                         return response_dict
 
                 elif method.upper() == "POST":
                     if json_data:
                         async with session.post(
-                            url,
-                            headers=request_headers,
-                            params=params,
-                            json=json_data
+                            url, params=params, json=json_data
                         ) as response:
                             response_text = await response.text()
                             response_dict = {
@@ -611,7 +612,7 @@ class HTTPClient:
                                 "url": str(response.url),
                                 "headers": dict(response.headers),
                                 "text": response_text,
-                                "success": response.status < 400
+                                "success": response.status < 400,
                             }
 
                             # Try to parse JSON response
@@ -619,14 +620,18 @@ class HTTPClient:
                                 response_dict["json"] = await response.json()
                             except:
                                 response_dict["json"] = None
+
+                            # Print response information (like sync version)
+                            print("\n=== Async HTTP Response Information ===")
+                            print(
+                                f"Response Body: {response_dict.get('json', response_dict.get('text', 'No content'))}"
+                            )
+                            print("=" * 50)
 
                             return response_dict
                     else:
                         async with session.post(
-                            url,
-                            headers=request_headers,
-                            params=params,
-                            data=data
+                            url, params=params, data=data
                         ) as response:
                             response_text = await response.text()
                             response_dict = {
@@ -634,7 +639,7 @@ class HTTPClient:
                                 "url": str(response.url),
                                 "headers": dict(response.headers),
                                 "text": response_text,
-                                "success": response.status < 400
+                                "success": response.status < 400,
                             }
 
                             # Try to parse JSON response
@@ -642,17 +647,41 @@ class HTTPClient:
                                 response_dict["json"] = await response.json()
                             except:
                                 response_dict["json"] = None
+
+                            # Print response information (like sync version)
+                            print("\n=== Async HTTP Response Information ===")
+                            print(
+                                f"Response Body: {response_dict.get('json', response_dict.get('text', 'No content'))}"
+                            )
+                            print("=" * 50)
 
                             return response_dict
                 else:
                     raise ValueError(f"Unsupported HTTP method: {method}")
 
         except asyncio.TimeoutError:
-            print(f"Request timeout after {self.timeout} seconds")
-            raise
+            # Print error information
+            print("\n=== Async HTTP Request Timeout ===")
+            print(f"Request URL: {url}")
+            print(f"Timeout: {self.timeout} seconds")
+            print("=" * 50)
+
+            return {
+                "success": False,
+                "error": "Request timeout",
+                "status_code": None,
+                "url": url,
+            }
+
         except Exception as e:
-            print(f"Request failed: {e}")
-            raise
+            # Print error information
+            print("\n=== Async HTTP Request Error ===")
+            print(f"Error Type: {type(e).__name__}")
+            print(f"Error Message: {str(e)}")
+            print(f"Request URL: {url}")
+            print("=" * 50)
+
+            return {"success": False, "error": str(e), "status_code": None, "url": url}
 
     def close(self):
         """Close HTTP session"""

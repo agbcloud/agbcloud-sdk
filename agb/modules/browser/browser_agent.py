@@ -1,10 +1,13 @@
 import json
-from typing import List, Dict, Union, Any, Optional, Tuple, TypeVar, Generic, Type
-from pydantic import BaseModel
-from agb.api.base_service import BaseService, OperationResult
-from agb.exceptions import BrowserError, AGBError
+from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
-T = TypeVar('T', bound=BaseModel)
+from pydantic import BaseModel
+
+from agb.api.base_service import BaseService, OperationResult
+from agb.exceptions import AGBError, BrowserError
+
+T = TypeVar("T", bound=BaseModel)
+
 
 class ActOptions:
     """
@@ -600,7 +603,7 @@ class BrowserAgent(BaseService):
                     f"Response from CallMcpTool - page_use_extract:",
                     response.error_message,
                 )
-                return False, None
+                return False, None  # type: ignore
         except Exception as e:
             raise BrowserError(f"Failed to extract: {e}")
 
@@ -670,7 +673,7 @@ class BrowserAgent(BaseService):
                     f"Response from CallMcpTool - page_use_extract:",
                     response.error_message,
                 )
-                return False, None
+                return False, None  # type: ignore
         except Exception as e:
             raise BrowserError(f"Failed to extract: {e}")
 

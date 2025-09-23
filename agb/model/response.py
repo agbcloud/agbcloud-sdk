@@ -4,7 +4,6 @@ API response models for AGB SDK.
 
 from typing import TYPE_CHECKING, Any, List, Optional
 
-
 if TYPE_CHECKING:
     from agb.session import BaseSession
 
@@ -134,4 +133,3 @@ class BoolResult(ApiResponse):
         self.success = success
         self.data = data
         self.error_message = error_message
-

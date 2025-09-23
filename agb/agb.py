@@ -6,19 +6,19 @@ environment.
 
 import json
 import os
-from typing import Dict, List, Optional, Union
 from threading import Lock
+from typing import Dict, List, Optional, Union
 
 from agb.api.client import Client as mcp_client
 from agb.api.models import (
     CreateSessionRequest,
-    ReleaseSessionRequest,
     CreateSessionResponse,
+    ReleaseSessionRequest,
 )
-from agb.config import load_config, Config
-from agb.session import Session, BaseSession
+from agb.config import Config, load_config
+from agb.model.response import DeleteResult, SessionResult
+from agb.session import BaseSession, Session
 from agb.session_params import CreateSessionParams
-from agb.model.response import SessionResult, DeleteResult
 
 
 class AGB:
@@ -38,12 +38,13 @@ class AGB:
                 configuration will be used.
         """
         if not api_key:
-            api_key = os.getenv("AGB_API_KEY")
-            if not api_key:
+            api_key_env = os.getenv("AGB_API_KEY")
+            if not api_key_env:
                 raise ValueError(
                     "API key is required. Provide it as a parameter or set the "
                     "AGB_API_KEY environment variable"
                 )
+            api_key = api_key_env
 
         # Load configuration
         self.config = load_config(cfg)
@@ -54,9 +55,8 @@ class AGB:
 
         # Initialize the HTTP API client with the complete config
         self.client = mcp_client(self.config)
-        self._sessions = {}
+        self._sessions: Dict[str, Session] = {}
         self._lock = Lock()
-
 
     def create(self, params: Optional[CreateSessionParams] = None) -> SessionResult:
         """
@@ -78,7 +78,7 @@ class AGB:
             if params.image_id:
                 request.image_id = params.image_id
 
-            response : CreateSessionResponse = self.client.create_mcp_session(request)
+            response: CreateSessionResponse = self.client.create_mcp_session(request)
 
             # Check if response is empty
             if response is None:
@@ -95,7 +95,8 @@ class AGB:
                 print(f"Response: {response}")
 
             # Extract request ID
-            request_id = getattr(response, 'request_id', '') or ''
+            request_id_attr = getattr(response, "request_id", "")
+            request_id = request_id_attr or ""
 
             # Check if the session creation was successful
             if response.data and response.data.success is False:
@@ -128,7 +129,7 @@ class AGB:
                 session.resource_url = resource_url
 
             # Store image_id used for this session
-            session.image_id = params.image_id
+            session.image_id = params.image_id or ""
 
             with self._lock:
                 self._sessions[session_id] = session
@@ -153,7 +154,6 @@ class AGB:
         """
         with self._lock:
             return list(self._sessions.values())
-
 
     def delete(self, session: Session) -> DeleteResult:
         """
@@ -184,24 +184,29 @@ class AGB:
                 )
 
             # Check response type, if it's ReleaseSessionResponse, use new parsing method
-            if hasattr(response, 'is_successful'):
+            if hasattr(response, "is_successful"):
                 # This is a ReleaseSessionResponse object
                 if response.is_successful():
                     # Remove from local cache
                     with self._lock:
                         self._sessions.pop(session.session_id, None)
 
-                    return DeleteResult(request_id=response.request_id or "", success=True)
+                    request_id_attr = getattr(response, "request_id", "")
+                    return DeleteResult(request_id=request_id_attr or "", success=True)
                 else:
-                    error_msg = response.get_error_message() or "Failed to delete session"
+                    error_msg = (
+                        response.get_error_message() or "Failed to delete session"
+                    )
+                    request_id_attr = getattr(response, "request_id", "")
                     return DeleteResult(
-                        request_id=response.request_id or "",
+                        request_id=request_id_attr or "",
                         success=False,
                         error_message=error_msg,
                     )
             else:
+                request_id_attr = getattr(response, "request_id", "")
                 return DeleteResult(
-                    request_id=response.request_id or "",
+                    request_id=request_id_attr or "",
                     success=False,
                     error_message="Failed to delete session",
                 )

@@ -132,4 +132,9 @@ dmypy.json
 .cursor/
 CLAUDE.md
 .DS_Store
-.aoneci/
+
+# Dual repository management scripts and files
+scripts/dual-repo-management/
+sync-internal-to-external.sh
+sync-external-to-internal.sh
+DUAL_DIRECTORY_WORKFLOW.md

@@ -4,8 +4,8 @@
 Test code for session.info method
 """
 
-import sys
 import os
+import sys
 import time
 
 # Add project root directory to Python path
@@ -40,9 +40,9 @@ def test_session_info():
         agb = AGB(api_key=api_key)
         print(f"✅ AGB client initialized successfully")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Testing session.info method...")
-        print("="*60)
+        print("=" * 60)
 
         # Create a session to test info method
         print("\n0. Creating a test session...")
@@ -86,13 +86,17 @@ def test_session_info():
                     print(f"     Resource URL: {data.get('resource_url', 'N/A')}")
 
                     # Display desktop info if available
-                    if data.get('app_id'):
+                    if data.get("app_id"):
                         print("     Desktop Information:")
                         print(f"       App ID: {data.get('app_id', 'N/A')}")
                         print(f"       Auth Code: {data.get('auth_code', 'N/A')}")
-                        print(f"       Connection Properties: {data.get('connection_properties', 'N/A')}")
+                        print(
+                            f"       Connection Properties: {data.get('connection_properties', 'N/A')}"
+                        )
                         print(f"       Resource ID: {data.get('resource_id', 'N/A')}")
-                        print(f"       Resource Type: {data.get('resource_type', 'N/A')}")
+                        print(
+                            f"       Resource Type: {data.get('resource_type', 'N/A')}"
+                        )
                         print(f"       Ticket: {data.get('ticket', 'N/A')}")
                 else:
                     print("   ⚠️  No data in result")
@@ -103,6 +107,7 @@ def test_session_info():
         except Exception as e:
             print(f"   ❌ Error testing session.info: {e}")
             import traceback
+
             traceback.print_exc()
 
         # Test 2: Test session.info with different session object
@@ -110,6 +115,7 @@ def test_session_info():
         try:
             # Create a new session object using the same session_id
             from agb.session import Session
+
             new_session = Session(agb, session_id)
 
             print("   Created new session object with same session_id")
@@ -129,11 +135,14 @@ def test_session_info():
                     data = new_info_result.data
                     print(f"     Resource URL: {data.get('resource_url', 'N/A')}")
             else:
-                print(f"   ❌ New session object failed: {new_info_result.error_message}")
+                print(
+                    f"   ❌ New session object failed: {new_info_result.error_message}"
+                )
 
         except Exception as e:
             print(f"   ❌ Error testing new session object: {e}")
             import traceback
+
             traceback.print_exc()
 
         # Test 3: Test session.info error handling
@@ -160,6 +169,7 @@ def test_session_info():
         except Exception as e:
             print(f"   ❌ Error testing error handling: {e}")
             import traceback
+
             traceback.print_exc()
 
         # Test 4: Test session.info multiple times
@@ -185,6 +195,7 @@ def test_session_info():
         except Exception as e:
             print(f"   ❌ Error testing multiple calls: {e}")
             import traceback
+
             traceback.print_exc()
 
         # Clean up: delete the test session
@@ -198,15 +209,16 @@ def test_session_info():
         except Exception as e:
             print(f"   ⚠️  Error deleting session: {e}")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("session.info method test completed!")
-        print("="*60)
+        print("=" * 60)
 
         return True
 
     except Exception as e:
         print(f"❌ Error in test: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -228,6 +240,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
         import traceback
+
         traceback.print_exc()
 
 

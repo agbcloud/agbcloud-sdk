@@ -20,7 +20,6 @@
 | 🐍 Execute Code | [Code Execution Guide](guides/code-execution.md) | [Code Examples](examples/file_system/README.md) |
 | 💾 File Operations | [File Operations Guide](guides/file-operations.md) | [File Examples](examples/file_system/README.md) |
 | ⚡ Execute Commands | [Command Execution Guide](guides/command-execution.md) | [Command Examples](examples/session_creation/README.md) |
-| ☁️ Cloud Storage Integration | [OSS Integration Guide](guides/oss-integration.md) | [OSS Examples](examples/oss_management/README.md) |
 
 ## 📚 Documentation Structure
 
@@ -30,7 +29,6 @@
 - **[code-execution.md](guides/code-execution.md)** - Code Execution Guide
 - **[command-execution.md](guides/command-execution.md)** - Command Execution Guide
 - **[file-operations.md](guides/file-operations.md)** - File Operations Guide
-- **[oss-integration.md](guides/oss-integration.md)** - OSS Cloud Storage Guide
 - **[best-practices.md](guides/best-practices.md)** - Best Practices and Troubleshooting
 
 ### API Reference (`api-reference/`)
@@ -40,7 +38,6 @@
 - **[README.md](examples/README.md)** - Examples Overview
 - **[browser/](examples/browser/README.md)** - Browser Automation Examples
 - **[file_system/](examples/file_system/README.md)** - File Operations Examples
-- **[oss_management/](examples/oss_management/README.md)** - OSS Integration Examples
 - **[session_creation/](examples/session_creation/README.md)** - Session Creation Examples
 
 ## 🚀 Quick Start

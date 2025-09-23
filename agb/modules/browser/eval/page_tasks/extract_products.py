@@ -3,31 +3,37 @@ import asyncio
 import json
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from urllib.parse import urlparse, urljoin
 import base64
 import logging
-
+from agb.modules.browser.browser import BrowserOption
+from agb import AGB
 
 from agb.modules.browser.browser_agent import ActOptions
 from agb.modules.browser.eval.page_agent import PageAgent
 
 logger = logging.getLogger(__name__)
 
+# Optional Playwright import with type annotations
+try:
+    from playwright.async_api import async_playwright
+    PLAYWRIGHT_AVAILABLE = True
+except ImportError:
+    async_playwright = None  # type: ignore
+    PLAYWRIGHT_AVAILABLE = False
+    print("Warning: Playwright not available. Browser interaction tests will be skipped.")
 
 class ProductInfo(BaseModel):
     name: str = Field(..., description="商品名")
     price: Optional[str] = Field(None, description="价格文本；可为空")
     link: str = Field(..., description="商品页的相对路径 (如 /products/item1)")
 
-
 class InspectionResult(BaseModel):
     products: List[ProductInfo] = Field(..., description="页面上的全部商品")
 
-
 def domain_of(url: str) -> str:
     return urlparse(url).netloc
-
 
 def normalize_abs_link(base_url: str, link: str) -> Optional[str]:
     link = (link or "").strip()
@@ -36,7 +42,6 @@ def normalize_abs_link(base_url: str, link: str) -> Optional[str]:
     if link.startswith("/"):
         return urljoin(base_url, link)
     return link
-
 
 def normalize_links(base_url: str, products: List[ProductInfo]) -> List[ProductInfo]:
     out: List[ProductInfo] = []
@@ -51,7 +56,6 @@ def normalize_links(base_url: str, products: List[ProductInfo]) -> List[ProductI
         )
     return out
 
-
 def is_valid_product(p: ProductInfo) -> bool:
     has_name = bool(p.name and p.name.strip())
     has_valid_link = bool(p.link and p.link.strip())
@@ -59,17 +63,14 @@ def is_valid_product(p: ProductInfo) -> bool:
 
     return has_name and (has_valid_link or has_price)
 
-
 def has_valid_products(products: List[ProductInfo], min_items: int = 2) -> bool:
     goods = [p for p in products if is_valid_product(p)]
     return len(goods) >= min_items
-
 
 async def act(agent, page, instruction: str) -> bool:
     logger.info(f"Acting: {instruction}")
     ret = await agent.act(ActOptions(action=instruction))
     return bool(getattr(ret, "success", False))
-
 
 async def take_and_save_screenshot(agent, base_url: str, out_dir: str):
     base64_screenshot = await agent.screenshot()
@@ -82,13 +83,12 @@ async def take_and_save_screenshot(agent, base_url: str, out_dir: str):
 
         logger.info(f"{base_url} -> Screenshot saved via agent: {screenshot_path}")
 
-
 async def extract_products(
     agent, page, base_url: str, out_dir: str
 ) -> List[ProductInfo]:
     data = await agent.extract(
         instruction=(
-            "请提取本页所有商品。价格可为范围（例如 $199–$299）或“from $199”。"
+            "请提取本页所有商品。价格可为范围（例如 $199–$299）或'from $199'。"
             "对于商品链接(link)，请仅返回相对路径（例如 /path/to/product），不要包含域名。"
         ),
         schema=InspectionResult,
@@ -102,9 +102,8 @@ async def extract_products(
         print(
             f"Extracted products from {base_url} but none were valid after normalization."
         )
-        return None
+        return []
     return products
-
 
 async def ensure_listing_page(
     agent, page, base_url: str, out_dir: str, max_steps: int = 3
@@ -115,7 +114,7 @@ async def ensure_listing_page(
     for i in range(max_steps):
         print(f"Extraction attempt {i+1}/{max_steps} for {base_url}...")
         products_found = await extract_products(agent, page, base_url, out_dir)
-        if products_found is not None:
+        if products_found:
             valid_count = len([p for p in products_found if is_valid_product(p)])
             print(
                 f"Extraction successful on attempt {i+1}. Found {valid_count} valid products."
@@ -132,46 +131,54 @@ async def ensure_listing_page(
     logger.info(f"All {max_steps} extraction attempts failed for {base_url}.")
     return []
 
-
 async def process_site(agent, url: str, out_dir: str = "/tmp") -> None:
-    host = domain_of(url)
+    try:
+        if not PLAYWRIGHT_AVAILABLE or async_playwright is None:
+            print("    ⚠️ Playwright not available, skipping browser API detection")
+            return  # Skip this check if Playwright unavailable
+        
+        host = domain_of(url)
+        page = None
+        async with async_playwright() as p:
+            if url in CAPTURE_DETECT_URL:
+                print(f"CAPTCHA detected on {host}, skipping.")
+                browser = await p.chromium.connect_over_cdp(url)
+                context = browser.contexts[0]
+                page = await context.new_page()
+                await page.goto(url, timeout=60000, wait_until="domcontentloaded")
+                await asyncio.sleep(40)
+            else:
+                await agent.navigate(url)
 
-    page = None
-    if url in CAPTURE_DETECT_URL:
-        print(f"CAPTCHA detected on {host}, skipping.")
-        context = browser.contexts[0]
-        page = await context.new_page()
-        await page.goto(url, timeout=60000, wait_until="domcontentloaded")
-        await asyncio.sleep(40)
-    else:
-        await agent.navigate(url)
-
-    products_from_page = await ensure_listing_page(
-        agent, page, url, out_dir, max_steps=3
-    )
-    products = [p for p in products_from_page if is_valid_product(p)]
-
-    out_path = os.path.join(out_dir, f"inspection_{host}.json")
-    os.makedirs(out_dir, exist_ok=True)
-
-    if products:
-        try:
-            with open(out_path, "w", encoding="utf-8") as f:
-                json.dump(
-                    [p.model_dump(mode="json") for p in products],
-                    f,
-                    ensure_ascii=False,
-                    indent=2,
-                )
-            priced_cnt = sum(1 for p in products if p.price)
-            logger.info(
-                f"{host} -> {len(products)} items (with price: {priced_cnt}) saved: {out_path}"
+            products_from_page = await ensure_listing_page(
+                agent, page, url, out_dir, max_steps=3
             )
-        except Exception as e:
-            logger.info(f"{host} -> save failed: {e}")
-    else:
-        logger.info(f"{host} -> no products found (name+link/price)")
+            products = [p for p in products_from_page if is_valid_product(p)]
 
+            out_path = os.path.join(out_dir, f"inspection_{host}.json")
+            os.makedirs(out_dir, exist_ok=True)
+
+            if products:
+                try:
+                    with open(out_path, "w", encoding="utf-8") as f:
+                        json.dump(
+                            [p.model_dump(mode="json") for p in products],
+                            f,
+                            ensure_ascii=False,
+                            indent=2,
+                        )
+                    priced_cnt = sum(1 for p in products if p.price)
+                    logger.info(
+                        f"{host} -> {len(products)} items (with price: {priced_cnt}) saved: {out_path}"
+                    )
+                except Exception as e:
+                    logger.info(f"{host} -> save failed: {e}")
+            else:
+                logger.info(f"{host} -> no products found (name+link/price)")
+
+    except Exception as e:
+            print(f"    ❌ Browser API detection error: {e}")
+            return
 
 SITES = [
     "https://milatech.shop/",
@@ -188,7 +195,6 @@ SITES = [
 CAPTURE_DETECT_URL = [
     "https://censlighting.com/",
 ]
-
 
 async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) -> dict:
     """

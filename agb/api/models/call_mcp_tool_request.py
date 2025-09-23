@@ -1,4 +1,4 @@
-from typing import Optional, Union, List, Dict, Any
+from typing import Any, Dict, List, Optional, Union
 
 
 class CallMcpToolRequest:
@@ -11,7 +11,7 @@ class CallMcpToolRequest:
         image_id: Optional[str] = None,
         name: Optional[str] = None,
         server: Optional[str] = None,
-        session_id: Optional[str] = None
+        session_id: Optional[str] = None,
     ):
         self.args = args
         self.authorization = authorization
@@ -28,6 +28,7 @@ class CallMcpToolRequest:
             # If args is a list or dict, convert to JSON string
             if isinstance(self.args, (list, dict)):
                 import json
+
                 body["args"] = json.dumps(self.args)
             else:
                 body["args"] = str(self.args)

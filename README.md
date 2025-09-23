@@ -6,7 +6,7 @@ AGB Python SDK provides a convenient way to interact with the AGB cloud service.
 
 - Create and manage sessions in the AGB cloud environment
 - Access session information
-- Work with file system, command execution, code execution, and OSS storage modules
+- Work with file system, command execution, and code execution modules
 - Browser automation with AI-powered natural language operations
 - Advanced browser configuration (stealth mode, proxies, fingerprinting)
 - Structured data extraction from web pages

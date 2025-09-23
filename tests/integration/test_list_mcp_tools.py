@@ -4,8 +4,8 @@
 Test code for list_mcp_tools interface
 """
 
-import sys
 import os
+import sys
 
 # Add project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -39,9 +39,9 @@ def test_list_mcp_tools():
         agb = AGB(api_key=api_key)
         print(f"✅ AGB client initialized successfully")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Testing list_mcp_tools interface...")
-        print("="*60)
+        print("=" * 60)
 
         try:
             # Import the client directly to test the interface
@@ -49,19 +49,16 @@ def test_list_mcp_tools():
             from agb.config import Config
 
             # Create config
-            cfg = Config(
-                endpoint="sdk-api.agb.cloud",
-                timeout_ms=60000
-            )
+            cfg = Config(endpoint="sdk-api.agb.cloud", timeout_ms=60000)
 
             # Create client
             client = Client(cfg)
 
             # Create request
             from agb.api.models.list_mcp_tools_request import ListMcpToolsRequest
+
             request = ListMcpToolsRequest(
-                authorization=f"Bearer {api_key}",
-                image_id="agb-code-space-1"
+                authorization=f"Bearer {api_key}", image_id="agb-code-space-1"
             )
 
             # Call list_mcp_tools
@@ -97,11 +94,13 @@ def test_list_mcp_tools():
         except Exception as e:
             print(f"   ❌ Error testing list_mcp_tools: {e}")
             import traceback
+
             traceback.print_exc()
 
     except Exception as e:
         print(f"❌ Error in test: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -119,6 +118,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
         import traceback
+
         traceback.print_exc()
 
 

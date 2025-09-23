@@ -1,8 +1,9 @@
 import json
 import os
-from typing import Any, Dict, Optional
-import dotenv
 from pathlib import Path
+from typing import Any, Dict, Optional
+
+from dotenv import load_dotenv
 
 # Browser configuration constants
 BROWSER_DATA_PATH = "/tmp/agb_browser_data"
@@ -42,7 +43,7 @@ def load_config(cfg: Optional[Config] = None) -> Config:
         config = default_config()
         try:
             env_path = Path(os.getcwd()) / ".env"
-            dotenv.load_dotenv(env_path)
+            load_dotenv(env_path)
         except:
             print("Warning: Failed to load .env file")
 

@@ -47,6 +47,9 @@ import shutil
 
 import anyio
 from PIL import Image
+# 在文件顶部的导入部分添加缺失的类型导入
+from typing import Any, Dict, List, Optional, Union, cast
+from browser_use.llm.base import BaseChatModel as BrowserUseBaseChatModel 
 
 MAX_IMAGE = 5
 
@@ -157,7 +160,7 @@ Examples of Failure Cases:
 - If the requirement is $1500-$2500, but the applied filter is $2000-$2500, it is a failure.
 - If the requirement is $25-$200, but the applied filter is $0-$200, it is a failure.
 - If the required years are 2004-2012, but the filter applied is 2001-2012, it is a failure.
-- If the required years are before 2015, but the applied filter is 2000-2014, it is a failure.
+- If the required years are before 2015, but the filter applied is 2000-2014, it is a failure.
 - If the task requires exactly 2 beds, but the filter applied is 2+ beds, it is a failure.
 5: Some tasks require a submission action or a display of results to be considered successful.
 6: If the retrieved information is invalid or empty(e.g., No match was found), but the agent has correctly performed the required action, it should still be considered successful.
@@ -288,8 +291,9 @@ from langchain_openai import ChatOpenAI
 from pydantic.types import SecretStr
 
 from browser_use import ActionResult, Agent, BrowserProfile, BrowserSession, Controller
-from browser_use.agent.memory import MemoryConfig
+from browser_use.agent.memory import MemoryConfig  # type: ignore[attr-defined]
 from browser_use.agent.views import AgentHistoryList
+
 
 SUPPORTED_MODELS = {
 	# Anthropic
@@ -483,7 +487,7 @@ def get_llm(model_name: str):
 	api_key_secret = SecretStr(api_key) if api_key else None
 	match provider:
 		case 'openai':
-			kwargs = {'model': config['model_name'], 'temperature': 0.0}
+			kwargs: Dict[str, Any] = {'model': config['model_name'], 'temperature': 0.0}
 			# Must set temperatue=1 if model is gpt-o4-mini
 			if model_name == 'gpt-o4-mini':
 				kwargs['temperature'] = 1
@@ -540,13 +544,30 @@ async def reformat_agent_history(
 	# Process history items
 	for step_num, history_item in enumerate(agent_history.history):
 		# Save screenshot
-		if history_item.state and history_item.state.screenshot:
-			screenshot_path = trajectory_with_highlights_dir / f'step_{step_num}.png'
-			screenshot_paths.append(str(screenshot_path))
-			# Save the actual screenshot
-			screenshot_data = base64.b64decode(history_item.state.screenshot)
-			async with await anyio.open_file(screenshot_path, 'wb') as f:
-				await f.write(screenshot_data)
+		if history_item.state:
+			try:
+				# Try to get screenshot using get_screenshot method
+				screenshot_data_b64 = history_item.state.get_screenshot() if hasattr(history_item.state, 'get_screenshot') else None
+				# Fallback to screenshot_path if available
+				if not screenshot_data_b64 and hasattr(history_item.state, 'screenshot_path'):
+					screenshot_path_attr = history_item.state.screenshot_path
+					if screenshot_path_attr:
+						# If screenshot_path exists, read the file
+						with open(screenshot_path_attr, 'rb') as f:
+							screenshot_data_b64 = base64.b64encode(f.read()).decode('utf-8')
+				# Final fallback to screenshot attribute if it exists
+				elif not screenshot_data_b64 and hasattr(history_item.state, 'screenshot'):
+					screenshot_data_b64 = history_item.state.get_screenshot() if hasattr(history_item.state, 'get_screenshot') else None
+				
+				if screenshot_data_b64:
+					screenshot_path = trajectory_with_highlights_dir / f'step_{step_num}.png'
+					screenshot_paths.append(str(screenshot_path))
+					# Save the actual screenshot
+					screenshot_data = base64.b64decode(screenshot_data_b64)
+					async with await anyio.open_file(screenshot_path, 'wb') as f:
+						await f.write(screenshot_data)
+			except Exception as e:
+				logger.warning(f'Failed to save screenshot for step {step_num}: {type(e).__name__}: {e}')
 
 		# Get action result content
 		if history_item.result:
@@ -593,19 +614,25 @@ async def reformat_agent_history(
 	# Calculate task duration from metadata
 	task_duration = None
 	if complete_history and len(complete_history) > 0:
-		first_step = complete_history[0].get('metadata', {})
-		last_step = complete_history[-1].get('metadata', {})
-		if first_step and last_step:
-			start_time = first_step.get('step_start_time')
-			end_time = last_step.get('step_end_time')
-			if start_time and end_time:
-				# Ensure timestamps are floats before subtracting
-				try:
-					start_time_float = float(start_time)
-					end_time_float = float(end_time)
-					task_duration = end_time_float - start_time_float
-				except (ValueError, TypeError) as e:
-					logger.warning(f'Could not calculate task duration due to invalid timestamp format: {e}')
+		first_step = complete_history[0]
+		last_step = complete_history[-1]
+		
+		# Ensure we have dict objects before calling .get()
+		if isinstance(first_step, dict) and isinstance(last_step, dict):
+			first_step_metadata = first_step.get('metadata', {})
+			last_step_metadata = last_step.get('metadata', {})
+			
+			if isinstance(first_step_metadata, dict) and isinstance(last_step_metadata, dict):
+				start_time = first_step_metadata.get('step_start_time')
+				end_time = last_step_metadata.get('step_end_time')
+				if start_time and end_time:
+					# Ensure timestamps are floats before subtracting
+					try:
+						start_time_float = float(start_time)
+						end_time_float = float(end_time)
+						task_duration = end_time_float - start_time_float
+					except (ValueError, TypeError) as e:
+						logger.warning(f'Could not calculate task duration due to invalid timestamp format: {e}')
 
 	# Create results structure with new fields
 	results = {
@@ -809,10 +836,10 @@ class TaskResult:
 
 	def __init__(self, task_id: str, run_id: str, task_description: str, task: Task, max_steps: int):
 		self.task_id = task_id
-		self.completed_stages = set()
-		self.stage_data = {}  # Store actual results from each stage
-		self.failed_stages = {}  # Store errors from failed stages
-		self.local_error = None
+		self.completed_stages: set[Stage] = set()
+		self.stage_data: dict[Stage, Any] = {}  # Store actual results from each stage
+		self.failed_stages: dict[Stage, StageError]  = {}  # Store errors from failed stages
+		self.local_error: Optional[str] = None
 
 		# Initialize server payload with defaults
 		self.server_payload = {
@@ -1011,7 +1038,11 @@ async def setup_browser_session(task: Task, headless: bool) -> BrowserSession:
 	"""Setup browser session for the task"""
 	logger.debug(f'Browser setup: Creating unique user data directory for task {task.task_id}')
 	# Create unique user data directory
-	base_user_data_dir = Path(BrowserProfile().user_data_dir).parent
+	base_user_data_dir_path = BrowserProfile().user_data_dir
+	if base_user_data_dir_path is None:
+		base_user_data_dir = Path.home() / '.browser_data'
+	else:
+		base_user_data_dir = Path(base_user_data_dir_path).parent
 	unique_user_data_dir = base_user_data_dir / f'task_{task.task_id}'
 	unique_user_data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1032,7 +1063,7 @@ async def setup_browser_session(task: Task, headless: bool) -> BrowserSession:
 	# Navigate to task starting url if provided
 	if task.website:
 		logger.debug(f'Browser setup: Navigating to {task.website} for task {task.task_id}')
-		await browser_session.navigate(task.website)
+		await browser_session.navigate_to(task.website)
 
 	logger.debug(f'Browser setup: Setup completed for task {task.task_id}')
 	return browser_session
@@ -1061,9 +1092,9 @@ async def run_agent_with_browser(
 	if enable_memory:
 		memory_config = MemoryConfig(agent_id=f'eval_agent_{task.task_id}', memory_interval=memory_interval, llm_instance=llm)
 
-	agent = Agent(
+	agent: Agent = Agent(
 		task=task.confirmed_task,
-		llm=llm,
+		llm=cast(BrowserUseBaseChatModel, llm), 
 		controller=controller,
 		browser_session=browser_session,
 		use_vision=use_vision,
@@ -1077,7 +1108,7 @@ async def run_agent_with_browser(
 	)
 
 	await agent.run(max_steps=max_steps)
-	return agent.state.history
+	return agent.history
 
 
 async def evaluate_task_result(eval_model: BaseChatModel, task_folder: Path) -> dict:
@@ -1094,7 +1125,7 @@ async def cleanup_browser_safe(browser_session: BrowserSession):
 	"""Safe browser cleanup with timeout"""
 	try:
 		logger.debug('Browser cleanup: Starting close operation for session')
-		await asyncio.wait_for(browser_session.close(), timeout=30)
+		await asyncio.wait_for(browser_session.stop(), timeout=30)
 		logger.debug('Browser cleanup: Close operation completed successfully')
 	except TimeoutError:
 		logger.warning('Browser cleanup: Timed out after 30 seconds')
@@ -1415,7 +1446,7 @@ async def run_multiple_tasks(
 	)
 
 	# Process task results and handle any exceptions returned by gather
-	processed_results = []
+	processed_results:List[Dict[str, object]] = []
 	successful_tasks = 0
 	failed_tasks = 0
 
@@ -1425,10 +1456,15 @@ async def run_multiple_tasks(
 			processed_results.append({'task_id': f'task_{i}', 'success': False, 'error': str(result)})
 			failed_tasks += 1
 		else:
-			processed_results.append(result)
-			if result.get('success', False):
-				successful_tasks += 1
+			if isinstance(result, dict):
+				processed_results.append(result)
+				if result.get('success', False):
+					successful_tasks += 1
+				else:
+					failed_tasks += 1
 			else:
+				logger.error(f'Task {i} returned unexpected result type: {type(result)}')
+				processed_results.append({'task_id': f'task_{i}', 'success': False, 'error': f'Unexpected result type: {type(result)}'})
 				failed_tasks += 1
 
 	logger.info(f'All {len(tasks_to_run)} tasks completed. Success: {successful_tasks}, Failed: {failed_tasks}')

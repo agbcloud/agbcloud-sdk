@@ -22,7 +22,6 @@ session = result.session
 session.code.run_code("print('Hello')", "python")
 session.command.execute_command("ls")
 session.file_system.read_file("/path/to/file")
-session.oss.upload_file("local.txt", "remote.txt")
 
 # Clean up
 agb.delete(session)

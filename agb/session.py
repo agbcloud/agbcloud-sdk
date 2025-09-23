@@ -4,12 +4,12 @@ from typing import TYPE_CHECKING, Dict, Optional
 from agb.api.models import (
     GetMcpResourceRequest,
 )
+from agb.exceptions import SessionError
 from agb.model.response import OperationResult
-from agb.modules.file_system import FileSystem
-from agb.modules.command import Command
-from agb.modules.code import Code
-from agb.modules.oss import Oss
 from agb.modules.browser import Browser
+from agb.modules.code import Code
+from agb.modules.command import Command
+from agb.modules.file_system import FileSystem
 
 if TYPE_CHECKING:
     from agb.agb import AGB
@@ -32,7 +32,6 @@ class BaseSession:
         self.command = Command(self)
         self.file_system = FileSystem(self)
         self.code = Code(self)
-        self.oss = Oss(self)
         self.browser = Browser(self)
 
     def get_api_key(self) -> str:
@@ -79,7 +78,7 @@ class BaseSession:
                 )
 
             # Check response type, if it's GetMcpResourceResponse, use new parsing method
-            if hasattr(response, 'is_successful'):
+            if hasattr(response, "is_successful"):
                 # This is GetMcpResourceResponse object
                 request_id = response.request_id or ""
 
@@ -91,46 +90,53 @@ class BaseSession:
                             # Extract information from resource data
                             result_data = {
                                 "session_id": resource_data.session_id,
-                                "resource_url": resource_data.resource_url
+                                "resource_url": resource_data.resource_url,
                             }
 
                             # Add desktop info if available
                             if resource_data.desktop_info:
                                 desktop_info = resource_data.desktop_info
-                                result_data.update({
-                                    "app_id": desktop_info.app_id,
-                                    "auth_code": desktop_info.auth_code,
-                                    "connection_properties": desktop_info.connection_properties,
-                                    "resource_id": desktop_info.resource_id,
-                                    "resource_type": desktop_info.resource_type,
-                                    "ticket": desktop_info.ticket
-                                })
+                                result_data.update(
+                                    {
+                                        "app_id": desktop_info.app_id,
+                                        "auth_code": desktop_info.auth_code,
+                                        "connection_properties": desktop_info.connection_properties,
+                                        "resource_id": desktop_info.resource_id,
+                                        "resource_type": desktop_info.resource_type,
+                                        "ticket": desktop_info.ticket,
+                                    }
+                                )
 
                             return OperationResult(
-                                request_id=request_id,
-                                success=True,
-                                data=result_data
+                                request_id=request_id, success=True, data=result_data
                             )
                         else:
                             return OperationResult(
                                 request_id=request_id,
                                 success=False,
-                                error_message="No resource data found in response"
+                                error_message="No resource data found in response",
                             )
 
                     except Exception as e:
                         return OperationResult(
                             request_id=request_id,
                             success=False,
-                            error_message=f"Error parsing resource data: {e}"
+                            error_message=f"Error parsing resource data: {e}",
                         )
                 else:
-                    error_msg = response.get_error_message() or "Failed to get MCP resource"
-                    return OperationResult(
-                        request_id=request_id,
-                        success=False,
-                        error_message=error_msg
+                    error_msg = (
+                        response.get_error_message() or "Failed to get MCP resource"
                     )
+                    return OperationResult(
+                        request_id=request_id, success=False, error_message=error_msg
+                    )
+            else:
+                # Handle case where response doesn't have is_successful method
+                return OperationResult(
+                    request_id="",
+                    success=False,
+                    error_message="Unsupported response type",
+                )
         except Exception as e:
             return OperationResult(
                 request_id="",
@@ -139,8 +145,8 @@ class BaseSession:
             )
 
     def get_link(
-            self, protocol_type: Optional[str] = None, port: Optional[int] = None
-        ) -> OperationResult:
+        self, protocol_type: Optional[str] = None, port: Optional[int] = None
+    ) -> OperationResult:
         """
         Get a link associated with the current session.
 
@@ -175,12 +181,14 @@ class BaseSession:
                 request_id = response.get_request_id()
 
                 if url:
-                    return OperationResult(request_id=request_id or "", success=True, data=url)
+                    return OperationResult(
+                        request_id=request_id or "", success=True, data=url
+                    )
                 else:
                     return OperationResult(
                         request_id=request_id or "",
                         success=False,
-                        error_message="No URL found in response"
+                        error_message="No URL found in response",
                     )
             else:
                 # Get error message from response
@@ -188,7 +196,7 @@ class BaseSession:
                 return OperationResult(
                     request_id=response.get_request_id() or "",
                     success=False,
-                    error_message=error_message
+                    error_message=error_message,
                 )
 
         except Exception as e:

@@ -24,9 +24,6 @@ This directory contains the complete user guide for AGB SDK, designed with a pro
   - Batch file processing
   - File system best practices
 
-- **[oss-integration.md](oss-integration.md)** - OSS Cloud Storage Guide
-  - Cloud storage upload and download
-  - Data processing pipelines
   - Backup and archival systems
 
 ### 🏗️ Management Guides
@@ -91,7 +88,6 @@ Cross-references and extended reading
 ### 🚀 Advanced Users (60 minutes)
 1. **[File Operations](file-operations.md)** - File system operations
 2. **[Command Execution](command-execution.md)** - System-level operations
-3. **[OSS Integration](oss-integration.md)** - Cloud storage integration
 4. **[Best Practices](best-practices.md)** - Production environment preparation
 
 ### 🏆 Expert Users (As needed)

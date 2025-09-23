@@ -4,8 +4,8 @@
 Simple Java code execution test
 """
 
-import sys
 import os
+import sys
 
 # Add project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -57,20 +57,20 @@ def main():
         System.out.println("Hello, World!");
     }
 }"""
-        
+
         print("Java code to execute:")
         print(java_code)
-        
+
         # Run the Java code
         code_result = result.session.code.run_code(java_code, "java", timeout_s=30)
-        
+
         if code_result.success:
             print("✅ Java code execution succeeded!")
             print(f"Output:\n{code_result.result}")
         else:
             print("❌ Java code execution failed!")
             print(f"Error: {code_result.error_message}")
-            
+
         # Clean up - delete session
         print("\nDeleting session...")
         delete_result = agb.delete(result.session)
@@ -82,6 +82,7 @@ def main():
     except Exception as e:
         print(f"❌ Error occurred: {e}")
         import traceback
+
         traceback.print_exc()
 
 

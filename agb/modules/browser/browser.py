@@ -1,14 +1,16 @@
-from typing import TYPE_CHECKING, Optional, Literal
 import asyncio
 import time
-from agb.api.models import InitBrowserRequest
-from agb.modules.browser.browser_agent import BrowserAgent
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional
+
 from agb.api.base_service import BaseService
-from agb.exceptions import BrowserError
+from agb.api.models import InitBrowserRequest
 from agb.config import BROWSER_DATA_PATH
+from agb.exceptions import BrowserError
+from agb.modules.browser.browser_agent import BrowserAgent
 
 if TYPE_CHECKING:
     from agb.session import Session
+
 
 class BrowserProxy:
     """
@@ -16,6 +18,7 @@ class BrowserProxy:
     Supports two types of proxy: custom proxy, built-in proxy.
     built-in proxy support two strategies: restricted and polling.
     """
+
     def __init__(
         self,
         proxy_type: Literal["custom", "built-in"],
@@ -23,7 +26,7 @@ class BrowserProxy:
         username: Optional[str] = None,
         password: Optional[str] = None,
         strategy: Optional[Literal["restricted", "polling"]] = None,
-        pollsize: int = 10
+        pollsize: int = 10,
     ):
         """
         Initialize a BrowserProxy.
@@ -70,14 +73,15 @@ class BrowserProxy:
             raise ValueError("strategy is required for built-in proxy type")
 
         if proxy_type == "built-in" and strategy not in ["restricted", "polling"]:
-            raise ValueError("strategy must be restricted or polling for built-in proxy type")
+            raise ValueError(
+                "strategy must be restricted or polling for built-in proxy type"
+            )
 
         if proxy_type == "built-in" and strategy == "polling" and pollsize <= 0:
             raise ValueError("pollsize must be greater than 0 for polling strategy")
+
     def to_map(self):
-        proxy_map = {
-            "type": self.type
-        }
+        proxy_map = {"type": self.type}
 
         if self.type == "custom":
             proxy_map["server"] = self.server
@@ -90,11 +94,10 @@ class BrowserProxy:
             if self.strategy == "polling":
                 proxy_map["pollsize"] = self.pollsize
 
-
         return proxy_map
 
     @classmethod
-    def from_map(cls, m: dict = None):
+    def from_map(cls, m: Optional[Dict[Any, Any]] = None):
         if not m:
             return None
 
@@ -107,21 +110,23 @@ class BrowserProxy:
                 proxy_type=proxy_type,
                 server=m.get("server"),
                 username=m.get("username"),
-                password=m.get("password")
+                password=m.get("password"),
             )
         elif proxy_type == "built-in":
             return cls(
                 proxy_type=proxy_type,
                 strategy=m.get("strategy"),
-                pollsize=m.get("pollsize", 10)
+                pollsize=m.get("pollsize", 10),
             )
         else:
             raise ValueError(f"Unsupported proxy type: {proxy_type}")
+
 
 class BrowserViewport:
     """
     Browser viewport options.
     """
+
     def __init__(self, width: int = 1920, height: int = 1080):
         self.width = width
         self.height = height
@@ -129,23 +134,31 @@ class BrowserViewport:
     def to_map(self):
         viewport_map = dict()
         if self.width is not None:
-            viewport_map['width'] = self.width
+            viewport_map["width"] = self.width
         if self.height is not None:
-            viewport_map['height'] = self.height
+            viewport_map["height"] = self.height
         return viewport_map
 
-    def from_map(self, m: dict = None):
+    @classmethod
+    def from_map(cls, m: Optional[Dict[Any, Any]] = None):
+        instance = cls()
         m = m or dict()
-        if m.get('width') is not None:
-            self.width = m.get('width')
-        if m.get('height') is not None:
-            self.height = m.get('height')
-        return self
+        if m.get("width") is not None:
+            width_val = m.get("width")
+            if isinstance(width_val, int):
+                instance.width = width_val
+        if m.get("height") is not None:
+            height_val = m.get("height")
+            if isinstance(height_val, int):
+                instance.height = height_val
+        return instance
+
 
 class BrowserScreen:
     """
     Browser screen options.
     """
+
     def __init__(self, width: int = 1920, height: int = 1080):
         self.width = width
         self.height = height
@@ -153,36 +166,44 @@ class BrowserScreen:
     def to_map(self):
         screen_map = dict()
         if self.width is not None:
-            screen_map['width'] = self.width
+            screen_map["width"] = self.width
         if self.height is not None:
-            screen_map['height'] = self.height
+            screen_map["height"] = self.height
         return screen_map
 
-    def from_map(self, m: dict = None):
+    @classmethod
+    def from_map(cls, m: Optional[Dict[Any, Any]] = None):
+        instance = cls()
         m = m or dict()
-        if m.get('width') is not None:
-            self.width = m.get('width')
-        if m.get('height') is not None:
-            self.height = m.get('height')
-        return self
+        if m.get("width") is not None:
+            width_val = m.get("width")
+            if isinstance(width_val, int):
+                instance.width = width_val
+        if m.get("height") is not None:
+            height_val = m.get("height")
+            if isinstance(height_val, int):
+                instance.height = height_val
+        return instance
+
 
 class BrowserFingerprint:
     """
     Browser fingerprint options.
     """
+
     def __init__(
         self,
-        devices: list[Literal["desktop", "mobile"]] = None,
-        operating_systems: list[Literal["windows", "macos", "linux", "android", "ios"]] = None,
-        locales: list[str] = None
+        devices: Optional[List[Literal["desktop", "mobile"]]] = None,
+        operating_systems: Optional[
+            List[Literal["windows", "macos", "linux", "android", "ios"]]
+        ] = None,
+        locales: Optional[List[str]] = None,
     ):
         self.devices = devices
         self.operating_systems = operating_systems
         self.locales = locales
 
-
         # Validation
-
 
         if devices is not None:
             if not isinstance(devices, list):
@@ -195,41 +216,59 @@ class BrowserFingerprint:
             if not isinstance(operating_systems, list):
                 raise ValueError("operating_systems must be a list")
             for operating_system in operating_systems:
-                if operating_system not in ["windows", "macos", "linux", "android", "ios"]:
-                    raise ValueError("operating_system must be windows, macos, linux, android or ios")
+                if operating_system not in [
+                    "windows",
+                    "macos",
+                    "linux",
+                    "android",
+                    "ios",
+                ]:
+                    raise ValueError(
+                        "operating_system must be windows, macos, linux, android or ios"
+                    )
 
     def to_map(self):
         fingerprint_map = dict()
         if self.devices is not None:
-            fingerprint_map['devices'] = self.devices
+            fingerprint_map["devices"] = self.devices
         if self.operating_systems is not None:
-            fingerprint_map['operatingSystems'] = self.operating_systems
+            fingerprint_map["operatingSystems"] = self.operating_systems
         if self.locales is not None:
-            fingerprint_map['locales'] = self.locales
+            fingerprint_map["locales"] = self.locales
         return fingerprint_map
 
-    def from_map(self, m: dict = None):
+    @classmethod
+    def from_map(cls, m: Optional[Dict[Any, Any]] = None):
+        instance = cls()
         m = m or dict()
-        if m.get('devices') is not None:
-            self.devices = m.get('devices')
-        if m.get('operatingSystems') is not None:
-            self.operating_systems = m.get('operatingSystems')
-        if m.get('locales') is not None:
-            self.locales = m.get('locales')
-        return self
+        if m.get("devices") is not None:
+            devices_val = m.get("devices")
+            if isinstance(devices_val, list):
+                instance.devices = devices_val
+        if m.get("operatingSystems") is not None:
+            os_val = m.get("operatingSystems")
+            if isinstance(os_val, list):
+                instance.operating_systems = os_val
+        if m.get("locales") is not None:
+            locales_val = m.get("locales")
+            if isinstance(locales_val, list):
+                instance.locales = locales_val
+        return instance
+
 
 class BrowserOption:
     """
     browser initialization options.
     """
+
     def __init__(
         self,
         use_stealth: bool = False,
-        user_agent: str = None,
-        viewport: BrowserViewport = None,
-        screen: BrowserScreen = None,
-        fingerprint: BrowserFingerprint = None,
-        proxies: Optional[list[BrowserProxy]] = None,
+        user_agent: Optional[str] = None,
+        viewport: Optional[BrowserViewport] = None,
+        screen: Optional[BrowserScreen] = None,
+        fingerprint: Optional[BrowserFingerprint] = None,
+        proxies: Optional[List[BrowserProxy]] = None,
     ):
         self.use_stealth = use_stealth
         self.user_agent = user_agent
@@ -248,51 +287,70 @@ class BrowserOption:
     def to_map(self):
         option_map = dict()
         if self.use_stealth is not None:
-            option_map['useStealth'] = self.use_stealth
+            option_map["useStealth"] = self.use_stealth
         if self.user_agent is not None:
-            option_map['userAgent'] = self.user_agent
+            option_map["userAgent"] = self.user_agent
         if self.viewport is not None:
-            option_map['viewport'] = self.viewport.to_map()
+            option_map["viewport"] = self.viewport.to_map()
         if self.screen is not None:
-            option_map['screen'] = self.screen.to_map()
+            option_map["screen"] = self.screen.to_map()
         if self.fingerprint is not None:
-            option_map['fingerprint'] = self.fingerprint.to_map()
+            option_map["fingerprint"] = self.fingerprint.to_map()
         if self.proxies is not None:
-            option_map['proxies'] = [proxy.to_map() for proxy in self.proxies]
+            option_map["proxies"] = [proxy.to_map() for proxy in self.proxies]
         return option_map
 
-    def from_map(self, m: dict = None):
+    @classmethod
+    def from_map(cls, m: Optional[Dict[Any, Any]] = None):
+        instance = cls()
         m = m or dict()
-        if m.get('useStealth') is not None:
-            self.use_stealth = m.get('useStealth')
+        if m.get("useStealth") is not None:
+            stealth_val = m.get("useStealth")
+            if isinstance(stealth_val, bool):
+                instance.use_stealth = stealth_val
         else:
-            self.use_stealth = False
-        if m.get('userAgent') is not None:
-            self.user_agent = m.get('userAgent')
-        if m.get('viewport') is not None:
-            self.viewport = BrowserViewport.from_map(m.get('viewport'))
-        if m.get('screen') is not None:
-            self.screen = BrowserScreen.from_map(m.get('screen'))
-        if m.get('fingerprint') is not None:
-            self.fingerprint = BrowserFingerprint.from_map(m.get('fingerprint'))
-        if m.get('proxies') is not None:
-            proxy_list = m.get('proxies')
-            if len(proxy_list) > 1:
-                raise ValueError("proxies list length must be limited to 1")
-            self.proxies = [BrowserProxy.from_map(proxy_data) for proxy_data in proxy_list]
-        return self
+            instance.use_stealth = False
+        if m.get("userAgent") is not None:
+            ua_val = m.get("userAgent")
+            if isinstance(ua_val, str):
+                instance.user_agent = ua_val
+        if m.get("viewport") is not None:
+            viewport_data = m.get("viewport")
+            if isinstance(viewport_data, dict):
+                instance.viewport = BrowserViewport.from_map(viewport_data)
+        if m.get("screen") is not None:
+            screen_data = m.get("screen")
+            if isinstance(screen_data, dict):
+                instance.screen = BrowserScreen.from_map(screen_data)
+        if m.get("fingerprint") is not None:
+            fingerprint_data = m.get("fingerprint")
+            if isinstance(fingerprint_data, dict):
+                instance.fingerprint = BrowserFingerprint.from_map(fingerprint_data)
+        if m.get("proxies") is not None:
+            proxy_list = m.get("proxies")
+            if isinstance(proxy_list, list) and len(proxy_list) > 0:
+                if len(proxy_list) > 1:
+                    raise ValueError("proxies list length must be limited to 1")
+                instance.proxies = [
+                    BrowserProxy.from_map(proxy_data)
+                    for proxy_data in proxy_list
+                    if isinstance(proxy_data, dict)
+                ]
+        return instance
+
 
 class Browser(BaseService):
     """
     Browser provides browser-related operations for the session.
     """
+
     def __init__(self, session: "Session"):
         self.session = session
-        self._endpoint_url = None
+        self._endpoint_url: Optional[str] = None
         self._initialized = False
-        self._option = None
+        self._option: Optional[BrowserOption] = None
         self.agent = BrowserAgent(self.session, self)
-        self.endpoint_router_port = None
+        self.endpoint_router_port: Optional[int] = None
 
     def initialize(self, option: "BrowserOption") -> bool:
         """
@@ -311,8 +369,6 @@ class Browser(BaseService):
 
             # Use the new HTTP client implementation
             response = self.session.get_client().init_browser(request)
-
-            print(f"Response from init_browser: {response}")
 
             # Check if response is successful
             if response.is_successful():
@@ -353,7 +409,6 @@ class Browser(BaseService):
                 browser_option=option.to_map(),
             )
             response = await self.session.get_client().init_browser_async(request)
-            print(f"Response from init_browser: {response}")
 
             # Check if response is successful
             if response.is_successful():
@@ -394,7 +449,9 @@ class Browser(BaseService):
         When initialized, always fetches the latest CDP url from session.get_link().
         """
         if not self.is_initialized():
-            raise BrowserError("Browser is not initialized. Cannot access endpoint URL.")
+            raise BrowserError(
+                "Browser is not initialized. Cannot access endpoint URL."
+            )
         try:
             # Get CDP URL from session
             cdp_url_result = self.session.get_link()
@@ -402,7 +459,9 @@ class Browser(BaseService):
                 self._endpoint_url = cdp_url_result.data
                 return self._endpoint_url
             else:
-                raise BrowserError(f"Failed to get CDP URL: {cdp_url_result.error_message}")
+                raise BrowserError(
+                    f"Failed to get CDP URL: {cdp_url_result.error_message}"
+                )
         except Exception as e:
             raise BrowserError(f"Failed to get endpoint URL from session: {e}")
 

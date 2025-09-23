@@ -1,0 +1,218 @@
+# AGB Python SDK CI/CD Pipeline
+name: "AGB SDK Quality Assurance"
+
+triggers:
+  merge_request:
+    target-branches:
+    - "**"
+    types:
+    - "opened"
+  push:
+    branches:
+    - "master"
+    - "release_v*"
+
+traits:
+- type: "notification"
+  properties:
+    types:
+    - "dingtalk"
+    when:
+    - "fail"
+    users:
+    - "68125"  # 替换为实际用户ID
+    - "187788"  # 替换为实际用户ID
+    webhooks:
+    - "https://oapi.dingtalk.com/robot/send?access_token=eea6bd5473a4542870d3a33ebd678b8ba214f2f99a756ce04db1c3da8ba32280"
+    dingtalkGroupIds:
+    - "cid4XzFY99C8o2VZU/LaPj6BA=="
+
+params:
+  python_enabled:
+    name: 启用Python代码扫描
+    type: boolean
+    default: true
+  python_version:
+    name: Python版本
+    type: string
+    default: "3.10"
+  security_scan_enabled:
+    name: 启用安全扫描
+    type: boolean
+    default: true
+  unit_test_enabled:
+    name: 启用单元测试
+    type: boolean
+    default: false
+  format_code_enabled:
+    name: 启用代码格式检查
+    type: boolean
+    default: true
+  compare_to:
+    name: 对比目标
+    description: "默认在PUSH场景下为前一个提交，CR场景下为目标分支"
+    type: string
+    advanced: true
+    default: "${{(git.merge_request != null ? git.merge_request.targetBranch : (git.push != null ? git.push.beforeSha256 : params.before_commit_id)) ?: git.defaultBranch}}"
+  runs_on_resources:
+    name: 资源规格
+    description: "运行时容器资源规格"
+    default: "4-16Gi"
+    options:
+      - "4-16Gi"
+      - "8-32Gi"
+      - "16-64Gi"
+
+jobs:
+  setup:
+    name: "环境准备"
+    runs-on:
+      - "${{params.runs_on_resources}}"
+    outputs:
+      python_code: '${{steps.cloc.outputs.Python_code ?: "0"}}'
+      python_code_inc: '${{steps.cloc.outputs.Python_added_code ?: "0"}}'
+    image: alios-8u
+    steps:
+      - uses: checkout
+      - uses: cloc
+        id: cloc
+        continue-on-error: false
+        inputs:
+          compare_to: "${{params.compare_to}}"
+          write_outputs: true
+      - uses: setup-env
+        inputs:
+          python-version: "${{params.python_version}}"
+
+
+
+  code-quality-scan:
+    name: "代码质量扫描"
+    needs: ["setup"]
+    when: "${{params.python_enabled}}"
+    timeout: "30m"
+    runs-on:
+      - "${{params.runs_on_resources}}"
+    steps:
+      - uses: checkout
+      - uses: setup-env
+        inputs:
+          python-version: "${{params.python_version}}"
+
+
+      # 代码格式检查
+      - id: format-check
+        when: "${{params.format_code_enabled}}"
+        continue-on-error: true
+        run: |
+          echo "检查代码格式，不修改文件..."
+          python -m pip install --upgrade pip
+          pip install black && black agb tests --exclude "agb/modules/browser/eval" --check --diff
+          pip install isort && isort --check-only --diff --verbose agb tests --skip agb/modules/browser/eval
+          echo "格式检查完成"
+
+      # 代码质量检查
+      - id: lint-check
+        run: |
+          echo "执行代码质量检查..."
+          python -m pip install --upgrade pip
+          pip install flake8 && flake8 agb tests --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=agb/modules/browser/eval
+          echo "质量检查完成"
+
+      # 类型检查
+      - id: type-check
+        continue-on-error: false
+        run: |
+          echo "执行类型检查..."
+          python -m pip install --upgrade pip
+          pip install mypy
+          pip install types-requests types-aiohttp types-Pillow types-setuptools types-pydantic || true
+          mypy agb --install-types --no-error-summary --exclude 'agb/modules/browser/eval' --install-types --non-interactive
+          echo "类型检查完成"
+
+  security-scan:
+    name: "安全扫描"
+    needs: ["setup"]
+    when: "${{params.security_scan_enabled}}"
+    timeout: "20m"
+    runs-on:
+      - "${{params.runs_on_resources}}"
+    steps:
+      - uses: checkout
+      - uses: setup-env
+        inputs:
+          python-version: "${{params.python_version}}"
+
+
+      # Bandit安全扫描
+      - id: bandit-scan
+        continue-on-error: false
+        run: |
+          echo "执行Bandit安全扫描..."
+          python -m pip install --upgrade pip
+          pip install bandit
+          python -m bandit -r agb/ -v --skip B105,B106,B107 --exclude agb/modules/browser/eval
+          echo "Bandit扫描完成"
+
+      # Running security scans
+      - id: pip-audit-scan
+        continue-on-error: false
+        run: |
+          echo "执行pip-audit依赖漏洞扫描..."
+          python -m pip install --upgrade pip
+          pip install pip-audit
+          pip-audit --desc
+          echo "依赖漏洞扫描完成"
+
+  # 单元测试（暂时注释，待添加测试用例后启用）
+  # unit-tests:
+  #   name: "单元测试"
+  #   needs: ["setup"]
+  #   when: "${{params.unit_test_enabled && #number(jobs.setup.outputs.python_code) > 0}}"
+  #   timeout: "20m"
+  #   runs-on:
+  #     - "${{params.runs_on_resources}}"
+  #   steps:
+  #     - uses: checkout
+  #     - uses: setup-env
+  #       inputs:
+  #         python-version: "${{params.python_version}}"
+  #
+  #     - id: install-deps
+  #       run: |
+  #         echo "安装测试依赖..."
+  #         pip install -e .[test]
+  #         echo "依赖安装完成"
+  #
+  #     - id: run-tests
+  #       run: |
+  #         echo "执行单元测试..."
+  #         pytest tests/ -v --cov=agb --cov-report=term-missing --cov-report=xml:coverage.xml --cov-report=html:htmlcov/
+  #         echo "单元测试完成"
+  #
+  #     - uses: upload-artifact
+  #       inputs:
+  #         retention-days: 30
+  #         path: |
+  #           coverage.xml
+  #           htmlcov/**/*
+  #           .coverage
+
+  summary:
+    name: "质量检查总结"
+    needs: ["code-quality-scan", "security-scan"]
+    runs-on:
+      - "4-16Gi"
+    steps:
+      - id: generate-summary
+        run: |
+          echo "=========================================="
+          echo "         AGB SDK 质量检查完成"
+          echo "=========================================="
+          echo "✅ 代码质量扫描: 已完成"
+          echo "✅ 安全扫描: 已完成"
+
+          echo "📝 单元测试: 待添加测试用例后启用"
+          echo "=========================================="
+          echo "请查看各个任务的详细报告获取更多信息"
+          echo "=========================================="

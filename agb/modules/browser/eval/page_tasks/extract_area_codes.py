@@ -1,6 +1,6 @@
 import logging
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from typing import List, Dict, Any, cast
 from agb.modules.browser.eval.page_agent import PageAgent
 
 class Center(BaseModel):
@@ -9,11 +9,9 @@ class Center(BaseModel):
     )
     code: str = Field(..., description="The area code for the Primary Center.")
 
-
 class Zone(BaseModel):
     name: str = Field(..., description="The name of the Zone.")
     center: List[Center]
-
 
 class AreaCodeData(BaseModel):
     zone: List[Zone]
@@ -109,7 +107,7 @@ EXPECTED_DATA = {
     ]
 }
 
-def validate_zone_centers(extracted_centers: List[Dict], expected_centers: List[Dict], zone_name: str) -> tuple[bool, str]:
+def validate_zone_centers(extracted_centers: List[Dict[str, Any]], expected_centers: List[Dict[str, Any]], zone_name: str) -> tuple[bool, str]:
     """
     Validate all the centers in a zone
     """
@@ -159,6 +157,7 @@ def validate_extracted_data(extracted_data: Dict[str, Any]) -> tuple[bool, str]:
 
     # Validate centers in each zone
     for zone_name, expected_zone in expected_zone_dict.items():
+        zone_name = cast(str, zone_name)
         if zone_name not in extracted_zone_dict:
             return False, f"Missing zone: {zone_name}"
 
@@ -167,15 +166,14 @@ def validate_extracted_data(extracted_data: Dict[str, Any]) -> tuple[bool, str]:
             return False, f"Zone '{zone_name}' is missing 'center' field"
 
         success, error_msg = validate_zone_centers(
-            extracted_zone["center"],
-            expected_zone["center"],
+            cast(List[Dict[str, Any]], extracted_zone["center"]),
+            cast(List[Dict[str, Any]], expected_zone["center"]),
             zone_name
         )
         if not success:
             return False, error_msg
 
     return True, "Validation passed"
-
 
 async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) -> dict:
     await agent.goto(
@@ -190,7 +188,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
         "and the name of their corresponding Zone."
     )
 
-    extracted_data: AreaCodeData = await agent.extract(
+    extracted_data = await agent.extract(
         instruction=instruction,
         schema=AreaCodeData,
         use_text_extract=use_text_extract,

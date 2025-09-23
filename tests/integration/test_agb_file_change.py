@@ -1,4 +1,5 @@
 import os
+
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -25,29 +26,35 @@ def test_get_file_change():
     # Initialize AGB client
     api_key = get_api_key()
     agb = AGB(api_key=api_key)
-    
+
     # Create session with specified ImageId
     session_params = CreateSessionParams(image_id="agb-code-space-1")
     session_result = agb.create(session_params)
-    
+
     if not session_result.success:
         print(f"Failed to create session: {session_result.error_message}")
         return
-    
+
     session = session_result.session
     print(f"Session created successfully with ID: {session.session_id}")
-    
+
     try:
         # Create the test directory
         create_dir_result = session.file_system.create_directory("/tmp/test")
         print(f"Create directory result: {create_dir_result.success}")
-        
+
         # Write initial file content
-        initial_content = "This is the initial content of the test file.\nLine 2 of initial content."
-        write_result = session.file_system.write_file("/tmp/test/test_file.txt", initial_content)
+        initial_content = (
+            "This is the initial content of the test file.\nLine 2 of initial content."
+        )
+        write_result = session.file_system.write_file(
+            "/tmp/test/test_file.txt", initial_content
+        )
         print(f"Write file result: {write_result.success}")
-        assert write_result.success, f"Failed to write file: {write_result.error_message}"
-        
+        assert (
+            write_result.success
+        ), f"Failed to write file: {write_result.error_message}"
+
         # Call _get_file_change for the first time (initial state)
         first_change_result = session.file_system._get_file_change("/tmp/test")
         print(f"First get_file_change result: {first_change_result}")
@@ -59,13 +66,17 @@ def test_get_file_change():
             for event in first_change_result.events:
                 print(f"  - {event}")
         print(f"First change raw data: {first_change_result.raw_data}")
-        
+
         # Modify the file
         modified_content = "This is the MODIFIED content of the test file.\nLine 2 has been changed.\nAdded a new line 3."
-        modify_result = session.file_system.write_file("/tmp/test/test_file.txt", modified_content)
+        modify_result = session.file_system.write_file(
+            "/tmp/test/test_file.txt", modified_content
+        )
         print(f"Modify file result: {modify_result.success}")
-        assert modify_result.success, f"Failed to modify file: {modify_result.error_message}"
-        
+        assert (
+            modify_result.success
+        ), f"Failed to modify file: {modify_result.error_message}"
+
         # Call _get_file_change for the second time (after modification)
         second_change_result = session.file_system._get_file_change("/tmp/test")
         print(f"Second get_file_change result: {second_change_result}")
@@ -77,7 +88,7 @@ def test_get_file_change():
             for event in second_change_result.events:
                 print(f"  - {event}")
         print(f"Second change raw data: {second_change_result.raw_data}")
-        
+
         # Analyze specific change types
         modified_files = second_change_result.get_modified_files()
         created_files = second_change_result.get_created_files()
@@ -85,7 +96,7 @@ def test_get_file_change():
         print(f"Modified files: {modified_files}")
         print(f"Created files: {created_files}")
         print(f"Deleted files: {deleted_files}")
-        
+
         # Compare the results
         print("\n=== COMPARISON ===")
         print("First call result:")
@@ -94,8 +105,10 @@ def test_get_file_change():
         print("\nSecond call result:")
         print(f"  Events: {len(second_change_result.events)}")
         print(f"  Has changes: {second_change_result.has_changes()}")
-        print(f"  Event details: {[str(event) for event in second_change_result.events]}")
-            
+        print(
+            f"  Event details: {[str(event) for event in second_change_result.events]}"
+        )
+
     finally:
         # Clean up
         delete_result = agb.delete(session)
@@ -106,4 +119,4 @@ def test_get_file_change():
 
 
 if __name__ == "__main__":
-    test_get_file_change() 
+    test_get_file_change()

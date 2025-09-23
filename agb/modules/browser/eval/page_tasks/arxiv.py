@@ -3,19 +3,16 @@ from pydantic import BaseModel, Field, HttpUrl
 from typing import List, Dict, Any, Optional
 from agb.modules.browser.eval.page_agent import PageAgent
 
-
 class PaperLink(BaseModel):
     title: str = Field(..., description="The title of the paper.")
     link: Optional[HttpUrl] = Field(
         ..., description="The direct link (URL) to the paper's page."
     )
 
-
 class PaperLinkList(BaseModel):
     papers: List[PaperLink] = Field(
         ..., description="A list of papers found on the search results page."
     )
-
 
 class PaperDetails(BaseModel):
     category: str = Field(
@@ -38,7 +35,6 @@ class PaperDetails(BaseModel):
     #     None, description="The link to the code repository, if provided."
     # )
 
-
 async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) -> dict:
     """
     Tests a complex workflow: search, extract links, loop through links,
@@ -54,7 +50,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
     extract_method = config.get("extract_method", "domExtract")
     use_text_extract = extract_method == "textExtract"
 
-    link_results: PaperLinkList = await agent.extract(
+    link_results = await agent.extract(
         instruction="extract the titles and links for two papers",
         schema=PaperLinkList,
         use_text_extract=use_text_extract,
@@ -74,7 +70,7 @@ async def run(agent: PageAgent, logger: logging.Logger, config: Dict[str, Any]) 
 
         await agent.goto(url=str(paper_link.link))
 
-        details: PaperDetails = await agent.extract(
+        details = await agent.extract(
             instruction="extract details of the paper from the abstract",
             schema=PaperDetails,
             use_text_extract=use_text_extract,

@@ -4,14 +4,15 @@
 AGB command execution test code
 """
 
-import sys
 import os
+import sys
 
 # Add project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Direct import, completely bypass __init__.py
 import importlib.util
+
 from agb.agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -46,9 +47,7 @@ def test_create_session():
         print("\nCreating session...")
 
         # Call create() method without passing any parameters
-        params = CreateSessionParams(
-            image_id="agb-code-space-1"
-        )
+        params = CreateSessionParams(image_id="agb-code-space-1")
         result = agb.create(params)
 
         # Check result
@@ -56,9 +55,9 @@ def test_create_session():
             print("✅ Session created successfully!")
             print(f"   Request ID: {result.request_id}")
             print(f"   Session ID: {result.session.session_id}")
-            if hasattr(result.session, 'resource_url') and result.session.resource_url:
+            if hasattr(result.session, "resource_url") and result.session.resource_url:
                 print(f"   Resource URL: {result.session.resource_url}")
-            if hasattr(result.session, 'image_id') and result.session.image_id:
+            if hasattr(result.session, "image_id") and result.session.image_id:
                 print(f"   Image ID: {result.session.image_id}")
         else:
             print("❌ Session creation failed!")
@@ -71,6 +70,7 @@ def test_create_session():
     except Exception as e:
         print(f"❌ Error occurred during test: {e}")
         import traceback
+
         traceback.print_exc()
         return None, None
 
@@ -86,10 +86,10 @@ def test_command_execution(session):
         print("1. Testing system information commands...")
         commands = [
             "uname -a",  # System information
-            "whoami",    # Current user
-            "pwd",       # Current directory
-            "ls -la",    # List files
-            "date",      # Current time
+            "whoami",  # Current user
+            "pwd",  # Current directory
+            "ls -la",  # List files
+            "date",  # Current time
         ]
 
         for cmd in commands:
@@ -197,6 +197,7 @@ def test_command_execution(session):
     except Exception as e:
         print(f"❌ Error occurred during command execution test: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -219,7 +220,7 @@ def main():
         print("Do you want to delete the created session? (y/n): ", end="")
         try:
             choice = input().strip().lower()
-            if choice in ['y', 'yes']:
+            if choice in ["y", "yes"]:
                 print("Deleting session...")
                 delete_result = agb.delete(result.session)
                 print("delete_result =", delete_result)

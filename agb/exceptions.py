@@ -44,13 +44,6 @@ class SessionError(AGBError):
         super().__init__(message, *args, **kwargs)
 
 
-class OssError(AGBError):
-    """Raised for errors related to OSS operations."""
-
-    def __init__(self, message="OSS operation error", *args, **kwargs):
-        super().__init__(message, *args, **kwargs)
-
-
 class ApplicationError(AGBError):
     """Raised for errors related to application operations."""
 

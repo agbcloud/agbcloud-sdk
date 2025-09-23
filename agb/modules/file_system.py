@@ -1,8 +1,8 @@
-from typing import Any, Dict, List, Optional, Union, Callable
 import json
-import time
 import threading
+import time
 from collections import defaultdict
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from agb.api.base_service import BaseService
 from agb.model.response import ApiResponse, BoolResult
@@ -252,12 +252,14 @@ class FileChangeResult(ApiResponse):
         ]
 
     def __repr__(self):
-        return f"FileChangeResult(success={self.success}, events_count={len(self.events)})"
+        return (
+            f"FileChangeResult(success={self.success}, events_count={len(self.events)})"
+        )
 
 
 class FileSystem(BaseService):
     """
-    Handles file operations in the AGB cloud environment.
+    FileSystem provides file system operations for the session.
     """
 
     # Default chunk size is 50KB
@@ -338,28 +340,30 @@ class FileSystem(BaseService):
             FileInfoResult: Result object containing file info and error message if any.
         """
 
-        def parse_file_info(file_info_str: str) -> dict:
+        def parse_file_info(file_info_str: str) -> Dict[str, Any]:
             """
-            Parse a file info string into a dictionary.
+            Parse file info string into a dictionary.
 
             Args:
-                file_info_str (str): The file info string to parse.
+                file_info_str (str): File info string in format:
+                    "key1: value1\nkey2: value2\n..."
 
             Returns:
-                dict: A dictionary containing the parsed file info.
+                Dict[str, Any]: Dictionary containing parsed file information.
             """
-            result = {}
+            result: Dict[str, Any] = {}
             lines = file_info_str.split("\n")
             for line in lines:
                 if ":" in line:
-                    key, value = line.split(":", 1)
+                    key, value_str = line.split(":", 1)
                     key = key.strip()
-                    value = value.strip()
+                    value_str = value_str.strip()
 
                     # Convert boolean values
-                    if value.lower() == "true":
+                    value: Any = value_str
+                    if value_str.lower() == "true":
                         value = True
-                    elif value.lower() == "false":
+                    elif value_str.lower() == "false":
                         value = False
 
                     # Convert numeric values
@@ -442,7 +446,7 @@ class FileSystem(BaseService):
                         {"name": "test.txt", "isDirectory": False}
                     ]
             """
-            result = []
+            result: List[Dict[str, Union[str, bool]]] = []
             lines = text.split("\n")
 
             for line in lines:
@@ -450,7 +454,7 @@ class FileSystem(BaseService):
                 if line == "":
                     continue
 
-                entry_map = {}
+                entry_map: Dict[str, Union[str, bool]] = {}
                 if line.startswith("[DIR]"):
                     entry_map["isDirectory"] = True
                     entry_map["name"] = line.replace("[DIR]", "").strip()
@@ -541,7 +545,7 @@ class FileSystem(BaseService):
             FileContentResult: Result object containing file content and error message
                 if any.
         """
-        args = {"path": path}
+        args: Dict[str, Union[str, int]] = {"path": path}
         if offset > 0:
             args["offset"] = offset
         if length > 0:
@@ -604,7 +608,7 @@ class FileSystem(BaseService):
         args = {"path": path, "content": content, "mode": mode}
         try:
             result = self._call_mcp_tool("write_file", args)
-            print(f"Response from CallMcpTool - write_file: {result}")
+            print("Response from CallMcpTool - write_file:", result)
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -622,7 +626,7 @@ class FileSystem(BaseService):
 
     def read_file(self, path: str) -> FileContentResult:
         """
-        Read the contents of a file. Automatically handles large files by chunking.
+        Read the contents of a file.
 
         Args:
             path: The path of the file to read.
@@ -719,7 +723,7 @@ class FileSystem(BaseService):
 
         try:
             # Write the first chunk (creates or overwrites the file)
-            first_chunk = content[:self.DEFAULT_CHUNK_SIZE]
+            first_chunk = content[: self.DEFAULT_CHUNK_SIZE]
             result = self._write_file_chunk(path, first_chunk, mode)
             if not result.success:
                 return result
@@ -768,7 +772,7 @@ class FileSystem(BaseService):
             Returns:
                 Dict[str, str]: A dictionary mapping file paths to their content.
             """
-            result = {}
+            result: Dict[str, str] = {}
             if not text:
                 return result
 
@@ -862,7 +866,8 @@ class FileSystem(BaseService):
             FileSearchResult: Result object containing matching file paths and error
                 message if any.
         """
-        args = {"path": path, "pattern": pattern}
+
+        args: Dict[str, Any] = {"path": path, "pattern": pattern}
         if exclude_patterns:
             args["excludePatterns"] = exclude_patterns
 
@@ -872,7 +877,11 @@ class FileSystem(BaseService):
 
             if result.success:
                 # Handle "No matches found" case
-                if result.data and result.data.strip() and result.data.strip() != "No matches found":
+                if (
+                    result.data
+                    and result.data.strip()
+                    and result.data.strip() != "No matches found"
+                ):
                     matching_files = result.data.strip().split("\n")
                 else:
                     matching_files = []
@@ -932,7 +941,7 @@ class FileSystem(BaseService):
                 print(f"Raw data: {raw_data}")
             except Exception as e:
                 print(f"Warning: Unexpected error parsing file change data: {e}")
-            
+
             return events
 
         args = {"path": path}
@@ -961,7 +970,7 @@ class FileSystem(BaseService):
                 return FileChangeResult(
                     request_id=result.request_id,
                     success=False,
-                    raw_data=getattr(result, 'data', ''),
+                    raw_data=getattr(result, "data", ""),
                     error_message=result.error_message or "Failed to get file change",
                 )
         except Exception as e:
@@ -998,52 +1007,48 @@ class FileSystem(BaseService):
             """Internal function to monitor directory changes."""
             print(f"Starting directory monitoring for: {path}")
             print(f"Polling interval: {interval} seconds")
-            
+
             while not stop_event.is_set():
                 try:
                     # Get current file changes
                     result = self._get_file_change(path)
-                    
+
                     if result.success:
                         current_events = result.events
-                        
+
                         # Always call callback with current events (no deduplication)
                         print(f"Detected {len(current_events)} file changes:")
                         for event in current_events:
                             print(f"  - {event}")
-                        
+
                         try:
                             callback(current_events)
                         except Exception as e:
                             print(f"Error in callback function: {e}")
-                    
+
                     else:
                         print(f"Error monitoring directory: {result.error_message}")
-                    
+
                     # Wait for the next poll
                     stop_event.wait(interval)
-                    
+
                 except Exception as e:
                     print(f"Unexpected error in directory monitoring: {e}")
                     stop_event.wait(interval)
-            
+
             print(f"Stopped monitoring directory: {path}")
 
         # Create stop event if not provided
         if stop_event is None:
             stop_event = threading.Event()
-        
+
         # Create and configure the monitoring thread
         monitor_thread = threading.Thread(
             target=_monitor_directory,
             name=f"DirectoryWatcher-{path.replace('/', '_')}",
-            daemon=True
+            daemon=True,
         )
-        
+
         # Add stop_event as an attribute to the thread for easy access
-        monitor_thread.stop_event = stop_event
-        
+        setattr(monitor_thread, "stop_event", stop_event)
         return monitor_thread
-
-
-

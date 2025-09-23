@@ -5,21 +5,30 @@ AGB browser module test code
 Tests browser initialization, configuration, and management functionality
 """
 
-import sys
-import os
-import time
 import asyncio
+import os
+import sys
+import time
 
 # Add project root directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 # Direct import, completely bypass __init__.py
 import importlib.util
 import traceback
+
 from agb.agb import AGB
-from agb.session_params import CreateSessionParams
 from agb.config import Config
-from agb.modules.browser.browser import BrowserOption, BrowserProxy, BrowserViewport, BrowserScreen, BrowserFingerprint
+from agb.modules.browser.browser import (
+    BrowserFingerprint,
+    BrowserOption,
+    BrowserProxy,
+    BrowserScreen,
+    BrowserViewport,
+)
+from agb.session_params import CreateSessionParams
 
 
 def get_api_key():
@@ -44,8 +53,7 @@ def test_create_session():
         print("Initializing AGB client...")
 
         config = Config(
-            endpoint=os.getenv("AGB_ENDPOINT", "sdk-api.agb.cloud"),
-            timeout_ms=60000
+            endpoint=os.getenv("AGB_ENDPOINT", "sdk-api.agb.cloud"), timeout_ms=60000
         )
 
         # Create AGB instance
@@ -56,9 +64,7 @@ def test_create_session():
 
         print("\nCreating session...")
 
-        params = CreateSessionParams(
-            image_id="agb-browser-use-1"
-        )
+        params = CreateSessionParams(image_id="agb-browser-use-1")
 
         # Record session creation start time
         create_start_time = time.time()
@@ -76,9 +82,9 @@ def test_create_session():
             print("✅ Session created successfully!")
             print(f"   Request ID: {result.request_id}")
             print(f"   Session ID: {result.session.session_id}")
-            if hasattr(result.session, 'resource_url') and result.session.resource_url:
+            if hasattr(result.session, "resource_url") and result.session.resource_url:
                 print(f"   Resource URL: {result.session.resource_url}")
-            if hasattr(result.session, 'image_id') and result.session.image_id:
+            if hasattr(result.session, "image_id") and result.session.image_id:
                 print(f"   Image ID: {result.session.image_id}")
         else:
             print("❌ Session creation failed!")
@@ -107,7 +113,7 @@ def test_browser_proxy_configuration():
             proxy_type="custom",
             server="127.0.0.1:8080",
             username="user",
-            password="pass"
+            password="pass",
         )
 
         proxy_map = custom_proxy.to_map()
@@ -121,9 +127,7 @@ def test_browser_proxy_configuration():
         # Test built-in proxy with polling strategy
         print("\n2. Testing built-in proxy with polling strategy...")
         builtin_polling_proxy = BrowserProxy(
-            proxy_type="built-in",
-            strategy="polling",
-            pollsize=15
+            proxy_type="built-in", strategy="polling", pollsize=15
         )
 
         builtin_map = builtin_polling_proxy.to_map()
@@ -136,8 +140,7 @@ def test_browser_proxy_configuration():
         # Test built-in proxy with restricted strategy
         print("\n3. Testing built-in proxy with restricted strategy...")
         builtin_restricted_proxy = BrowserProxy(
-            proxy_type="built-in",
-            strategy="restricted"
+            proxy_type="built-in", strategy="restricted"
         )
 
         restricted_map = builtin_restricted_proxy.to_map()
@@ -169,7 +172,9 @@ def test_browser_proxy_configuration():
 
         try:
             builtin_without_strategy = BrowserProxy(proxy_type="built-in")
-            print("❌ Should have raised ValueError for built-in proxy without strategy")
+            print(
+                "❌ Should have raised ValueError for built-in proxy without strategy"
+            )
         except ValueError as e:
             print(f"✅ Correctly caught validation error: {e}")
 
@@ -242,7 +247,7 @@ def test_browser_fingerprint():
         fingerprint = BrowserFingerprint(
             devices=["desktop", "mobile"],
             operating_systems=["windows", "macos", "linux"],
-            locales=["en-US", "zh-CN", "ja-JP"]
+            locales=["en-US", "zh-CN", "ja-JP"],
         )
 
         fingerprint_map = fingerprint.to_map()
@@ -294,7 +299,7 @@ def test_browser_option():
         print("1. Testing basic browser option...")
         basic_option = BrowserOption(
             use_stealth=True,
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         )
 
         basic_map = basic_option.to_map()
@@ -315,17 +320,25 @@ def test_browser_option():
             viewport=viewport,
             screen=BrowserScreen(width=1920, height=1080),
             fingerprint=fingerprint,
-            proxies=[proxy]
+            proxies=[proxy],
         )
 
         complex_map = complex_option.to_map()
         print(f"✅ Complex option created successfully!")
         print(f"   Use Stealth: {complex_option.use_stealth}")
         print(f"   User Agent: {complex_option.user_agent}")
-        print(f"   Viewport: {complex_option.viewport.to_map() if complex_option.viewport else None}")
-        print(f"   Screen: {complex_option.screen.to_map() if complex_option.screen else None}")
-        print(f"   Fingerprint: {complex_option.fingerprint.to_map() if complex_option.fingerprint else None}")
-        print(f"   Proxies: {[p.to_map() for p in complex_option.proxies] if complex_option.proxies else None}")
+        print(
+            f"   Viewport: {complex_option.viewport.to_map() if complex_option.viewport else None}"
+        )
+        print(
+            f"   Screen: {complex_option.screen.to_map() if complex_option.screen else None}"
+        )
+        print(
+            f"   Fingerprint: {complex_option.fingerprint.to_map() if complex_option.fingerprint else None}"
+        )
+        print(
+            f"   Proxies: {[p.to_map() for p in complex_option.proxies] if complex_option.proxies else None}"
+        )
         print(f"   Map: {complex_map}")
 
         # Test from_map method
@@ -363,7 +376,7 @@ def test_browser_initialization(session):
         browser_option = BrowserOption(
             use_stealth=True,
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            viewport=BrowserViewport(width=1366, height=768)
+            viewport=BrowserViewport(width=1366, height=768),
         )
 
         print(f"✅ Browser option created successfully!")
@@ -390,7 +403,9 @@ def test_browser_initialization(session):
             print("✅ Browser initialized successfully!")
             print(f"   Endpoint Router Port: {browser.endpoint_router_port}")
             print(f"   Is Initialized: {browser.is_initialized()}")
-            print(f"   Option: {browser.get_option().to_map() if browser.get_option() else None}")
+            print(
+                f"   Option: {browser.get_option().to_map() if browser.get_option() else None}"
+            )
 
             # Test endpoint URL generation
             try:
@@ -422,7 +437,7 @@ async def test_browser_async_initialization(session):
         browser_option = BrowserOption(
             use_stealth=False,
             user_agent="Async Test User Agent",
-            viewport=BrowserViewport(width=1920, height=1080)
+            viewport=BrowserViewport(width=1920, height=1080),
         )
 
         print(f"✅ Browser option created successfully!")
@@ -449,7 +464,9 @@ async def test_browser_async_initialization(session):
             print("✅ Async browser initialization successful!")
             print(f"   Endpoint Router Port: {browser.endpoint_router_port}")
             print(f"   Is Initialized: {browser.is_initialized()}")
-            print(f"   Option: {browser.get_option().to_map() if browser.get_option() else None}")
+            print(
+                f"   Option: {browser.get_option().to_map() if browser.get_option() else None}"
+            )
 
             # Test endpoint URL generation
             try:
@@ -551,12 +568,12 @@ async def main():
 
         result, agb, create_duration = test_create_session()
         if result and result.success:
-            test_results['session_creation'] = True
-            test_results['create_duration'] = create_duration
+            test_results["session_creation"] = True
+            test_results["create_duration"] = create_duration
             session = result.session
             print("✅ Session creation test passed!")
         else:
-            test_results['session_creation'] = False
+            test_results["session_creation"] = False
             print("❌ Session creation test failed!")
             return 1
 
@@ -566,7 +583,7 @@ async def main():
         print("=" * 60)
 
         proxy_success = test_browser_proxy_configuration()
-        test_results['proxy_configuration'] = proxy_success
+        test_results["proxy_configuration"] = proxy_success
         if proxy_success:
             print("✅ Browser proxy configuration test passed!")
         else:
@@ -578,7 +595,7 @@ async def main():
         print("=" * 60)
 
         viewport_success = test_browser_viewport_and_screen()
-        test_results['viewport_screen'] = viewport_success
+        test_results["viewport_screen"] = viewport_success
         if viewport_success:
             print("✅ Browser viewport and screen test passed!")
         else:
@@ -590,7 +607,7 @@ async def main():
         print("=" * 60)
 
         fingerprint_success = test_browser_fingerprint()
-        test_results['fingerprint'] = fingerprint_success
+        test_results["fingerprint"] = fingerprint_success
         if fingerprint_success:
             print("✅ Browser fingerprint test passed!")
         else:
@@ -602,7 +619,7 @@ async def main():
         print("=" * 60)
 
         option_success = test_browser_option()
-        test_results['browser_option'] = option_success
+        test_results["browser_option"] = option_success
         if option_success:
             print("✅ Browser option test passed!")
         else:
@@ -614,8 +631,8 @@ async def main():
         print("=" * 60)
 
         init_success, browser, init_duration = test_browser_initialization(session)
-        test_results['browser_initialization'] = init_success
-        test_results['init_duration'] = init_duration
+        test_results["browser_initialization"] = init_success
+        test_results["init_duration"] = init_duration
         if init_success:
             print("✅ Browser initialization test passed!")
         else:
@@ -626,9 +643,11 @@ async def main():
         print("TEST 7: Async Browser Initialization")
         print("=" * 60)
 
-        async_init_success, async_browser, async_init_duration = await test_browser_async_initialization(session)
-        test_results['async_browser_initialization'] = async_init_success
-        test_results['async_init_duration'] = async_init_duration
+        async_init_success, async_browser, async_init_duration = (
+            await test_browser_async_initialization(session)
+        )
+        test_results["async_browser_initialization"] = async_init_success
+        test_results["async_init_duration"] = async_init_duration
         if async_init_success:
             print("✅ Async browser initialization test passed!")
         else:
@@ -640,7 +659,7 @@ async def main():
         print("=" * 60)
 
         agent_success = test_browser_agent(session)
-        test_results['browser_agent'] = agent_success
+        test_results["browser_agent"] = agent_success
         if agent_success:
             print("✅ Browser agent test passed!")
         else:
@@ -652,8 +671,8 @@ async def main():
         print("=" * 60)
 
         cleanup_success, delete_duration = test_browser_cleanup(session, agb)
-        test_results['cleanup'] = cleanup_success
-        test_results['delete_duration'] = delete_duration
+        test_results["cleanup"] = cleanup_success
+        test_results["delete_duration"] = delete_duration
         if cleanup_success:
             print("✅ Cleanup test passed!")
         else:
@@ -665,8 +684,23 @@ async def main():
         print("=" * 80)
 
         # Separate test results from performance data
-        test_keys = [k for k in test_results.keys() if k not in ['create_duration', 'init_duration', 'async_init_duration', 'delete_duration']]
-        performance_keys = ['create_duration', 'init_duration', 'async_init_duration', 'delete_duration']
+        test_keys = [
+            k
+            for k in test_results.keys()
+            if k
+            not in [
+                "create_duration",
+                "init_duration",
+                "async_init_duration",
+                "delete_duration",
+            ]
+        ]
+        performance_keys = [
+            "create_duration",
+            "init_duration",
+            "async_init_duration",
+            "delete_duration",
+        ]
 
         total_tests = len(test_keys)
         passed_tests = sum(1 for k in test_keys if test_results[k] is True)
@@ -678,13 +712,13 @@ async def main():
 
         # Performance summary
         print("\nPerformance Summary:")
-        if 'create_duration' in test_results:
+        if "create_duration" in test_results:
             print(f"  Session Creation: {test_results['create_duration']:.3f}s")
-        if 'init_duration' in test_results:
+        if "init_duration" in test_results:
             print(f"  Browser Init: {test_results['init_duration']:.3f}s")
-        if 'async_init_duration' in test_results:
+        if "async_init_duration" in test_results:
             print(f"  Async Browser Init: {test_results['async_init_duration']:.3f}s")
-        if 'delete_duration' in test_results:
+        if "delete_duration" in test_results:
             print(f"  Session Deletion: {test_results['delete_duration']:.3f}s")
 
         # Individual test results
@@ -698,7 +732,9 @@ async def main():
             print("\n🎉 ALL TESTS PASSED! Browser module is working correctly!")
             return 0
         else:
-            print(f"\n⚠️  {failed_tests} test(s) failed. Please check the implementation.")
+            print(
+                f"\n⚠️  {failed_tests} test(s) failed. Please check the implementation."
+            )
             return 1
 
     except Exception as e:

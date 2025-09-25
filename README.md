@@ -29,7 +29,6 @@ agb = AGB(api_key="your-api-key")
 # Create a session
 params = CreateSessionParams(
     image_id="agb-code-space-1",
-    labels={"environment": "development", "project": "example"}
 )
 result = agb.create(params)
 

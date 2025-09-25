@@ -53,12 +53,12 @@ export AGB_API_KEY="your_api_key"
 ### First Example
 ```python
 from agb import AGB
+from agb.session_params import CreateSessionParams
 
 # Create client
 agb = AGB()
 
 # Create code execution session
-from agb.session_params import CreateSessionParams
 params = CreateSessionParams(image_id="agb-code-space-1")
 session = agb.create(params).session
 

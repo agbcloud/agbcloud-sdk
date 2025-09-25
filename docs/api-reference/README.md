@@ -170,6 +170,9 @@ class ApiResponse:
 
 ### Error Handling Examples
 ```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 # Session creation error handling
 params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)

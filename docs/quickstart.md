@@ -17,6 +17,7 @@ export AGB_API_KEY="your_key"
 
 ```python
 from agb import AGB
+from agb.session_params import CreateSessionParams
 
 # Create client
 agb = AGB()
@@ -87,7 +88,6 @@ from agb.session_params import CreateSessionParams
 agb = AGB()
 
 # Type-safe session creation
-from agb.session_params import CreateSessionParams
 params = CreateSessionParams(image_id="agb-code-space-1")
 session = agb.create(params).session
 

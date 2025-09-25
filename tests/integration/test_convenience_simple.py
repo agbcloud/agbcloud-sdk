@@ -93,7 +93,14 @@ def test_agb_create_and_delete():
                 # Test session deletion
                 print("\n5. Testing session deletion...")
                 try:
-                    delete_result = agb.delete(session)
+                    # Ensure session is not None and is of correct type before deletion
+                    if session is not None:
+                        from agb.session import Session  # Ensure correct import
+                        if not isinstance(session, Session):
+                            session = Session(**session.__dict__)
+                        delete_result = agb.delete(session)
+                    else:
+                        raise ValueError("Session is None, cannot delete.")
 
                     if delete_result.success:
                         print("✅ Session deleted successfully")

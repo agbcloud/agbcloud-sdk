@@ -124,6 +124,9 @@ def process_multiple_files(session, file_data):
     return results
 
 # Usage
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
 session = agb.create(params).session
@@ -174,6 +177,9 @@ def file_processing_pipeline(session, input_file, output_file):
     }
 
 # Usage example
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
 session = agb.create(params).session
@@ -243,6 +249,9 @@ def handle_csv_file(session, filepath, data):
     return False, None
 
 # Usage examples
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
 session = agb.create(params).session

@@ -36,6 +36,10 @@ agb.delete(session)
 
 ### Data Processing
 ```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
+agb = AGB()
 # File processing pipeline
 params = CreateSessionParams(image_id="agb-code-space-1")
 session = agb.create(params).session

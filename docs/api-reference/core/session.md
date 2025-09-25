@@ -111,6 +111,7 @@ This class is identical to BaseSession and is kept for backward compatibility.
 
 ```python
 from agb import AGB
+from agb.session_params import CreateSessionParams
 
 # Create AGB client
 agb = AGB(api_key="your_api_key")
@@ -169,6 +170,9 @@ if info_result.success:
 ### Session Creation Errors
 
 ```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
 if not result.success:
@@ -208,10 +212,13 @@ else:
 ### 2. Session Lifecycle Management
 
 ```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 try:
     # Create session
     params = CreateSessionParams(image_id="agb-code-space-1")
-result = agb.create(params)
+    result = agb.create(params)
     if result.success:
         session = result.session
 
@@ -227,10 +234,13 @@ finally:
 ### 3. Resource Management
 
 ```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 # Use context manager pattern (if available)
 def with_session(agb, operation):
     params = CreateSessionParams(image_id="agb-code-space-1")
-result = agb.create(params)
+    result = agb.create(params)
     if not result.success:
         raise Exception(f"Failed to create session: {result.error_message}")
 

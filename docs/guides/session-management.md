@@ -50,6 +50,9 @@ else:
 ### Session Configuration
 
 ```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 # Custom session with specific image
 params = CreateSessionParams(
     image_id="agb-code-space-1"
@@ -74,7 +77,7 @@ if info_result.success:
 ### Listing Sessions
 
 ```python
-# List all active sessions
+# List all local active sessions
 sessions = agb.list()
 print(f"Active sessions: {len(sessions)}")
 
@@ -231,6 +234,9 @@ class SessionMonitor:
         return info is not None
 
 # Usage
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
@@ -261,6 +267,9 @@ agb.delete(session)
 ### 1. Always Clean Up Sessions
 
 ```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 # ✅ Good: Always delete sessions
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
@@ -301,6 +310,9 @@ with SessionContext(agb) as session:
 ### 2. Handle Errors Gracefully
 
 ```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 def safe_session_operation(agb: AGB, operation_func):
     """Safely execute an operation with proper error handling"""
     params = CreateSessionParams(image_id="agb-code-space-1")
@@ -333,6 +345,9 @@ print(result)
 ### 3. Use Labels for Organization
 
 ```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 # Organize sessions with meaningful image IDs
 params = CreateSessionParams(image_id="agb-code-space-1")
 
@@ -362,6 +377,9 @@ def monitor_session_usage(session, operation_name: str):
             print("Session remained healthy throughout operation")
 
 # Usage
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
@@ -379,6 +397,9 @@ agb.delete(session)
 
 **Session Creation Fails**
 ```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
 if not result.success:
@@ -392,6 +413,9 @@ if not result.success:
 
 **Session Becomes Unresponsive**
 ```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 # Check session health
 info_result = session.info()
 if not info_result.success:
@@ -403,6 +427,9 @@ if not info_result.success:
 
 **Memory or Resource Limits**
 ```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
 # Monitor resource usage and recreate sessions periodically
 operation_count = 0
 max_operations_per_session = 100

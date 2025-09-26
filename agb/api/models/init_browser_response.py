@@ -73,7 +73,7 @@ class InitBrowserResponse:
             status_code=response_dict.get("status_code", 0),
             url=response_dict.get("url", ""),
             headers=response_dict.get("headers", {}),
-            json_data=response_dict.get("json"),
+            json_data=response_dict.get("json") or {},
             text=response_dict.get("text"),
             success=response_dict.get("success", False),
             error=response_dict.get("error"),

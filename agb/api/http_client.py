@@ -91,9 +91,9 @@ class HTTPClient:
 
     def _process_endpoint(self, endpoint: str):
         """Process endpoint logic"""
-        # Use endpoint from config directly as base_url, ensure it includes http:// prefix
+        # Use endpoint from config directly as base_url, ensure it includes https:// prefix
         if endpoint and not endpoint.startswith(("http://", "https://")):
-            self.base_url = f"http://{endpoint}"
+            self.base_url = f"https://{endpoint}"
         else:
             self.base_url = endpoint
 
@@ -404,9 +404,6 @@ class HTTPClient:
         request_headers: Dict[str, str] = {}
         for key, value in self.session.headers.items():
             request_headers[str(key)] = str(value)
-
-        # Add Authorization header
-        request_headers["authorization"] = self.api_key
 
         if headers:
             request_headers.update(headers)

@@ -92,13 +92,14 @@ for session in sessions:
         print(f"Image ID: {session.image_id}")
 ```
 
-### `delete(session)`
+### `delete(session, sync_context=False)`
 
 Delete a session by session object.
 
 #### Parameters
 
-- **`session`** (`Session`): The session to delete.
+- **`session`** (`BaseSession`): The session to delete.
+- **`sync_context`** (`bool`, optional): Whether to sync context before deletion. Defaults to `False`.
 
 #### Returns
 
@@ -116,10 +117,17 @@ if result.success:
     # Use the session
     # ... perform operations ...
 
-    # Delete the session
+    # Delete the session without context sync
     delete_result = agb.delete(session)
     if delete_result.success:
         print("Session deleted successfully")
+    else:
+        print(f"Failed to delete session: {delete_result.error_message}")
+
+    # Delete the session with context sync
+    delete_result = agb.delete(session, sync_context=True)
+    if delete_result.success:
+        print("Session deleted with context sync")
     else:
         print(f"Failed to delete session: {delete_result.error_message}")
 ```
@@ -210,7 +218,7 @@ try:
         # ... use session ...
 finally:
     if 'session' in locals():
-        agb.delete(session)
+        agb.delete(session, sync_context=True)
 ```
 
 ### 3. Use Environment Variables for API Keys

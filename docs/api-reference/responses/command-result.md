@@ -127,32 +127,6 @@ cmd_result = session.command.execute_command("sort file.txt")
 
 All response objects inherit from `ApiResponse` and have access to the `request_id` property for tracking API requests.
 
-## Common Error Scenarios
-
-### Command Not Found
-```python
-cmd_result = session.command.execute_command("nonexistent_command")
-# cmd_result.error_message = "Command not found: nonexistent_command"
-```
-
-### Permission Denied
-```python
-cmd_result = session.command.execute_command("chmod 777 /root/")
-# cmd_result.error_message = "Permission denied"
-```
-
-### Invalid Arguments
-```python
-cmd_result = session.command.execute_command("ls --invalid-option")
-# cmd_result.error_message = "ls: unrecognized option '--invalid-option'"
-```
-
-### File Not Found
-```python
-cmd_result = session.command.execute_command("cat nonexistent_file.txt")
-# cmd_result.error_message = "cat: nonexistent_file.txt: No such file or directory"
-```
-
 ## Advanced Usage
 
 ### Chaining Commands
@@ -183,32 +157,6 @@ cmd_result = session.command.execute_command("cd /tmp && pwd")
 
 # Execute in specific directory
 cmd_result = session.command.execute_command("ls -la /home")
-```
-
-## Error Handling
-
-### Basic Error Handling
-```python
-cmd_result = session.command.execute_command("invalid_command")
-
-if cmd_result.success:
-    print(f"Command output: {cmd_result.output}")
-else:
-    print(f"Command failed: {cmd_result.error_message}")
-    print(f"Request ID: {cmd_result.request_id}")
-```
-
-### Specific Error Handling
-```python
-cmd_result = session.command.execute_command("cat nonexistent_file.txt")
-
-if not cmd_result.success:
-    if "No such file" in cmd_result.error_message:
-        print("File not found")
-    elif "Permission denied" in cmd_result.error_message:
-        print("Permission denied")
-    else:
-        print(f"Unexpected error: {cmd_result.error_message}")
 ```
 
 ## Related Types

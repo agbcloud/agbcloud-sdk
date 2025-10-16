@@ -110,22 +110,20 @@ class GetMcpResourceResponse:
         cls, response_dict: Dict[str, Any]
     ) -> "GetMcpResourceResponse":
         """Create GetMcpResourceResponse from HTTP response dictionary"""
-        json_data = response_dict.get("json", {})
-
-        # Extract request ID from response
-        request_id = None
-        if json_data and isinstance(json_data, dict):
-            request_id = json_data.get("requestId")
-
         return cls(
             status_code=response_dict.get("status_code", 0),
             url=response_dict.get("url", ""),
             headers=response_dict.get("headers", {}),
             success=response_dict.get("success", False),
-            json_data=json_data,
+            json_data=response_dict.get("json", {}),
             text=response_dict.get("text"),
             error=response_dict.get("error"),
-            request_id=request_id,
+            request_id=response_dict.get("request_id")
+            or (
+                response_dict.get("json", {}).get("requestId")
+                if response_dict.get("json")
+                else None
+            ),
         )
 
     def is_successful(self) -> bool:

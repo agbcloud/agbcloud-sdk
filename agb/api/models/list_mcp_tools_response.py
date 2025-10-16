@@ -42,22 +42,20 @@ class ListMcpToolsResponse:
         cls, response_dict: Dict[str, Any]
     ) -> "ListMcpToolsResponse":
         """Create ListMcpToolsResponse from HTTP response dictionary"""
-        json_data = response_dict.get("json", {})
-
-        # Extract request ID from response
-        request_id = None
-        if json_data and isinstance(json_data, dict):
-            request_id = json_data.get("requestId")
-
         return cls(
             status_code=response_dict.get("status_code", 0),
             url=response_dict.get("url", ""),
             headers=response_dict.get("headers", {}),
             success=response_dict.get("success", False),
-            json_data=json_data,
+            json_data=response_dict.get("json", {}),
             text=response_dict.get("text"),
             error=response_dict.get("error"),
-            request_id=request_id,
+            request_id=response_dict.get("request_id")
+            or (
+                response_dict.get("json", {}).get("requestId", "")
+                if response_dict.get("json")
+                else None
+            ),
         )
 
     def is_successful(self) -> bool:
@@ -69,24 +67,19 @@ class ListMcpToolsResponse:
         if self.error:
             return self.error
 
-        if self.json_data and isinstance(self.json_data, dict):
-            # Check for API-level error messages
-            if not self.json_data.get("success", True):
-                return self.json_data.get("message") or "API request failed"
+        if not self.api_success:
+            return self.message or "API request failed"
 
-            # Check for data-level error messages
-            data = self.json_data.get("data")
-            if data and isinstance(data, dict) and data.get("isError"):
-                return data.get("errMsg") or "Tool execution failed"
+        # Check for data-level error messages
+        if self.data and isinstance(self.data, dict) and self.data.get("isError"):
+            return self.data.get("errMsg") or "Tool execution failed"
 
         return None
 
     def get_tools_list(self) -> Optional[str]:
         """Get the tools list from response"""
-        if self.json_data and isinstance(self.json_data, dict):
-            data = self.json_data.get("data")
-            if data and isinstance(data, str):
-                return data
+        if self.data and isinstance(self.data, str):
+            return self.data
         return None
 
     def to_dict(self) -> Dict[str, Any]:

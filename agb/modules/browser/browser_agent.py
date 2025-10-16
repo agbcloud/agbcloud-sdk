@@ -1,10 +1,13 @@
-import json
+import json, asyncio
 from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union
+import logging
 
 from pydantic import BaseModel
 
 from agb.api.base_service import BaseService, OperationResult
 from agb.exceptions import AGBError, BrowserError
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -21,12 +24,14 @@ class ActOptions:
         iframes: Optional[bool] = None,
         dom_settle_timeout_ms: Optional[int] = None,
         variables: Optional[Dict[str, str]] = None,
+        use_vision: Optional[bool] = None,
     ):
         self.action = action
         self.timeoutMS = timeoutMS
         self.iframes = iframes
         self.dom_settle_timeout_ms = dom_settle_timeout_ms
         self.variables = variables
+        self.use_vision = use_vision
 
 
 class ActResult:
@@ -34,10 +39,9 @@ class ActResult:
     Result of the act method.
     """
 
-    def __init__(self, success: bool, message: str, action: str):
+    def __init__(self, success: bool, message: str):
         self.success = success
         self.message = message
-        self.action = action
 
 
 class ObserveOptions:
@@ -50,10 +54,12 @@ class ObserveOptions:
         instruction: str,
         iframes: Optional[bool] = None,
         dom_settle_timeout_ms: Optional[int] = None,
+        use_vision: Optional[bool] = None,
     ):
         self.instruction = instruction
         self.iframes = iframes
         self.dom_settle_timeout_ms = dom_settle_timeout_ms
+        self.use_vision = use_vision
 
 
 class ObserveResult:
@@ -101,34 +107,9 @@ class BrowserAgent(BaseService):
         self.session = session
         self.browser = browser
 
-    def navigate(self, url: str) -> str:
-        """
-        Navigates a specific page to the given URL.
-        This is a synchronous wrapper around `navigate_async`.
-
-        Args:
-            url: The URL to navigate to.
-
-        Returns:
-            A string indicating the result of the navigation.
-        """
-        if not self.browser.is_initialized():
-            raise BrowserError("Browser must be initialized before calling goto.")
-        try:
-            args = {
-                "url": url,
-            }
-            response = self._call_mcp_tool_timeout("page_use_navigate", args)
-            if response.success:
-                return response.data
-            else:
-                return f"Goto failed: {response.error_message}"
-        except Exception as e:
-            raise BrowserError(f"Failed to call goto: {e}") from e
-
     async def navigate_async(self, url: str) -> str:
         """
-        Navigates a specific page to the given URL asynchronously.
+        Navigates a specific page to the given URL.
 
         Args:
             url: The URL to navigate to.
@@ -137,18 +118,16 @@ class BrowserAgent(BaseService):
             A string indicating the result of the navigation.
         """
         if not self.browser.is_initialized():
-            raise BrowserError("Browser must be initialized before calling goto_async.")
+            raise BrowserError("Browser must be initialized before calling navigate_async.")
         try:
-            args = {
-                "url": url,
-            }
+            args = {"url": url}
             response = self._call_mcp_tool_timeout("page_use_navigate", args)
             if response.success:
                 return response.data
             else:
-                return f"Goto failed: {response.error_message}"
+                return f"Navigation failed: {response.error_message}"
         except Exception as e:
-            raise BrowserError(f"Failed to call goto_async: {e}") from e
+            raise BrowserError(f"Failed to navigate: {e}")
 
     def screenshot(
         self,
@@ -176,22 +155,11 @@ class BrowserAgent(BaseService):
             raise BrowserError("Browser must be initialized before calling screenshot.")
         try:
             page_id, context_id = self._get_page_and_context_index(page)
-            args = {
-                "context_id": context_id,
-                "page_id": page_id,
-                "full_page": full_page,
-                "quality": quality,
-            }
-            if clip:
-                args["clip"] = clip
-            if timeout:
-                args["timeout"] = timeout
-
-            response = self._call_mcp_tool_timeout("page_use_screenshot", args)
-            if response.success:
-                return response.data
-            else:
-                return f"Screenshot failed: {response.error_message}"
+            return asyncio.get_event_loop().run_until_complete(
+                self._execute_screenshot(
+                    context_id, page_id, full_page, quality, clip, timeout
+                )
+            )
         except Exception as e:
             raise BrowserError(f"Failed to call screenshot: {e}") from e
 
@@ -222,25 +190,38 @@ class BrowserAgent(BaseService):
                 "Browser must be initialized before calling screenshot_async."
             )
         try:
-            page_id, context_id = self._get_page_and_context_index(page)
-            args = {
-                "context_id": context_id,
-                "page_id": page_id,
-                "full_page": full_page,
-                "quality": quality,
-            }
-            if clip:
-                args["clip"] = clip
-            if timeout:
-                args["timeout"] = timeout
-
-            response = self._call_mcp_tool_timeout("page_use_screenshot", args)
-            if response.success:
-                return response.data
-            else:
-                return f"Screenshot failed: {response.error_message}"
+            page_id, context_id = await self._get_page_and_context_index_async(page)
+            return await self._execute_screenshot(
+                context_id, page_id, full_page, quality, clip, timeout
+            )
         except Exception as e:
             raise BrowserError(f"Failed to call screenshot_async: {e}") from e
+
+    async def _execute_screenshot(
+        self,
+        context_id: int,
+        page_id: Optional[str] = None,
+        full_page: bool = True,
+        quality: int = 80,
+        clip: Optional[Dict[str, float]] = None,
+        timeout: Optional[int] = None,
+    ) -> str:
+        logger.debug(f"Screenshot page_id: {page_id}, context_id: {context_id}")
+        args = {
+            "context_id": context_id,
+            "page_id": page_id,
+            "full_page": full_page,
+            "quality": quality,
+            "clip": clip,
+            "timeout": timeout,
+        }
+        args = {k: v for k, v in args.items() if v is not None}
+
+        response = self._call_mcp_tool_timeout("page_use_screenshot", args)
+        if response.success:
+            return response.data
+        else:
+            return f"Screenshot failed: {response.error_message}"
 
     async def close_async(self) -> bool:
         """
@@ -248,13 +229,12 @@ class BrowserAgent(BaseService):
         This will terminate the browser process managed by the agent.
         """
         try:
-            print("Closing remote browser agent session...")
             response = self._call_mcp_tool_timeout("page_use_close_session", args={})
             if response.success:
-                print(f"Session close status: {response.data}")
+                logger.info(f"Session close status: {response.data}")
                 return True
             else:
-                print(f"Failed to close session: {response.error_message}")
+                logger.warning(f"Failed to close session: {response.error_message}")
                 return False
         except Exception as e:
             raise BrowserError(f"Failed to call close_async: {e}") from e
@@ -278,52 +258,10 @@ class BrowserAgent(BaseService):
         if not self.browser.is_initialized():
             raise BrowserError("Browser must be initialized before calling act.")
         try:
-            page_index, context_index = self._get_page_and_context_index(page)
-            print(
-                f"Acting on page: {page}, page_index: {page_index}, context_index: {context_index}"
+            page_id, context_id = self._get_page_and_context_index(page)
+            return asyncio.get_event_loop().run_until_complete(
+                self._execute_act_async(action_input, context_id, page_id)
             )
-            args = {
-                "context_id": context_index,
-                "page_id": page_index,
-            }
-            if isinstance(action_input, ActOptions):
-                args["action"] = action_input.action
-                if action_input.variables is not None:
-                    args["variables"] = action_input.variables
-                if action_input.timeoutMS is not None:
-                    args["timeout_ms"] = action_input.timeoutMS
-                if action_input.iframes is not None:
-                    args["iframes"] = action_input.iframes
-                if action_input.dom_settle_timeout_ms is not None:
-                    args["dom_settle_timeout_ms"] = action_input.dom_settle_timeout_ms
-                args["action"] = action_input.action
-            elif isinstance(action_input, ObserveResult):
-                action_dict = {
-                    "method": action_input.method,
-                    "arguments": (
-                        json.loads(action_input.arguments)
-                        if isinstance(action_input.arguments, str)
-                        else action_input.arguments
-                    ),
-                }
-                args["action"] = json.dumps(action_dict)
-            response = self._call_mcp_tool_timeout("page_use_act", args)
-            if response.success:
-                print(f"Response from CallMcpTool - page_use_act:", response.data)
-                import json as _json
-
-                if isinstance(response.data, str):
-                    data = _json.loads(response.data)
-                else:
-                    data = response.data
-                # Map snake_case keys to ActResult members
-                message = data.get("message", "")
-                action = data.get("action", "")
-                return ActResult(success=True, message=message, action=action)
-            else:
-                return ActResult(
-                    success=False, message=response.error_message, action=""
-                )
         except Exception as e:
             raise BrowserError(f"Failed to act: {e}")
 
@@ -346,55 +284,139 @@ class BrowserAgent(BaseService):
         if not self.browser.is_initialized():
             raise BrowserError("Browser must be initialized before calling act_async.")
         try:
-            page_index, context_index = await self._get_page_and_context_index_async(
-                page
-            )
-            print(
-                f"Acting on page: {page}, page_index: {page_index}, context_index: {context_index}"
-            )
-            args = {
-                "context_id": context_index,
-                "page_id": page_index,
-            }
-            if isinstance(action_input, ActOptions):
-                args["action"] = action_input.action
-                if action_input.variables is not None:
-                    args["variables"] = action_input.variables
-                if action_input.timeoutMS is not None:
-                    args["timeout_ms"] = action_input.timeoutMS
-                if action_input.iframes is not None:
-                    args["iframes"] = action_input.iframes
-                if action_input.dom_settle_timeout_ms is not None:
-                    args["dom_settle_timeout_ms"] = action_input.dom_settle_timeout_ms
-            elif isinstance(action_input, ObserveResult):
-                action_dict = {
-                    "method": action_input.method,
-                    "arguments": (
-                        json.loads(action_input.arguments)
-                        if isinstance(action_input.arguments, str)
-                        else action_input.arguments
-                    ),
-                }
-                args["action"] = json.dumps(action_dict)
-            response = self._call_mcp_tool_timeout("page_use_act", args)
-            if response.success:
-                print(f"Response from CallMcpTool - page_use_act:", response.data)
-                import json as _json
-
-                if isinstance(response.data, str):
-                    data = _json.loads(response.data)
-                else:
-                    data = response.data
-                # Map snake_case keys to ActResult members
-                message = data.get("message", "")
-                action = data.get("action", "")
-                return ActResult(success=True, message=message, action=action)
-            else:
-                return ActResult(
-                    success=False, message=response.error_message, action=""
-                )
+            page_id, context_id = await self._get_page_and_context_index_async(page)
+            return await self._execute_act_async(action_input, context_id, page_id)
         except Exception as e:
             raise BrowserError(f"Failed to act: {e}")
+
+    async def _execute_act(
+        self,
+        action_input: Union[ObserveResult, ActOptions],
+        context_id: int,
+        page_id: Optional[str],
+    ) -> "ActResult":
+        logger.debug(f"Acting page_id: {page_id}, context_id: {context_id}")
+        args = {
+            "context_id": context_id,
+            "page_id": page_id,
+        }
+        if isinstance(action_input, ActOptions):
+            args.update(
+                {
+                    "action": action_input.action,
+                    "variables": action_input.variables,
+                    "timeout_ms": action_input.timeoutMS,
+                    "iframes": action_input.iframes,
+                    "dom_settle_timeout_ms": action_input.dom_settle_timeout_ms,
+                    "use_vision": action_input.use_vision,
+                }
+            )
+        elif isinstance(action_input, ObserveResult):
+            action_dict = {
+                "method": action_input.method,
+                "arguments": (
+                    json.loads(action_input.arguments)
+                    if isinstance(action_input.arguments, str)
+                    else action_input.arguments
+                ),
+            }
+            args["action"] = json.dumps(action_dict)
+        args = {k: v for k, v in args.items() if v is not None}
+
+        response = self._call_mcp_tool_timeout("page_use_act", args)
+        if response.success and response.data:
+            data = (
+                response.data
+                if isinstance(response.data, str)
+                else json.dumps(response.data, ensure_ascii=False)
+            )
+            logger.info(f"MCP tool response (data): {data}")
+            return ActResult(success=True, message=data)
+        else:
+            return ActResult(success=False, message=response.error_message)
+
+    async def _execute_act_async(
+        self,
+        action_input: Union[ObserveResult, ActOptions],
+        context_id: int,
+        page_id: Optional[str],
+    ) -> "ActResult":
+        logger.debug(f"Acting page_id: {page_id}, context_id: {context_id}")
+        args = {
+            "context_id": context_id,
+            "page_id": page_id,
+        }
+        if isinstance(action_input, ActOptions):
+            args.update(
+                {
+                    "action": action_input.action,
+                    "variables": action_input.variables,
+                    "timeout_ms": action_input.timeoutMS,
+                    "iframes": action_input.iframes,
+                    "dom_settle_timeout_ms": action_input.dom_settle_timeout_ms,
+                    "use_vision": action_input.use_vision,
+                }
+            )
+        elif isinstance(action_input, ObserveResult):
+            action_dict = {
+                "method": action_input.method,
+                "arguments": (
+                    json.loads(action_input.arguments)
+                    if isinstance(action_input.arguments, str)
+                    else action_input.arguments
+                ),
+            }
+            args["action"] = json.dumps(action_dict)
+        args = {k: v for k, v in args.items() if v is not None}
+
+        response = self._call_mcp_tool_timeout("page_use_act_async", args)
+        if not response.success:
+            raise BrowserError("Failed to start act task")
+
+        task_id = json.loads(response.data)["task_id"]
+        max_retries = 30
+
+        while max_retries > 0:
+            await asyncio.sleep(5)
+            if hasattr(self, "mcp_client") and self.mcp_client:
+                result = await self._call_mcp_tool_async(
+                    "page_use_get_act_result", {"task_id": task_id}
+                )
+            else:
+                result = self._call_mcp_tool_timeout(
+                    "page_use_get_act_result", {"task_id": task_id}
+                )
+            if result.success and result.data:
+                data = (
+                    json.loads(result.data)
+                    if isinstance(result.data, str)
+                    else result.data
+                )
+                steps = data.get("steps", [])
+                is_done = data.get("is_done", False)
+                success = bool(data.get("success", False))
+                no_action_msg = "No actions have been executed."
+                if is_done:
+                    if steps:
+                        task_status = (
+                            steps
+                            if isinstance(steps, str)
+                            else json.dumps(steps, ensure_ascii=False)
+                        )
+                    else:
+                        task_status = no_action_msg
+                    logger.info(
+                        f"Task {task_id} is done. Success: {success}. {task_status}"
+                    )
+                    return ActResult(success=success, message=task_status)
+                task_status = (
+                    f"{len(steps)} steps done. Details: {steps}"
+                    if steps
+                    else no_action_msg
+                )
+                logger.info(f"Task {task_id} progress: {task_status}")
+            max_retries -= 1
+        raise BrowserError(f"Task {task_id}: Act timed out")
 
     def observe(
         self,
@@ -416,52 +438,10 @@ class BrowserAgent(BaseService):
         if not self.browser.is_initialized():
             raise BrowserError("Browser must be initialized before calling observe.")
         try:
-            page_index, context_index = self._get_page_and_context_index(page)
-            print(
-                f"Observing page: {page}, page_index: {page_index}, context_index: {context_index}"
+            page_id, context_id = self._get_page_and_context_index(page)
+            return asyncio.get_event_loop().run_until_complete(
+                self._execute_observe(options, context_id, page_id)
             )
-            args = {
-                "context_id": context_index,
-                "page_id": page_index,
-                "instruction": options.instruction,
-            }
-            if options.iframes is not None:
-                args["iframes"] = options.iframes
-            if options.dom_settle_timeout_ms is not None:
-                args["dom_settle_timeout_ms"] = options.dom_settle_timeout_ms
-            response = self._call_mcp_tool_timeout("page_use_observe", args)
-            print("Response from CallMcpTool - page_use_observe:", response)
-
-            if response.success:
-                print(f"Response from CallMcpTool - page_use_observe:", response.data)
-                import json as _json
-
-                if isinstance(response.data, str):
-                    data = _json.loads(response.data)
-                else:
-                    raise BrowserError("Observe response data is not a json!!!")
-
-                results = []
-                observeResults = json.loads(data.get("observe_result", ""))
-                print("observeResults =", observeResults)
-
-                for item in observeResults:
-                    selector = item.get("selector", "")
-                    description = item.get("description", "")
-                    method = item.get("method", "")
-                    arguments = item.get("arguments", {})
-                    results.append(
-                        ObserveResult(selector, description, method, arguments)
-                    )
-
-                return True, results
-            else:
-                print(
-                    f"Response from CallMcpTool - page_use_observe:",
-                    response.error_message,
-                )
-                return False, []
-
         except Exception as e:
             raise BrowserError(f"Failed to observe: {e}")
 
@@ -487,63 +467,56 @@ class BrowserAgent(BaseService):
                 "Browser must be initialized before calling observe_async."
             )
         try:
-            page_index, context_index = await self._get_page_and_context_index_async(
-                page
-            )
-            print(
-                f"Observing page: {page}, page_index: {page_index}, context_index: {context_index}"
-            )
-            args = {
-                "context_id": context_index,
-                "page_id": page_index,
-                "instruction": options.instruction,
-            }
-            if options.iframes is not None:
-                args["iframes"] = options.iframes
-            if options.dom_settle_timeout_ms is not None:
-                args["dom_settle_timeout_ms"] = options.dom_settle_timeout_ms
-            response = self._call_mcp_tool_timeout("page_use_observe", args)
-            print("Response from CallMcpTool - page_use_observe:", response)
-
-            if response.success:
-                print(f"Response from CallMcpTool - page_use_observe:", response.data)
-                import json as _json
-
-                if isinstance(response.data, str):
-                    data = _json.loads(response.data)
-                else:
-                    raise BrowserError("Observe response data is not a json!!!")
-
-                results = []
-                observeResults = json.loads(data.get("observe_result", ""))
-                print("observeResults =", observeResults)
-
-                for item in observeResults:
-                    selector = item.get("selector", "")
-                    description = item.get("description", "")
-                    method = item.get("method", "")
-                    arguments_str = item.get("arguments", "{}")
-                    try:
-                        arguments_dict = _json.loads(arguments_str)
-                    except _json.JSONDecodeError:
-                        print(
-                            f"Warning: Could not parse arguments as JSON: {arguments_str}"
-                        )
-                        arguments_dict = arguments_str
-                    results.append(
-                        ObserveResult(selector, description, method, arguments_dict)
-                    )
-
-                return True, results
-            else:
-                print(
-                    f"Response from CallMcpTool - page_use_observe:",
-                    response.error_message,
-                )
-                return False, []
-
+            page_id, context_id = await self._get_page_and_context_index_async(page)
+            return await self._execute_observe(options, context_id, page_id)
         except Exception as e:
-            raise BrowserError(f"Failed to observe: {e}")
+            raise BrowserError(f"Failed to observe_async: {e}")
+
+    async def _execute_observe(
+        self,
+        options: ObserveOptions,
+        context_id: int,
+        page_id: Optional[str],
+    ) -> Tuple[bool, List[ObserveResult]]:
+        logger.debug(f"Observing page_id: {page_id}, context_id: {context_id}")
+        args = {
+            "context_id": context_id,
+            "page_id": page_id,
+            "instruction": options.instruction,
+            "iframes": options.iframes,
+            "dom_settle_timeout_ms": options.dom_settle_timeout_ms,
+            "use_vision": options.use_vision,
+        }
+        args = {k: v for k, v in args.items() if v is not None}
+
+        response = self._call_mcp_tool_timeout("page_use_observe", args)
+
+        if not response.success or not response.data:
+            logger.warning(f"Failed to execute observe: {response.error_message}")
+            return False, []
+
+        data = (
+            json.loads(response.data)
+            if isinstance(response.data, str)
+            else response.data
+        )
+        logger.info(f"observe results: {data}")
+        results = []
+        for item in data:
+            selector = item.get("selector", "")
+            description = item.get("description", "")
+            method = item.get("method", "")
+            arguments_str = item.get("arguments", "{}")
+            try:
+                arguments_dict = json.loads(arguments_str)
+            except json.JSONDecodeError:
+                logger.warning(
+                    f"Warning: Could not parse arguments as JSON: {arguments_str}"
+                )
+                arguments_dict = arguments_str
+            results.append(ObserveResult(selector, description, method, arguments_dict))
+
+        return True, results
 
     def extract(self, options: ExtractOptions, page=None) -> Tuple[bool, T]:
         """
@@ -561,49 +534,10 @@ class BrowserAgent(BaseService):
         if not self.browser.is_initialized():
             raise BrowserError("Browser must be initialized before calling extract.")
         try:
-            page_index, context_index = self._get_page_and_context_index(page)
-            args = {
-                "context_id": context_index,
-                "page_id": page_index,
-                "instruction": options.instruction,
-                "schema": "schema: " + json.dumps(options.schema.model_json_schema()),
-            }
-            print(
-                f"Extracting from page: {page}, page_index: {page_index}, context_index: {context_index}, args: {args}"
+            page_id, context_id = self._get_page_and_context_index(page)
+            return asyncio.get_event_loop().run_until_complete(
+                self._execute_extract_async(options, context_id, page_id)
             )
-            if options.use_text_extract is not None:
-                args["use_text_extract"] = options.use_text_extract
-            if options.use_vision is not None:
-                args["use_vision"] = options.use_vision
-            if options.selector is not None:
-                args["selector"] = options.selector
-            if options.iframe is not None:
-                args["iframe"] = options.iframe
-            if options.dom_settle_timeout_ms is not None:
-                args["dom_settle_timeout_ms"] = options.dom_settle_timeout_ms
-
-            response = self._call_mcp_tool_timeout("page_use_extract", args)
-            print("Response from CallMcpTool - page_use_extract:", response)
-
-            if response.success:
-                print(f"Response from CallMcpTool - page_use_extract:", response.data)
-                import json as _json
-
-                if isinstance(response.data, str):
-                    data = _json.loads(response.data)
-                else:
-                    data = response.data
-                print("extract data =", data)
-                extract_result = data.get("extract_result", "")
-                print("extract_result =", extract_result)
-                extract_obj = options.schema.model_validate_json(extract_result)
-                return True, extract_obj
-            else:
-                print(
-                    f"Response from CallMcpTool - page_use_extract:",
-                    response.error_message,
-                )
-                return False, None  # type: ignore
         except Exception as e:
             raise BrowserError(f"Failed to extract: {e}")
 
@@ -629,53 +563,97 @@ class BrowserAgent(BaseService):
                 "Browser must be initialized before calling extract  _async."
             )
         try:
-            page_index, context_index = await self._get_page_and_context_index_async(
-                page
-            )
-            args = {
-                "context_id": context_index,
-                "page_id": page_index,
-                "instruction": options.instruction,
-                "schema": "schema: " + json.dumps(options.schema.model_json_schema()),
-            }
-            print(
-                f"Extracting from page: {page}, page_index: {page_index}, context_index: {context_index}, args: {args}"
-            )
-            if options.use_text_extract is not None:
-                args["use_text_extract"] = options.use_text_extract
-            if options.use_vision is not None:
-                args["use_vision"] = options.use_vision
-            if options.selector is not None:
-                args["selector"] = options.selector
-            if options.iframe is not None:
-                args["iframe"] = options.iframe
-            if options.dom_settle_timeout_ms is not None:
-                args["dom_settle_timeout_ms"] = options.dom_settle_timeout_ms
-
-            response = self._call_mcp_tool_timeout("page_use_extract", args)
-            print("Response from CallMcpTool - page_use_extract:", response)
-
-            if response.success:
-                print(f"Response from CallMcpTool - page_use_extract:", response.data)
-                import json as _json
-
-                if isinstance(response.data, str):
-                    data = _json.loads(response.data)
-                else:
-                    data = response.data
-                print("extract data =", data)
-                extract_result = data.get("extract_result", "")
-                print("extract_result =", extract_result)
-                extract_obj = options.schema.model_validate_json(extract_result)
-                return True, extract_obj
-            else:
-                print(
-                    f"Response from CallMcpTool - page_use_extract:",
-                    response.error_message,
-                )
-                return False, None  # type: ignore
+            page_id, context_id = await self._get_page_and_context_index_async(page)
+            return await self._execute_extract_async(options, context_id, page_id)
         except Exception as e:
-            raise BrowserError(f"Failed to extract: {e}")
+            raise BrowserError(f"Failed to extract_async: {e}")
+
+    async def _execute_extract(
+        self,
+        options: ExtractOptions,
+        context_id: int,
+        page_id: Optional[str],
+    ) -> Tuple[bool, T]:
+        args = {
+            "context_id": context_id,
+            "page_id": page_id,
+            "instruction": options.instruction,
+            "schema": "schema: " + json.dumps(options.schema.model_json_schema()),
+            "use_text_extract": options.use_text_extract,
+            "use_vision": options.use_vision,
+            "selector": options.selector,
+            "iframe": options.iframe,
+            "dom_settle_timeout_ms": options.dom_settle_timeout_ms,
+        }
+        args = {k: v for k, v in args.items() if v is not None}
+        logger.debug(
+            f"Extracting page_id: {page_id}, context_id: {context_id}, args: {args}"
+        )
+
+        response = self._call_mcp_tool_timeout("page_use_extract", args)
+
+        if response.success and response.data:
+            extract_result = (
+                json.loads(response.data)
+                if isinstance(response.data, str)
+                else response.data
+            )
+            logger.info(f"extract result: {extract_result}")
+            return True, options.schema.model_validate(extract_result)
+        else:
+            logger.warning(f"Faild to execute extract: {response.error_message}")
+            return False, None
+
+    async def _execute_extract_async(
+        self,
+        options: ExtractOptions,
+        context_id: int,
+        page_id: Optional[str],
+    ) -> Tuple[bool, T]:
+        args = {
+            "context_id": context_id,
+            "page_id": page_id,
+            "instruction": options.instruction,
+            "schema": "schema: " + json.dumps(options.schema.model_json_schema()),
+            "use_text_extract": options.use_text_extract,
+            "use_vision": options.use_vision,
+            "selector": options.selector,
+            "iframe": options.iframe,
+            "dom_settle_timeout_ms": options.dom_settle_timeout_ms,
+        }
+        args = {k: v for k, v in args.items() if v is not None}
+
+        response = self._call_mcp_tool_timeout("page_use_extract_async", args)
+        if not response.success:
+            raise BrowserError("Failed to start extraction task")
+
+        task_id = json.loads(response.data)["task_id"]
+        max_retries = 20
+
+        while max_retries > 0:
+            await asyncio.sleep(8)
+
+            if hasattr(self, "mcp_client") and self.mcp_client:
+                result = await self._call_mcp_tool_async(
+                    "page_use_get_extract_result", {"task_id": task_id}
+                )
+            else:
+                result = self._call_mcp_tool_timeout(
+                    "page_use_get_extract_result", {"task_id": task_id}
+                )
+            if result.success and result.data:
+                extract_result = (
+                    json.loads(result.data)
+                    if isinstance(result.data, str)
+                    else result.data
+                )
+                return True, options.schema.model_validate(extract_result)
+            max_retries -= 1
+            logger.debug(
+                f"Task {task_id}: No extract result yet (attempt {20 - max_retries}/20)"
+            )
+
+        raise BrowserError(f"Task {task_id}: Extract timed out")
 
     def _get_page_and_context_index(self, page):
         """

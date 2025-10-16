@@ -7,6 +7,9 @@ from agb.api.models import InitBrowserRequest
 from agb.config import BROWSER_DATA_PATH
 from agb.exceptions import BrowserError
 from agb.modules.browser.browser_agent import BrowserAgent
+from agb.logger import get_logger
+
+logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from agb.session import Session
@@ -344,7 +347,7 @@ class Browser(BaseService):
     Browser provides browser-related operations for the session.
     """
 
-    def __init__(self, session: "Session"):
+    def __init__(self, session):
         self.session = session
         self._endpoint_url: Optional[str] = None
         self._initialized = False
@@ -378,17 +381,17 @@ class Browser(BaseService):
                     self._initialized = True
                     self.endpoint_router_port = port
                     self._option = option
-                    print("Browser instance was successfully initialized.")
+                    logger.info("Browser instance was successfully initialized.")
                     return True
                 else:
-                    print("Browser initialization failed: No port in response")
+                    logger.error("Browser initialization failed: No port in response")
                     return False
             else:
-                print(f"Browser initialization failed: {response.get_error_message()}")
+                logger.error(f"Browser initialization failed: {response.get_error_message()}")
                 return False
 
         except Exception as e:
-            print("Failed to initialize browser instance:", e)
+            logger.error(f"Failed to initialize browser instance: {e}")
             self._initialized = False
             self._endpoint_url = None
             self._option = None
@@ -418,17 +421,17 @@ class Browser(BaseService):
                     self.endpoint_router_port = port
                     self._initialized = True
                     self._option = option
-                    print("Browser instance successfully initialized")
+                    logger.info("Browser instance successfully initialized")
                     return True
                 else:
-                    print("Browser initialization failed: No port in response")
+                    logger.error("Browser initialization failed: No port in response")
                     return False
             else:
-                print(f"Browser initialization failed: {response.get_error_message()}")
+                logger.error(f"Browser initialization failed: {response.get_error_message()}")
                 return False
 
         except Exception as e:
-            print("Failed to initialize browser instance:", e)
+            logger.error(f"Failed to initialize browser instance: {e}")
             self._initialized = False
             self._endpoint_url = None
             self._option = None

@@ -92,6 +92,33 @@ Get the HTTP client for making API calls.
 **Returns:**
 - `Client`: The HTTP client instance.
 
+#### `delete(sync_context=False)`
+
+Delete the current session.
+
+**Parameters:**
+- `sync_context` (`bool`, optional): Whether to sync context before deletion. Defaults to `False`.
+
+**Returns:**
+- `DeleteResult`: Result indicating success or failure and request ID.
+
+**Example:**
+```python
+# Delete session without context sync
+delete_result = session.delete()
+if delete_result.success:
+    print("Session deleted successfully")
+else:
+    print(f"Failed to delete session: {delete_result.error_message}")
+
+# Delete session with context sync
+delete_result = session.delete(sync_context=True)
+if delete_result.success:
+    print("Session deleted with context sync")
+else:
+    print(f"Failed to delete session: {delete_result.error_message}")
+```
+
 ## Session Class
 
 Backward compatibility class that extends BaseSession.
@@ -228,7 +255,13 @@ try:
 finally:
     # Always clean up
     if 'session' in locals():
-        agb.delete(session)
+        # Option 1: Use session.delete() method
+        delete_result = session.delete(sync_context=True)
+        if not delete_result.success:
+            print(f"Failed to delete session: {delete_result.error_message}")
+
+        # Option 2: Use agb.delete() method
+        # agb.delete(session, sync_context=True)
 ```
 
 ### 3. Resource Management
@@ -248,7 +281,7 @@ def with_session(agb, operation):
         session = result.session
         return operation(session)
     finally:
-        agb.delete(session)
+        agb.delete(session, sync_context=True)
 
 # Usage
 def my_operation(session):

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 
 class CallMcpToolResponse:
@@ -30,7 +30,6 @@ class CallMcpToolResponse:
             self.code = json_data.get("code")
             self.message = json_data.get("message")
             self.http_status_code = json_data.get("httpStatusCode")
-            self.access_denied_detail = json_data.get("accessDeniedDetail")
             self.data = json_data.get("data", {})
 
             # Check if tool execution was successful
@@ -39,41 +38,25 @@ class CallMcpToolResponse:
             )
 
             # Get tool execution result
-            if self.data and not self.data.get("isError", False):
-                # Tool execution successful, try to get result
-                content = self.data.get("content", [])
-                if content and isinstance(content, list):
-                    # Extract text content
-                    text_parts = []
-                    for item in content:
-                        if isinstance(item, dict) and item.get("type") == "text":
-                            text_parts.append(item.get("text", ""))
-                    self.result = "\n".join(text_parts) if text_parts else None
-                else:
-                    self.result = None
+            content = self.data.get("content", []) if self.data else []
+            if content and isinstance(content, list):
+                # Extract text content from all items
+                text_parts = []
+                for item in content:
+                    if isinstance(item, dict) and item.get("type") == "text":
+                        text_parts.append(item.get("text", ""))
+                self.result = "\n".join(text_parts) if text_parts else None
             else:
-                # Tool execution failed, get error information
-                content = self.data.get("content", []) if self.data else []
-                if content and isinstance(content, list):
-                    error_parts = []
-                    for item in content:
-                        if isinstance(item, dict) and item.get("type") == "text":
-                            error_parts.append(item.get("text", ""))
-                    self.result = "\n".join(error_parts) if error_parts else None
-                else:
-                    self.result = None
+                self.result = None
 
-            self.output = self.result  # Maintain backward compatibility
         else:
             self.api_success = None
             self.code = None
             self.message = None
             self.http_status_code = None
-            self.access_denied_detail = None
             self.data = None
             self.tool_success = False
             self.result = None
-            self.output = None
 
     @classmethod
     def from_http_response(cls, response_dict: Dict[str, Any]) -> "CallMcpToolResponse":
@@ -96,7 +79,7 @@ class CallMcpToolResponse:
 
     def is_successful(self) -> bool:
         """Check if API call was successful"""
-        return self.success and self.status_code == 200 and self.api_success is True
+        return self.success and self.status_code == 200 and self.api_success is True and self.tool_success is True
 
     def is_tool_successful(self) -> bool:
         """Check if tool execution was successful"""
@@ -116,9 +99,6 @@ class CallMcpToolResponse:
         """Get tool execution result"""
         return self.result
 
-    def get_tool_output(self) -> Optional[str]:
-        """Get tool output"""
-        return self.output
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary format"""

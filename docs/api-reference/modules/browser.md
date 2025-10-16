@@ -294,23 +294,22 @@ Perform an action on the given Playwright Page object using natural language.
 
 **Example:**
 ```python
-result = session.browser.agent.act(page, ActOptions(
-    action="Click the submit button",
-    timeoutMS=10000
-))
+result = session.browser.agent.act(ActOptions(
+    action="Click the submit button"
+), page)
 ```
 
 ##### act_async
 
 ```python
-async def act_async(page, action_input: Union[ObserveResult, ActOptions]) -> ActResult
+async def act_async(action_input: Union[ObserveResult, ActOptions], page) -> ActResult
 ```
 
 Asynchronous version of the act method.
 
 **Parameters:**
-- `page`: Playwright Page object
 - `action_input` (Union[ObserveResult, ActOptions]): Action configuration
+- `page`: Playwright Page object
 
 **Returns:**
 - `ActResult`: Result of the action
@@ -318,30 +317,29 @@ Asynchronous version of the act method.
 ##### observe
 
 ```python
-def observe(page, options: ObserveOptions) -> Tuple[bool, List[ObserveResult]]
+def observe(options: ObserveOptions, page) -> Tuple[bool, List[ObserveResult]]
 ```
 
 Observe elements or state on the given Playwright Page object.
 
 **Parameters:**
-- `page`: Playwright Page object
 - `options` (ObserveOptions): Observation configuration
+- `page`: Playwright Page object
 
 **Returns:**
 - `Tuple[bool, List[ObserveResult]]`: Success status and list of observed elements
 
 **Example:**
 ```python
-success, results = session.browser.agent.observe(page, ObserveOptions(
-    instruction="Find all clickable buttons",
-    returnActions=5
-))
+success, results = session.browser.agent.observe(ObserveOptions(
+    instruction="Find all clickable buttons"
+), page)
 ```
 
 ##### observe_async
 
 ```python
-async def observe_async(page, options: ObserveOptions) -> Tuple[bool, List[ObserveResult]]
+async def observe_async(options: ObserveOptions, page) -> Tuple[bool, List[ObserveResult]]
 ```
 
 Asynchronous version of the observe method.
@@ -355,18 +353,18 @@ def extract(page, options: ExtractOptions[T]) -> Tuple[bool, T]
 Extract structured information from the given Playwright Page object.
 
 **Parameters:**
-- `page`: Playwright Page object
 - `options` (ExtractOptions[T]): Extraction configuration with schema
+- `page`: Playwright Page object
 
 **Returns:**
 - `Tuple[bool, T]`: Success status and extracted data
 
 **Example:**
 ```python
-success, data = session.browser.agent.extract(page, ExtractOptions(
+success, data = session.browser.agent.extract(ExtractOptions(
     instruction="Extract product information",
     schema=ProductSchema
-))
+), page)
 ```
 
 ##### extract_async
@@ -411,7 +409,6 @@ Result of a browser action.
 ```python
 success: bool      # Whether the action succeeded
 message: str       # Result message or error description
-action: str        # The action that was performed
 ```
 
 ---
@@ -425,7 +422,6 @@ Configuration options for page observation.
 ```python
 ObserveOptions(
     instruction: str,
-    returnActions: Optional[int] = None,
     iframes: Optional[bool] = None,
     dom_settle_timeout_ms: Optional[int] = None
 )
@@ -433,7 +429,6 @@ ObserveOptions(
 
 **Parameters:**
 - `instruction` (str): Natural language description of what to observe
-- `returnActions` (int): Maximum number of actions to return
 - `iframes` (bool): Whether to include iframe content
 - `dom_settle_timeout_ms` (int): Time to wait for DOM to settle
 
@@ -566,16 +561,14 @@ from agb.modules.browser import ActOptions, ObserveOptions, ExtractOptions
 from pydantic import BaseModel
 
 # Perform actions
-act_result = await session.browser.agent.act_async(page, ActOptions(
-    action="Fill the search box with 'Python automation' and press Enter",
-    timeoutMS=15000
-))
+act_result = await session.browser.agent.act_async(ActOptions(
+    action="Fill the search box with 'Python automation' and press Enter"
+), page)
 
 # Observe page elements
-success, results = await session.browser.agent.observe_async(page, ObserveOptions(
-    instruction="Find all search result links",
-    returnActions=10
-))
+success, results = await session.browser.agent.observe_async(ObserveOptions(
+    instruction="Find all search result links"
+), page)
 
 # Extract structured data
 class SearchResult(BaseModel):
@@ -583,10 +576,10 @@ class SearchResult(BaseModel):
     url: str
     description: str
 
-success, data = await session.browser.agent.extract_async(page, ExtractOptions(
+success, data = await session.browser.agent.extract_async(ExtractOptions(
     instruction="Extract search results information",
     schema=SearchResult
-))
+), page)
 ```
 
 ## Best Practices

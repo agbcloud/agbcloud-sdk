@@ -582,37 +582,6 @@ def safe_code_execution(session, code, language):
     }
 ```
 
-## Error Handling
-
-### Common Error Types
-
-**Syntax Errors:**
-```python
-result = session.code.run_code("print('unclosed string", "python")
-if not result.success:
-    print("Syntax error:", result.error_message)
-```
-
-**Runtime Errors:**
-```python
-result = session.code.run_code("print(undefined_variable)", "python")
-if not result.success:
-    print("Runtime error:", result.error_message)
-```
-
-**Timeout Errors:**
-```python
-result = session.code.run_code("import time; time.sleep(10)", "python", timeout_s=5)
-if not result.success and "timeout" in result.error_message.lower():
-    print("Code execution timed out")
-```
-
-**Import Errors:**
-```python
-result = session.code.run_code("import nonexistent_module", "python")
-if not result.success:
-    print("Import error:", result.error_message)
-```
 
 ## Related Documentation
 

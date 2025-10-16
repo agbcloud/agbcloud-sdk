@@ -36,7 +36,6 @@ class GetLinkResponse:
             self.code = json_data.get("code")
             self.message = json_data.get("message")
             self.http_status_code = json_data.get("httpStatusCode")
-            # 从 data.url 获取实际的 WebSocket URL
             self.url_data = (
                 json_data.get("data", {}).get("url") if json_data.get("data") else None
             )
@@ -67,7 +66,12 @@ class GetLinkResponse:
             json_data=json_data,
             text=response_dict.get("text"),
             error=response_dict.get("error"),
-            request_id=response_dict.get("request_id") or json_data.get("requestId"),
+            request_id=response_dict.get("request_id")
+            or (
+                response_dict.get("json", {}).get("requestId", "")
+                if response_dict.get("json")
+                else None
+            ),
         )
 
     def is_successful(self) -> bool:
@@ -97,29 +101,4 @@ class GetLinkResponse:
         """
         return self.url_data if self.is_successful() else None
 
-    def get_request_id(self) -> Optional[str]:
-        """
-        Get request ID from response
 
-        Returns:
-            Optional[str]: Request ID or None if not found
-        """
-        return self.request_id
-
-    def to_map(self) -> Dict[str, Any]:
-        """
-        Convert to dictionary representation
-
-        Returns:
-            Dict[str, Any]: Dictionary representation
-        """
-        return {
-            "status_code": self.status_code,
-            "url": self.url,
-            "headers": self.headers,
-            "json_data": self.json_data,
-            "text": self.text,
-            "success": self.success,
-            "error": self.error,
-            "request_id": self.request_id,
-        }

@@ -41,8 +41,8 @@ class PageAgent:
         api_key = os.environ.get("AGB_API_KEY")
         if not api_key:
             api_key = "akm-xxx"  # Replace with your test API key
-            print(
-                "Warning: Using default API key. Set AGB_API_KEY environment variable for testing."
+            logger.warning(
+                "Using default API key. Set AGB_API_KEY environment variable for testing."
             )
         return api_key
 
@@ -133,12 +133,12 @@ class PageAgent:
                     try:
                         task_name, arguments, future = await asyncio.wait_for(self._task_queue.get(), timeout=1.0)
                         try:
-                            print(f"Execute task {task_name} with arguments {arguments}")
+                            logger.debug(f"Execute task {task_name} with arguments {arguments}")
                             if task_name == "run_task":
                                 task_module = arguments["task"]
-                                logger = arguments["logger"]
+                                task_logger = arguments["logger"]
                                 config = arguments["config"]
-                                ret = await task_module.run(self, logger, config)
+                                ret = await task_module.run(self, task_logger, config)
                             else:
                                 raise RuntimeError(f"Unknown task: {task_name}")
                             future.set_result(ret)
@@ -164,11 +164,11 @@ class PageAgent:
                 try:
                     tool_name, arguments, future = await asyncio.wait_for(self._tool_call_queue.get(), timeout=1.0)
                     try:
-                        print(f"Call tool {tool_name} with arguments {arguments}")
+                        logger.debug(f"Call tool {tool_name} with arguments {arguments}")
                         if self.session is not None:
                             service = BaseService(self.session)
                             response = service._call_mcp_tool(tool_name, arguments)
-                            print("MCP tool response:", response)
+                            logger.debug(f"MCP tool response: {response}")
 
                             # Extract text content from response
                             if hasattr(response, 'content') and response.content:
@@ -241,8 +241,6 @@ class PageAgent:
     async def goto(
         self,
         url: str,
-        context_id: Optional[int] = None,
-        page_id: Optional[str] = None,
         wait_until: Optional[
             Literal["load", "domcontentloaded", "networkidle", "commit"]
         ] = "load",
@@ -264,7 +262,7 @@ class PageAgent:
         self,
         url: str) -> str:
         """Navigates the browser to the specified URL."""
-        logger.info(f"goto {url}")
+        logger.info(f"navigate {url}")
         try:
             if self.session is None:
                 raise RuntimeError("Session is not initialized. Call initialize() first.")
@@ -272,8 +270,8 @@ class PageAgent:
             await self.session.browser.agent.navigate_async(url)
             return f"Successfully navigated to {url}"
         except Exception as e:
-            logger.error(f"Error in goto: {e}", exc_info=True)
-            return f"goto {url} failed: {str(e)}"
+            logger.error(f"Error in navigate: {e}", exc_info=True)
+            return f"navigate {url} failed: {str(e)}"
 
     async def screenshot(
         self
@@ -298,7 +296,7 @@ class PageAgent:
             logger.error(f"Error in screenshot: {e}", exc_info=True)
             return f"screenshot failed: {str(e)}"
 
-    async def extract(self, instruction: str, schema: Type[T], context_id: Optional[int] = None, page_id: Optional[str] = None, use_text_extract: Optional[bool] = False, dom_settle_timeout_ms: Optional[int] = 5000, use_vision: Optional[bool] = False, selector: Optional[str] = None) -> T:
+    async def extract(self, instruction: str, schema: Type[T], use_text_extract: Optional[bool] = False, dom_settle_timeout_ms: Optional[int] = 5000, use_vision: Optional[bool] = False, selector: Optional[str] = None) -> T:
         """
         Extracts structured data from the current webpage based on an instruction.
 
@@ -321,9 +319,12 @@ class PageAgent:
                 instruction=instruction,
                 schema=schema,
                 use_text_extract=use_text_extract,
+                dom_settle_timeout_ms=dom_settle_timeout_ms,
+                use_vision=use_vision,
+                selector=selector,
             )
 
-            success, extracted_data = await self.session.browser.agent.extract_async(page=self.current_page, options=options)
+            success, extracted_data = await self.session.browser.agent.extract_async(options=options, page=self.current_page)
             if not success or extracted_data is None:
                 raise RuntimeError("Failed to extract data from the page")
             return extracted_data
@@ -331,14 +332,12 @@ class PageAgent:
             logger.error(f"Error in extract: {e}", exc_info=True)
             raise
 
-    async def observe(self, instruction: str, return_actions: bool = True, only_visible: bool = False, dom_settle_timeout_ms: Optional[int] = None, use_vision: bool = False) -> List[ObserveResult]:
+    async def observe(self, instruction: str, dom_settle_timeout_ms: Optional[int] = None, use_vision: bool = False) -> List[ObserveResult]:
         """
         Observes the current webpage to identify and describe elements.
 
         Args:
             instruction (Optional[str]): Natural language goal for observation.
-            return_actions (bool): If True, action suggestions for observed elements are returned.
-            only_visible (bool): If True, only visible elements are considered.
             dom_settle_timeout_ms (Optional[int]): Max time to wait for DOM stability.
             use_vision (bool): If True, uses visual (screenshot) information for observation.
 
@@ -353,14 +352,15 @@ class PageAgent:
             options = ObserveOptions(
                 instruction=instruction,
                 dom_settle_timeout_ms=dom_settle_timeout_ms,
+                use_vision=use_vision,
             )
-            success, observed_elements = await self.session.browser.agent.observe_async(page=self.current_page, options=options)
+            success, observed_elements = await self.session.browser.agent.observe_async(options=options, page=self.current_page)
             return observed_elements
         except Exception as e:
             logger.error(f"Error in observe: {e}", exc_info=True)
             raise
 
-    async def act(self, action_input: Union[str, ActOptions, ObserveResult], context_id: Optional[int] = None, page_id: Optional[str] = None, use_vision: bool = False) -> ActResult:
+    async def act(self, action_input: Union[str, ActOptions, ObserveResult], use_vision: bool = False) -> ActResult:
         """
         Performs an action on the current webpage, either inferred from an instruction
         or directly on an ObservedElement.
@@ -382,11 +382,12 @@ class PageAgent:
             logger.info(f"Attempting to execute action: {action_input}")
             if isinstance(action_input, str):
                 options = ActOptions(
-                    action=action_input,    
+                    action=action_input,
+                    use_vision=use_vision,    
                 )
-                return await self.session.browser.agent.act_async(page=self.current_page, action_input=options)
+                return await self.session.browser.agent.act_async(action_input=options, page=self.current_page)
             else:
-                return await self.session.browser.agent.act_async(page=self.current_page, action_input=action_input)
+                return await self.session.browser.agent.act_async(action_input=action_input, page=self.current_page)
         except Exception as e:
             logger.error(f"Error in act: {e}", exc_info=True)
             raise

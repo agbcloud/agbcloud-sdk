@@ -22,6 +22,27 @@ from agb.api.models import (
     ListMcpToolsResponse,
     ReleaseSessionRequest,
     ReleaseSessionResponse,
+    # Context related imports
+    ListContextsRequest,
+    ListContextsResponse,
+    GetContextRequest,
+    GetContextResponse,
+    ModifyContextRequest,
+    ModifyContextResponse,
+    DeleteContextRequest,
+    DeleteContextResponse,
+    SyncContextRequest,
+    SyncContextResponse,
+    GetContextInfoRequest,
+    GetContextInfoResponse,
+    GetContextFileDownloadUrlRequest,
+    GetContextFileDownloadUrlResponse,
+    GetContextFileUploadUrlRequest,
+    GetContextFileUploadUrlResponse,
+    DeleteContextFileRequest,
+    DeleteContextFileResponse,
+    DescribeContextFilesRequest,
+    DescribeContextFilesResponse,
 )
 
 from .http_client import HTTPClient
@@ -268,6 +289,177 @@ class Client:
 
         try:
             response = await http_client.get_link_async(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    # Context related methods
+    def list_contexts(self, request: ListContextsRequest) -> ListContextsResponse:
+        """
+        List contexts using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.list_contexts(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def get_context(self, request: GetContextRequest) -> GetContextResponse:
+        """
+        Get context using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.get_context(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def modify_context(self, request: ModifyContextRequest) -> ModifyContextResponse:
+        """
+        Modify context using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.modify_context(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def delete_context(self, request: DeleteContextRequest) -> DeleteContextResponse:
+        """
+        Delete context using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.delete_context(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def sync_context(self, request: SyncContextRequest) -> SyncContextResponse:
+        """
+        Sync context using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.sync_context(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def get_context_info(self, request: GetContextInfoRequest) -> GetContextInfoResponse:
+        """
+        Get context info using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.get_context_info(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def get_context_file_download_url(self, request: GetContextFileDownloadUrlRequest) -> GetContextFileDownloadUrlResponse:
+        """
+        Get context file download URL using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.get_context_file_download_url(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def get_context_file_upload_url(self, request: GetContextFileUploadUrlRequest) -> GetContextFileUploadUrlResponse:
+        """
+        Get context file upload URL using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.get_context_file_upload_url(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def delete_context_file(self, request: DeleteContextFileRequest) -> DeleteContextFileResponse:
+        """
+        Delete context file using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.delete_context_file(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def describe_context_files(self, request: DescribeContextFilesRequest) -> DescribeContextFilesResponse:
+        """
+        Describe context files using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.describe_context_files(request)
             return response
         finally:
             # Always close the HTTP client to release resources

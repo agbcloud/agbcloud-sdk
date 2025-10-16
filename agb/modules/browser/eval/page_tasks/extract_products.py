@@ -12,8 +12,9 @@ from agb import AGB
 
 from agb.modules.browser.browser_agent import ActOptions
 from agb.modules.browser.eval.page_agent import PageAgent
+from agb.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Optional Playwright import with type annotations
 try:
@@ -22,7 +23,7 @@ try:
 except ImportError:
     async_playwright = None  # type: ignore
     PLAYWRIGHT_AVAILABLE = False
-    print("Warning: Playwright not available. Browser interaction tests will be skipped.")
+    logger.warning("Playwright not available. Browser interaction tests will be skipped.")
 
 class ProductInfo(BaseModel):
     name: str = Field(..., description="商品名")
@@ -99,7 +100,7 @@ async def extract_products(
 
     products = normalize_links(base_url, data.products)
     if not has_valid_products(products):
-        print(
+        logger.warning(
             f"Extracted products from {base_url} but none were valid after normalization."
         )
         return []
@@ -112,11 +113,11 @@ async def ensure_listing_page(
     await act(agent, page, common_action)
     await asyncio.sleep(0.6)
     for i in range(max_steps):
-        print(f"Extraction attempt {i+1}/{max_steps} for {base_url}...")
+        logger.info(f"Extraction attempt {i+1}/{max_steps} for {base_url}...")
         products_found = await extract_products(agent, page, base_url, out_dir)
         if products_found:
             valid_count = len([p for p in products_found if is_valid_product(p)])
-            print(
+            logger.info(
                 f"Extraction successful on attempt {i+1}. Found {valid_count} valid products."
             )
 
@@ -124,7 +125,7 @@ async def ensure_listing_page(
             return products_found
 
         if i < max_steps - 1:
-            print("Extraction failed, attempting to navigate to a listing page...")
+            logger.info("Extraction failed, attempting to navigate to a listing page...")
             await act(agent, page, common_action)
             await asyncio.sleep(0.6)
 
@@ -134,14 +135,14 @@ async def ensure_listing_page(
 async def process_site(agent, url: str, out_dir: str = "/tmp") -> None:
     try:
         if not PLAYWRIGHT_AVAILABLE or async_playwright is None:
-            print("    ⚠️ Playwright not available, skipping browser API detection")
+            logger.warning("    ⚠️ Playwright not available, skipping browser API detection")
             return  # Skip this check if Playwright unavailable
-        
+
         host = domain_of(url)
         page = None
         async with async_playwright() as p:
             if url in CAPTURE_DETECT_URL:
-                print(f"CAPTCHA detected on {host}, skipping.")
+                logger.warning(f"CAPTCHA detected on {host}, skipping.")
                 browser = await p.chromium.connect_over_cdp(url)
                 context = browser.contexts[0]
                 page = await context.new_page()
@@ -177,7 +178,7 @@ async def process_site(agent, url: str, out_dir: str = "/tmp") -> None:
                 logger.info(f"{host} -> no products found (name+link/price)")
 
     except Exception as e:
-            print(f"    ❌ Browser API detection error: {e}")
+            logger.error(f"    ❌ Browser API detection error: {e}")
             return
 
 SITES = [

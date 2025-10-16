@@ -131,6 +131,10 @@ class CreateSessionResponse:
         """Get resource URL"""
         return self.data.resource_url if self.data else None
 
+    def get_data(self) -> Optional[SessionData]:
+        """Get data"""
+        return self.data
+
     def get_error_message(self) -> str:
         """Get error message"""
         if self.error:

@@ -87,39 +87,6 @@ cat("R version:", R.version.string, "\\n")
 
 All response objects inherit from `ApiResponse` and have access to the `request_id` property for tracking API requests.
 
-## Common Error Scenarios
-
-### Syntax Errors
-```python
-# Python syntax error
-code_result = session.code.run_code("print('Hello world'", "python")
-# code_result.error_message = "SyntaxError: unexpected EOF while parsing"
-```
-
-### Runtime Errors
-```python
-# Division by zero
-code_result = session.code.run_code("1/0", "python")
-# code_result.error_message = "ZeroDivisionError: division by zero"
-```
-
-### Unsupported Language
-```python
-# Unsupported language
-code_result = session.code.run_code("print('Hello')", "unsupported")
-# code_result.error_message = "Unsupported language: unsupported"
-```
-
-### Timeout
-```python
-# Code execution timeout
-code_result = session.code.run_code("""
-import time
-time.sleep(300)  # 5 minutes
-""", "python", timeout_s=30)
-# code_result.error_message = "Code execution timeout"
-```
-
 ## Best Practices
 
 ### Always Check Success

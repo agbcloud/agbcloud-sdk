@@ -6,6 +6,9 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from agb.api.base_service import BaseService
 from agb.model.response import ApiResponse, BoolResult
+from agb.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class FileChangeEvent:
@@ -279,7 +282,7 @@ class FileSystem(BaseService):
         args = {"path": path}
         try:
             result = self._call_mcp_tool("create_directory", args)
-            print("Response from CallMcpTool - create_directory:", result)
+            logger.debug(f"Response from CallMcpTool - create_directory: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -313,7 +316,7 @@ class FileSystem(BaseService):
         args = {"path": path, "edits": edits, "dryRun": dry_run}
         try:
             result = self._call_mcp_tool("edit_file", args)
-            print("Response from CallMcpTool - edit_file:", result)
+            logger.debug(f"Response from CallMcpTool - edit_file: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -380,14 +383,14 @@ class FileSystem(BaseService):
         try:
             result = self._call_mcp_tool("get_file_info", args)
             try:
-                print("Response body:")
-                print(
+                logger.debug("Response body:")
+                logger.debug(
                     json.dumps(
                         getattr(result, "body", result), ensure_ascii=False, indent=2
                     )
                 )
             except Exception:
-                print(f"Response: {result}")
+                logger.debug(f"Response: {result}")
             if result.success:
                 file_info = parse_file_info(result.data)
                 return FileInfoResult(
@@ -473,14 +476,14 @@ class FileSystem(BaseService):
         try:
             result = self._call_mcp_tool("list_directory", args)
             try:
-                print("Response body:")
-                print(
+                logger.debug("Response body:")
+                logger.debug(
                     json.dumps(
                         getattr(result, "body", result), ensure_ascii=False, indent=2
                     )
                 )
             except Exception:
-                print(f"Response: {result}")
+                logger.debug(f"Response: {result}")
             if result.success:
                 entries = parse_directory_listing(result.data)
                 return DirectoryListResult(
@@ -514,7 +517,7 @@ class FileSystem(BaseService):
         args = {"source": source, "destination": destination}
         try:
             result = self._call_mcp_tool("move_file", args)
-            print("Response from CallMcpTool - move_file:", result)
+            logger.debug(f"Response from CallMcpTool - move_file: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -554,14 +557,14 @@ class FileSystem(BaseService):
         try:
             result = self._call_mcp_tool("read_file", args)
             try:
-                print("Response body:")
-                print(
+                logger.debug("Response body:")
+                logger.debug(
                     json.dumps(
                         getattr(result, "body", result), ensure_ascii=False, indent=2
                     )
                 )
             except Exception:
-                print(f"Response: {result}")
+                logger.debug(f"Response: {result}")
             if result.success:
                 return FileContentResult(
                     request_id=result.request_id,
@@ -608,7 +611,7 @@ class FileSystem(BaseService):
         args = {"path": path, "content": content, "mode": mode}
         try:
             result = self._call_mcp_tool("write_file", args)
-            print("Response from CallMcpTool - write_file:", result)
+            logger.debug(f"Response from CallMcpTool - write_file: {result}")
             if result.success:
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
@@ -671,7 +674,7 @@ class FileSystem(BaseService):
             while offset < file_size:
                 length = min(self.DEFAULT_CHUNK_SIZE, file_size - offset)
                 chunk_result = self._read_file_chunk(path, offset, length)
-                print(
+                logger.debug(
                     f"ReadFile: Reading chunk {chunk_count + 1} "
                     f"({length} bytes at offset {offset}/{file_size})"
                 )
@@ -712,7 +715,7 @@ class FileSystem(BaseService):
                 any.
         """
         content_len = len(content)
-        print(
+        logger.info(
             f"WriteFile: Starting chunked write to {path} (total size: "
             f"{content_len} bytes, chunk size: {self.DEFAULT_CHUNK_SIZE} bytes)"
         )
@@ -818,14 +821,14 @@ class FileSystem(BaseService):
         try:
             result = self._call_mcp_tool("read_multiple_files", args)
             try:
-                print("Response body:")
-                print(
+                logger.debug("Response body:")
+                logger.debug(
                     json.dumps(
                         getattr(result, "body", result), ensure_ascii=False, indent=2
                     )
                 )
             except Exception:
-                print(f"Response: {result}")
+                logger.debug(f"Response: {result}")
 
             if result.success:
                 files_content = parse_multiple_files_response(result.data)
@@ -873,7 +876,7 @@ class FileSystem(BaseService):
 
         try:
             result = self._call_mcp_tool("search_files", args)
-            print(f"Response from CallMcpTool - search_files: {result}")
+            logger.debug(f"Response from CallMcpTool - search_files: {result}")
 
             if result.success:
                 # Handle "No matches found" case
@@ -935,12 +938,12 @@ class FileSystem(BaseService):
                             event = FileChangeEvent.from_dict(event_dict)
                             events.append(event)
                 else:
-                    print(f"Warning: Expected list but got {type(change_data)}")
+                    logger.warning(f"Expected list but got {type(change_data)}")
             except json.JSONDecodeError as e:
-                print(f"Warning: Failed to parse JSON data: {e}")
-                print(f"Raw data: {raw_data}")
+                logger.warning(f"Failed to parse JSON data: {e}")
+                logger.warning(f"Raw data: {raw_data}")
             except Exception as e:
-                print(f"Warning: Unexpected error parsing file change data: {e}")
+                logger.warning(f"Unexpected error parsing file change data: {e}")
 
             return events
 
@@ -948,14 +951,14 @@ class FileSystem(BaseService):
         try:
             result = self._call_mcp_tool("get_file_change", args)
             try:
-                print("Response body:")
-                print(
+                logger.debug("Response body:")
+                logger.debug(
                     json.dumps(
                         getattr(result, "body", result), ensure_ascii=False, indent=2
                     )
                 )
             except Exception:
-                print(f"Response: {result}")
+                logger.debug(f"Response: {result}")
 
             if result.success:
                 # Parse the file change events
@@ -1005,8 +1008,8 @@ class FileSystem(BaseService):
 
         def _monitor_directory():
             """Internal function to monitor directory changes."""
-            print(f"Starting directory monitoring for: {path}")
-            print(f"Polling interval: {interval} seconds")
+            logger.info(f"Starting directory monitoring for: {path}")
+            logger.info(f"Polling interval: {interval} seconds")
 
             while not stop_event.is_set():
                 try:
@@ -1017,26 +1020,26 @@ class FileSystem(BaseService):
                         current_events = result.events
 
                         # Always call callback with current events (no deduplication)
-                        print(f"Detected {len(current_events)} file changes:")
+                        logger.debug(f"Detected {len(current_events)} file changes:")
                         for event in current_events:
-                            print(f"  - {event}")
+                            logger.debug(f"  - {event}")
 
                         try:
                             callback(current_events)
                         except Exception as e:
-                            print(f"Error in callback function: {e}")
+                            logger.error(f"Error in callback function: {e}")
 
                     else:
-                        print(f"Error monitoring directory: {result.error_message}")
+                        logger.error(f"Error monitoring directory: {result.error_message}")
 
                     # Wait for the next poll
                     stop_event.wait(interval)
 
                 except Exception as e:
-                    print(f"Unexpected error in directory monitoring: {e}")
+                    logger.error(f"Unexpected error in directory monitoring: {e}")
                     stop_event.wait(interval)
 
-            print(f"Stopped monitoring directory: {path}")
+            logger.info(f"Stopped monitoring directory: {path}")
 
         # Create stop event if not provided
         if stop_event is None:

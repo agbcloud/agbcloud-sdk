@@ -4,6 +4,9 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
+from agb.logger import get_logger
+
+logger = get_logger(__name__)
 
 # Browser configuration constants
 BROWSER_DATA_PATH = "/tmp/agb_browser_data"
@@ -45,7 +48,7 @@ def load_config(cfg: Optional[Config] = None) -> Config:
             env_path = Path(os.getcwd()) / ".env"
             load_dotenv(env_path)
         except:
-            print("Warning: Failed to load .env file")
+            logger.warning("Failed to load .env file")
 
         if endpoint := os.getenv("AGB_ENDPOINT"):
             config.endpoint = endpoint

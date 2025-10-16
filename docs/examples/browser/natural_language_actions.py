@@ -72,10 +72,9 @@ async def main():
                 await page.goto("https://httpbin.org/html", wait_until="domcontentloaded", timeout=15000)
 
                 # Use natural language to interact with the page
-                search_result = await session.browser.agent.act_async(page, ActOptions(
-                    action="Find and click on any link on this page",
-                    timeoutMS=15000
-                ))
+                search_result = await session.browser.agent.act_async(ActOptions(
+                    action="Find and click on any link on this page"
+                ), page)
 
                 print(f"  Link click result: {search_result.success}")
                 if search_result.success:
@@ -103,10 +102,9 @@ async def main():
             ]
 
             for action_text in form_actions:
-                result = await session.browser.agent.act_async(page, ActOptions(
-                    action=action_text,
-                    timeoutMS=10000
-                ))
+                result = await session.browser.agent.act_async(ActOptions(
+                    action=action_text
+                ), page)
 
                 print(f"  Action: {action_text}")
                 print(f"  Result: {'✅' if result.success else '❌'} {result.message}")
@@ -114,18 +112,15 @@ async def main():
                 if not result.success:
                     print(f"    Retrying with more specific instruction...")
                     # Retry with more specific instruction
-                    retry_result = await session.browser.agent.act_async(page, ActOptions(
-                        action=f"Find and {action_text.lower()}",
-                        timeoutMS=15000,
-                        dom_settle_timeout_ms=2000
-                    ))
+                    retry_result = await session.browser.agent.act_async(ActOptions(
+                        action=f"Find and {action_text.lower()}"
+                    ), page)
                     print(f"    Retry result: {'✅' if retry_result.success else '❌'} {retry_result.message}")
 
             # Submit the form
-            submit_result = await session.browser.agent.act_async(page, ActOptions(
-                action="Click the submit button to submit the form",
-                timeoutMS=10000
-            ))
+            submit_result = await session.browser.agent.act_async(ActOptions(
+                action="Click the submit button to submit the form"
+            ), page)
 
             print(f"  Form submission: {'✅' if submit_result.success else '❌'} {submit_result.message}")
 
@@ -134,18 +129,16 @@ async def main():
             await page.goto("https://quotes.toscrape.com", wait_until="domcontentloaded", timeout=15000)
 
             # Scroll and interact with dynamic content
-            scroll_result = await session.browser.agent.act_async(page, ActOptions(
-                action="Scroll down to see more quotes on the page",
-                timeoutMS=10000
-            ))
+            scroll_result = await session.browser.agent.act_async(ActOptions(
+                action="Scroll down to see more quotes on the page"
+            ), page)
 
             print(f"  Scroll result: {'✅' if scroll_result.success else '❌'} {scroll_result.message}")
 
             # Click on a tag to filter quotes
-            tag_result = await session.browser.agent.act_async(page, ActOptions(
-                action="Click on any tag link to filter quotes by that tag",
-                timeoutMS=10000
-            ))
+            tag_result = await session.browser.agent.act_async(ActOptions(
+                action="Click on any tag link to filter quotes by that tag"
+            ), page)
 
             print(f"  Tag click result: {'✅' if tag_result.success else '❌'} {tag_result.message}")
             if tag_result.success:
@@ -174,11 +167,9 @@ async def main():
             for i, step in enumerate(workflow_steps, 1):
                 print(f"  Step {i}: {step['description']}")
 
-                result = await session.browser.agent.act_async(page, ActOptions(
-                    action=step['action'],
-                    timeoutMS=15000,
-                    dom_settle_timeout_ms=2000
-                ))
+                result = await session.browser.agent.act_async(ActOptions(
+                    action=step['action']
+                ), page)
 
                 print(f"    Result: {'✅' if result.success else '❌'} {result.message}")
 
@@ -193,10 +184,9 @@ async def main():
             await page.goto("https://httpbin.org/html", wait_until="domcontentloaded", timeout=15000)
 
             # Perform conditional actions based on page content
-            conditional_result = await session.browser.agent.act_async(page, ActOptions(
-                action="If there is a link that says 'Herman Melville', click on it. Otherwise, just scroll down the page",
-                timeoutMS=15000
-            ))
+            conditional_result = await session.browser.agent.act_async(ActOptions(
+                action="If there is a link that says 'Herman Melville', click on it. Otherwise, just scroll down the page"
+            ), page)
 
             print(f"  Conditional action result: {'✅' if conditional_result.success else '❌'} {conditional_result.message}")
 
@@ -220,41 +210,6 @@ async def main():
             print("🧹 Session cleaned up")
 
     print("🎉 Natural language actions example completed!")
-
-
-async def demonstrate_error_recovery():
-    """Demonstrate error recovery patterns with natural language actions."""
-
-    print("\n🔧 Demonstrating error recovery patterns...")
-
-    # This would be part of a larger session, shown here for educational purposes
-    # In practice, you would integrate this into your main workflow
-
-    async def retry_action_with_fallback(agent, page, primary_action, fallback_action, max_retries=3):
-        """Retry an action with a fallback if it fails."""
-
-        for attempt in range(max_retries):
-            try:
-                action_text = primary_action if attempt == 0 else fallback_action
-                result = await agent.act_async(page, ActOptions(
-                    action=action_text,
-                    timeoutMS=10000 + (attempt * 5000)  # Increase timeout with retries
-                ))
-
-                if result.success:
-                    return result
-
-                print(f"    Attempt {attempt + 1} failed: {result.message}")
-
-            except Exception as e:
-                print(f"    Attempt {attempt + 1} error: {e}")
-
-            if attempt < max_retries - 1:
-                await asyncio.sleep(2)  # Wait before retry
-
-        raise BrowserError(f"Action failed after {max_retries} attempts")
-
-    print("  This pattern can be used to make your automation more robust!")
 
 
 if __name__ == "__main__":

@@ -16,6 +16,9 @@ import importlib.util
 
 from agb.agb import AGB
 from agb.session_params import CreateSessionParams
+from agb.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_api_key():
@@ -34,15 +37,15 @@ def test_create_session():
 
     # API key
     api_key = get_api_key()
-    print(f"Using API Key: {api_key}")
+    logger.info(f"Using API Key: {api_key}")
 
     try:
-        print("Initializing AGB client...")
+        logger.info("Initializing AGB client...")
 
         # Create AGB instance
         agb = AGB(api_key=api_key)
-        print(f"✅ AGB client initialized successfully")
-        print(f"   Endpoint: {agb.endpoint}")
+        logger.info(f"✅ AGB client initialized successfully")
+        logger.info(f"   Endpoint: {agb.endpoint}")
         print(f"   Timeout: {agb.timeout_ms}ms")
 
         print("\nCreating session...")

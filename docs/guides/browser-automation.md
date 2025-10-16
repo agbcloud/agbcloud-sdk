@@ -186,23 +186,15 @@ Execute actions on web pages using natural language:
 from agb.modules.browser import ActOptions
 
 # Simple click action
-act_result = await session.browser.agent.act_async(page, ActOptions(
-    action="Click the login button",
-    timeoutMS=10000
-))
+act_result = await session.browser.agent.act_async(ActOptions(
+    action="Click the login button"
+), page)
 
-# Form filling
-act_result = await session.browser.agent.act_async(page, ActOptions(
-    action="Fill the email field with 'user@example.com' and password field with 'password123'",
-    timeoutMS=15000
-))
 
 # Complex interactions
-act_result = await session.browser.agent.act_async(page, ActOptions(
-    action="Scroll down to find the 'Load More' button and click it",
-    timeoutMS=20000,
-    iframes=True  # Include iframe content
-))
+act_result = await session.browser.agent.act_async(ActOptions(
+    action="Scroll down to find the 'Load More' button and click it"
+), page)
 
 print(f"Action result: {act_result.success} - {act_result.message}")
 ```
@@ -215,11 +207,9 @@ Observe and analyze page elements:
 from agb.modules.browser import ObserveOptions
 
 # Find interactive elements
-success, results = await session.browser.agent.observe_async(page, ObserveOptions(
-    instruction="Find all clickable buttons and links on the page",
-    returnActions=10,
-    iframes=False
-))
+success, results = await session.browser.agent.observe_async(ObserveOptions(
+    instruction="Find all clickable buttons and links on the page"
+), page)
 
 if success:
     for result in results:
@@ -248,11 +238,11 @@ class ProductList(BaseModel):
     products: List[Product]
 
 # Extract data
-success, data = await session.browser.agent.extract_async(page, ExtractOptions(
+success, data = await session.browser.agent.extract_async(ExtractOptions(
     instruction="Extract all product information from this e-commerce page",
     schema=ProductList,
     use_text_extract=True
-))
+), page)
 
 if success and data:
     for product in data.products:
@@ -263,21 +253,15 @@ if success and data:
 
 ```python
 # With iframe support and custom timeouts
-act_result = await session.browser.agent.act_async(page, ActOptions(
-    action="Navigate through the multi-step checkout process",
-    timeoutMS=30000,
-    iframes=True,
-    dom_settle_timeout_ms=2000  # Wait for DOM to settle
-))
+act_result = await session.browser.agent.act_async(ActOptions(
+    action="Navigate through the multi-step checkout process"
+), page)
 
 # Selective extraction with CSS selector
-success, data = await session.browser.agent.extract_async(page, ExtractOptions(
+success, data = await session.browser.agent.extract_async(ExtractOptions(
     instruction="Extract pricing information from the product cards",
     schema=ProductList,
-    selector=".product-card",  # Focus on specific elements
-    iframe=False,
-    dom_settle_timeout_ms=1000
-))
+), page)
 ```
 
 ## Advanced Features
@@ -320,9 +304,9 @@ try:
     if not success:
         raise BrowserError("Failed to initialize browser")
 
-    act_result = await session.browser.agent.act_async(page, ActOptions(
+    act_result = await session.browser.agent.act_async(ActOptions(
         action="Click the submit button"
-    ))
+    ), page)
 
     if not act_result.success:
         print(f"Action failed: {act_result.message}")
@@ -356,13 +340,13 @@ Use appropriate timeouts for different operations:
 
 ```python
 # Quick interactions
-quick_action = ActOptions(action="Click button", timeoutMS=5000)
+quick_action = ActOptions(action="Click button")
 
 # Form submissions
-form_action = ActOptions(action="Submit form", timeoutMS=15000)
+form_action = ActOptions(action="Submit form")
 
 # Page navigation
-nav_action = ActOptions(action="Navigate to next page", timeoutMS=30000)
+nav_action = ActOptions(action="Navigate to next page")
 ```
 
 ### 3. Robust Element Interaction
@@ -371,17 +355,14 @@ Make your automation more reliable:
 
 ```python
 # Wait for elements to be ready
-act_result = await session.browser.agent.act_async(page, ActOptions(
-    action="Wait for the page to fully load, then click the submit button",
-    timeoutMS=20000,
-    dom_settle_timeout_ms=3000
-))
+act_result = await session.browser.agent.act_async(ActOptions(
+    action="Wait for the page to fully load, then click the submit button"
+), page)
 
 # Handle dynamic content
-observe_result = await session.browser.agent.observe_async(page, ObserveOptions(
-    instruction="Wait for the search results to appear and find the first result link",
-    returnActions=1
-))
+observe_result = await session.browser.agent.observe_async(ObserveOptions(
+    instruction="Wait for the search results to appear and find the first result link"
+), page)
 ```
 
 ### 4. Error Recovery
@@ -392,7 +373,7 @@ Implement retry logic for critical operations:
 async def retry_action(agent, page, action_options, max_retries=3):
     for attempt in range(max_retries):
         try:
-            result = await agent.act_async(page, action_options)
+            result = await agent.act_async(action_options, page)
             if result.success:
                 return result
             print(f"Attempt {attempt + 1} failed: {result.message}")
@@ -439,15 +420,14 @@ except Exception as e:
 
 ```python
 # Add more specific instructions
-act_result = await session.browser.agent.act_async(page, ActOptions(
-    action="Look for a button with text 'Submit' or 'Send' and click it",
-    timeoutMS=15000
-))
+act_result = await session.browser.agent.act_async(ActOptions(
+    action="Look for a button with text 'Submit' or 'Send' and click it"
+), page)
 
 # Check page state first
-success, elements = await session.browser.agent.observe_async(page, ObserveOptions(
+success, elements = await session.browser.agent.observe_async(ObserveOptions(
     instruction="Check if the page has finished loading and show all interactive elements"
-))
+), page)
 ```
 
 ### Debug Mode

@@ -1,5 +1,8 @@
 from agb.api.base_service import BaseService
 from agb.model.response import ApiResponse
+from agb.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class CodeExecutionResult(ApiResponse):
@@ -68,7 +71,7 @@ class Code(BaseService):
 
             args = {"code": code, "language": language, "timeout_s": timeout_s}
             result = self._call_mcp_tool("run_code", args)
-            print(f"Run code response: {result}")
+            logger.debug(f"Run code response: {result}")
 
             if result.success:
                 return CodeExecutionResult(

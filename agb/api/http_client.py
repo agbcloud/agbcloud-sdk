@@ -5,12 +5,13 @@ Provides HTTP communication functionality with AGB API
 """
 
 import asyncio
-import json
-from typing import Any, Dict, List, Optional, Union
-from urllib.parse import urlencode
+from typing import Any, Dict, Optional
 
 import aiohttp
 import requests
+from agb.logger import get_logger
+
+logger = get_logger(__name__)
 
 from .models.call_mcp_tool_request import CallMcpToolRequest
 from .models.call_mcp_tool_response import CallMcpToolResponse
@@ -26,6 +27,28 @@ from .models.list_mcp_tools_request import ListMcpToolsRequest
 from .models.list_mcp_tools_response import ListMcpToolsResponse
 from .models.release_session_request import ReleaseSessionRequest
 from .models.release_session_response import ReleaseSessionResponse
+
+# Context related imports
+from .models.list_contexts_request import ListContextsRequest
+from .models.list_contexts_response import ListContextsResponse
+from .models.get_context_request import GetContextRequest
+from .models.get_context_response import GetContextResponse
+from .models.modify_context_request import ModifyContextRequest
+from .models.modify_context_response import ModifyContextResponse
+from .models.delete_context_request import DeleteContextRequest
+from .models.delete_context_response import DeleteContextResponse
+from .models.sync_context_request import SyncContextRequest
+from .models.sync_context_response import SyncContextResponse
+from .models.get_context_info_request import GetContextInfoRequest
+from .models.get_context_info_response import GetContextInfoResponse
+from .models.get_context_file_download_url_request import GetContextFileDownloadUrlRequest
+from .models.get_context_file_download_url_response import GetContextFileDownloadUrlResponse
+from .models.get_context_file_upload_url_request import GetContextFileUploadUrlRequest
+from .models.get_context_file_upload_url_response import GetContextFileUploadUrlResponse
+from .models.delete_context_file_request import DeleteContextFileRequest
+from .models.delete_context_file_response import DeleteContextFileResponse
+from .models.describe_context_files_request import DescribeContextFilesRequest
+from .models.describe_context_files_response import DescribeContextFilesResponse
 
 
 class HTTPClient:
@@ -421,24 +444,24 @@ class HTTPClient:
             timeout = self.timeout
             timeout_display = f"{self.timeout} seconds"
 
-        # Print request information
-        print("\n=== HTTP Request Information ===")
-        print(f"URL: {url}")
-        print(f"Timeout: {timeout_display}")
+        # Log request information
+        logger.debug("\n=== HTTP Request Information ===")
+        logger.debug(f"URL: {url}")
+        logger.debug(f"Timeout: {timeout_display}")
 
         if params:
-            print(f"Query Parameters: {params}")
+            logger.debug(f"Query Parameters: {params}")
         else:
-            print("Query Parameters: None")
+            logger.debug("Query Parameters: None")
 
         if json_data:
-            print(f"JSON Data: {json_data}")
+            logger.debug(f"JSON Data: {json_data}")
         elif data:
-            print(f"Form Data: {data}")
+            logger.debug(f"Form Data: {data}")
         else:
-            print("Request Body: None")
+            logger.debug("Request Body: None")
 
-        print("=" * 50)
+        logger.debug("=" * 50)
 
         try:
             # Execute request
@@ -490,26 +513,34 @@ class HTTPClient:
             # Try to parse JSON response
             try:
                 result["json"] = response.json()
+                # Extract request_id from JSON response if available
+                if result["json"] and "requestId" in result["json"]:
+                    result["request_id"] = result["json"]["requestId"]
             except ValueError:
                 result["text"] = response.text
                 result["json"] = None
 
-            # Print response information
-            print("\n=== HTTP Response Information ===")
-            print(
+            # Extract request_id from response headers if not found in JSON
+            if "request_id" not in result:
+                result["request_id"] = response.headers.get("x-request-id", "")
+
+            # Log response information
+            logger.debug("\n=== HTTP Response Information ===")
+            logger.debug(
                 f"Response Body: {result.get('json', result.get('text', 'No content'))}"
             )
-            print("=" * 50)
+            logger.debug(f"Request ID in result: {result.get('request_id', 'NOT_FOUND')}")
+            logger.debug("=" * 50)
 
             return result
 
         except requests.exceptions.RequestException as e:
-            # Print error information
-            print("\n=== HTTP Request Error ===")
-            print(f"Error Type: {type(e).__name__}")
-            print(f"Error Message: {str(e)}")
-            print(f"Request URL: {url}")
-            print("=" * 50)
+            # Log error information
+            logger.error("\n=== HTTP Request Error ===")
+            logger.error(f"Error Type: {type(e).__name__}")
+            logger.error(f"Error Message: {str(e)}")
+            logger.error(f"Request URL: {url}")
+            logger.error("=" * 50)
 
             return {"success": False, "error": str(e), "status_code": None, "url": url}
 
@@ -546,24 +577,24 @@ class HTTPClient:
         if headers:
             request_headers.update(headers)
 
-        # Print request information
-        print("\n=== Async HTTP Request Information ===")
-        print(f"URL: {url}")
-        print(f"Timeout: {self.timeout} seconds")
+        # Log request information
+        logger.debug("\n=== Async HTTP Request Information ===")
+        logger.debug(f"URL: {url}")
+        logger.debug(f"Timeout: {self.timeout} seconds")
 
         if params:
-            print(f"Query Parameters: {params}")
+            logger.debug(f"Query Parameters: {params}")
         else:
-            print("Query Parameters: None")
+            logger.debug("Query Parameters: None")
 
         if json_data:
-            print(f"JSON Data: {json_data}")
+            logger.debug(f"JSON Data: {json_data}")
         elif data:
-            print(f"Form Data: {data}")
+            logger.debug(f"Form Data: {data}")
         else:
-            print("Request Body: None")
+            logger.debug("Request Body: None")
 
-        print("=" * 50)
+        logger.debug("=" * 50)
 
         try:
             # Create aiohttp session and execute request
@@ -586,15 +617,22 @@ class HTTPClient:
                         # Try to parse JSON response
                         try:
                             response_dict["json"] = await response.json()
+                            # Extract request_id from JSON response if available
+                            if response_dict["json"] and "requestId" in response_dict["json"]:
+                                response_dict["request_id"] = response_dict["json"]["requestId"]
                         except:
                             response_dict["json"] = None
 
-                        # Print response information (like sync version)
-                        print("\n=== Async HTTP Response Information ===")
-                        print(
+                        # Extract request_id from response headers if not found in JSON
+                        if "request_id" not in response_dict:
+                            response_dict["request_id"] = response.headers.get("x-request-id", "")
+
+                        # Log response information (like sync version)
+                        logger.debug("\n=== Async HTTP Response Information ===")
+                        logger.debug(
                             f"Response Body: {response_dict.get('json', response_dict.get('text', 'No content'))}"
                         )
-                        print("=" * 50)
+                        logger.debug("=" * 50)
 
                         return response_dict
 
@@ -618,12 +656,12 @@ class HTTPClient:
                             except:
                                 response_dict["json"] = None
 
-                            # Print response information (like sync version)
-                            print("\n=== Async HTTP Response Information ===")
-                            print(
+                            # Log response information (like sync version)
+                            logger.debug("\n=== Async HTTP Response Information ===")
+                            logger.debug(
                                 f"Response Body: {response_dict.get('json', response_dict.get('text', 'No content'))}"
                             )
-                            print("=" * 50)
+                            logger.debug("=" * 50)
 
                             return response_dict
                     else:
@@ -645,23 +683,23 @@ class HTTPClient:
                             except:
                                 response_dict["json"] = None
 
-                            # Print response information (like sync version)
-                            print("\n=== Async HTTP Response Information ===")
-                            print(
+                            # Log response information (like sync version)
+                            logger.debug("\n=== Async HTTP Response Information ===")
+                            logger.debug(
                                 f"Response Body: {response_dict.get('json', response_dict.get('text', 'No content'))}"
                             )
-                            print("=" * 50)
+                            logger.debug("=" * 50)
 
                             return response_dict
                 else:
                     raise ValueError(f"Unsupported HTTP method: {method}")
 
         except asyncio.TimeoutError:
-            # Print error information
-            print("\n=== Async HTTP Request Timeout ===")
-            print(f"Request URL: {url}")
-            print(f"Timeout: {self.timeout} seconds")
-            print("=" * 50)
+            # Log error information
+            logger.error("\n=== Async HTTP Request Timeout ===")
+            logger.error(f"Request URL: {url}")
+            logger.error(f"Timeout: {self.timeout} seconds")
+            logger.error("=" * 50)
 
             return {
                 "success": False,
@@ -671,12 +709,12 @@ class HTTPClient:
             }
 
         except Exception as e:
-            # Print error information
-            print("\n=== Async HTTP Request Error ===")
-            print(f"Error Type: {type(e).__name__}")
-            print(f"Error Message: {str(e)}")
-            print(f"Request URL: {url}")
-            print("=" * 50)
+            # Log error information
+            logger.error("\n=== Async HTTP Request Error ===")
+            logger.error(f"Error Type: {type(e).__name__}")
+            logger.error(f"Error Message: {str(e)}")
+            logger.error(f"Request URL: {url}")
+            logger.error("=" * 50)
 
             return {"success": False, "error": str(e), "status_code": None, "url": url}
 
@@ -684,3 +722,290 @@ class HTTPClient:
         """Close HTTP session"""
         if self.session:
             self.session.close()
+
+    # Context related methods
+    def list_contexts(self, request: ListContextsRequest) -> ListContextsResponse:
+        """
+        HTTP request interface for listing contexts
+
+        Args:
+            request (ListContextsRequest): Request object for listing contexts
+
+        Returns:
+            ListContextsResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="GET",
+            endpoint="/sdk/ListContexts",
+            headers=headers,
+            params=params,
+        )
+
+        # Return structured response object
+        return ListContextsResponse.from_http_response(response_dict)
+
+    def get_context(self, request: GetContextRequest) -> GetContextResponse:
+        """
+        HTTP request interface for getting context
+
+        Args:
+            request (GetContextRequest): Request object for getting context
+
+        Returns:
+            GetContextResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="GET",
+            endpoint="/sdk/GetContext",
+            headers=headers,
+            params=params,
+        )
+
+        # Return structured response object
+        return GetContextResponse.from_http_response(response_dict)
+
+    def modify_context(self, request: ModifyContextRequest) -> ModifyContextResponse:
+        """
+        HTTP request interface for modifying context
+
+        Args:
+            request (ModifyContextRequest): Request object for modifying context
+
+        Returns:
+            ModifyContextResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/sdk/ModifyContext",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return ModifyContextResponse.from_http_response(response_dict)
+
+    def delete_context(self, request: DeleteContextRequest) -> DeleteContextResponse:
+        """
+        HTTP request interface for deleting context
+
+        Args:
+            request (DeleteContextRequest): Request object for deleting context
+
+        Returns:
+            DeleteContextResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/sdk/DeleteContext",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return DeleteContextResponse.from_http_response(response_dict)
+
+    def sync_context(self, request: SyncContextRequest) -> SyncContextResponse:
+        """
+        HTTP request interface for syncing context
+
+        Args:
+            request (SyncContextRequest): Request object for syncing context
+
+        Returns:
+            SyncContextResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/sdk/SyncContext",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return SyncContextResponse.from_http_response(response_dict)
+
+    def get_context_info(self, request: GetContextInfoRequest) -> GetContextInfoResponse:
+        """
+        HTTP request interface for getting context info
+
+        Args:
+            request (GetContextInfoRequest): Request object for getting context info
+
+        Returns:
+            GetContextInfoResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="GET",
+            endpoint="/sdk/GetContextInfo",
+            headers=headers,
+            params=params,
+        )
+
+        # Return structured response object
+        return GetContextInfoResponse.from_http_response(response_dict)
+
+    def get_context_file_download_url(self, request: GetContextFileDownloadUrlRequest) -> GetContextFileDownloadUrlResponse:
+        """
+        HTTP request interface for getting context file download URL
+
+        Args:
+            request (GetContextFileDownloadUrlRequest): Request object for getting download URL
+
+        Returns:
+            GetContextFileDownloadUrlResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/sdk/GetContextFileDownloadUrl",
+            headers=headers,
+            params=params,
+        )
+
+        # Return structured response object
+        return GetContextFileDownloadUrlResponse.from_http_response(response_dict)
+
+    def get_context_file_upload_url(self, request: GetContextFileUploadUrlRequest) -> GetContextFileUploadUrlResponse:
+        """
+        HTTP request interface for getting context file upload URL
+
+        Args:
+            request (GetContextFileUploadUrlRequest): Request object for getting upload URL
+
+        Returns:
+            GetContextFileUploadUrlResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/sdk/GetContextFileUploadUrl",
+            headers=headers,
+            params=params,
+        )
+
+        # Return structured response object
+        return GetContextFileUploadUrlResponse.from_http_response(response_dict)
+
+    def delete_context_file(self, request: DeleteContextFileRequest) -> DeleteContextFileResponse:
+        """
+        HTTP request interface for deleting context file
+
+        Args:
+            request (DeleteContextFileRequest): Request object for deleting file
+
+        Returns:
+            DeleteContextFileResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/sdk/DeleteContextFile",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return DeleteContextFileResponse.from_http_response(response_dict)
+
+    def describe_context_files(self, request: DescribeContextFilesRequest) -> DescribeContextFilesResponse:
+        """
+        HTTP request interface for describing context files
+
+        Args:
+            request (DescribeContextFilesRequest): Request object for describing files
+
+        Returns:
+            DescribeContextFilesResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/sdk/DescribeContextFiles",
+            headers=headers,
+            params=params,
+        )
+
+        # Return structured response object
+        return DescribeContextFilesResponse.from_http_response(response_dict)

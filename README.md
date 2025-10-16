@@ -88,7 +88,7 @@ For comprehensive documentation, guides, and examples, visit:
 
 3. Install dependencies:
    ```bash
-   pip install -e .[dev,test]
+   pip install -e ."[dev,test]"
    ```
 
 ## License

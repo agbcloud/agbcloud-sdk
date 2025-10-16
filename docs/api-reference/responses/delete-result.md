@@ -64,26 +64,6 @@ delete_result.request_id = "req_123456789"
 
 All response objects inherit from `ApiResponse` and have access to the `request_id` property for tracking API requests.
 
-## Common Error Scenarios
-
-### Session Not Found
-```python
-# Attempting to delete a non-existent session
-delete_result.error_message = "Session not found"
-```
-
-### Session Already Deleted
-```python
-# Attempting to delete an already deleted session
-delete_result.error_message = "Session already deleted"
-```
-
-### Permission Denied
-```python
-# Insufficient permissions to delete the session
-delete_result.error_message = "Permission denied"
-```
-
 ## Related Types
 
 - **[SessionResult](session-result.md)** - Result type for session creation

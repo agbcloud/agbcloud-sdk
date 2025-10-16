@@ -112,22 +112,20 @@ async with async_playwright() as p:
 from agb.modules.browser import ActOptions, ObserveOptions, ExtractOptions
 
 # Perform actions
-result = await session.browser.agent.act_async(page, ActOptions(
-    action="Click the submit button",
-    timeoutMS=10000
-))
+result = await session.browser.agent.act_async(ActOptions(
+    action="Click the submit button"
+), page)
 
 # Observe elements
-success, results = await session.browser.agent.observe_async(page, ObserveOptions(
-    instruction="Find all product cards",
-    returnActions=10
-))
+success, results = await session.browser.agent.observe_async(bserveOptions(
+    instruction="Find all product cards"
+), page)
 
 # Extract data
-success, data = await session.browser.agent.extract_async(page, ExtractOptions(
+success, data = await session.browser.agent.extract_async(ExtractOptions(
     instruction="Extract product information",
     schema=ProductSchema
-))
+), page)
 ```
 
 ## 🔧 Troubleshooting

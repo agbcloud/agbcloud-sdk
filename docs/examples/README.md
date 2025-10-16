@@ -146,7 +146,7 @@ Before running examples, ensure you have:
    export AGB_API_KEY="your_api_key"
    ```
 
-3. **Python 3.7+** (for running examples locally)
+3. **Python 3.10+** (for running examples locally)
 
 ## 💡 Tips for Using Examples
 

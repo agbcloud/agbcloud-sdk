@@ -9,6 +9,16 @@ This directory contains the complete user guide for AGB SDK, designed with a pro
   - Understanding session functionality and use cases
 
 ### 🔧 Feature Guides
+- **[context-usage-guide.md](context-usage-guide.md)** - Context Usage Guide
+  - Comprehensive Context feature introduction
+  - File operations and sync mechanisms
+  - Advanced features and best practices
+
+- **[context-sync-policies.md](context-sync-policies.md)** - Context Sync Policies Guide
+  - Sync policy configuration and optimization
+  - Recommended configurations for different scenarios
+  - Performance tuning and troubleshooting
+
 - **[code-execution.md](code-execution.md)** - Code Execution Guide
   - Python and JavaScript code execution
   - Code execution best practices
@@ -23,7 +33,6 @@ This directory contains the complete user guide for AGB SDK, designed with a pro
   - File and directory management
   - Batch file processing
   - File system best practices
-
   - Backup and archival systems
 
 ### 🏗️ Management Guides
@@ -81,14 +90,16 @@ Cross-references and extended reading
 ## 🎯 Recommended Learning Paths
 
 ### 👋 New Users (30 minutes)
-1. **[Session Management](session-management.md)** - Understanding basic concepts
-2. **[Code Execution](code-execution.md)** - Learning core functionality
-3. **[Session Management](session-management.md)** - Mastering basic management
+1. **[Context Usage Guide](context-usage-guide.md)** - Understanding Context basic concepts
+2. **[Session Management](session-management.md)** - Understanding basic concepts
+3. **[Code Execution](code-execution.md)** - Learning core functionality
 
 ### 🚀 Advanced Users (60 minutes)
-1. **[File Operations](file-operations.md)** - File system operations
-2. **[Command Execution](command-execution.md)** - System-level operations
-4. **[Best Practices](best-practices.md)** - Production environment preparation
+1. **[Context Usage Guide](context-usage-guide.md)** - Deep learning Context features
+2. **[Context Sync Policies Guide](context-sync-policies.md)** - Optimize sync configuration
+3. **[File Operations](file-operations.md)** - File system operations
+4. **[Command Execution](command-execution.md)** - System-level operations
+5. **[Best Practices](best-practices.md)** - Production environment preparation
 
 ### 🏆 Expert Users (As needed)
 - **[Best Practices](best-practices.md)** - Deep optimization and troubleshooting

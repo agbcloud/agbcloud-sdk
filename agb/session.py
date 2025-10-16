@@ -3,13 +3,18 @@ from typing import TYPE_CHECKING, Dict, Optional
 
 from agb.api.models import (
     GetMcpResourceRequest,
+    ReleaseSessionRequest,
 )
 from agb.exceptions import SessionError
-from agb.model.response import OperationResult
+from agb.model.response import OperationResult, DeleteResult
 from agb.modules.browser import Browser
 from agb.modules.code import Code
 from agb.modules.command import Command
 from agb.modules.file_system import FileSystem
+from agb.context_manager import ContextManager
+from agb.logger import get_logger
+
+logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from agb.agb import AGB
@@ -33,6 +38,9 @@ class BaseSession:
         self.file_system = FileSystem(self)
         self.code = Code(self)
         self.browser = Browser(self)
+
+        # Initialize context manager
+        self.context = ContextManager(self)
 
     def get_api_key(self) -> str:
         """Return the API key for this session."""
@@ -178,7 +186,7 @@ class BaseSession:
             if response.is_successful():
                 # Get URL from response
                 url = response.get_url()
-                request_id = response.get_request_id()
+                request_id = response.request_id
 
                 if url:
                     return OperationResult(
@@ -194,13 +202,110 @@ class BaseSession:
                 # Get error message from response
                 error_message = response.get_error_message() or "Failed to get link"
                 return OperationResult(
-                    request_id=response.get_request_id() or "",
+                    request_id=response.request_id or "",
                     success=False,
                     error_message=error_message,
                 )
 
         except Exception as e:
             raise SessionError(f"Failed to get link: {e}")
+
+    def delete(self, sync_context: bool = False) -> DeleteResult:
+        """
+        Delete a session by session object.
+
+        Args:
+            session (BaseSession): The session to delete.
+            sync_context (bool, optional): Whether to sync context before deletion. Defaults to False.
+
+        Returns:
+            DeleteResult: Result indicating success or failure and request ID.
+        """
+        try:
+            # Handle context synchronization before deletion if requested
+            if sync_context:
+                logger.info("Syncing context before session deletion...")
+                import time
+                sync_start_time = time.time()
+
+                try:
+                    # Check if we're in an async context
+                    import asyncio
+                    try:
+                        # Try to get the current event loop
+                        loop = asyncio.get_running_loop()
+                        # If we're in an async context, we can't use asyncio.run()
+                        # Instead, we'll create a task and wait for it
+                        import concurrent.futures
+                        with concurrent.futures.ThreadPoolExecutor() as executor:
+                            future = executor.submit(asyncio.run, self.context.sync())
+                            sync_result = future.result()
+                    except RuntimeError:
+                        # No event loop running, safe to use asyncio.run()
+                        sync_result = asyncio.run(self.context.sync())
+
+                    sync_duration = time.time() - sync_start_time
+
+                    if sync_result.success:
+                        logger.info("Context sync completed successfully")
+                        logger.info(f"⏱️  Context sync completed in {sync_duration:.2f} seconds")
+                    else:
+                        logger.warning("Context sync completed with failures")
+                        logger.warning(f"⏱️  Context sync failed after {sync_duration:.2f} seconds")
+
+                except Exception as e:
+                    sync_duration = time.time() - sync_start_time
+                    logger.error(f"Failed to trigger context sync: {e}")
+                    logger.error(f"⏱️  Context sync failed after {sync_duration:.2f} seconds")
+                    # Continue with deletion even if sync fails
+
+            # Create request to release the session
+            request = ReleaseSessionRequest(
+                authorization=f"Bearer {self.get_api_key()}",
+                session_id=self.session_id,
+            )
+
+            # Make the API call
+            response = self.get_client().release_mcp_session(request)
+
+            # Check if response is empty
+            if response is None:
+                return DeleteResult(
+                    request_id="",
+                    success=False,
+                    error_message="OpenAPI client returned None response",
+                )
+
+            # Check response type, if it's ReleaseSessionResponse, use new parsing method
+            if hasattr(response, "is_successful"):
+                # This is a ReleaseSessionResponse object
+                if response.is_successful():
+                    return DeleteResult(request_id=response.request_id or "", success=True)
+                else:
+                    error_msg = (
+                        response.get_error_message() or "Failed to delete session"
+                    )
+                    request_id_attr = getattr(response, "request_id", "")
+                    return DeleteResult(
+                        request_id=request_id_attr or "",
+                        success=False,
+                        error_message=error_msg,
+                    )
+            else:
+                request_id_attr = getattr(response, "request_id", "")
+                return DeleteResult(
+                    request_id=request_id_attr or "",
+                    success=False,
+                    error_message="Failed to delete session",
+                )
+
+        except Exception as e:
+            logger.error(f"Error calling release_mcp_session: {e}")
+            # In case of error, return failure result with error message
+            return DeleteResult(
+                success=False,
+                error_message=f"Failed to delete session {self.session_id}: {e}",
+            )
 
 
 class Session(BaseSession):

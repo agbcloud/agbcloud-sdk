@@ -9,6 +9,9 @@ import requests
 from agb.api.models import CallMcpToolRequest
 from agb.exceptions import AGBError
 from agb.model import OperationResult
+from agb.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class BaseService:
@@ -85,10 +88,10 @@ class BaseService:
             if hasattr(response, "is_tool_successful"):
                 # This is a CallMcpToolResponse object
                 try:
-                    print("Response body:")
-                    print(json.dumps(response.json_data, ensure_ascii=False, indent=2))
+                    logger.debug("Response body:")
+                    logger.debug(json.dumps(response.json_data, ensure_ascii=False, indent=2))
                 except Exception:
-                    print(f"Response: {response}")
+                    logger.debug(f"Response: {response}")
 
                 if response.is_tool_successful():
                     # Tool execution successful

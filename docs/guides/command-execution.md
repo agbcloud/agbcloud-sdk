@@ -598,10 +598,10 @@ result = session.command.execute_command("echo 'Current time: $(date)'")
 
 ## Error Handling and Troubleshooting
 
-### Common Command Errors
+### Error Handling Examples
 
 ```python
-def handle_common_errors():
+def handle_errors():
     agb = AGB()
     params = CreateSessionParams(image_id="agb-code-space-1")
     session = agb.create(params).session

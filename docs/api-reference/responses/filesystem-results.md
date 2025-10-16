@@ -156,32 +156,6 @@ search_result = session.file_system.search_files("/tmp", "*.py")
 search_result = session.file_system.search_files("/tmp", "config")
 ```
 
-## Common Error Scenarios
-
-### File Not Found
-```python
-read_result = session.file_system.read_file("/nonexistent/file.txt")
-# read_result.error_message = "File not found: /nonexistent/file.txt"
-```
-
-### Permission Denied
-```python
-write_result = session.file_system.write_file("/root/restricted.txt", "content")
-# write_result.error_message = "Permission denied"
-```
-
-### Directory Not Found
-```python
-list_result = session.file_system.list_directory("/nonexistent/directory")
-# list_result.error_message = "Directory not found: /nonexistent/directory"
-```
-
-### Invalid Path
-```python
-info_result = session.file_system.get_file_info("invalid/path/with/../..")
-# info_result.error_message = "Invalid path provided"
-```
-
 ## Best Practices
 
 ### Error Handling

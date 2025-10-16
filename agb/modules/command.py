@@ -1,5 +1,8 @@
 from agb.api.base_service import BaseService
 from agb.model.response import ApiResponse
+from agb.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class CommandResult(ApiResponse):
@@ -48,7 +51,7 @@ class Command(BaseService):
             args = {"command": command, "timeout_ms": timeout_ms}
 
             result = self._call_mcp_tool("shell", args)
-            print(f"Command executed response: {result}")
+            logger.debug(f"Command executed response: {result}")
 
             if result.success:
                 return CommandResult(

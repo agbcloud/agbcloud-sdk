@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0] - 2025-10-15
+
+### New Features
+- **Context Management System**: Complete context management with persistent data storage, file operations, and synchronization
+- **Enhanced Logging**: Integrated Loguru for better log formatting and structured logging across all modules
+
+### API Enhancements
+- **Context API**: New context endpoints for CRUD operations, file management, and synchronization with region support
+- **Session Integration**: Enhanced session management with context synchronization during lifecycle
+
+### Documentation & Testing
+- **Context Documentation**: Comprehensive usage guides, API reference, and response type documentation
+- **Testing**: Complete test coverage for context operations, file management, and synchronization features
+
+### Bug Fixes
+- **API & HTTP**: Fixed parameter validation, async request issues, and data serialization problems
+- **Infrastructure**: Updated dependencies, improved CI/CD, and resolved type checking issues
+
 ## [0.2.2] - 2025-09-23
 ### Bug Fixes
 - remove oss related code and docs

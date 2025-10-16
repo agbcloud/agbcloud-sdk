@@ -79,20 +79,6 @@ cat("Hello from R!\\n")
 """, "r")
 ```
 
-## Common Error Scenarios
-
-### Code Execution Errors
-- **Syntax Errors**: Invalid syntax in the provided code
-- **Runtime Errors**: Errors that occur during code execution
-- **Timeout Errors**: Code execution exceeds the timeout limit
-- **Unsupported Language**: Language not supported by the system
-
-### Command Execution Errors
-- **Command Not Found**: The specified command doesn't exist
-- **Permission Denied**: Insufficient permissions to execute the command
-- **Invalid Arguments**: Command arguments are invalid
-- **File Not Found**: Referenced files don't exist
-
 ## Best Practices
 
 ### Error Handling

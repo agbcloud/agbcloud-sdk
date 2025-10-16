@@ -113,18 +113,3 @@ class InitBrowserResponse:
             pass
         return None
 
-    def to_map(self) -> Dict[str, Any]:
-        """
-        Convert response to map format for backward compatibility
-
-        Returns:
-            Dict representation of the response
-        """
-        return {
-            "status_code": self.status_code,
-            "url": self.url,
-            "headers": self.headers,
-            "body": self.json_data or {},
-            "success": self.success,
-            "error": self.error,
-        }

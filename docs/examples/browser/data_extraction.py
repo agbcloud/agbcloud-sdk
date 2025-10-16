@@ -114,11 +114,11 @@ async def main():
             await page.goto("https://quotes.toscrape.com")
 
             # Extract all quotes on the page
-            success, quotes_data = await session.browser.agent.extract_async(page, ExtractOptions(
+            success, quotes_data = await session.browser.agent.extract_async(ExtractOptions(
                 instruction="Extract all quotes from this page including the quote text, author, and tags",
                 schema=QuotesList,
                 use_text_extract=True
-            ))
+            ), page)
 
             if success and quotes_data:
                 print(f"  ✅ Successfully extracted {len(quotes_data.quotes)} quotes")
@@ -134,12 +134,12 @@ async def main():
             print("\n🎯 Example 2: Focused Extraction with CSS Selector")
 
             # Extract only the first quote using CSS selector
-            success, focused_quotes = await session.browser.agent.extract_async(page, ExtractOptions(
+            success, focused_quotes = await session.browser.agent.extract_async(ExtractOptions(
                 instruction="Extract the quote information from the selected quote container",
                 schema=Quote,
                 selector=".quote:first-child",  # Focus on first quote only
                 use_text_extract=False
-            ))
+            ), page)
 
             if success and focused_quotes:
                 print(f"  ✅ Successfully extracted focused quote:")
@@ -159,11 +159,11 @@ async def main():
                 headings: List[str] = Field(description="All headings on the page")
                 links: List[str] = Field(description="All link texts on the page")
 
-            success, page_info = await session.browser.agent.extract_async(page, ExtractOptions(
+            success, page_info = await session.browser.agent.extract_async(ExtractOptions(
                 instruction="Extract the page title, all headings, and all link texts from this HTML page",
                 schema=SimplePageInfo,
                 use_text_extract=True
-            ))
+            ), page)
 
             if success and page_info:
                 print(f"  ✅ Successfully extracted page information:")
@@ -188,12 +188,12 @@ async def main():
                 unique_tags: List[str] = Field(description="All unique tags used on the page")
                 page_title: str = Field(description="Page title")
 
-            success, analysis = await session.browser.agent.extract_async(page, ExtractOptions(
+            success, analysis = await session.browser.agent.extract_async(ExtractOptions(
                 instruction="Analyze this quotes page and extract comprehensive information about quotes, authors, tags, and page structure",
                 schema=PageAnalysis,
                 use_text_extract=True,
                 dom_settle_timeout_ms=2000
-            ))
+            ), page)
 
             if success and analysis:
                 print(f"  ✅ Successfully extracted complex analysis:")
@@ -219,11 +219,11 @@ async def main():
                 main_content: str = Field(description="Main content text")
                 links: List[str] = Field(description="All links on the page")
 
-            success, strict_info = await session.browser.agent.extract_async(page, ExtractOptions(
+            success, strict_info = await session.browser.agent.extract_async(ExtractOptions(
                 instruction="Extract title, main content, and all links from this page",
                 schema=StrictPageInfo,
                 use_text_extract=True
-            ))
+            ), page)
 
             if success and strict_info:
                 print(f"  ✅ Strict extraction successful:")
@@ -239,11 +239,11 @@ async def main():
                     content: Optional[str] = Field(description="Any text content found", default=None)
                     has_links: bool = Field(description="Whether the page has any links", default=False)
 
-                success, flexible_info = await session.browser.agent.extract_async(page, ExtractOptions(
+                success, flexible_info = await session.browser.agent.extract_async(ExtractOptions(
                     instruction="Extract any available information from this page, being flexible about what's available",
                     schema=FlexiblePageInfo,
                     use_text_extract=True
-                ))
+                ), page)
 
                 if success and flexible_info:
                     print(f"  ✅ Flexible extraction successful:")
@@ -269,12 +269,12 @@ async def main():
                 container_id = f"quote-{i}"
                 await container.evaluate(f"(element) => element.id = '{container_id}'")
 
-                success, quote = await session.browser.agent.extract_async(page, ExtractOptions(
+                success, quote = await session.browser.agent.extract_async(ExtractOptions(
                     instruction=f"Extract the quote information from the element with id '{container_id}'",
                     schema=Quote,
                     selector=f"#{container_id}",
                     use_text_extract=False
-                ))
+                ), page)
 
                 if success and quote:
                     extracted_quotes.append(quote)

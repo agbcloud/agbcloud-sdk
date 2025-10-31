@@ -46,12 +46,14 @@ class CreateSessionRequest:
         authorization: str = "",
         context_id: Optional[str] = None,
         image_id: str = "",
+        labels: Optional[str] = None,
         persistence_data_list: Optional[List[CreateMcpSessionRequestPersistenceDataList]] = None,
         session_id: str = "",
     ):
         self.authorization = authorization
         self.context_id = context_id
         self.image_id = image_id
+        self.labels = labels
         self.persistence_data_list = persistence_data_list
         self.session_id = session_id
 
@@ -70,6 +72,9 @@ class CreateSessionRequest:
 
         if self.context_id:
             body["contextId"] = self.context_id
+
+        if self.labels:
+            body["labels"] = self.labels
 
         return body
 

@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.4.0] - 2025-10-31
+
+### New Features
+- **Session Management Enhancements**: Complete session lifecycle management with listing, retrieval, and labeling
+  - `list()` method for retrieving all sessions with pagination support
+  - `get()` method for retrieving individual session details by session ID
+  - Session labels support for better session organization and management
+- **Browser Module Enhancements**:
+  - Captcha solving support for browser automation
+  - Extension support for AGB browser operations
+- **Context API Improvements**:
+  - Enhanced parameter validation for all context operations
+  - Improved error messages for missing or invalid parameters
+  - `list_files()` now supports optional `parent_folder_path` parameter
+
+### Bug Fixes
+- **Context Validation**: Fixed missing parameter validation in context operations
+  - Added null and empty string checks for all required parameters
+  - Improved error handling and user feedback
+- **Browser Module**: Fixed API parameter mismatch (`schema` renamed to `field_schema`) to align with MCP field validation
+- **Testing**: Fixed httpx connection error in integration tests for context file URLs
+- **Context Manager**: Optimized documentation notes in `context_manager.sync()` function
+
+### Documentation & Testing
+- **Session Management**:
+  - Comprehensive documentation for session listing, retrieval, and label management
+  - Updated session management guide with new features
+  - New examples for session label operations
+- **Testing Coverage**:
+  - Integration tests for session labels functionality
+  - Unit tests for AGB and session modules
+  - Comprehensive validation tests for context operations (18 new test cases)
+  - Enhanced test coverage for file operations with parameter validation
+
+
 ## [0.3.0] - 2025-10-15
 
 ### New Features

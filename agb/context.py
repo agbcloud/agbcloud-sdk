@@ -297,33 +297,68 @@ class ContextService:
                 error_message=str(e)
             )
 
-    def get(self, name: str, create: bool = False, login_region_id: Optional[str] = None) -> ContextResult:
+    def get(
+        self,
+        name: Optional[str] = None,
+        create: bool = False,
+        login_region_id: Optional[str] = None,
+        context_id: Optional[str] = None,
+    ) -> ContextResult:
         """
-        Gets a context by name. Optionally creates it if it doesn't exist.
+        Gets a context by ID or name. Optionally creates it if it doesn't exist.
 
         Args:
-            name (str): The name of the context to get.
+            name (Optional[str]): The name of the context to get. Either name or context_id must be provided.
             create (bool, optional): Whether to create the context if it doesn't exist.
+                If True, context_id cannot be provided (only name is allowed). Defaults to False.
             login_region_id (Optional[str], optional): Login region ID for the request.
                 If None or empty, defaults to Hangzhou region (cn-hangzhou).
+            context_id (Optional[str]): The ID of the context to get. Either name or context_id must be provided.
+                This parameter is placed last for backward compatibility.
 
         Returns:
-            ContextResult: The ContextResult object containing the Context and request
-                ID.
+            ContextResult: The ContextResult object containing the Context and request ID.
+
+        Raises:
+            ValueError: If validation fails (both name and context_id are None, or
+                context_id is provided when create is True).
         """
+        # Store original values for error messages
+        original_context_id = context_id
+        original_name = name
+
         try:
-            # Validate name parameter
-            if not name or not name.strip():
-                logger.error("Context name cannot be empty or None")
+            # Normalize empty strings to None
+            name = name.strip() if name and name.strip() else None
+            context_id = context_id.strip() if context_id and context_id.strip() else None
+
+            # Validation: ID and Name must be provided (at least one)
+            if not context_id and not name:
+                error_msg = "Either context_id or name must be provided (cannot both be empty)"
+                logger.error(error_msg)
                 return ContextResult(
                     success=False,
-                    error_message="Context name cannot be empty or None",
+                    error_message=error_msg,
+                    request_id=""
+                )
+
+            # Validation: If AllowCreate is True, ID cannot be provided
+            if create and context_id:
+                error_msg = "context_id cannot be provided when create=True (only name is allowed when creating)"
+                logger.error(error_msg)
+                return ContextResult(
+                    success=False,
+                    error_message=error_msg,
                     request_id=""
                 )
 
             # Note: If login_region_id is None or empty, the server will default to Hangzhou region (cn-hangzhou)
-            log_api_call("GetContext", f"Name={name}, AllowCreate={create}, LoginRegionId={login_region_id}")
+            log_api_call(
+                "GetContext",
+                f"Id={context_id or 'None'}, Name={name or 'None'}, AllowCreate={create}, LoginRegionId={login_region_id}"
+            )
             request = GetContextRequest(
+                id=context_id,
                 name=name,
                 allow_create=create,
                 login_region_id=login_region_id,  # None means use default region (cn-hangzhou)
@@ -351,17 +386,17 @@ class ContextService:
 
             try:
                 data = response.get_context_data()
-                context_id = data.id or ""
+                result_context_id = data.id or context_id or ""
                 context = Context(
-                    id=context_id,
-                    name=data.name or name,
+                    id=result_context_id,
+                    name=data.name or name or "",
                     created_at=data.create_time,
                     last_used_at=data.last_used_time,
                 )
                 return ContextResult(
                     request_id=request_id or "",
                     success=True,
-                    context_id=context_id,
+                    context_id=result_context_id,
                     context=context,
                 )
             except Exception as e:
@@ -371,15 +406,17 @@ class ContextService:
                     success=False,
                     context_id="",
                     context=None,
+                    error_message=f"Failed to parse response: {str(e)}"
                 )
         except Exception as e:
             log_operation_error("GetContext", str(e))
+            context_identifier = original_context_id or original_name or "unknown"
             return ContextResult(
                 request_id="",
                 success=False,
                 context_id="",
                 context=None,
-                error_message=f"Failed to get context {name}: {e}"
+                error_message=f"Failed to get context {context_identifier}: {e}"
             )
 
     def create(self, name: str) -> ContextResult:
@@ -392,7 +429,16 @@ class ContextService:
         Returns:
             ContextResult: The created ContextResult object with request ID.
         """
-        return self.get(name, create=True)
+        # Validate required parameter
+        if not name or (isinstance(name, str) and not name.strip()):
+            error_msg = "name cannot be empty or None"
+            logger.error(error_msg)
+            return ContextResult(
+                success=False,
+                error_message=error_msg,
+                request_id=""
+            )
+        return self.get(name.strip(), create=True)
 
     def update(self, context: Context) -> OperationResult:
         """
@@ -404,11 +450,43 @@ class ContextService:
         Returns:
             OperationResult: Result object containing success status and request ID.
         """
+        # Validate required parameter
+        if context is None:
+            error_msg = "context cannot be None"
+            logger.error(error_msg)
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message=error_msg
+            )
+
+        # Validate context.id
+        if not context.id or (isinstance(context.id, str) and not context.id.strip()):
+            error_msg = "context.id cannot be empty or None"
+            logger.error(error_msg)
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message=error_msg
+            )
+
+        # Validate context.name
+        if not context.name or (isinstance(context.name, str) and not context.name.strip()):
+            error_msg = "context.name cannot be empty or None"
+            logger.error(error_msg)
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message=error_msg
+            )
+
         try:
-            log_api_call("ModifyContext", f"Id={context.id}, Name={context.name}")
+            context_id = context.id.strip() if isinstance(context.id, str) else context.id
+            context_name = context.name.strip() if isinstance(context.name, str) else context.name
+            log_api_call("ModifyContext", f"Id={context_id}, Name={context_name}")
             request = ModifyContextRequest(
-                id=context.id,
-                name=context.name,
+                id=context_id,
+                name=context_name,
                 authorization=f"Bearer {self.agb.api_key}",
             )
             response = self.agb.client.modify_context(request)
@@ -433,14 +511,14 @@ class ContextService:
             return OperationResult(
                 request_id=request_id or "",
                 success=True,
-                data={"context_id": context.id}
+                data={"context_id": context_id}
             )
         except Exception as e:
             logger.error(f"Error calling ModifyContext: {e}")
             return OperationResult(
                 request_id="",
                 success=False,
-                error_message=f"Failed to update context {context.id}: {e}"
+                error_message=f"Failed to update context {context_id}: {e}"
             )
 
     def delete(self, context: Context) -> OperationResult:
@@ -453,10 +531,31 @@ class ContextService:
         Returns:
             OperationResult: Result object containing success status and request ID.
         """
+        # Validate required parameter
+        if context is None:
+            error_msg = "context cannot be None"
+            logger.error(error_msg)
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message=error_msg
+            )
+
+        # Validate context.id
+        if not context.id or (isinstance(context.id, str) and not context.id.strip()):
+            error_msg = "context.id cannot be empty or None"
+            logger.error(error_msg)
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message=error_msg
+            )
+
         try:
-            log_api_call("DeleteContext", f"Id={context.id}")
+            context_id = context.id.strip() if isinstance(context.id, str) else context.id
+            log_api_call("DeleteContext", f"Id={context_id}")
             request = DeleteContextRequest(
-                id=context.id, authorization=f"Bearer {self.agb.api_key}"
+                id=context_id, authorization=f"Bearer {self.agb.api_key}"
             )
             response = self.agb.client.delete_context(request)
             try:
@@ -480,7 +579,7 @@ class ContextService:
             return OperationResult(
                 request_id=request_id or "",
                 success=True,
-                data={"context_id": context.id}
+                data={"context_id": context_id}
             )
 
         except Exception as e:
@@ -488,16 +587,39 @@ class ContextService:
             return OperationResult(
                 request_id="",
                 success=False,
-                error_message=f"Failed to delete context {context.id}: {e}"
+                error_message=f"Failed to delete context {context_id}: {e}"
             )
 
     def get_file_download_url(self, context_id: str, file_path: str) -> FileUrlResult:
         """Get a presigned download URL for a file in a context."""
-        log_api_call("GetContextFileDownloadUrl", f"ContextId={context_id}, FilePath={file_path}")
+        # Validate required parameters
+        if not context_id or (isinstance(context_id, str) and not context_id.strip()):
+            error_msg = "context_id cannot be empty or None"
+            logger.error(error_msg)
+            return FileUrlResult(
+                request_id="",
+                success=False,
+                url="",
+                error_message=error_msg
+            )
+
+        if not file_path or (isinstance(file_path, str) and not file_path.strip()):
+            error_msg = "file_path cannot be empty or None"
+            logger.error(error_msg)
+            return FileUrlResult(
+                request_id="",
+                success=False,
+                url="",
+                error_message=error_msg
+            )
+
+        validated_context_id = context_id.strip() if isinstance(context_id, str) else context_id
+        validated_file_path = file_path.strip() if isinstance(file_path, str) else file_path
+        log_api_call("GetContextFileDownloadUrl", f"ContextId={validated_context_id}, FilePath={validated_file_path}")
         req = GetContextFileDownloadUrlRequest(
             authorization=f"Bearer {self.agb.api_key}",
-            context_id=context_id,
-            file_path=file_path,
+            context_id=validated_context_id,
+            file_path=validated_file_path,
         )
         resp = self.agb.client.get_context_file_download_url(req)
         try:
@@ -521,11 +643,34 @@ class ContextService:
 
     def get_file_upload_url(self, context_id: str, file_path: str) -> FileUrlResult:
         """Get a presigned upload URL for a file in a context."""
-        log_api_call("GetContextFileUploadUrl", f"ContextId={context_id}, FilePath={file_path}")
+        # Validate required parameters
+        if not context_id or (isinstance(context_id, str) and not context_id.strip()):
+            error_msg = "context_id cannot be empty or None"
+            logger.error(error_msg)
+            return FileUrlResult(
+                request_id="",
+                success=False,
+                url="",
+                error_message=error_msg
+            )
+
+        if not file_path or (isinstance(file_path, str) and not file_path.strip()):
+            error_msg = "file_path cannot be empty or None"
+            logger.error(error_msg)
+            return FileUrlResult(
+                request_id="",
+                success=False,
+                url="",
+                error_message=error_msg
+            )
+
+        validated_context_id = context_id.strip() if isinstance(context_id, str) else context_id
+        validated_file_path = file_path.strip() if isinstance(file_path, str) else file_path
+        log_api_call("GetContextFileUploadUrl", f"ContextId={validated_context_id}, FilePath={validated_file_path}")
         req = GetContextFileUploadUrlRequest(
             authorization=f"Bearer {self.agb.api_key}",
-            context_id=context_id,
-            file_path=file_path,
+            context_id=validated_context_id,
+            file_path=validated_file_path,
         )
         resp = self.agb.client.get_context_file_upload_url(req)
         try:
@@ -549,11 +694,32 @@ class ContextService:
 
     def delete_file(self, context_id: str, file_path: str) -> OperationResult:
         """Delete a file in a context."""
-        log_api_call("DeleteContextFile", f"ContextId={context_id}, FilePath={file_path}")
+        # Validate required parameters
+        if not context_id or (isinstance(context_id, str) and not context_id.strip()):
+            error_msg = "context_id cannot be empty or None"
+            logger.error(error_msg)
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message=error_msg
+            )
+
+        if not file_path or (isinstance(file_path, str) and not file_path.strip()):
+            error_msg = "file_path cannot be empty or None"
+            logger.error(error_msg)
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message=error_msg
+            )
+
+        validated_context_id = context_id.strip() if isinstance(context_id, str) else context_id
+        validated_file_path = file_path.strip() if isinstance(file_path, str) else file_path
+        log_api_call("DeleteContextFile", f"ContextId={validated_context_id}, FilePath={validated_file_path}")
         req = DeleteContextFileRequest(
             authorization=f"Bearer {self.agb.api_key}",
-            context_id=context_id,
-            file_path=file_path,
+            context_id=validated_context_id,
+            file_path=validated_file_path,
         )
         resp = self.agb.client.delete_context_file(req)
         try:
@@ -576,20 +742,41 @@ class ContextService:
     def list_files(
         self,
         context_id: str,
-        parent_folder_path: str,
+        parent_folder_path: Optional[str] = None,
         page_number: int = 1,
         page_size: int = 50,
     ) -> ContextFileListResult:
-        """List files under a specific folder path in a context."""
+        """List files under a specific folder path in a context.
+
+        Args:
+            context_id (str): The ID of the context.
+            parent_folder_path (Optional[str]): The parent folder path. Can be empty or None.
+            page_number (int): Page number for pagination. Defaults to 1.
+            page_size (int): Page size for pagination. Defaults to 50.
+        """
+        # Validate required parameters
+        if not context_id or (isinstance(context_id, str) and not context_id.strip()):
+            error_msg = "context_id cannot be empty or None"
+            logger.error(error_msg)
+            return ContextFileListResult(
+                request_id="",
+                success=False,
+                entries=[],
+                error_message=error_msg
+            )
+
+        # parent_folder_path is optional and can be empty
+        validated_context_id = context_id.strip() if isinstance(context_id, str) else context_id
+        validated_parent_folder_path = parent_folder_path.strip() if parent_folder_path and isinstance(parent_folder_path, str) else (parent_folder_path or "")
         log_api_call("DescribeContextFiles",
-            f"ContextId={context_id}, ParentFolderPath={parent_folder_path}, "
+            f"ContextId={validated_context_id}, ParentFolderPath={validated_parent_folder_path}, "
             f"PageNumber={page_number}, PageSize={page_size}")
         req = DescribeContextFilesRequest(
             authorization=f"Bearer {self.agb.api_key}",
             page_number=page_number,
             page_size=page_size,
-            parent_folder_path=parent_folder_path,
-            context_id=context_id,
+            parent_folder_path=validated_parent_folder_path,
+            context_id=validated_context_id,
         )
         resp = self.agb.client.describe_context_files(req)
         try:

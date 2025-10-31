@@ -271,14 +271,18 @@ class BrowserOption:
         viewport: Optional[BrowserViewport] = None,
         screen: Optional[BrowserScreen] = None,
         fingerprint: Optional[BrowserFingerprint] = None,
+        solve_captchas: bool = False,
         proxies: Optional[List[BrowserProxy]] = None,
+        extension_path: Optional[str] = "/tmp/extensions/",
     ):
         self.use_stealth = use_stealth
         self.user_agent = user_agent
         self.viewport = viewport
         self.screen = screen
         self.fingerprint = fingerprint
+        self.solve_captchas = solve_captchas
         self.proxies = proxies
+        self.extension_path = extension_path
 
         # Validate proxies list items
         if proxies is not None:
@@ -286,6 +290,12 @@ class BrowserOption:
                 raise ValueError("proxies must be a list")
             if len(proxies) > 1:
                 raise ValueError("proxies list length must be limited to 1")
+        # Validate extension_path if provided
+        if extension_path is not None:
+            if not isinstance(extension_path, str):
+                raise ValueError("extension_path must be a string")
+            if not extension_path.strip():
+                raise ValueError("extension_path cannot be empty")
 
     def to_map(self):
         option_map = dict()
@@ -299,8 +309,12 @@ class BrowserOption:
             option_map["screen"] = self.screen.to_map()
         if self.fingerprint is not None:
             option_map["fingerprint"] = self.fingerprint.to_map()
+        if self.solve_captchas is not None:
+            option_map['solveCaptchas'] = self.solve_captchas
         if self.proxies is not None:
             option_map["proxies"] = [proxy.to_map() for proxy in self.proxies]
+        if self.extension_path is not None:
+            option_map['extensionPath'] = self.extension_path
         return option_map
 
     @classmethod
@@ -329,6 +343,10 @@ class BrowserOption:
             fingerprint_data = m.get("fingerprint")
             if isinstance(fingerprint_data, dict):
                 instance.fingerprint = BrowserFingerprint.from_map(fingerprint_data)
+        if m.get('solveCaptchas') is not None:
+            instance.solve_captchas = m.get('solveCaptchas')
+        else:
+            instance.solve_captchas = False
         if m.get("proxies") is not None:
             proxy_list = m.get("proxies")
             if isinstance(proxy_list, list) and len(proxy_list) > 0:

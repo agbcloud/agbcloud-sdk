@@ -469,6 +469,179 @@ class TestContextFileOperations(unittest.TestCase):
         self.assertEqual(call_args.page_number, 2)
         self.assertEqual(call_args.page_size, 25)
 
+    def test_get_file_upload_url_validation_empty_context_id(self):
+        """Test that get_file_upload_url fails when context_id is empty."""
+        result = self.context_service.get_file_upload_url("", self.test_path)
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("context_id cannot be empty or None", result.error_message or "")
+        self.agb.client.get_context_file_upload_url.assert_not_called()
+
+    def test_get_file_upload_url_validation_empty_file_path(self):
+        """Test that get_file_upload_url fails when file_path is empty."""
+        result = self.context_service.get_file_upload_url(self.context_id, "")
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("file_path cannot be empty or None", result.error_message or "")
+        self.agb.client.get_context_file_upload_url.assert_not_called()
+
+    def test_get_file_download_url_validation_empty_context_id(self):
+        """Test that get_file_download_url fails when context_id is empty."""
+        result = self.context_service.get_file_download_url("", self.test_path)
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("context_id cannot be empty or None", result.error_message or "")
+        self.agb.client.get_context_file_download_url.assert_not_called()
+
+    def test_get_file_download_url_validation_empty_file_path(self):
+        """Test that get_file_download_url fails when file_path is empty."""
+        result = self.context_service.get_file_download_url(self.context_id, "")
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("file_path cannot be empty or None", result.error_message or "")
+        self.agb.client.get_context_file_download_url.assert_not_called()
+
+    def test_delete_file_validation_empty_context_id(self):
+        """Test that delete_file fails when context_id is empty."""
+        result = self.context_service.delete_file("", self.test_path)
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("context_id cannot be empty or None", result.error_message or "")
+        self.agb.client.delete_context_file.assert_not_called()
+
+    def test_delete_file_validation_empty_file_path(self):
+        """Test that delete_file fails when file_path is empty."""
+        result = self.context_service.delete_file(self.context_id, "")
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("file_path cannot be empty or None", result.error_message or "")
+        self.agb.client.delete_context_file.assert_not_called()
+
+    def test_list_files_context_id_validation_empty(self):
+        """Test that list_files fails when context_id is empty."""
+        # Call the method with empty context_id
+        result = self.context_service.list_files("", "/tmp")
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("context_id cannot be empty or None", result.error_message or "")
+
+        # Verify the client was not called
+        self.agb.client.describe_context_files.assert_not_called()
+
+    def test_list_files_context_id_validation_none(self):
+        """Test that list_files fails when context_id is None."""
+        # Call the method with None context_id
+        result = self.context_service.list_files(None, "/tmp")
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("context_id cannot be empty or None", result.error_message or "")
+
+        # Verify the client was not called
+        self.agb.client.describe_context_files.assert_not_called()
+
+    def test_list_files_parent_folder_path_can_be_none(self):
+        """Test that list_files allows parent_folder_path to be None."""
+        # Mock the response
+        mock_response = DescribeContextFilesResponse(
+            status_code=200,
+            json_data={
+                "success": True,
+                "message": "Success",
+                "data": [],
+                "count": 0,
+                "requestId": "req-list-none-path"
+            },
+            request_id="req-list-none-path"
+        )
+        mock_response.data = []
+
+        # Mock the client method
+        self.agb.client.describe_context_files.return_value = mock_response
+
+        # Call the method with None parent_folder_path
+        result = self.context_service.list_files(self.context_id, None)
+
+        # Assertions - should succeed
+        self.assertTrue(result.success)
+        self.assertEqual(result.request_id, "req-list-none-path")
+
+        # Verify the client was called with empty string for parent_folder_path
+        self.agb.client.describe_context_files.assert_called_once()
+        call_args = self.agb.client.describe_context_files.call_args[0][0]
+        self.assertEqual(call_args.context_id, self.context_id)
+        self.assertEqual(call_args.parent_folder_path, "")
+        self.assertEqual(call_args.authorization, "Bearer test-api-key")
+
+    def test_list_files_parent_folder_path_can_be_empty_string(self):
+        """Test that list_files allows parent_folder_path to be empty string."""
+        # Mock the response
+        mock_response = DescribeContextFilesResponse(
+            status_code=200,
+            json_data={
+                "success": True,
+                "message": "Success",
+                "data": [],
+                "count": 0,
+                "requestId": "req-list-empty-path"
+            },
+            request_id="req-list-empty-path"
+        )
+        mock_response.data = []
+
+        # Mock the client method
+        self.agb.client.describe_context_files.return_value = mock_response
+
+        # Call the method with empty string parent_folder_path
+        result = self.context_service.list_files(self.context_id, "")
+
+        # Assertions - should succeed
+        self.assertTrue(result.success)
+        self.assertEqual(result.request_id, "req-list-empty-path")
+
+        # Verify the client was called with empty string for parent_folder_path
+        self.agb.client.describe_context_files.assert_called_once()
+        call_args = self.agb.client.describe_context_files.call_args[0][0]
+        self.assertEqual(call_args.context_id, self.context_id)
+        self.assertEqual(call_args.parent_folder_path, "")
+        self.assertEqual(call_args.authorization, "Bearer test-api-key")
+
+    def test_list_files_parent_folder_path_optional_default(self):
+        """Test that list_files can be called without parent_folder_path (defaults to None)."""
+        # Mock the response
+        mock_response = DescribeContextFilesResponse(
+            status_code=200,
+            json_data={
+                "success": True,
+                "message": "Success",
+                "data": [],
+                "count": 0,
+                "requestId": "req-list-default-path"
+            },
+            request_id="req-list-default-path"
+        )
+        mock_response.data = []
+
+        # Mock the client method
+        self.agb.client.describe_context_files.return_value = mock_response
+
+        # Call the method without parent_folder_path (using default None)
+        result = self.context_service.list_files(self.context_id)
+
+        # Assertions - should succeed
+        self.assertTrue(result.success)
+        self.assertEqual(result.request_id, "req-list-default-path")
+
+        # Verify the client was called with empty string for parent_folder_path
+        self.agb.client.describe_context_files.assert_called_once()
+        call_args = self.agb.client.describe_context_files.call_args[0][0]
+        self.assertEqual(call_args.context_id, self.context_id)
+        self.assertEqual(call_args.parent_folder_path, "")
+        self.assertEqual(call_args.authorization, "Bearer test-api-key")
+
 
 if __name__ == "__main__":
     unittest.main()

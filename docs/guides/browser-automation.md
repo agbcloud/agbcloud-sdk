@@ -7,7 +7,7 @@ Welcome to the AGB Browser Automation Guide! This comprehensive guide covers eve
 - [Getting Started](#getting-started) - Basic setup and first browser session
 - [Browser Configuration](#browser-configuration) - Customizing browser behavior
 - [AI Agent Operations](#ai-agent-operations) - Using natural language automation
-- [Advanced Features](#advanced-features) - Proxy, stealth mode, and fingerprinting
+- [Advanced Features](#advanced-features) - Proxy, stealth mode, fingerprinting, and extensions
 - [Best Practices](#best-practices) - Tips for reliable automation
 - [Troubleshooting](#troubleshooting) - Common issues and solutions
 
@@ -99,7 +99,7 @@ from agb.modules.browser import (
 option = BrowserOption(
     use_stealth=True,
     user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-    viewport=BrowserViewport(width=1366, height=768),
+    viewport=BrowserViewport(width=1366, height=668),
     screen=BrowserScreen(width=1920, height=1080)
 )
 ```
@@ -281,6 +281,99 @@ stealth_option = BrowserOption(
 )
 ```
 
+### Browser Extensions
+
+AGB supports loading Chrome extensions into browser sessions, allowing you to automate workflows that require specific browser functionality.
+
+#### Uploading and Managing Extensions
+
+Use the `ExtensionsService` to manage browser extensions:
+
+```python
+from agb.extension import ExtensionsService
+
+# Initialize extension service
+extensions_service = ExtensionsService(agb, "my_browser_extensions")
+
+# Upload an extension from a ZIP file
+extension = extensions_service.create("/path/to/my-extension.zip")
+print(f"Uploaded extension: {extension.id}")
+
+# List all extensions
+extensions = extensions_service.list()
+for ext in extensions:
+    print(f"Extension: {ext.id} - {ext.name}")
+
+# Update an extension
+updated_extension = extensions_service.update(extension.id, "/path/to/updated-extension.zip")
+
+# Delete an extension
+extensions_service.delete(extension.id)
+```
+
+#### Loading Extensions in Browser Sessions
+
+To load extensions in a browser session, configure the session with extension options:
+
+```python
+from agb.session_params import BrowserContext
+from agb.extension import ExtensionOption
+
+# Upload extensions
+ext1 = extensions_service.create("/path/to/extension1.zip")
+ext2 = extensions_service.create("/path/to/extension2.zip")
+
+# Create extension option for browser integration
+ext_option = extensions_service.create_extension_option([ext1.id, ext2.id])
+
+# Create browser context with extensions
+browser_context = BrowserContext(
+    context_id="browser_session_with_extensions",
+    auto_upload=True,
+    extension_option=ext_option
+)
+
+# Create session with browser context
+params = CreateSessionParams(
+    image_id="agb-browser-use-1",
+    browser_context=browser_context
+)
+
+session_result = agb.create(params)
+session = session_result.session
+
+# Initialize browser with extensions
+browser_option = BrowserOption(
+    extension_path="/tmp/extensions/"
+)
+
+success = await session.browser.initialize_async(browser_option)
+```
+
+#### Working with Loaded Extensions
+
+Once extensions are loaded, you can interact with them using Playwright:
+
+```python
+# Connect to browser and check loaded extensions
+endpoint_url = session.browser.get_endpoint_url()
+
+async with async_playwright() as p:
+    browser = await p.chromium.connect_over_cdp(endpoint_url)
+    cdp_session = await browser.new_browser_cdp_session()
+
+    # Get all targets to find loaded extensions
+    targets = await cdp_session.send("Target.getTargets")
+
+    for info in targets["targetInfos"]:
+        url = info.get("url", "")
+        if url.startswith("chrome-extension://"):
+            ext_id = url.split("/")[2]
+            print(f"Loaded extension: {ext_id} - {info.get('title')}")
+
+    await cdp_session.detach()
+```
+
 ### Session Management
 
 ```python
@@ -399,9 +492,6 @@ if not result.success:
     return
 
 # Verify browser initialization
-success = await session.browser.initialize_async(BrowserOption())
-if not success:
-    print("Browser initialization failed - check your session image")
 ```
 
 #### CDP Connection Issues
@@ -454,3 +544,4 @@ logging.basicConfig(level=logging.DEBUG)
 - Check out [Browser Examples](../examples/browser/README.md) for practical use cases
 - Learn about [Session Management](session-management.md) for advanced session handling
 - Review [Best Practices](best-practices.md) for production deployments
+- See [Extensions API](../api-reference/core/extensions.md) for browser extension management

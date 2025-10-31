@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Dict, Optional
 from agb.api.models import (
     GetMcpResourceRequest,
     ReleaseSessionRequest,
+    SetLabelRequest,
+    GetLabelRequest,
 )
 from agb.exceptions import SessionError
 from agb.model.response import OperationResult, DeleteResult
@@ -58,6 +60,167 @@ class BaseSession:
         """Find the server that provides the specified tool."""
         # For now, return a default server name
         return "default-server"
+
+    def _validate_labels(self, labels: Dict[str, str]) -> Optional[OperationResult]:
+        """
+        Validates labels parameter for label operations.
+
+        Args:
+            labels: The labels to validate
+
+        Returns:
+            None if validation passes, or OperationResult with error if validation fails
+        """
+        # Check if labels is None
+        if labels is None:
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message="Labels cannot be null, undefined, or invalid type. Please provide a valid labels object.",
+            )
+
+        # Check if labels is a list (array equivalent) - check this before dict check
+        if isinstance(labels, list):
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message="Labels cannot be an array. Please provide a valid labels object.",
+            )
+
+        # Check if labels is not a dict (after checking for list)
+        if not isinstance(labels, dict):
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message="Labels cannot be null, undefined, or invalid type. Please provide a valid labels object.",
+            )
+
+        # Check if labels object is empty
+        if len(labels) == 0:
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message="Labels cannot be empty. Please provide at least one label.",
+            )
+
+        for key, value in labels.items():
+            # Check key validity
+            if not key or (isinstance(key, str) and key.strip() == ""):
+                return OperationResult(
+                    request_id="",
+                    success=False,
+                    error_message="Label keys cannot be empty Please provide valid keys.",
+                )
+
+            # Check value is not None or empty
+            if value is None or (isinstance(value, str) and value.strip() == ""):
+                return OperationResult(
+                    request_id="",
+                    success=False,
+                    error_message="Label values cannot be empty Please provide valid values.",
+                )
+
+        # Validation passed
+        return None
+
+    def set_labels(self, labels: Dict[str, str]) -> OperationResult:
+        """
+        Sets the labels for this session.
+
+        Args:
+            labels (Dict[str, str]): The labels to set for the session.
+
+        Returns:
+            OperationResult: Result indicating success or failure with request ID.
+
+        Raises:
+            SessionError: If the operation fails.
+        """
+        try:
+            # Validate labels using the extracted validation function
+            validation_result = self._validate_labels(labels)
+            if validation_result is not None:
+                return validation_result
+
+            # Convert labels to JSON string
+            labels_json = json.dumps(labels)
+
+            request = SetLabelRequest(
+                authorization=f"Bearer {self.get_api_key()}",
+                session_id=self.session_id,
+                labels=labels_json,
+            )
+
+            response = self.get_client().set_label(request)
+
+            # Check if response is successful
+            if response.is_successful():
+                return OperationResult(
+                    request_id=response.request_id or "",
+                    success=True
+                )
+            else:
+                # Get error message from response
+                error_message = response.get_error_message() or "Failed to set labels"
+                return OperationResult(
+                    request_id=response.request_id or "",
+                    success=False,
+                    error_message=error_message,
+                )
+
+        except Exception as e:
+            logger.error(f"Error calling set_label: {e}")
+            raise SessionError(
+                f"Failed to set labels for session {self.session_id}: {e}"
+            )
+
+    def get_labels(self) -> OperationResult:
+        """
+        Gets the labels for this session.
+
+        Returns:
+            OperationResult: Result containing the labels as data and request ID.
+
+        Raises:
+            SessionError: If the operation fails.
+        """
+        try:
+            request = GetLabelRequest(
+                authorization=f"Bearer {self.get_api_key()}",
+                session_id=self.session_id,
+            )
+
+            response = self.get_client().get_label(request)
+
+            # Check if response is successful
+            if response.is_successful():
+                # Get labels data from response
+                labels_data = response.get_labels_data()
+                labels = {}
+
+                if labels_data and labels_data.labels:
+                    # Parse JSON string to dictionary
+                    labels = json.loads(labels_data.labels)
+
+                return OperationResult(
+                    request_id=response.request_id or "",
+                    success=True,
+                    data=labels
+                )
+            else:
+                # Get error message from response
+                error_message = response.get_error_message() or "Failed to get labels"
+                return OperationResult(
+                    request_id=response.request_id or "",
+                    success=False,
+                    error_message=error_message,
+                )
+
+        except Exception as e:
+            logger.error(f"Error calling get_label: {e}")
+            raise SessionError(
+                f"Failed to get labels for session {self.session_id}: {e}"
+            )
 
     def info(self) -> OperationResult:
         """

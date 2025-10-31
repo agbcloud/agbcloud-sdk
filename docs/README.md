@@ -17,6 +17,7 @@
 | I want to... | Recommended Documentation | Example Code |
 |-----------|----------|----------|
 | 🤖 Browser Automation | [Browser Automation Guide](guides/browser-automation.md) | [Browser Examples](examples/browser/README.md) |
+| 🧩 Browser Extensions | [Extensions API](api-reference/core/extensions.md) | [Extensions Examples](examples/extensions/README.md) |
 | 🐍 Execute Code | [Code Execution Guide](guides/code-execution.md) | [Code Examples](examples/file_system/README.md) |
 | 💾 File Operations | [File Operations Guide](guides/file-operations.md) | [File Examples](examples/file_system/README.md) |
 | ⚡ Execute Commands | [Command Execution Guide](guides/command-execution.md) | [Command Examples](examples/session_creation/README.md) |
@@ -33,10 +34,13 @@
 
 ### API Reference (`api-reference/`)
 - **[README.md](api-reference/README.md)** - API Overview
+- **[Core Classes](api-reference/core/)** - AGB client, Session, ExtensionsService
+- **[Modules](api-reference/modules/)** - Code, Command, FileSystem, Browser
 
 ### Example Code (`examples/`)
 - **[README.md](examples/README.md)** - Examples Overview
 - **[browser/](examples/browser/README.md)** - Browser Automation Examples
+- **[extensions/](examples/extensions/README.md)** - Browser Extension Examples
 - **[file_system/](examples/file_system/README.md)** - File Operations Examples
 - **[session_creation/](examples/session_creation/README.md)** - Session Creation Examples
 

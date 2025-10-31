@@ -58,14 +58,21 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         # Use the obtained presigned URL to upload content to OSS
         upload_content = f"AGB integration upload test at {int(time.time())}\n".encode("utf-8")
         try:
-            response = httpx.put(result.url, content=upload_content, timeout=30.0)
-            self.assertIn(
-                response.status_code,
-                (200, 204),
-                f"Upload failed with status code {response.status_code}"
-            )
-            etag = response.headers.get("ETag")
-            print(f"Uploaded {len(upload_content)} bytes, status={response.status_code}, ETag={etag}")
+            # Use more robust httpx configuration
+            with httpx.Client(
+                timeout=30.0,
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
+                http2=True,
+                verify=True
+            ) as client:
+                response = client.put(result.url, content=upload_content)
+                self.assertIn(
+                    response.status_code,
+                    (200, 204),
+                    f"Upload failed with status code {response.status_code}"
+                )
+                etag = response.headers.get("ETag")
+                print(f"Uploaded {len(upload_content)} bytes, status={response.status_code}, ETag={etag}")
         except httpx.ConnectError as e:
             print(f"⚠️ Upload failed due to network connection error: {e}")
             print("This is likely a system-level network issue, skipping upload test")
@@ -81,10 +88,17 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         print(f"Download URL: {dl_result.url[:80]}... (RequestID: {dl_result.request_id})")
 
         try:
-            dl_resp = httpx.get(dl_result.url, timeout=30.0)
-            self.assertEqual(dl_resp.status_code, 200, f"Download failed with status code {dl_resp.status_code}")
-            self.assertEqual(dl_resp.content, upload_content, "Downloaded content does not match uploaded content")
-            print(f"Downloaded {len(dl_resp.content)} bytes, content matches uploaded data")
+            # Use more robust httpx configuration
+            with httpx.Client(
+                timeout=30.0,
+                limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
+                http2=True,
+                verify=True
+            ) as client:
+                dl_resp = client.get(dl_result.url)
+                self.assertEqual(dl_resp.status_code, 200, f"Download failed with status code {dl_resp.status_code}")
+                self.assertEqual(dl_resp.content, upload_content, "Downloaded content does not match uploaded content")
+                print(f"Downloaded {len(dl_resp.content)} bytes, content matches uploaded data")
         except httpx.ConnectError as e:
             print(f"⚠️ Download failed due to network connection error: {e}")
             print("This is likely a system-level network issue, skipping download test")
@@ -161,8 +175,15 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         post_dl = self.agent_bay.context.get_file_download_url(self.context.id, test_path)
         if post_dl.success and isinstance(post_dl.url, str) and len(post_dl.url) > 0:
             try:
-                post_resp = httpx.get(post_dl.url, timeout=30.0)
-                print(f"Post-delete download status (informational): {post_resp.status_code}")
+                # Use more robust httpx configuration
+                with httpx.Client(
+                    timeout=30.0,
+                    limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
+                    http2=True,
+                    verify=True
+                ) as client:
+                    post_resp = client.get(post_dl.url)
+                    print(f"Post-delete download status (informational): {post_resp.status_code}")
             except httpx.ConnectError as e:
                 print(f"⚠️ Post-delete download failed due to network error: {e}")
             except Exception as e:

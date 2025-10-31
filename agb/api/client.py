@@ -16,12 +16,20 @@ from agb.api.models import (
     GetLinkResponse,
     GetMcpResourceRequest,
     GetMcpResourceResponse,
+    GetSessionRequest,
+    GetSessionResponse,
     InitBrowserRequest,
     InitBrowserResponse,
     ListMcpToolsRequest,
     ListMcpToolsResponse,
+    ListSessionRequest,
+    ListSessionResponse,
     ReleaseSessionRequest,
     ReleaseSessionResponse,
+    SetLabelRequest,
+    SetLabelResponse,
+    GetLabelRequest,
+    GetLabelResponse,
     # Context related imports
     ListContextsRequest,
     ListContextsResponse,
@@ -113,6 +121,42 @@ class Client:
 
         try:
             response = http_client.release_session(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def get_mcp_session(
+        self, request: GetSessionRequest
+    ) -> GetSessionResponse:
+        """
+        Get MCP session information using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.get_session(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def list_sessions(self, request: ListSessionRequest) -> ListSessionResponse:
+        """
+        List sessions using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.list_sessions(request)
             return response
         finally:
             # Always close the HTTP client to release resources
@@ -460,6 +504,40 @@ class Client:
 
         try:
             response = http_client.describe_context_files(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def set_label(self, request: SetLabelRequest) -> SetLabelResponse:
+        """
+        Set label using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.set_label(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def get_label(self, request: GetLabelRequest) -> GetLabelResponse:
+        """
+        Get label using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.get_label(request)
             return response
         finally:
             # Always close the HTTP client to release resources

@@ -21,12 +21,20 @@ from .models.get_link_request import GetLinkRequest
 from .models.get_link_response import GetLinkResponse
 from .models.get_mcp_resource_request import GetMcpResourceRequest
 from .models.get_mcp_resource_response import GetMcpResourceResponse
+from .models.get_session_request import GetSessionRequest
+from .models.get_session_response import GetSessionResponse
 from .models.init_browser_request import InitBrowserRequest
 from .models.init_browser_response import InitBrowserResponse
 from .models.list_mcp_tools_request import ListMcpToolsRequest
 from .models.list_mcp_tools_response import ListMcpToolsResponse
+from .models.list_session_request import ListSessionRequest
+from .models.list_session_response import ListSessionResponse
 from .models.release_session_request import ReleaseSessionRequest
 from .models.release_session_response import ReleaseSessionResponse
+from .models.set_label_request import SetLabelRequest
+from .models.set_label_response import SetLabelResponse
+from .models.get_label_request import GetLabelRequest
+from .models.get_label_response import GetLabelResponse
 
 # Context related imports
 from .models.list_contexts_request import ListContextsRequest
@@ -181,6 +189,64 @@ class HTTPClient:
 
         # Return structured response object
         return ReleaseSessionResponse.from_http_response(response_dict)
+
+    def get_session(self, request: GetSessionRequest) -> GetSessionResponse:
+        """
+        HTTP request interface for getting session information
+
+        Args:
+            request (GetSessionRequest): Request object for getting session information
+
+        Returns:
+            GetSessionResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/mcp/getSession",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return GetSessionResponse.from_http_response(response_dict)
+
+    def list_sessions(self, request: ListSessionRequest) -> ListSessionResponse:
+        """
+        HTTP request interface for listing sessions
+
+        Args:
+            request (ListSessionRequest): Request object for listing sessions
+
+        Returns:
+            ListSessionResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="GET",
+            endpoint="/sdk/ListSession",
+            headers=headers,
+            params=params,
+        )
+
+        # Return structured response object
+        return ListSessionResponse.from_http_response(response_dict)
 
     def call_mcp_tool(
         self,
@@ -1009,3 +1075,61 @@ class HTTPClient:
 
         # Return structured response object
         return DescribeContextFilesResponse.from_http_response(response_dict)
+
+    def set_label(self, request: SetLabelRequest) -> SetLabelResponse:
+        """
+        HTTP request interface for setting label
+
+        Args:
+            request (SetLabelRequest): Request object for setting label
+
+        Returns:
+            SetLabelResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/sdk/SetLabel",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return SetLabelResponse.from_http_response(response_dict)
+
+    def get_label(self, request: GetLabelRequest) -> GetLabelResponse:
+        """
+        HTTP request interface for getting label
+
+        Args:
+            request (GetLabelRequest): Request object for getting label
+
+        Returns:
+            GetLabelResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="GET",
+            endpoint="/sdk/GetLabel",
+            headers=headers,
+            params=params,
+        )
+
+        # Return structured response object
+        return GetLabelResponse.from_http_response(response_dict)

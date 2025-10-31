@@ -10,6 +10,7 @@ This directory contains practical examples demonstrating how to use the AGB SDK 
 
 ### Browser Automation
 - **[Browser Examples](browser/README.md)** - AI-powered browser automation examples
+- **[Extensions Examples](extensions/README.md)** - Browser extension management and integration
 
 ## 📚 By Use Case
 
@@ -72,6 +73,10 @@ examples/
 │   ├── data_extraction.py      # Data extraction examples
 │   ├── natural_language_actions.py # AI-powered actions
 │   └── README.md               # Browser examples guide
+├── extensions/                  # Browser extension examples
+│   ├── basic_extension_management.py  # Extension CRUD operations
+│   ├── browser_session_with_extensions.py # Browser with extensions
+│   └── README.md               # Extensions examples guide
 ├── session_creation/            # Session creation examples
 │   ├── main.py                 # Basic session creation
 │   └── README.md               # Session creation guide
@@ -88,10 +93,12 @@ examples/
 - [Session Creation](session_creation/README.md)
 - [File Operations](file_system/README.md)
 - [Browser Automation](browser/README.md)
+- [Extensions Management](extensions/README.md)
 
 **Experienced Developer?** Jump to:
 - [Advanced Browser Examples](browser/README.md)
 - [Data Extraction](browser/README.md)
+- [Extensions Integration](extensions/README.md)
 
 ### 2. Run Examples
 
@@ -105,6 +112,7 @@ export AGB_API_KEY="your_api_key_here"
 python docs/examples/session_creation/main.py
 python docs/examples/file_system/main.py
 python docs/examples/browser/basic_navigation.py
+python docs/examples/extensions/basic_extension_management.py
 ```
 
 ### 3. Modify and Experiment
@@ -130,6 +138,13 @@ Master file and directory operations:
 - Directory navigation and management
 - File permissions and metadata
 - Batch file operations
+
+### Browser Extensions (`extensions/`)
+Manage and use browser extensions:
+- **[Basic Extension Management](extensions/basic_extension_management.py)** - Create, list, update, delete extensions
+- **[Browser Session with Extensions](extensions/browser_session_with_extensions.py)** - Load extensions in browser sessions
+- Extension lifecycle management
+- Integration with browser automation workflows
 
 
 ## 🔧 Prerequisites

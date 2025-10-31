@@ -210,9 +210,11 @@ class ContextManager:
         request_id = response.request_id
         success = response.is_successful()
 
-        # If callback is provided, start polling in background thread (sync mode)
+        # If a callback is provided, polling will be performed in a background thread,
+        # and the method will return immediately after starting the thread.
+        # ⚠️ Note: If the callback accesses shared resources, the caller must ensure thread safety,
+        # because _poll_for_completion runs in a new thread. Potential thread-safety issues depend on the callback logic.
         if callback is not None and success:
-            # Start polling in background thread regardless of event loop status
             poll_thread = threading.Thread(
                 target=self._poll_for_completion,
                 args=(callback, context_id, path, max_retries, retry_interval),
@@ -221,7 +223,8 @@ class ContextManager:
             poll_thread.start()
             return ContextSyncResult(request_id=request_id or "", success=success)
 
-        # If no callback, wait for completion (async mode)
+        # If no callback is provided, the method will block and wait for all sync tasks to finish.
+        # This is a synchronous (blocking) pattern
         if success:
             final_success = await self._poll_for_completion_async(
                 context_id, path, max_retries, retry_interval

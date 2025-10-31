@@ -74,22 +74,58 @@ params = CreateSessionParams(
 result = agb.create(params)
 ```
 
-### `list()`
+### `list(labels=None, page=None, limit=None)`
 
-List all available sessions.
+Returns paginated list of session IDs filtered by labels.
+
+#### Parameters
+
+- **`labels`** (`Optional[Dict[str, str]]`, optional): Labels to filter sessions. Defaults to `None` (empty dict).
+- **`page`** (`Optional[int]`, optional): Page number for pagination (starting from 1). Defaults to `None` (returns first page).
+- **`limit`** (`Optional[int]`, optional): Maximum number of items per page. Defaults to `None` (uses default of 10).
 
 #### Returns
 
-- **`List[BaseSession]`**: A list of all available sessions.
+- **`SessionListResult`**: Paginated list of session IDs that match the labels, including request_id, success status, and pagination information.
 
-#### Example
+#### Examples
+
+##### Basic Usage
 
 ```python
-sessions = agb.list()
-for session in sessions:
-    print(f"Session ID: {session.session_id}")
-    if hasattr(session, 'image_id'):
-        print(f"Image ID: {session.image_id}")
+# List all sessions
+result = agb.list()
+if result.success:
+    print(f"Found {result.total_count} total sessions")
+    print(f"Showing {len(result.session_ids)} session IDs on this page")
+    print(f"Request ID: {result.request_id}")
+
+    for session_id in result.session_ids:
+        print(f"Session ID: {session_id}")
+else:
+    print(f"Failed to list sessions: {result.error_message}")
+```
+
+##### Filtering by Labels
+
+```python
+# List sessions with specific labels
+result = agb.list(labels={"project": "demo", "environment": "testing"})
+if result.success:
+    print(f"Found {len(result.session_ids)} sessions matching the labels")
+    for session_id in result.session_ids:
+        print(f"Session ID: {session_id}")
+```
+
+##### Pagination
+
+```python
+# Get page 2 with 5 items per page
+result = agb.list(labels={"project": "demo"}, page=2, limit=5)
+if result.success:
+    print(f"Page 2 of results (showing {len(result.session_ids)} sessions)")
+    print(f"Total sessions: {result.total_count}")
+    print(f"Has more pages: {'yes' if result.next_token else 'no'}")
 ```
 
 ### `delete(session, sync_context=False)`
@@ -132,6 +168,37 @@ if result.success:
         print(f"Failed to delete session: {delete_result.error_message}")
 ```
 
+### `get(session_id)`
+
+Get a session by its ID.
+
+This method retrieves a session by calling the GetSession API and returns a SessionResult containing the Session object and request ID.
+
+#### Parameters
+
+- **`session_id`** (`str`): The ID of the session to retrieve.
+
+#### Returns
+
+- **`SessionResult`**: Result containing the Session instance, request ID, and success status.
+
+#### Example
+
+```python
+# Get a session object
+result = agb.get("your-session-id")
+if result.success:
+    session = result.session
+    print(f"Session ID: {session.session_id}")
+    print(f"Resource URL: {session.resource_url}")
+    print(f"Request ID: {result.request_id}")
+
+    # Use the session for operations
+    # ... perform operations with session ...
+else:
+    print(f"Failed to get session: {result.error_message}")
+```
+
 ## Properties
 
 ### `api_key`
@@ -149,6 +216,10 @@ if result.success:
 ### `client`
 - **Type:** `Client`
 - **Description:** The underlying HTTP client for API communication.
+
+### `context`
+- **Type:** `ContextService`
+- **Description:** Context service for managing session contexts and synchronization.
 
 ## Response Objects
 
@@ -173,6 +244,52 @@ class DeleteResult:
     request_id: str     # Unique request identifier
     success: bool      # Whether deletion succeeded
     error_message: str # Error description (if failed)
+```
+
+### GetSessionResult
+
+Result object returned by get_session method.
+
+```python
+class GetSessionResult:
+    request_id: str          # Unique request identifier
+    http_status_code: int    # HTTP status code
+    code: str               # Response code
+    success: bool           # Whether the request succeeded
+    data: GetSessionData    # Session data (if successful)
+    error_message: str      # Error description (if failed)
+```
+
+### GetSessionData
+
+Session data object contained in GetSessionResult.
+
+```python
+class GetSessionData:
+    app_instance_id: str        # Application instance ID
+    resource_id: str           # Resource ID
+    session_id: str            # Session ID
+    success: bool              # Success status
+    http_port: str             # HTTP port
+    network_interface_ip: str  # Network interface IP
+    token: str                 # Authentication token
+    vpc_resource: bool         # Whether it's a VPC resource
+    resource_url: str          # Resource URL
+```
+
+### SessionListResult
+
+Result object returned by the list method.
+
+```python
+class SessionListResult:
+    request_id: str           # Unique request identifier
+    success: bool            # Whether the request succeeded
+    session_ids: List[str]   # List of session IDs
+    next_token: str          # Token for next page (empty if no more pages)
+    max_results: int         # Maximum results per page
+    total_count: int         # Total number of sessions matching the filter
+    error_message: str       # Error description (if failed)
 ```
 
 ## Configuration

@@ -62,6 +62,82 @@ result = agb.create(params)
 session = result.session
 ```
 
+### Session Labels Management
+
+Labels help organize and categorize sessions for easier management. You can set labels when creating sessions or manage them after session creation.
+
+#### Creating Sessions with Labels
+
+```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
+agb = AGB()
+
+# Create session with labels
+params = CreateSessionParams(
+    image_id="agb-code-space-1",
+    labels={"project": "demo", "environment": "testing", "team": "backend"}
+)
+result = agb.create(params)
+if result.success:
+    session = result.session
+    print(f"Session created with labels: {session.session_id}")
+```
+
+#### Setting Session Labels
+
+```python
+# Set labels for an existing session
+labels = {"project": "demo", "environment": "production", "version": "v1.2.0"}
+result = session.set_labels(labels)
+
+if result.success:
+    print("Labels set successfully")
+else:
+    print(f"Failed to set labels: {result.error_message}")
+```
+
+#### Getting Session Labels
+
+```python
+# Get current session labels
+result = session.get_labels()
+
+if result.success:
+    print("Current session labels:")
+    for key, value in result.data.items():
+        print(f"  {key}: {value}")
+else:
+    print(f"Failed to get labels: {result.error_message}")
+```
+
+#### Label Validation
+
+The AGB SDK automatically validates labels to ensure they meet the requirements:
+
+```python
+# Valid labels
+valid_labels = {
+    "project": "my-project",
+    "environment": "staging",
+    "team": "data-science"
+}
+
+# Invalid labels (will fail validation)
+invalid_labels = {
+    "": "empty-key",          # Empty key
+    "project": "",            # Empty value
+    "team": None,             # None value
+    ["invalid"]: "list-key"   # Non-string key
+}
+
+# Set labels with validation
+result = session.set_labels(valid_labels)
+if not result.success:
+    print(f"Label validation failed: {result.error_message}")
+```
+
 ### Session Information
 
 ```python
@@ -76,14 +152,99 @@ if info_result.success:
 
 ### Listing Sessions
 
-```python
-# List all local active sessions
-sessions = agb.list()
-print(f"Active sessions: {len(sessions)}")
+The `list()` method allows you to query and retrieve session IDs from your AGB account. This is useful for managing multiple sessions, monitoring active environments, and organizing your cloud resources.
 
-for session in sessions:
-    print(f"- {session.session_id}")
+#### Basic Usage
+
+```python
+from agb import AGB
+
+# Initialize the SDK
+agb = AGB(api_key=api_key)
+
+# List all active sessions
+result = agb.list()
+
+if result.success:
+    print(f"Found {result.total_count} total sessions")
+    print(f"Showing {len(result.session_ids)} session IDs on this page")
+    print(f"Request ID: {result.request_id}")
+
+    for session_id in result.session_ids:
+        print(f"Session ID: {session_id}")
+else:
+    print(f"Failed to list sessions: {result.error_message}")
+
+# Output:
+# Found 0 total sessions
+# Showing 0 session IDs on this page
+# Request ID: 6620****-****-****-****-********C2C1
 ```
+
+#### Filtering by Labels
+
+You can filter sessions by labels to find specific environments:
+
+```python
+from agb import AGB
+
+# Initialize the SDK
+agb = AGB(api_key=api_key)
+
+# List sessions with specific labels
+result = agb.list(labels={"project": "demo", "environment": "testing"})
+
+if result.success:
+    print(f"Found {len(result.session_ids)} sessions matching the labels")
+    for session_id in result.session_ids:
+        print(f"Session ID: {session_id}")
+
+# Output (after creating a session with matching labels):
+# Found 1 sessions matching the labels
+# Session ID: session-**********************sic
+```
+
+#### Pagination
+
+For accounts with many sessions, use pagination to retrieve results in manageable chunks:
+
+```python
+from agb import AGB
+
+# Initialize the SDK
+agb = AGB(api_key=api_key)
+
+# Get page 2 with 10 items per page
+result = agb.list(labels={"project": "demo"}, page=2, limit=10)
+
+if result.success:
+    print(f"Page 2 of results (showing {len(result.session_ids)} sessions)")
+    print(f"Total sessions: {result.total_count}")
+    print(f"Next page token: {result.next_token}")
+
+# Output (when there are no sessions on page 2):
+# Page 2 of results (showing 0 sessions)
+# Total sessions: 0
+# Next page token: None
+```
+
+#### Important Notes
+
+**Active Sessions Only:**
+- The `list()` method **only returns currently active sessions**
+- Sessions that have been deleted or released (either manually via `delete()` or automatically due to timeout) will **not** be included in the results
+- To check if a specific session is still active, use the `get()` method or `session.info()` method
+
+**Return Value:**
+- The method returns session IDs (strings) rather than full Session objects
+- Use `agb.get(session_id)` to retrieve a full Session object if needed
+
+**Key Features:**
+- **Flexible Filtering**: List all sessions or filter by any combination of labels
+- **Pagination Support**: Use `page` and `limit` parameters for easy pagination
+- **Request ID**: All responses include a `request_id` for tracking and debugging
+- **Efficient**: Returns only session IDs for better performance
+
 
 ### Deleting Sessions
 
@@ -96,171 +257,100 @@ else:
     print(f"Failed to delete session: {delete_result.error_message}")
 ```
 
-## Advanced Usage (15 minutes)
+## Session Release
 
-### Session Lifecycle Management
+Sessions can be released in two ways, and understanding these mechanisms is crucial for proper session management.
 
-```python
-class SessionManager:
-    def __init__(self):
-        self.agb = AGB()
-        self.active_sessions = {}
+### Release Mechanisms
 
-    def create_session(self, name: str, image_id: str = None):
-        """Create a named session with optional image ID"""
-        params = CreateSessionParams(image_id=image_id or "agb-code-space-1")
-        result = self.agb.create(params)
+**1. Manual Deletion**
 
-        if result.success:
-            self.active_sessions[name] = result.session
-            return result.session
-        else:
-            raise Exception(f"Failed to create session: {result.error_message}")
-
-    def get_session(self, name: str):
-        """Get session by name"""
-        return self.active_sessions.get(name)
-
-    def cleanup_all(self):
-        """Clean up all managed sessions"""
-        for name, session in self.active_sessions.items():
-            try:
-                self.agb.delete(session)
-                print(f"Deleted session: {name}")
-            except Exception as e:
-                print(f"Error deleting session {name}: {e}")
-
-        self.active_sessions.clear()
-
-# Usage
-manager = SessionManager()
-
-# Create multiple sessions
-dev_session = manager.create_session("development", "agb-code-space-1")
-test_session = manager.create_session("testing", "agb-code-space-1")
-
-# Use sessions
-dev_session.code.run_code("print('Development environment')", "python")
-test_session.code.run_code("print('Testing environment')", "python")
-
-# Cleanup
-manager.cleanup_all()
-```
-
-### Concurrent Session Management
+You can manually delete a session using the `delete()` method:
 
 ```python
-import concurrent.futures
-from typing import List, Dict, Any
-
-def create_session_with_task(agb: AGB, task_config: Dict[str, Any]):
-    """Create session and execute a task"""
-    params = CreateSessionParams(image_id=task_config.get("image_id", "agb-code-space-1"))
-    result = agb.create(params)
-
-    if not result.success:
-        return {"error": result.error_message}
-
-    session = result.session
-
-    try:
-        # Execute the task
-        code_result = session.code.run_code(
-            task_config["code"],
-            task_config.get("language", "python")
-        )
-
-        return {
-            "session_id": session.session_id,
-            "result": code_result.result if code_result.success else code_result.error_message,
-            "success": code_result.success
-        }
-    finally:
-        # Always clean up
-        agb.delete(session)
-
-# Execute multiple tasks concurrently
-agb = AGB()
-tasks = [
-    {"code": "print('Task 1')", "image_id": "agb-code-space-1"},
-    {"code": "print('Task 2')", "image_id": "agb-code-space-1"},
-    {"code": "print('Task 3')", "image_id": "agb-code-space-1"},
-]
-
-with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-    futures = [
-        executor.submit(create_session_with_task, agb, task)
-        for task in tasks
-    ]
-
-    results = [future.result() for future in concurrent.futures.as_completed(futures)]
-
-for result in results:
-    print(f"Session {result.get('session_id', 'unknown')}: {result.get('result', result.get('error'))}")
-```
-
-### Session Monitoring and Health Checks
-
-```python
-import time
-from typing import Optional
-
-class SessionMonitor:
-    def __init__(self, session):
-        self.session = session
-        self.last_health_check = None
-
-    def health_check(self) -> bool:
-        """Check if session is healthy"""
-        try:
-            # Simple health check - execute a basic command
-            result = self.session.code.run_code("print('health_check')", "python")
-            self.last_health_check = time.time()
-            return result.success
-        except Exception:
-            return False
-
-    def get_session_info(self) -> Optional[dict]:
-        """Get detailed session information"""
-        try:
-            info_result = self.session.info()
-            return info_result.data if info_result.success else None
-        except Exception:
-            return None
-
-    def is_session_active(self) -> bool:
-        """Check if session is still active"""
-        info = self.get_session_info()
-        return info is not None
-
-# Usage
 from agb import AGB
-from agb.session_params import CreateSessionParams
 
-agb = AGB()
-params = CreateSessionParams(image_id="agb-code-space-1")
-result = agb.create(params)
-session = result.session
-
-monitor = SessionMonitor(session)
-
-# Periodic health checks
-for i in range(5):
-    if monitor.health_check():
-        print(f"Health check {i+1}: OK")
-        info = monitor.get_session_info()
-        if info:
-            print(f"  Session ID: {info.get('session_id')}")
-    else:
-        print(f"Health check {i+1}: FAILED")
-        break
-
-    time.sleep(2)
-
-# Cleanup
-agb.delete(session)
+# Delete a session manually
+delete_result = agb.delete(session)
+if delete_result.success:
+    print("Session deleted successfully")
+else:
+    print(f"Failed to delete session: {delete_result.error_message}")
 ```
 
+**2. Automatic Timeout Release**
+
+If you don't manually delete a session, it will be automatically released after a configured timeout period:
+
+- **Configuration**: Timeout duration is set in the [AGB Console](https://agb.cloud/console)
+- **Behavior**: Once the timeout is reached, the session is automatically released
+- **Recovery**: After release (manual or automatic), the session cannot be recovered - the session ID becomes invalid
+
+### Important Notes About Session Release
+
+- Released sessions (either manually or by timeout) will **not** appear in `agb.list()` results
+- Once released, all non-persistent data in the session is permanently lost
+- Use [Context Synchronization](context-usage-guide.md) to preserve important data across sessions
+- Session IDs become invalid after release and cannot be used for recovery
+
+### Checking Session Status
+
+Before attempting to recover a session, you can check if it's still active:
+
+```python
+from agb import AGB
+
+# Check if a session is still active
+agb = AGB()
+sessions = agb.list()
+session_ids = [session.session_id for session in sessions]
+
+if "your_session_id" in session_ids:
+    print("Session is still active")
+else:
+    print("Session has been released or does not exist")
+```
+
+## Session Recovery
+
+In certain scenarios, you may need to recover a Session object using its session ID. The SDK provides the `get` method to retrieve an existing session.
+
+### Using the get Method
+
+The `get` method is the recommended way to recover a session. It retrieves session information from the cloud and returns a ready-to-use Session object with the API request ID.
+
+```python
+from agb import AGB
+
+# Initialize the SDK
+agb = AGB()
+
+# Retrieve session using its ID
+session_id = "your_existing_session_id"
+get_result = agb.get(session_id)
+
+if get_result.success:
+    session = get_result.session
+    print(f"Retrieved session: {session.session_id}")
+    print(f"Request ID: {get_result.request_id}")
+
+    # You can now perform any session operations
+    result = session.command.execute_command("echo 'Hello, World!'")
+    if result.success:
+        print(result.output)
+else:
+    print(f"Failed to retrieve session: {get_result.error_message}")
+```
+
+### Important Considerations
+
+**Session Recovery Limitations:**
+
+1. **Released Sessions Cannot Be Recovered**: If the session ID corresponds to a cloud environment that has been actually released (either through active deletion via `Session.delete()` or automatic timeout release), it cannot be recovered using the session ID. In such cases, you must:
+   - Create a new session
+   - Use data persistence (see [Data Persistence Guide](data-persistence.md)) to restore your data
+
+2. **Session Status Validation**: Use the `Session.info()` method to determine if a session has been released. Only active (non-released) sessions can return information through the info interface.
 
 ## Best Practices
 
@@ -348,10 +438,52 @@ print(result)
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
-# Organize sessions with meaningful image IDs
-params = CreateSessionParams(image_id="agb-code-space-1")
+# ✅ Good: Organize sessions with meaningful labels
+params = CreateSessionParams(
+    image_id="agb-code-space-1",
+    labels={
+        "project": "data-pipeline",
+        "environment": "production",
+        "team": "analytics",
+        "version": "v2.1.0"
+    }
+)
 
 result = agb.create(params)
+session = result.session
+
+# ✅ Better: Use consistent labeling strategy
+class LabelManager:
+    @staticmethod
+    def create_project_labels(project_name: str, environment: str, **kwargs):
+        """Create standardized labels for project sessions"""
+        labels = {
+            "project": project_name,
+            "environment": environment,
+            "created_by": "agb-sdk",
+            "timestamp": str(int(time.time()))
+        }
+        labels.update(kwargs)
+        return labels
+
+# Usage
+labels = LabelManager.create_project_labels(
+    "ml-training",
+    "staging",
+    model_version="v1.3.2",
+    gpu_enabled="true"
+)
+
+params = CreateSessionParams(image_id="agb-code-space-1", labels=labels)
+result = agb.create(params)
+session = result.session
+
+# Update labels during session lifecycle
+session.set_labels({
+    **labels,
+    "status": "training_complete",
+    "accuracy": "0.94"
+})
 ```
 
 ### 4. Monitor Resource Usage

@@ -10,12 +10,20 @@ from .get_link_request import GetLinkRequest
 from .get_link_response import GetLinkResponse
 from .get_mcp_resource_request import GetMcpResourceRequest
 from .get_mcp_resource_response import GetMcpResourceResponse
+from .get_session_request import GetSessionRequest
+from .get_session_response import GetSessionResponse
 from .init_browser_request import InitBrowserRequest
 from .init_browser_response import InitBrowserResponse
 from .list_mcp_tools_request import ListMcpToolsRequest
 from .list_mcp_tools_response import ListMcpToolsResponse
+from .list_session_request import ListSessionRequest
+from .list_session_response import ListSessionResponse
 from .release_session_request import ReleaseSessionRequest
 from .release_session_response import ReleaseSessionResponse
+from .set_label_request import SetLabelRequest
+from .set_label_response import SetLabelResponse
+from .get_label_request import GetLabelRequest
+from .get_label_response import GetLabelResponse
 
 # Context related models
 from .list_contexts_request import ListContextsRequest
@@ -49,12 +57,20 @@ __all__ = [
     "CallMcpToolResponse",
     "GetMcpResourceRequest",
     "GetMcpResourceResponse",
+    "GetSessionRequest",
+    "GetSessionResponse",
     "InitBrowserRequest",
     "InitBrowserResponse",
     "GetLinkRequest",
     "GetLinkResponse",
     "ListMcpToolsRequest",
     "ListMcpToolsResponse",
+    "ListSessionRequest",
+    "ListSessionResponse",
+    "SetLabelRequest",
+    "SetLabelResponse",
+    "GetLabelRequest",
+    "GetLabelResponse",
     # Context related models
     "ListContextsRequest",
     "ListContextsResponse",

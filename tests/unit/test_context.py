@@ -116,6 +116,159 @@ class TestContextService(unittest.TestCase):
         self.assertEqual(call_args.allow_create, False)
         self.assertEqual(call_args.login_region_id, "us-west-1")
 
+    def test_get_context_with_id(self):
+        """Test getting a context by ID."""
+        # Mock the response from the API
+        mock_get_response = MagicMock()
+        mock_get_response.get_context_data.return_value = GetContextResponseBodyData(
+            id="context-123",
+            name="test-context-by-id",
+            create_time="2025-05-29T12:00:00Z",
+            last_used_time="2025-05-29T12:30:00Z",
+        )
+        mock_get_response.is_successful.return_value = True
+        mock_get_response.request_id = "req-123"
+        self.agb.client.get_context.return_value = mock_get_response
+
+        # Call the method with context_id
+        result = self.context_service.get(context_id="context-123")
+
+        # Verify the results
+        self.assertTrue(result.success)
+        self.assertEqual(result.context_id, "context-123")
+        if result.context:
+            self.assertEqual(result.context.id, "context-123")
+            self.assertEqual(result.context.name, "test-context-by-id")
+
+        # Verify the client was called with correct parameters
+        self.agb.client.get_context.assert_called_once()
+        call_args = self.agb.client.get_context.call_args[0][0]
+        self.assertEqual(call_args.id, "context-123")
+        self.assertIsNone(call_args.name)
+        self.assertEqual(call_args.allow_create, False)
+
+    def test_get_context_with_id_and_name(self):
+        """Test getting a context with both ID and name (should use both if API supports)."""
+        # Mock the response from the API
+        mock_get_response = MagicMock()
+        mock_get_response.get_context_data.return_value = GetContextResponseBodyData(
+            id="context-456",
+            name="test-context-both",
+            create_time="2025-05-29T12:00:00Z",
+            last_used_time="2025-05-29T12:30:00Z",
+        )
+        mock_get_response.is_successful.return_value = True
+        mock_get_response.request_id = "req-456"
+        self.agb.client.get_context.return_value = mock_get_response
+
+        # Call the method with both context_id and name
+        result = self.context_service.get(name="test-context-both", context_id="context-456")
+
+        # Verify the results
+        self.assertTrue(result.success)
+        self.assertEqual(result.context_id, "context-456")
+
+        # Verify the client was called with both parameters
+        self.agb.client.get_context.assert_called_once()
+        call_args = self.agb.client.get_context.call_args[0][0]
+        self.assertEqual(call_args.id, "context-456")
+        self.assertEqual(call_args.name, "test-context-both")
+
+    def test_get_context_empty_name_and_id(self):
+        """Test that getting a context fails when both name and context_id are empty."""
+        # Call the method without providing name or context_id
+        result = self.context_service.get()
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("Either context_id or name must be provided", result.error_message or "")
+        self.assertEqual(result.request_id, "")
+
+        # Verify the client was not called
+        self.agb.client.get_context.assert_not_called()
+
+    def test_get_context_empty_strings(self):
+        """Test that getting a context fails when both name and context_id are empty strings."""
+        # Call the method with empty strings
+        result = self.context_service.get(name="", context_id="")
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("Either context_id or name must be provided", result.error_message or "")
+
+        # Verify the client was not called
+        self.agb.client.get_context.assert_not_called()
+
+    def test_get_context_whitespace_only(self):
+        """Test that getting a context fails when both name and context_id are whitespace only."""
+        # Call the method with whitespace-only strings
+        result = self.context_service.get(name="   ", context_id="  \t  ")
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("Either context_id or name must be provided", result.error_message or "")
+
+        # Verify the client was not called
+        self.agb.client.get_context.assert_not_called()
+
+    def test_get_context_create_with_id_error(self):
+        """Test that creating a context fails when context_id is provided with create=True."""
+        # Call the method with create=True and context_id (should fail)
+        result = self.context_service.get(context_id="context-123", create=True)
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("context_id cannot be provided when create=True", result.error_message or "")
+        self.assertEqual(result.request_id, "")
+
+        # Verify the client was not called
+        self.agb.client.get_context.assert_not_called()
+
+    def test_get_context_create_with_both_id_and_name_error(self):
+        """Test that creating a context fails when both context_id and name are provided with create=True."""
+        # Call the method with create=True and both parameters (should fail)
+        result = self.context_service.get(name="test-context", context_id="context-123", create=True)
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("context_id cannot be provided when create=True", result.error_message or "")
+
+        # Verify the client was not called
+        self.agb.client.get_context.assert_not_called()
+
+    def test_get_context_backward_compatibility(self):
+        """Test backward compatibility: getting context with name parameter only (old API)."""
+        # Mock the response from the API
+        mock_get_response = MagicMock()
+        mock_get_response.get_context_data.return_value = GetContextResponseBodyData(
+            id="context-789",
+            name="legacy-context",
+            create_time="2025-05-29T12:00:00Z",
+            last_used_time="2025-05-29T12:30:00Z",
+        )
+        mock_get_response.is_successful.return_value = True
+        mock_get_response.request_id = "req-789"
+        self.agb.client.get_context.return_value = mock_get_response
+
+        # Call the method with only name (backward compatible way)
+        result = self.context_service.get("legacy-context")
+
+        # Verify the results
+        self.assertTrue(result.success)
+        self.assertEqual(result.context_id, "context-789")
+
+        # Verify the client was called with name only
+        self.agb.client.get_context.assert_called_once()
+        call_args = self.agb.client.get_context.call_args[0][0]
+        self.assertEqual(call_args.name, "legacy-context")
+        self.assertIsNone(call_args.id)
+        self.assertEqual(call_args.allow_create, False)
+
     def test_create_context(self):
         """Test creating a context."""
         # Mock the response from the API
@@ -180,6 +333,107 @@ class TestContextService(unittest.TestCase):
 
         # Verify the results
         self.assertTrue(result.success)
+
+    def test_create_context_validation_empty_name(self):
+        """Test that creating a context fails when name is empty."""
+        # Call the method with empty name
+        result = self.context_service.create("")
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("name cannot be empty or None", result.error_message or "")
+        self.assertEqual(result.request_id, "")
+
+        # Verify the client was not called
+        self.agb.client.get_context.assert_not_called()
+
+    def test_create_context_validation_none_name(self):
+        """Test that creating a context fails when name is None."""
+        # Call the method with None name
+        result = self.context_service.create(None)  # type: ignore
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("name cannot be empty or None", result.error_message or "")
+
+        # Verify the client was not called
+        self.agb.client.get_context.assert_not_called()
+
+    def test_update_context_validation_none(self):
+        """Test that updating a context fails when context is None."""
+        # Call the method with None context
+        result = self.context_service.update(None)  # type: ignore
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("context cannot be None", result.error_message or "")
+
+        # Verify the client was not called
+        self.agb.client.modify_context.assert_not_called()
+
+    def test_update_context_validation_empty_id(self):
+        """Test that updating a context fails when context.id is empty."""
+        # Create a context with empty id
+        context = Context(id="", name="test-name")
+
+        # Call the method
+        result = self.context_service.update(context)
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("context.id cannot be empty or None", result.error_message or "")
+
+        # Verify the client was not called
+        self.agb.client.modify_context.assert_not_called()
+
+    def test_update_context_validation_empty_name(self):
+        """Test that updating a context fails when context.name is empty."""
+        # Create a context with empty name
+        context = Context(id="ctx-123", name="")
+
+        # Call the method
+        result = self.context_service.update(context)
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("context.name cannot be empty or None", result.error_message or "")
+
+        # Verify the client was not called
+        self.agb.client.modify_context.assert_not_called()
+
+    def test_delete_context_validation_none(self):
+        """Test that deleting a context fails when context is None."""
+        # Call the method with None context
+        result = self.context_service.delete(None)  # type: ignore
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("context cannot be None", result.error_message or "")
+
+        # Verify the client was not called
+        self.agb.client.delete_context.assert_not_called()
+
+    def test_delete_context_validation_empty_id(self):
+        """Test that deleting a context fails when context.id is empty."""
+        # Create a context with empty id
+        context = Context(id="", name="test-name")
+
+        # Call the method
+        result = self.context_service.delete(context)
+
+        # Verify the results
+        self.assertFalse(result.success)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("context.id cannot be empty or None", result.error_message or "")
+
+        # Verify the client was not called
+        self.agb.client.delete_context.assert_not_called()
 
 
 class TestContextManager(unittest.TestCase):
@@ -321,7 +575,8 @@ class TestContextManager(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "req-invalid")
         self.assertEqual(len(result.context_status_data), 0)
-        self.assertIn("Unexpected error parsing context status", result.error_message)
+        self.assertIsNotNone(result.error_message)
+        self.assertIn("Unexpected error parsing context status", result.error_message or "")
 
     def test_info_multiple_status_items(self):
         """Test getting context info with multiple status items."""

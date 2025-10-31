@@ -35,6 +35,8 @@ agb.delete(session)
 | **[AGB](core/agb.md)** | Main SDK client | Session creation and management |
 | **[Session](core/session.md)** | Session management | Session lifecycle and information |
 | **[CreateSessionParams](core/session-params.md)** | Session configuration | Parameters for session creation |
+| **[ExtensionsService](core/extensions.md)** | Extension management | Browser extension lifecycle |
+| **[ExtensionOption](core/extensions.md#extensionoption)** | Extension configuration | Browser extension integration |
 
 ### 🔧 Modules
 
@@ -72,6 +74,24 @@ agb.delete(session) -> DeleteResult
 session.info() -> OperationResult
 session.get_session_id() -> str
 session.get_api_key() -> str
+```
+
+### Extension Management API
+```python
+# ExtensionsService methods
+from agb.extension import ExtensionsService
+
+# Initialize extension service
+extensions_service = ExtensionsService(agb, context_id="my_extensions")
+
+# Extension lifecycle
+extension = extensions_service.create(local_path="/path/to/extension.zip")
+extensions = extensions_service.list()
+updated_extension = extensions_service.update(extension_id, new_local_path)
+success = extensions_service.delete(extension_id)
+
+# Extension integration with browser sessions
+ext_option = extensions_service.create_extension_option([extension1.id, extension2.id])
 ```
 
 ### Code Execution API
@@ -195,6 +215,7 @@ if not code_result.success:
 - **[AGB Client](core/agb.md)** - Main SDK client class
 - **[Session Management](core/session.md)** - Session lifecycle and operations
 - **[Session Parameters](core/session-params.md)** - Configuration options
+- **[Extensions API](core/extensions.md)** - Browser extension management
 
 ### Modules
 - **[Code Execution](modules/code.md)** - Python, JavaScript, Java, R execution

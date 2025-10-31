@@ -14,9 +14,13 @@ from agb.api.models import (
     CreateSessionRequest,
     CreateSessionResponse,
     CreateMcpSessionRequestPersistenceDataList,
+    GetSessionRequest,
+    GetSessionResponse,
+    ListSessionRequest,
+    ListSessionResponse,
 )
 from agb.config import Config, load_config
-from agb.model.response import DeleteResult, SessionResult
+from agb.model.response import DeleteResult, SessionResult, GetSessionResult, GetSessionData, SessionListResult
 from agb.session import BaseSession, Session
 from agb.session_params import CreateSessionParams
 from agb.context import ContextService
@@ -84,6 +88,11 @@ class AGB:
 
             if params.image_id:
                 request.image_id = params.image_id
+
+             # Add labels if provided
+            if params.labels:
+                # Convert labels to JSON string
+                request.labels = json.dumps(params.labels)
 
             # Flag to indicate if we need to wait for context synchronization
             needs_context_sync = False
@@ -199,15 +208,161 @@ class AGB:
                 error_message=f"Failed to create session: {e}",
             )
 
-    def list(self) -> List[BaseSession]:
+    def list(
+        self,
+        labels: Optional[Dict[str, str]] = None,
+        page: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> SessionListResult:
         """
-        List all available sessions.
+        Returns paginated list of session IDs filtered by labels.
+
+        Args:
+            labels (Optional[Dict[str, str]], optional): Labels to filter sessions.
+                Defaults to None (empty dict).
+            page (Optional[int], optional): Page number for pagination (starting from 1).
+                Defaults to None (returns first page).
+            limit (Optional[int], optional): Maximum number of items per page.
+                Defaults to None (uses default of 10).
 
         Returns:
-            List[BaseSession]: A list of all available sessions.
+            SessionListResult: Paginated list of session IDs that match the labels,
+                including request_id, success status, and pagination information.
         """
-        with self._lock:
-            return list(self._sessions.values())
+        try:
+            # Set default values
+            if labels is None:
+                labels = {}
+            if limit is None:
+                limit = 10
+
+            # Validate page number
+            if page is not None and page < 1:
+                return SessionListResult(
+                    request_id="",
+                    success=False,
+                    error_message=f"Cannot reach page {page}: Page number must be >= 1",
+                    session_ids=[],
+                    next_token="",
+                    max_results=limit,
+                    total_count=0,
+                )
+
+            # Calculate next_token based on page number
+            # Page 1 or None means no next_token (first page)
+            # For page > 1, we need to make multiple requests to get to that page
+            next_token = ""
+            if page is not None and page > 1:
+                # We need to fetch pages 1 through page-1 to get the next_token
+                current_page = 1
+                while current_page < page:
+                    # Make API call to get next_token
+                    labels_json = json.dumps(labels)
+                    request = ListSessionRequest(
+                        authorization=f"Bearer {self.api_key}",
+                        labels=labels_json,
+                        max_results=limit,
+                    )
+                    if next_token:
+                        request.next_token = next_token
+
+                    response = self.client.list_sessions(request)
+                    request_id = getattr(response, "request_id", "") or ""
+
+                    if not response.is_successful():
+                        error_message = response.get_error_message() or "Unknown error"
+                        return SessionListResult(
+                            request_id=request_id,
+                            success=False,
+                            error_message=f"Cannot reach page {page}: {error_message}",
+                            session_ids=[],
+                            next_token="",
+                            max_results=limit,
+                            total_count=0,
+                        )
+
+                    next_token = response.get_next_token() or ""
+                    if not next_token:
+                        # No more pages available
+                        return SessionListResult(
+                            request_id=request_id,
+                            success=False,
+                            error_message=f"Cannot reach page {page}: No more pages available",
+                            session_ids=[],
+                            next_token="",
+                            max_results=limit,
+                            total_count=response.get_count() or 0,
+                        )
+                    current_page += 1
+
+            # Make the actual request for the desired page
+            labels_json = json.dumps(labels)
+            request = ListSessionRequest(
+                authorization=f"Bearer {self.api_key}",
+                labels=labels_json,
+                max_results=limit,
+            )
+            if next_token:
+                request.next_token = next_token
+                logger.debug(f"NextToken={request.next_token}")
+
+            logger.info(f"Making list_sessions API call - Labels={labels_json}, MaxResults={limit}")
+
+            # Make the API call
+            response = self.client.list_sessions(request)
+
+            # Extract request ID
+            request_id = getattr(response, "request_id", "") or ""
+
+            # Check for errors in the response
+            if not response.is_successful():
+                error_message = response.get_error_message() or "Unknown error"
+                return SessionListResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=f"Failed to list sessions: {error_message}",
+                    session_ids=[],
+                    next_token="",
+                    max_results=limit,
+                    total_count=0,
+                )
+
+            session_ids = []
+            next_token = response.get_next_token() or ""
+            max_results = response.get_max_results() or limit
+            total_count = response.get_count() or 0
+
+            # Extract session data
+            session_data_list = response.get_session_data()
+
+            # Process session data
+            for session_data in session_data_list:
+                if session_data.session_id:
+                    session_ids.append(session_data.session_id)
+
+            # Log API response with key details
+            logger.info(f"ListSessions API response - RequestID: {request_id}, Success: True")
+            logger.info(f"Total count: {total_count}, Returned count: {len(session_ids)}")
+            logger.info(f"Has more: {'yes' if next_token else 'no'}")
+
+            # Return SessionListResult with request ID and pagination info
+            return SessionListResult(
+                request_id=request_id,
+                success=True,
+                session_ids=session_ids,
+                next_token=next_token,
+                max_results=max_results,
+                total_count=total_count,
+            )
+
+        except Exception as e:
+            logger.error(f"Error calling list_sessions: {e}")
+            return SessionListResult(
+                request_id="",
+                success=False,
+                session_ids=[],
+                error_message=f"Failed to list sessions: {e}",
+            )
 
     def delete(self, session: BaseSession, sync_context: bool = False) -> DeleteResult:
         """
@@ -236,3 +391,155 @@ class AGB:
                 success=False,
                 error_message=f"Failed to delete session: {e}",
             )
+
+    def get_session(self, session_id: str) -> GetSessionResult:
+        """
+        Get session information by session ID.
+
+        Args:
+            session_id (str): The ID of the session to retrieve.
+
+        Returns:
+            GetSessionResult: Result containing session information.
+        """
+        try:
+            logger.info(f"Getting session information for session_id: {session_id}")
+
+            request = GetSessionRequest(
+                authorization=f"Bearer {self.api_key}",
+                session_id=session_id
+            )
+
+            response = self.client.get_mcp_session(request)
+
+            # Extract request ID from response
+            request_id = getattr(response, "request_id", "") or ""
+
+            try:
+                response_body = json.dumps(
+                    response.to_dict(), ensure_ascii=False, indent=2
+                )
+            except Exception:
+                response_body = str(response)
+
+            # Extract response information using your current architecture
+            http_status_code = getattr(response, 'status_code', 0)
+            code = getattr(response, 'code', "")
+            success = response.is_successful() if hasattr(response, 'is_successful') else False
+            message = response.get_error_message() if hasattr(response, 'get_error_message') else ""
+
+                # Check for API-level errors
+            if not success:
+                return GetSessionResult(
+                    request_id=request_id,
+                    http_status_code=http_status_code,
+                    code=code,
+                    success=False,
+                    data=None,
+                    error_message=message or "Unknown error",
+                )
+
+            # Create GetSessionData from the API response using your architecture
+            data = None
+            if hasattr(response, 'data') and response.data:
+                data = GetSessionData(
+                    app_instance_id=response.data.app_instance_id or "",
+                    resource_id=response.data.resource_id or "",
+                    session_id=response.data.session_id or session_id,
+                    success=True,
+                    http_port=response.data.http_port or "",
+                    network_interface_ip=response.data.network_interface_ip or "",
+                    token=response.data.token or "",
+                    vpc_resource=response.data.vpc_resource or False,
+                    resource_url=response.data.resource_url or ""
+                )
+
+            # Log API response with key details
+            key_fields = {}
+            if data:
+                key_fields["session_id"] = data.session_id
+                key_fields["vpc_resource"] = "yes" if data.vpc_resource else "no"
+
+            logger.info(f"GetSession API response - RequestID: {request_id}, Success: {success}")
+            if key_fields:
+                logger.debug(f"Key fields: {key_fields}")
+            logger.debug(f"Full response: {response_body}")
+
+            return GetSessionResult(
+                request_id=request_id,
+                http_status_code=http_status_code,
+                code=code,
+                success=success,
+                data=data,
+                error_message="",
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to parse response: {str(e)}")
+            return GetSessionResult(
+                request_id=request_id,
+                success=False,
+                error_message=f"Failed to parse response: {str(e)}",
+            )
+        except Exception as e:
+            logger.error(f"Error calling GetSession: {e}")
+            return GetSessionResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to get session {session_id}: {e}",
+            )
+
+    def get(self, session_id: str) -> SessionResult:
+        """
+        Get a session by its ID.
+
+        This method retrieves a session by calling the GetSession API
+        and returns a SessionResult containing the Session object and request ID.
+
+        Args:
+            session_id (str): The ID of the session to retrieve.
+
+        Returns:
+            SessionResult: Result containing the Session instance, request ID, and success status.
+        """
+        # Validate input
+        if not session_id or (isinstance(session_id, str) and not session_id.strip()):
+            return SessionResult(
+                request_id="",
+                success=False,
+                error_message="session_id is required",
+            )
+
+        # Call GetSession API
+        get_result = self.get_session(session_id)
+
+        # Check if the API call was successful
+        if not get_result.success:
+            error_msg = get_result.error_message or "Unknown error"
+            return SessionResult(
+                request_id=get_result.request_id,
+                success=False,
+                error_message=f"Failed to get session {session_id}: {error_msg}",
+            )
+
+        # Create the Session object
+        session = Session(self, session_id)
+
+        # Set session information from GetSession response
+        if get_result.data:
+            session.resource_url = get_result.data.resource_url or ""
+            # Store additional session data - set attributes directly
+            session.app_instance_id = get_result.data.app_instance_id or ""
+            session.resource_id = get_result.data.resource_id or ""
+            session.vpc_resource = get_result.data.vpc_resource or False
+            session.network_interface_ip = get_result.data.network_interface_ip or ""
+            session.http_port = get_result.data.http_port or ""
+            session.token = get_result.data.token or ""
+
+        logger.info(f"Successfully retrieved session: {session_id}")
+
+        return SessionResult(
+            request_id=get_result.request_id or "",
+            success=True,
+            session=session,
+        )

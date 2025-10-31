@@ -92,6 +92,53 @@ Get the HTTP client for making API calls.
 **Returns:**
 - `Client`: The HTTP client instance.
 
+#### `set_labels(labels)`
+
+Set labels for the current session.
+
+**Parameters:**
+- `labels` (`Dict[str, str]`): Dictionary of labels to set for the session.
+
+**Returns:**
+- `OperationResult`: Result indicating success or failure and request ID.
+
+**Example:**
+```python
+# Set labels for the session
+labels = {
+    "project": "my-project",
+    "environment": "production",
+    "team": "backend",
+    "version": "v1.2.0"
+}
+
+result = session.set_labels(labels)
+if result.success:
+    print("Labels set successfully")
+else:
+    print(f"Failed to set labels: {result.error_message}")
+```
+
+#### `get_labels()`
+
+Get the current labels for this session.
+
+**Returns:**
+- `OperationResult`: Result containing the labels as data and request ID.
+
+**Example:**
+```python
+# Get current session labels
+result = session.get_labels()
+if result.success:
+    labels = result.data
+    print("Current session labels:")
+    for key, value in labels.items():
+        print(f"  {key}: {value}")
+else:
+    print(f"Failed to get labels: {result.error_message}")
+```
+
 #### `delete(sync_context=False)`
 
 Delete the current session.
@@ -158,6 +205,95 @@ if result.success:
     info = session.info()
     if info.success:
         print(f"Session info: {info.data}")
+```
+
+### Session Labels Management
+
+Labels help organize and categorize sessions for easier management.
+
+#### Creating Sessions with Labels
+
+```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
+# Create session with initial labels
+labels = {
+    "project": "data-pipeline",
+    "environment": "production",
+    "team": "analytics",
+    "version": "v2.1.0"
+}
+
+params = CreateSessionParams(
+    image_id="agb-code-space-1",
+    labels=labels
+)
+
+result = agb.create(params)
+if result.success:
+    session = result.session
+    print(f"Session created with labels: {session.session_id}")
+```
+
+#### Managing Labels During Session Lifecycle
+
+```python
+# Get current labels
+label_result = session.get_labels()
+if label_result.success:
+    current_labels = label_result.data
+    print("Current labels:", current_labels)
+
+# Update labels with new information
+updated_labels = {
+    **current_labels,  # Keep existing labels
+    "status": "processing",
+    "last_updated": "2024-01-15T10:30:00Z",
+    "worker_id": "worker-123"
+}
+
+# Set updated labels
+set_result = session.set_labels(updated_labels)
+if set_result.success:
+    print("Labels updated successfully")
+
+# Verify labels were updated
+final_result = session.get_labels()
+if final_result.success:
+    print("Final labels:", final_result.data)
+```
+
+#### Label Validation
+
+The AGB SDK automatically validates labels to ensure they meet requirements:
+
+```python
+# Valid labels
+valid_labels = {
+    "project": "my-project",
+    "environment": "staging",
+    "team": "data-science"
+}
+
+# Invalid labels (will fail validation)
+invalid_labels = {
+    "": "empty-key",          # Empty key - will fail
+    "project": "",            # Empty value - will fail
+    "team": None,             # None value - will fail
+}
+
+# Set labels with validation
+result = session.set_labels(valid_labels)
+if result.success:
+    print("Valid labels set successfully")
+else:
+    print(f"Label validation failed: {result.error_message}")
+
+# Try invalid labels
+result = session.set_labels(invalid_labels)
+if not result.success:
+    print(f"Expected validation error: {result.error_message}")
 ```
 
 ### Module Availability
@@ -264,7 +400,51 @@ finally:
         # agb.delete(session, sync_context=True)
 ```
 
-### 3. Resource Management
+### 3. Use Labels for Organization
+
+```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+import time
+
+# Create sessions with meaningful labels
+def create_labeled_session(project_name, environment, **extra_labels):
+    """Create a session with standardized labels"""
+    labels = {
+        "project": project_name,
+        "environment": environment,
+        "created_by": "agb-sdk",
+        "created_at": str(int(time.time()))
+    }
+    labels.update(extra_labels)
+
+    params = CreateSessionParams(
+        image_id="agb-code-space-1",
+        labels=labels
+    )
+
+    return agb.create(params)
+
+# Usage
+result = create_labeled_session(
+    "data-pipeline",
+    "production",
+    team="analytics",
+    version="v2.1.0"
+)
+
+if result.success:
+    session = result.session
+
+    # Update labels during session lifecycle
+    session.set_labels({
+        **session.get_labels().data,
+        "status": "processing",
+        "worker_id": "worker-123"
+    })
+```
+
+### 4. Resource Management
 
 ```python
 from agb import AGB

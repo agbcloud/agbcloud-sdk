@@ -1,0 +1,401 @@
+# Documentation metadata configuration file for AGB Python SDK
+# This file centralizes metadata for API documentation generation
+
+# Global documentation configuration
+global:
+  # Requirements for different image types
+  image_requirements:
+    browser_latest: "Browser automation features require the `browser_latest` image"
+    code_latest: "Code execution features require the `code_latest` image"
+
+  # Common best practices
+  best_practices:
+    error_handling: "Always check for errors after API calls and handle them appropriately"
+    resource_cleanup: "Always clean up resources (sessions, contexts) when done to avoid resource leaks"
+    timeout_config: "Configure appropriate timeouts based on your operation's expected duration"
+    logging: "Enable logging for debugging and monitoring purposes"
+
+  # Auto-filtering rules for internal methods/functions
+  auto_filter_rules:
+    # Exclude simple getter methods
+    exclude_simple_getters:
+      - get_api_key
+      - get_client
+      - get_session_id
+      - get_endpoint_url
+      - get_option
+      - is_initialized
+# Exclude VPC-related helper methods
+    exclude_vpc_helpers:
+      - network_interface_ip
+      - http_port
+    # Exclude serialization methods
+    exclude_serialization_methods:
+      - to_map
+      - from_map
+      - to_dict
+      - from_dict
+
+    # Exclude validation methods
+    exclude_validation_methods: true
+
+    # Exclude internal helpers (check docstring for "internal" or "helper")
+    exclude_internal_helpers: true
+
+  # Response documentation specific filtering rules
+  response_docs:
+    # Exclude internal MCP tool methods from response type documentation
+    exclude_mcp_methods:
+      - _call_mcp_tool
+      - _call_mcp_tool_timeout
+      - _call_mcp_tool_async
+      - _call_mcp_tool
+    
+    # Exclude private/internal methods (starting with underscore)
+    exclude_private_methods: true
+    
+    # Exclude validation methods from response docs
+    exclude_validation_methods:
+      - _validate_labels
+      - _validate_session
+      - _validate_config
+    
+    # Exclude low-level API methods
+    exclude_low_level_api:
+      - _make_request
+      - _handle_response
+      - _process_result
+    
+    # Exclude specific response types from documentation generation
+    exclude_response_types:
+      - ApiResponse          # Base class, not directly used by users
+      - GetSessionData       # Internal data structure
+      - FileChangeResult     # Internal file monitoring result
+      - GetSessionResult     # Internal data structure
+    
+    # Related guides for response types
+    response_guides:
+      SessionResult:
+        title: "Session Management APIs"
+        description: "Get a session by its ID or create a new session in the AGB cloud environment"
+        url: "../../guides/session-management.md"
+      
+      SessionListResult:
+        title: "Session Listing APIs"
+        description: "Returns paginated list of session IDs filtered by labels"
+        url: "../../guides/session-management.md"
+      
+      OperationResult:
+        title: "Context and Session Management APIs"
+        description: "Update context data, delete files, and manage session operations"
+        url: "../../guides/context-usage-guide.md"
+      
+      DeleteResult:
+        title: "Session and Resource Deletion APIs"
+        description: "Delete sessions and manage resource cleanup operations"
+        url: "../../guides/session-management.md"
+      
+      BoolResult:
+        title: "File System Validation APIs"
+        description: "File existence checks and validation operations"
+        url: "../../guides/file-operations.md"
+      
+      MultipleFileContentResult:
+        title: "File Content Management APIs"
+        description: "Read multiple files and batch file content operations"
+        url: "../../guides/file-operations.md"
+      
+      FileSearchResult:
+        title: "File Search and Discovery APIs"
+        description: "Search files by patterns and locate specific file content"
+        url: "../../guides/file-operations.md"
+      
+      FileInfoResult:
+        title: "File Information and Metadata APIs"
+        description: "Get file properties, permissions, and metadata information"
+        url: "../../guides/file-operations.md"
+      
+      FileContentResult:
+        title: "File Content Access APIs"
+        description: "Read file content and retrieve file data"
+        url: "../../guides/file-operations.md"
+      
+      DirectoryListResult:
+        title: "Directory Management APIs"
+        description: "List directory contents and navigate file system structure"
+        url: "../../guides/file-operations.md"
+
+modules:
+  # AGB main module
+  agb:
+    python: agb.agb
+    
+    tutorial:
+      url: ../../docs/quickstart.md
+      text: Quick Start Guide
+      description: Get started with the AGB Python SDK
+
+    overview: |
+      The main AGB module provides the core functionality for creating and managing sessions
+      with the AGB cloud platform. It serves as the entry point for all SDK operations.
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+      - name: Context API Reference
+        module: context
+
+    emoji: 🚀
+    category: core
+
+  # Session module
+  session:
+    python: agb.session
+
+    tutorial:
+      url: ../../docs/guides/session-management.md
+      text: Session Management Guide
+      description: Detailed tutorial on session lifecycle and management
+
+    overview: |
+      The Session module provides methods for creating, managing, and terminating sessions
+      in the AGB cloud environment. Sessions are the foundation for all operations.
+
+    related_resources:
+      - name: AGB API Reference
+        module: agb
+      - name: Context API Reference
+        module: context
+      - name: Context Manager API Reference
+        module: context-manager
+
+    emoji: 🔧
+    category: core
+
+  # Context module
+  context:
+    python: agb.context
+
+    tutorial:
+      url: ../../docs/guides/context-usage-guide.md
+      text: Context Usage Guide
+      description: Learn about context management and data persistence
+
+    overview: |
+      The Context module provides methods for managing session context and data persistence.
+      It allows you to store and retrieve data across session operations.
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+      - name: Context Manager API Reference
+        module: context-manager
+
+    emoji: 💾
+    category: core
+
+  # Context Manager module
+  context-manager:
+    python: agb.context_manager
+
+    tutorial:
+      url: ../../docs/guides/context-usage-guide.md
+      text: Context Usage Guide
+      description: Advanced context management features
+
+    overview: |
+      The Context Manager module provides advanced context management capabilities
+      including context synchronization and lifecycle management.
+
+    related_resources:
+      - name: Context API Reference
+        module: context
+      - name: Session API Reference
+        module: session
+
+    emoji: 🗂️
+    category: core
+
+  # Context Sync module
+  context-sync:
+    python: agb.context_sync
+
+    tutorial:
+      url: ../../docs/guides/context-sync-policies.md
+      text: Context Sync Policies Guide
+      description: Learn about context synchronization policies
+
+    overview: |
+      The Context Sync module provides advanced context synchronization capabilities
+      for managing data consistency across distributed operations.
+
+    related_resources:
+      - name: Context API Reference
+        module: context
+      - name: Context Manager API Reference
+        module: context-manager
+
+    emoji: 🔄
+    category: core
+
+  # Logging module
+  logging:
+    python: agb.logger
+
+    tutorial:
+      url: ../../docs/guides/best-practices.md
+      text: Best Practices Guide
+      description: Configure logging and follow best practices
+
+    overview: |
+      The Logging module provides structured logging capabilities for the AGB SDK.
+      It helps with debugging, monitoring, and troubleshooting applications.
+
+    related_resources:
+      - name: AGB API Reference
+        module: agb
+
+    emoji: 📝
+    category: core
+
+  # Extension module
+  extension:
+    python: agb.extension
+
+    tutorial:
+      url: ../../docs/guides/browser-automation.md
+      text: Browser Automation Guide
+      description: Learn how to use browser extensions and automation
+
+    overview: |
+      The Extension module provides capabilities for working with browser extensions
+      and extending the functionality of the AGB platform.
+
+    related_resources:
+      - name: Browser API Reference
+        module: browser
+
+    emoji: 🧩
+    category: modules
+
+  # Command module
+  command:
+    python: agb.modules.command
+
+    tutorial:
+      url: ../../docs/guides/command-execution.md
+      text: Command Execution Guide
+      description: Learn how to execute commands in sessions
+
+    overview: |
+      The Command module provides methods for executing shell commands within a session
+      in the AGB cloud environment. It supports command execution with configurable timeouts.
+
+    best_practices:
+      - "Always specify appropriate timeout values based on expected command duration"
+      - "Handle command execution errors gracefully"
+      - "Use absolute paths when referencing files in commands"
+      - "Be aware that commands run with session user permissions"
+      - "Clean up temporary files created by commands"
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+      - name: File System API Reference
+        module: file-system
+
+    emoji: ⚡
+    category: modules
+
+  # File System module
+  file-system:
+    python: agb.modules.file_system
+
+    tutorial:
+      url: ../../docs/guides/file-operations.md
+      text: File Operations Guide
+      description: Complete guide to file system operations
+
+    overview: |
+      The File System module provides comprehensive file and directory operations
+      within the AGB cloud environment. It supports file upload, download, and manipulation.
+
+    best_practices:
+      - "Always check file permissions before operations"
+      - "Use appropriate file paths and handle path separators correctly"
+      - "Clean up temporary files after operations"
+      - "Handle file operation errors gracefully"
+      - "Use streaming for large file operations"
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+      - name: Command API Reference
+        module: command
+
+    emoji: 📁
+    category: modules
+
+  # Code module
+  code:
+    python: agb.modules.code
+
+    tutorial:
+      url: ../../docs/guides/code-execution.md
+      text: Code Execution Guide
+      description: Execute code in isolated environments
+
+    overview: |
+      The Code module provides secure code execution capabilities in isolated environments.
+      It supports multiple programming languages including Python, JavaScript, and more.
+
+    requirements:
+      - "Requires `code_latest` image for code execution features"
+
+    best_practices:
+      - "Validate code syntax before execution"
+      - "Set appropriate execution timeouts"
+      - "Handle execution errors and exceptions"
+      - "Use proper resource limits to prevent resource exhaustion"
+      - "Clean up temporary files after code execution"
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+
+    emoji: 💻
+    category: modules
+
+  # Browser module
+  browser:
+    python: agb.modules.browser.browser
+
+    tutorial:
+      url: ../../docs/guides/browser-automation.md
+      text: Browser Automation Guide
+      description: Complete guide to browser automation
+
+    overview: |
+      The Browser module provides comprehensive browser automation capabilities including navigation, 
+      element interaction, screenshot capture, and content extraction. It enables automated testing 
+      and web scraping workflows with support for proxy configuration, fingerprinting, and stealth mode.
+
+    requirements:
+      - "Requires `browser_latest` image for browser automation features"
+
+    best_practices:
+      - "Initialize browser with appropriate options before use"
+      - "Wait for page load completion before interacting with elements"
+      - "Use appropriate selectors (CSS, XPath) for reliable element identification"
+      - "Handle navigation timeouts and errors gracefully"
+      - "Take screenshots for debugging and verification"
+      - "Clean up browser resources after automation tasks"
+      - "Configure proxy settings properly for network requirements"
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+
+    emoji: 🌐
+    category: modules
+

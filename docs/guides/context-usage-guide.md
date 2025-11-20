@@ -27,7 +27,7 @@ Context synchronization refers to the process of syncing local files with cloud 
 ```python
 from agb import AGB
 
-# Initialize with API Key
+# Method 1: Initialize with API Key directly
 agb = AGB(api_key="your_api_key_here")
 ```
 
@@ -67,10 +67,11 @@ if list_result.success:
 ### 1. Upload Files
 
 ```python
-# Get upload URL
+agb = AGB()
+context = agb.context.get('test',True).context
 upload_result = agb.context.get_file_upload_url(
     context_id=context.id,
-    file_path="/data/my-file.txt"
+    file_path="/tmp/my-file.txt"
 )
 
 if upload_result.success:
@@ -90,10 +91,12 @@ else:
 ### 2. Download Files
 
 ```python
+agb = AGB()
+context = agb.context.get('test',True).context
 # Get download URL
 download_result = agb.context.get_file_download_url(
     context_id=context.id,
-    file_path="/data/my-file.txt"
+    file_path="/tmp/my-file.txt"
 )
 
 if download_result.success:
@@ -112,10 +115,12 @@ if download_result.success:
 ### 3. List Files
 
 ```python
+agb = AGB()
+context = agb.context.get('test',True).context
 # List files in Context
 files_result = agb.context.list_files(
     context_id=context.id,
-    parent_folder_path="/data",
+    parent_folder_path="/tmp",
     page_number=1,
     page_size=50
 )
@@ -123,12 +128,14 @@ files_result = agb.context.list_files(
 if files_result.success:
     print(f"Found {len(files_result.entries)} files:")
     for file_info in files_result.entries:
-        print(f"  - {file_info.file_path} (Size: {file_info.file_size} bytes)")
+        print(f"  - {file_info.file_path} (Size: {file_info.size} bytes)")
 ```
 
 ### 4. Delete Files
 
 ```python
+agb = AGB()
+context = agb.context.get('test',True).context
 # Delete file
 delete_result = agb.context.delete_file(
     context_id=context.id,
@@ -136,7 +143,7 @@ delete_result = agb.context.delete_file(
 )
 
 if delete_result.success:
-    print("File deleted successfully")
+    print("File deleted successfully",delete_result.data)
 else:
     print(f"Delete failed: {delete_result.error_message}")
 ```
@@ -149,8 +156,9 @@ else:
 from agb.session_params import CreateSessionParams
 from agb.context_sync import ContextSync, SyncPolicy
 
-# Create sync policy
+agb = AGB()
 sync_policy = SyncPolicy()
+context = agb.context.get('test',True).context
 
 # Create Context sync configuration
 context_sync = ContextSync.new(
@@ -170,14 +178,17 @@ session_result = agb.create(session_params)
 if session_result.success:
     session = session_result.session
     print(f"Session created successfully: {session.session_id}")
+    agb.delete(session)
+else:
+    print(f"Session creation failed: {session_result.error_message}")
 ```
 
 ### 2. File Operations in Session
 
 ```python
 # Create file in session
-file_path = "/home/wuying/my-data/test-file.txt"
-create_result = session.file_system.create_file(file_path, "Hello, Context!")
+file_path = "/tmp/test-file.txt"
+create_result = session.file_system.write_file(file_path, "Hello, Context!")
 
 if create_result.success:
     print("File created successfully")
@@ -188,6 +199,8 @@ if create_result.success:
         print("Sync successful")
     else:
         print(f"Sync failed: {sync_result.error_message}")
+else:
+    print(f"File creation failed: {create_result.error_message}")
 ```
 
 ### 3. Monitor Sync Status
@@ -270,15 +283,23 @@ if context_info.success:
 ### 3. Cross-Session Data Persistence
 
 ```python
-# First session: Create data
+context_sync = ContextSync.new(context_id=context.id, path="/home/wuying/my-data", policy=SyncPolicy())
+session_params = CreateSessionParams(image_id="agb-code-space-1", context_syncs=[context_sync])
+
 session1_result = agb.create(session_params)
 if session1_result.success:
     session1 = session1_result.session
 
     # Create file in first session
     file_path = "/home/wuying/my-data/persistent-data.txt"
-    with open(file_path, "w") as f:
-        f.write("This is persistent data")
+    create_result = session1.file_system.write_file(file_path, "This is persistent data")
+
+    if create_result.success:
+        print("File created successfully in session1")
+    else:
+        print(f"File creation failed: {create_result.error_message}")
+        agb.delete(session1, sync_context=True)
+        return
 
     # Sync to cloud
     await session1.context.sync()
@@ -290,13 +311,14 @@ if session1_result.success:
 session2_result = agb.create(session_params)
 if session2_result.success:
     session2 = session2_result.session
+    result = session2.file_system.read_file(file_path)
 
     # Check if file exists
-    if session2.file_system.exists(file_path):
+    if result.success:
         print("Data persistence successful!")
-        with open(file_path, "r") as f:
-            content = f.read()
-            print(f"Read data: {content}")
+        print(f"Read data: {result.content}")
+    else:
+        print(f"Failed to read file: {result.error_message}")
 
     agb.delete(session2)
 ```
@@ -314,7 +336,7 @@ context_name = f"model-training-{model_version}"
 ### 2. Path Management
 ```python
 # Use structured paths
-base_path = "/data"
+base_path = "/tmp"
 project_path = f"{base_path}/project-{project_id}"
 model_path = f"{project_path}/models"
 data_path = f"{project_path}/datasets"
@@ -335,11 +357,14 @@ def safe_context_operation(operation_func, *args, **kwargs):
         return None
 
 # Usage example
+agb = AGB()
 result = safe_context_operation(
     agb.context.get,
     "my-context",
     create=True
 )
+if result:  # Check if result is not None
+    print(f"Context created: {result.context.name}")
 ```
 
 ### 4. Resource Cleanup

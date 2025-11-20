@@ -50,7 +50,8 @@ from agb import AGB
 agb = AGB(api_key="your_api_key")
 
 # Create a session
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if result.success:
     session = result.session
 
@@ -93,12 +94,14 @@ async def sync(
 **Example:**
 ```python
 from agb import AGB
+from agb.session_params import CreateSessionParams
 
 # Initialize the SDK
 agb = AGB(api_key="your_api_key")
 
 # Create a session
-result = agb.create()
+params = CreateSessionParams(image_id="agb-code-space-1")
+result = agb.create(params)
 if result.success:
     session = result.session
 

@@ -3,7 +3,7 @@
 ## Overview
 
 Sessions are the core concept in AGB SDK. A session represents an isolated cloud environment where you can execute code, run commands, manage files, and interact with cloud storage. This guide covers everything you need to know about managing sessions effectively.
-**Important**: Image ID Management. When creating sessions, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account You can view and manage your available images in the [AGB Console Image Management](https://agb.cloud/console/image-management) page.
+**Important**: Image ID Management. When creating sessions, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account. You can view and manage your available images in the [AGB Console Image Management](https://agb.cloud/console/image-management) page.
 
 ## Quick Reference (1 minute)
 
@@ -20,7 +20,7 @@ session = result.session
 
 # Use session modules
 session.code.run_code("print('Hello')", "python")
-session.command.execute_command("ls")
+session.command.execute_command("ls /tmp")
 session.file_system.read_file("/path/to/file")
 
 # Clean up
@@ -129,7 +129,7 @@ invalid_labels = {
     "": "empty-key",          # Empty key
     "project": "",            # Empty value
     "team": None,             # None value
-    ["invalid"]: "list-key"   # Non-string key
+    "invalid-list-key": "list-key"   # Non-string key
 }
 
 # Set labels with validation
@@ -145,8 +145,8 @@ if not result.success:
 info_result = session.info()
 if info_result.success:
     data = info_result.data
-    print(f"Session ID: {data.get('session_id')}")
-    print(f"Resource URL: {data.get('resource_url')}")
+    print(f"Session ID: {data.get('session_id', 'N/A')}")
+    print(f"Resource URL: {data.get('resource_url', 'N/A')}")
     print(f"Desktop Info: {data.get('app_id', 'N/A')}")
 ```
 
@@ -160,7 +160,7 @@ The `list()` method allows you to query and retrieve session IDs from your AGB a
 from agb import AGB
 
 # Initialize the SDK
-agb = AGB(api_key=api_key)
+agb = AGB()
 
 # List all active sessions
 result = agb.list()
@@ -189,7 +189,7 @@ You can filter sessions by labels to find specific environments:
 from agb import AGB
 
 # Initialize the SDK
-agb = AGB(api_key=api_key)
+agb = AGB()
 
 # List sessions with specific labels
 result = agb.list(labels={"project": "demo", "environment": "testing"})
@@ -212,7 +212,7 @@ For accounts with many sessions, use pagination to retrieve results in manageabl
 from agb import AGB
 
 # Initialize the SDK
-agb = AGB(api_key=api_key)
+agb = AGB()
 
 # Get page 2 with 10 items per page
 result = agb.list(labels={"project": "demo"}, page=2, limit=10)
@@ -348,7 +348,7 @@ else:
 
 1. **Released Sessions Cannot Be Recovered**: If the session ID corresponds to a cloud environment that has been actually released (either through active deletion via `Session.delete()` or automatic timeout release), it cannot be recovered using the session ID. In such cases, you must:
    - Create a new session
-   - Use data persistence (see [Data Persistence Guide](data-persistence.md)) to restore your data
+   - Use data persistence (see [Data Persistence Guide](../examples/data_persistence/README.md#data-persistence)) to restore your data
 
 2. **Session Status Validation**: Use the `Session.info()` method to determine if a session has been released. Only active (non-released) sessions can return information through the info interface.
 
@@ -489,6 +489,9 @@ session.set_labels({
 ### 4. Monitor Resource Usage
 
 ```python
+from contextlib import contextmanager
+
+@contextmanager
 def monitor_session_usage(session, operation_name: str):
     """Monitor session resource usage during operations"""
     start_time = time.time()

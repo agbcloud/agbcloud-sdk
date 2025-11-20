@@ -9,10 +9,13 @@ from agb.api.models import (
     GetContextFileDownloadUrlRequest,
     GetContextFileUploadUrlRequest,
     DeleteContextFileRequest,
+    ClearContextRequest,
 )
 from agb.model.response import ApiResponse, OperationResult
+from agb.exceptions import ClearanceTimeoutError, AGBError
 from .logger import get_logger, log_api_call, log_api_response, log_operation_error
 import json
+import time
 
 # Initialize logger for this module
 logger = get_logger("context")
@@ -195,6 +198,32 @@ class ContextListParams:
         self.max_results = max_results
         self.next_token = next_token
 
+class ClearContextResult(OperationResult):
+    """
+    Result of context clear operations, including the real-time status.
+
+    Attributes:
+        request_id (str): Unique identifier for the API request.
+        success (bool): Whether the operation was successful.
+        error_message (str): Error message if the operation failed.
+        status (Optional[str]): Current status of the clearing task. This corresponds to the
+            context's state field. Possible values:
+            - "clearing": Context data is being cleared (in progress)
+            - "available": Clearing completed successfully
+        context_id (Optional[str]): The unique identifier of the context being cleared.
+    """
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        error_message: str = "",
+        status: Optional[str] = None,
+        context_id: Optional[str] = None,
+    ):
+        super().__init__(request_id, success, None, error_message)
+        self.status = status
+        self.context_id = context_id
 
 class ContextService:
     """
@@ -450,16 +479,6 @@ class ContextService:
         Returns:
             OperationResult: Result object containing success status and request ID.
         """
-        # Validate required parameter
-        if context is None:
-            error_msg = "context cannot be None"
-            logger.error(error_msg)
-            return OperationResult(
-                request_id="",
-                success=False,
-                error_message=error_msg
-            )
-
         # Validate context.id
         if not context.id or (isinstance(context.id, str) and not context.id.strip()):
             error_msg = "context.id cannot be empty or None"
@@ -531,16 +550,6 @@ class ContextService:
         Returns:
             OperationResult: Result object containing success status and request ID.
         """
-        # Validate required parameter
-        if context is None:
-            error_msg = "context cannot be None"
-            logger.error(error_msg)
-            return OperationResult(
-                request_id="",
-                success=False,
-                error_message=error_msg
-            )
-
         # Validate context.id
         if not context.id or (isinstance(context.id, str) and not context.id.strip()):
             error_msg = "context.id cannot be empty or None"
@@ -830,3 +839,206 @@ class ContextService:
                 entries=[],
                 error_message=f"Failed to parse response: {e}"
             )
+
+    def clear_async(self, context_id: str) -> ClearContextResult:
+        """
+        Asynchronously initiate a task to clear the context's persistent data.
+
+        This is a non-blocking method that returns immediately after initiating the clearing task
+        on the backend. The context's state will transition to "clearing" while the operation
+        is in progress.
+
+        Args:
+            context_id: Unique ID of the context to clear.
+
+        Returns:
+            A ClearContextResult object indicating the task has been successfully started,
+            with status field set to "clearing".
+
+        Raises:
+            AGBError: If the backend API rejects the clearing request (e.g., invalid ID).
+        """
+        try:
+            log_api_call("ClearContext", f"ContextId={context_id}")
+            request = ClearContextRequest(
+                authorization=f"Bearer {self.agb.api_key}",
+                id=context_id,
+            )
+            response = self.agb.client.clear_context(request)
+            try:
+                response_body = json.dumps(
+                    response.json_data, ensure_ascii=False, indent=2
+                )
+                log_api_response(response_body)
+            except Exception:
+                logger.debug(f"Response: {response}")
+
+            request_id = response.request_id or ""
+
+            # Check for API-level errors
+            if not response.is_successful():
+                return ClearContextResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=response.get_error_message() or "Unknown error",
+                )
+
+            # ClearContext API returns success info without Data field
+            # Initial status is "clearing" when the task starts
+            return ClearContextResult(
+                request_id=request_id,
+                success=True,
+                context_id=context_id,
+                status="clearing",
+                error_message="",
+            )
+        except Exception as e:
+            log_operation_error("ClearContext", str(e))
+            raise AGBError(f"Failed to start context clearing for {context_id}: {e}")
+
+    def get_clear_status(self, context_id: str) -> ClearContextResult:
+        """
+        Query the status of the clearing task.
+
+        This method calls GetContext API directly and parses the raw response to extract
+        the state field, which indicates the current clearing status.
+
+        Args:
+            context_id: ID of the context.
+
+        Returns:
+            ClearContextResult object containing the current task status.
+        """
+        try:
+            log_api_call("GetContext", f"ContextId={context_id} (for clear status)")
+            request = GetContextRequest(
+                authorization=f"Bearer {self.agb.api_key}",
+                id=context_id,
+                allow_create=False,
+            )
+            response = self.agb.client.get_context(request)
+            try:
+                response_body = json.dumps(
+                    response.json_data, ensure_ascii=False, indent=2
+                )
+                log_api_response(response_body)
+            except Exception:
+                logger.debug(f"Response: {response}")
+
+            request_id = response.request_id or ""
+
+            # Check for API-level errors
+            if not response.is_successful():
+                return ClearContextResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=response.get_error_message() or "Unknown error",
+                )
+
+            # Extract clearing status from the response using get_context_data()
+            # The server's state field indicates the clearing status:
+            # - "clearing": Clearing is in progress
+            # - "available": Clearing completed successfully
+            data = response.get_context_data()
+            context_id = data.id or context_id or ""
+            state = data.state or "clearing"  # Extract state from parsed response data
+            error_message = ""  # ErrorMessage is not in GetContextResponse data
+
+            return ClearContextResult(
+                request_id=request_id,
+                success=True,
+                context_id=context_id,
+                status=state,
+                error_message=error_message,
+            )
+        except Exception as e:
+            log_operation_error("GetContext (for clear status)", str(e))
+            return ClearContextResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to get clear status: {e}",
+            )
+
+    def clear(
+        self, context_id: str, timeout: int = 60, poll_interval: float = 2.0
+    ) -> ClearContextResult:
+        """
+        Synchronously clear the context's persistent data and wait for the final result.
+
+        This method wraps the `clear_async` and `_get_clear_status` polling logic,
+        providing the simplest and most direct way to handle clearing tasks.
+
+        The clearing process transitions through the following states:
+        - "clearing": Data clearing is in progress
+        - "available": Clearing completed successfully (final success state)
+
+        Args:
+        context_id: Unique ID of the context to clear.
+        timeout: Timeout in seconds to wait for task completion. Defaults to 60.
+        poll_interval: Interval in seconds between status polls. Defaults to 2.0.
+
+    Returns:
+        ClearContextResult object containing the final task result.
+        The status field will be "available" on success.
+
+    Raises:
+        ClearanceTimeoutError: If the task fails to complete within the timeout.
+        AGBError: If an API or network error occurs during execution.
+        """
+        # 1. Asynchronously start the clearing task
+        start_result = self.clear_async(context_id)
+        if not start_result.success:
+            return start_result
+
+        logger.info(f"Started context clearing task for: {context_id}")
+
+        # 2. Poll task status until completion or timeout
+        start_time = time.time()
+        max_attempts = int(timeout / poll_interval)
+        attempt = 0
+
+        while attempt < max_attempts:
+            # Wait before querying
+            time.sleep(poll_interval)
+            attempt += 1
+
+            # Query task status (using GetContext API with context ID)
+            status_result = self.get_clear_status(context_id)
+
+            if not status_result.success:
+                logger.error(
+                    f"Failed to get clear status: {status_result.error_message}"
+                )
+                return status_result
+
+            status = status_result.status
+            logger.debug(
+                f"Clear task status: {status} (attempt {attempt}/{max_attempts})"
+            )
+
+            # Check if completed
+            # When clearing is complete, the state changes from "clearing" to "available"
+            if status == "available":
+                elapsed = time.time() - start_time
+                logger.info(f"Context cleared successfully in {elapsed:.2f} seconds")
+                return ClearContextResult(
+                    request_id=start_result.request_id,
+                    success=True,
+                    context_id=status_result.context_id,
+                    status=status,
+                    error_message="",
+                )
+            elif status not in ("clearing", "pre-available"):
+                # If status is not "clearing" or "pre-available", and not "available",
+                # treat it as a potential error or unexpected state
+                elapsed = time.time() - start_time
+                logger.warning(
+                    f"Context in unexpected state after {elapsed:.2f} seconds: {status}"
+                )
+                # Continue polling as the state might transition to "available"
+
+        # Timeout
+        elapsed = time.time() - start_time
+        error_msg = f"Context clearing timed out after {elapsed:.2f} seconds"
+        logger.error(f"{error_msg}")
+        raise ClearanceTimeoutError(error_msg)

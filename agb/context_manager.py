@@ -57,9 +57,10 @@ class ContextInfoResult(ApiResponse):
 
 
 class ContextSyncResult(ApiResponse):
-    def __init__(self, request_id: str = "", success: bool = False):
+    def __init__(self, request_id: str = "", success: bool = False, error_message: str = ""):
         super().__init__(request_id)
         self.success = success
+        self.error_message = error_message
 
 
 class ContextManager:
@@ -222,7 +223,6 @@ class ContextManager:
             )
             poll_thread.start()
             return ContextSyncResult(request_id=request_id or "", success=success)
-
         # If no callback is provided, the method will block and wait for all sync tasks to finish.
         # This is a synchronous (blocking) pattern
         if success:
@@ -231,7 +231,7 @@ class ContextManager:
             )
             return ContextSyncResult(request_id=request_id or "", success=final_success)
 
-        return ContextSyncResult(request_id=request_id or "", success=success)
+        return ContextSyncResult(request_id=request_id or "", success=success, error_message=response.get_error_message())
 
     def _poll_for_completion(
         self,

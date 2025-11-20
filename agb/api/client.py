@@ -39,6 +39,8 @@ from agb.api.models import (
     ModifyContextResponse,
     DeleteContextRequest,
     DeleteContextResponse,
+    ClearContextRequest,
+    ClearContextResponse,
     SyncContextRequest,
     SyncContextResponse,
     GetContextInfoRequest,
@@ -402,6 +404,23 @@ class Client:
 
         try:
             response = http_client.delete_context(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def clear_context(self, request: ClearContextRequest) -> ClearContextResponse:
+        """
+        Clear context using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.clear_context(request)
             return response
         finally:
             # Always close the HTTP client to release resources

@@ -8,7 +8,7 @@ The `get` API allows you to retrieve a session object by providing its session I
 
 ## Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - Valid API key set in `AGB_API_KEY` environment variable
 - agb package installed
 

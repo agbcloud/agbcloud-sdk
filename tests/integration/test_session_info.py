@@ -47,7 +47,8 @@ def test_session_info():
         # Create a session to test info method
         print("\n0. Creating a test session...")
         try:
-            create_result = agb.create()
+            params = CreateSessionParams(image_id="agb-browser-use-1")
+            create_result = agb.create(params)
             if create_result.success:
                 session = create_result.session
                 session_id = session.session_id

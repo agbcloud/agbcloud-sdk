@@ -107,21 +107,23 @@ def test_session_get_link():
         # Test 2: Test session.get_link with port parameter
         print("\n2. Testing session.get_link with port parameter:")
         try:
-            print("   Calling session.get_link(port=9222)...")
+            # Use valid port range [30100, 30199] as per API requirements
+            test_port = 30100
+            print(f"   Calling session.get_link(port={test_port})...")
             start_time = time.time()
 
-            link_result_port = session.get_link(port=9222)
+            link_result_port = session.get_link(port=test_port)
 
             end_time = time.time()
             duration = end_time - start_time
 
-            print(f"   ✅ session.get_link(port=9222) call successful!")
+            print(f"   ✅ session.get_link(port={test_port}) call successful!")
             print(f"   Success: {link_result_port.success}")
             print(f"   Request ID: {link_result_port.request_id}")
             print(f"   Duration: {duration:.3f} seconds")
 
             if link_result_port.success:
-                print("   ✅ Link with port 9222 retrieved successfully")
+                print(f"   ✅ Link with port {test_port} retrieved successfully")
                 if link_result_port.data:
                     print(f"   Link URL: {link_result_port.data}")
                 else:
@@ -140,10 +142,12 @@ def test_session_get_link():
         # Test 2.5: Test session.get_link with protocol_type parameter
         print("\n2.5. Testing session.get_link with protocol_type parameter:")
         try:
+            # Use valid port range [30100, 30199] as per API requirements
+            test_port = 30101
             print("   Calling session.get_link(protocol_type='https')...")
             start_time = time.time()
 
-            link_result_https = session.get_link(protocol_type="https", port=443)
+            link_result_https = session.get_link(protocol_type="https", port=test_port)
 
             end_time = time.time()
             duration = end_time - start_time
@@ -303,22 +307,23 @@ def test_session_get_link():
             end_time = time.time()
             duration_with_protocol_https = end_time - start_time
 
-            # Test with port
+            # Test with port (use valid port range [30100, 30199])
+            test_port = 30102
             start_time = time.time()
-            result_with_port = session.get_link(port=9222)
+            result_with_port = session.get_link(port=test_port)
             end_time = time.time()
             duration_with_port = end_time - start_time
 
             # Test with both wss and port
             start_time = time.time()
-            result_with_wss_and_port = session.get_link(protocol_type="wss", port=9222)
+            result_with_wss_and_port = session.get_link(protocol_type="wss", port=test_port)
             end_time = time.time()
             duration_with_wss_and_port = end_time - start_time
 
             # Test with both https and port
             start_time = time.time()
             result_with_https_and_port = session.get_link(
-                protocol_type="https", port=9222
+                protocol_type="https", port=test_port
             )
             end_time = time.time()
             duration_with_https_and_port = end_time - start_time

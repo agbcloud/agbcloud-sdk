@@ -5,7 +5,7 @@ from .session import Session
 from .session_params import CreateSessionParams
 from .context import Context, ContextService, ContextResult, ContextListResult
 from .context_manager import ContextManager, ContextStatusData, ContextInfoResult, ContextSyncResult
-from .context_sync import ContextSync, SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, UploadStrategy, DownloadStrategy
+from .context_sync import ContextSync, SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, UploadStrategy, DownloadStrategy, UploadMode
 from .extension import ExtensionsService, ExtensionOption, Extension
 
 __all__ = [
@@ -14,5 +14,5 @@ __all__ = [
     "Context", "ContextService", "ContextResult", "ContextListResult",
     "ContextManager", "ContextStatusData", "ContextInfoResult", "ContextSyncResult",
     "ContextSync", "SyncPolicy", "UploadPolicy", "DownloadPolicy", "DeletePolicy", "ExtractPolicy",
-    "UploadStrategy", "DownloadStrategy","ExtensionsService","ExtensionOption","Extension",
+    "UploadStrategy", "DownloadStrategy", "UploadMode", "ExtensionsService","ExtensionOption","Extension",
 ]

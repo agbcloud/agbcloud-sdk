@@ -45,6 +45,8 @@ from .models.modify_context_request import ModifyContextRequest
 from .models.modify_context_response import ModifyContextResponse
 from .models.delete_context_request import DeleteContextRequest
 from .models.delete_context_response import DeleteContextResponse
+from .models.clear_context_request import ClearContextRequest
+from .models.clear_context_response import ClearContextResponse
 from .models.sync_context_request import SyncContextRequest
 from .models.sync_context_response import SyncContextResponse
 from .models.get_context_info_request import GetContextInfoRequest
@@ -905,6 +907,37 @@ class HTTPClient:
 
         # Return structured response object
         return DeleteContextResponse.from_http_response(response_dict)
+
+    def clear_context(self, request: ClearContextRequest) -> ClearContextResponse:
+        """
+        HTTP request interface for clearing context
+
+        Args:
+            request (ClearContextRequest): Request object for clearing context
+
+        Returns:
+            ClearContextResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/sdk/ClearContext",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return ClearContextResponse.from_http_response(response_dict)
 
     def sync_context(self, request: SyncContextRequest) -> SyncContextResponse:
         """

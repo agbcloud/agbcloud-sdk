@@ -287,6 +287,9 @@ agb.delete(session)
 import concurrent.futures
 import threading
 from typing import List, Callable
+import json
+
+from agb import AGB, CreateSessionParams
 
 class ConcurrentAGBProcessor:
     def __init__(self, max_workers: int = 3):
@@ -360,7 +363,6 @@ print(json.dumps(result))
 
     code_result = session.code.run_code(code, "python")
     if code_result.success:
-        import json
         return json.loads(code_result.result.strip().split('\n')[-1])
     else:
         raise Exception(code_result.error_message)
@@ -474,6 +476,8 @@ print("Cached execution:", result2.result)
 ```python
 import re
 from typing import List
+from agb import AGB, CreateSessionParams
+from agb.modules import CodeExecutionResult
 
 class SecureAGBClient:
     """AGB client with security validations"""
@@ -491,7 +495,7 @@ class SecureAGBClient:
     def __init__(self):
         self.agb = AGB()
 
-    def safe_execute_code(self, code: str, language: str = "python") -> Any:
+    def safe_execute_code(self, code: str, language: str = "python") -> CodeExecutionResult:
         """Execute code with security validations"""
         # Validate input
         if not self._validate_code_safety(code):
@@ -525,7 +529,7 @@ class SecureAGBClient:
 
         return True
 
-    def execute_trusted_code(self, code: str, language: str = "python") -> Any:
+    def execute_trusted_code(self, code: str, language: str = "python") -> CodeExecutionResult:
         """Execute code from trusted sources without validation"""
         params = CreateSessionParams(image_id="agb-code-space-1")
         result = self.agb.create(params)

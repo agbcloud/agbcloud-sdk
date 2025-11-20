@@ -101,9 +101,12 @@ if result.success:
 List sessions with specific labels:
 
 ```python
+agb = AGB()
+agb.create(CreateSessionParams(image_id="agb-code-space-1",labels={"project": "demo", "environment": "production"})).session
+agb.create(CreateSessionParams(image_id="agb-code-space-1",labels={"project": "demo","environment": "staging"})).session
+agb.create(CreateSessionParams(image_id="agb-code-space-1",labels={"project": "demo","environment": "development"})).session
 # Filter sessions by project
 result = agb.list(labels={"project": "demo"})
-
 if result.success:
     print(f"Found {len(result.session_ids)} sessions for project 'demo'")
     for session_id in result.session_ids:
@@ -125,7 +128,7 @@ All response objects inherit from `ApiResponse` and have access to the `request_
 ## Related Types
 
 - **[SessionResult](session-result.md)** - Result type for single session operations
-- **[GetSessionResult](get-session-result.md)** - Result type for session information retrieval
+- **[GetSessionResult](../core/agb.md#getsessionresult)** - Result type for session information retrieval
 - **[BaseSession](../core/session.md)** - The session object type
 
 ## Error Handling

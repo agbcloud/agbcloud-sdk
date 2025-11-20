@@ -100,7 +100,7 @@ for (int num : numbers) {
     sum += num;
 }
 
-System.out.println("\nSum: " + sum);
+System.out.println("\\nSum: " + sum);
 System.out.println("Average: " + (sum / numbers.length));
 
 // String manipulation
@@ -143,6 +143,7 @@ if code_result.success:
     print("Output:", code_result.result)
 else:
     print("Error:", code_result.error_message)
+```
 
 ### Timeout Configuration
 
@@ -177,87 +178,6 @@ if not code_result.success:
 ```
 
 ## Advanced Usage (15 minutes)
-
-### Multi-step Code Execution
-
-```python
-class CodeExecutor:
-    def __init__(self):
-        self.agb = AGB()
-        self.session = None
-        self.variables = {}
-
-    def start_session(self):
-        """Start a new code execution session"""
-        params = CreateSessionParams(image_id="agb-code-space-1")
-        result = self.agb.create(params)
-        if result.success:
-            self.session = result.session
-            return True
-        else:
-            print(f"Failed to create session: {result.error_message}")
-            return False
-
-    def execute_step(self, code: str, language: str = "python", description: str = ""):
-        """Execute a code step and track results"""
-        if not self.session:
-            raise Exception("No active session. Call start_session() first.")
-
-        print(f"Executing: {description or 'Code step'}")
-        result = self.session.code.run_code(code, language)
-
-        if result.success:
-            print(f"✅ Success: {result.result}")
-            return result.result
-        else:
-            print(f"❌ Error: {result.error_message}")
-            return None
-
-    def cleanup(self):
-        """Clean up the session"""
-        if self.session:
-            self.agb.delete(self.session)
-            self.session = None
-
-# Usage example
-executor = CodeExecutor()
-executor.start_session()
-
-# Step 1: Setup data
-executor.execute_step("""
-import pandas as pd
-import numpy as np
-
-# Create sample data
-data = {
-    'name': ['Alice', 'Bob', 'Charlie', 'Diana'],
-    'age': [25, 30, 35, 28],
-    'salary': [50000, 60000, 70000, 55000]
-}
-df = pd.DataFrame(data)
-print("Data created:")
-print(df)
-""", description="Create sample dataset")
-
-# Step 2: Analyze data
-executor.execute_step("""
-# Calculate statistics
-avg_age = df['age'].mean()
-avg_salary = df['salary'].mean()
-print(f"Average age: {avg_age}")
-print(f"Average salary: ${avg_salary:,.2f}")
-""", description="Calculate statistics")
-
-# Step 3: Filter data
-executor.execute_step("""
-# Filter high earners
-high_earners = df[df['salary'] > 55000]
-print("High earners:")
-print(high_earners)
-""", description="Filter high earners")
-
-executor.cleanup()
-```
 
 ### Code Execution with File Integration
 

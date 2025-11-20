@@ -39,6 +39,8 @@ result = session.command.execute_command("find / -name '*.txt'", timeout_ms=5000
 if result.success:
     print("Files found:")
     print(result.output)
+else:
+    print("Command failed:", result.error_message)
 ```
 
 ## CommandResult Class
@@ -116,9 +118,6 @@ result = session.command.execute_command("whoami")
 # Count lines in file
 result = session.command.execute_command("wc -l /tmp/data.txt")
 
-# Search in files
-result = session.command.execute_command("grep 'pattern' /tmp/*.txt")
-
 # Sort file contents
 result = session.command.execute_command("sort /tmp/data.txt")
 
@@ -130,8 +129,6 @@ result = session.command.execute_command("tail -10 /tmp/data.txt")
 ### Network Operations
 
 ```python
-# Check network connectivity
-result = session.command.execute_command("ping -c 3 google.com")
 
 # Download files
 result = session.command.execute_command("wget -O /tmp/file.txt https://example.com/file.txt")
@@ -313,19 +310,18 @@ def interactive_command_patterns():
 
     try:
         # Simulate interactive workflow
-        workflow_steps = [
+       workflow_steps = [
             # Step 1: Setup workspace
-            ("mkdir -p /tmp/workspace && cd /tmp/workspace", "Create workspace"),
-
+            ("mkdir -p /tmp/workspace", "Create workspace"),
             # Step 2: Create files
-            ("echo 'Hello World' > hello.txt", "Create hello.txt"),
-            ("echo 'Goodbye World' > goodbye.txt", "Create goodbye.txt"),
+            ("echo 'Hello World' > /tmp/workspace/hello.txt", "Create hello.txt"),
+            ("echo 'Goodbye World' > /tmp/workspace/goodbye.txt", "Create goodbye.txt"),
 
             # Step 3: Verify files
             ("ls -la /tmp/workspace/", "List workspace files"),
 
             # Step 4: Process files
-            ("cat /tmp/workspace/*.txt | wc -w", "Count words in all txt files"),
+            ("cat /tmp/workspace/hello.txt | wc -w", "Count words in all txt files"),
 
             # Step 5: Archive files
             ("cd /tmp/workspace && tar -czf archive.tar.gz *.txt", "Create archive"),
@@ -439,6 +435,8 @@ if result.success:
         print("Found files:", result.output)
     else:
         print("No files found")
+else:
+    print("Command failed:", result.error_message)
 ```
 
 ### 4. Use Safe Command Patterns

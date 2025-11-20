@@ -46,7 +46,7 @@ Write content to a file. Automatically handles large files by chunking internall
 - `mode` (str, optional): Write mode ("overwrite" or "append"). Default is "overwrite".
 
 **Returns:**
-- `BoolResult`: Result indicating success or failure of the write operation.
+- `BoolResult`: Result object containing success status and error message.
 
 **Example:**
 ```python
@@ -70,7 +70,7 @@ Read multiple files in a single operation.
 - `paths` (List[str]): List of file paths to read.
 
 **Returns:**
-- `MultipleFileContentResult`: Result containing contents of all files.
+- `MultipleFileContentResult`:Result object containing a dictionary mapping file paths to contents,and error message.
 
 **Example:**
 ```python
@@ -96,7 +96,7 @@ List the contents of a directory.
 - `path` (str): Path to the directory to list.
 
 **Returns:**
-- `DirectoryListResult`: Result containing directory entries and metadata.
+- `DirectoryListResult`: Result containing directory entries and error message.
 
 **Example:**
 ```python
@@ -105,7 +105,7 @@ if result.success:
     print("Directory contents:")
     for entry in result.entries:
         entry_type = "DIR" if entry.get("is_directory", False) else "FILE"
-        print(f"{entry_type}: {entry['name']} ({entry.get('size', 'N/A')} bytes)")
+        print(f"{entry_type}: {entry.get('name', 'N/A')} ({entry.get('size', 'N/A')} bytes)")
 else:
     print("Error:", result.error_message)
 ```
@@ -118,7 +118,7 @@ Create a directory (including parent directories if needed).
 - `path` (str): Path of the directory to create.
 
 **Returns:**
-- `BoolResult`: Result indicating success or failure of the creation.
+- `BoolResult`: Result object containing success status and error message.
 
 **Example:**
 ```python
@@ -126,11 +126,14 @@ Create a directory (including parent directories if needed).
 result = session.file_system.create_directory("/tmp/new_folder")
 if result.success:
     print("Directory created successfully")
-
+else:
+    print("creating directory failed:", result.error_message)
 # Create nested directories
 result = session.file_system.create_directory("/tmp/deep/nested/folder")
 if result.success:
     print("Nested directories created")
+else:
+    print("creating directory failed:", result.error_message)
 ```
 
 ### File Information
@@ -143,18 +146,18 @@ Get detailed information about a file or directory.
 - `path` (str): Path to the file or directory.
 
 **Returns:**
-- `FileInfoResult`: Result containing file metadata and information.
+- `FileInfoResult`: Result object containing file info and error message.
 
 **Example:**
 ```python
 result = session.file_system.get_file_info("/tmp/example.txt")
 if result.success:
     info = result.file_info
-    print(f"Name: {info.get('name')}")
-    print(f"Size: {info.get('size')} bytes")
-    print(f"Type: {info.get('type')}")
-    print(f"Modified: {info.get('modified_time')}")
-    print(f"Permissions: {info.get('permissions')}")
+    print(f"Name: {info.get('name','N/A')}")
+    print(f"Size: {info.get('size','N/A')} bytes")
+    print(f"Type: {info.get('type','N/A')}")
+    print(f"Modified: {info.get('modified_time','N/A')}")
+    print(f"Permissions: {info.get('permissions','N/A')}")
 else:
     print("Error:", result.error_message)
 ```
@@ -163,14 +166,14 @@ else:
 
 #### `move_file(source, destination)`
 
-Move or rename a file or directory.
+Move a file or directory from source path to destination path.
 
 **Parameters:**
 - `source` (str): Source path of the file/directory to move.
 - `destination` (str): Destination path.
 
 **Returns:**
-- `BoolResult`: Result indicating success or failure of the move operation.
+- `BoolResult`: Result object containing success status and error message.
 
 **Example:**
 ```python
@@ -183,17 +186,17 @@ if result.success:
 result = session.file_system.move_file("/tmp/file.txt", "/tmp/backup/file.txt")
 ```
 
-#### `search_files(directory, pattern, recursive=True)`
+#### `search_files(path, pattern, exclude_patterns)`
 
 Search for files matching a pattern.
 
 **Parameters:**
-- `directory` (str): Directory to search in.
-- `pattern` (str): Search pattern (supports wildcards).
-- `recursive` (bool, optional): Whether to search recursively. Default is True.
+- `path` (str): The base directory path to search in.
+- `pattern` (str): The glob pattern to search for.
+- `exclude_patterns` (List[str], optional):Optional list of patterns to exclude from the search.
 
 **Returns:**
-- `DirectoryListResult`: Result containing matching files.
+- `DirectoryListResult`: Result object containing matching file paths and error message.
 
 **Example:**
 ```python
@@ -205,29 +208,37 @@ if result.success:
         print(f"- {entry['name']}")
 
 # Non-recursive search
-result = session.file_system.search_files("/tmp", "*.py", recursive=False)
+earch_pattern = "*.log"
+exclude_patterns = ["runtime*.log"]
+result = session.file_system.search_files("/tmp", earch_pattern, exclude_patterns)
 ```
 
 ### Advanced Operations
 
-#### `edit_file(path, line_number, new_content)`
+#### `edit_file(path, edits, dry_run)`
 
-Edit a specific line in a file.
+Edit a file by replacing occurrences of oldText with newText.
 
 **Parameters:**
 - `path` (str): Path to the file to edit.
-- `line_number` (int): Line number to edit (1-based).
-- `new_content` (str): New content for the line.
+- `edits` (List[Dict[str, str]]):A list of dictionaries specifying oldText and newText.
+- `dry_run` (bool): If True, preview changes without applying them.(Default: False)
 
 **Returns:**
-- `BoolResult`: Result indicating success or failure of the edit operation.
+- `BoolResult`: Result object containing success status and error message.
 
 **Example:**
 ```python
 # Edit line 3 of a file
-result = session.file_system.edit_file("/tmp/config.txt", 3, "new_setting=value")
+edits = [
+    {"action": "append", "content": "\nThis line was appended."},
+    {"action": "prepend", "content": "This line was prepended.\n"}
+]
+result = session.file_system.edit_file("/tmp/config.txt", edits, True)
 if result.success:
     print("File edited successfully")
+else:
+    print("Edit failed:", result.error_message)
 ```
 
 #### `watch_directory(path, callback, interval=1.0, stop_event=None)`
@@ -238,7 +249,7 @@ Monitor a directory for file changes and execute a callback function when change
 - `path` (str): Directory path to monitor for changes.
 - `callback` (Callable): Function to call when changes are detected. Receives a list of `FileChangeEvent` objects.
 - `interval` (float, optional): Polling interval in seconds. Default is 1.0.
-- `stop_event` (threading.Event, optional): Event to stop monitoring. If not provided, a new Event is created.
+- `stop_event` (threading.Event, optional): Event to stop monitoring. If not provided, a new Event is created and returned via the thread object..
 
 **Returns:**
 - `threading.Thread`: Monitoring thread. Call `thread.start()` to begin monitoring and `thread.stop_event.set()` to stop.
@@ -262,7 +273,7 @@ def handle_changes(events):
 monitor_thread = session.file_system.watch_directory(
     path="/tmp/watch_folder",
     callback=handle_changes,
-    interval=0.5  # Check every 0.5 seconds
+    stop_event = threading.Event()
 )
 monitor_thread.start()
 
@@ -293,7 +304,7 @@ Represents a single file change event from directory monitoring.
 ```python
 class FileChangeEvent:
     event_type: str              # Type of change ("create", "modify", "delete")
-    path: str                    # Full path of the changed file/directory
+    path: str                    # Path of the file or directory that changed
     path_type: str               # Type of path ("file" or "directory")
 ```
 
@@ -344,13 +355,17 @@ def basic_file_operations():
             if read_result.success:
                 print("📄 File content:")
                 print(read_result.content)
+            else: 
+                print("❌ Failed to read file",read_result.error_message)
 
             # Get file information
             info_result = session.file_system.get_file_info("/tmp/test.txt")
             if info_result.success:
                 info = info_result.file_info
                 print(f"📊 File size: {info.get('size')} bytes")
-                print(f"📅 Modified: {info.get('modified_time')}")
+                print(f"📅 Modified: {info.get('modified_time','N/A')}")
+            else:
+                print("❌ Failed to get file info",info_result.error_message)
 
     finally:
         agb.delete(session)
@@ -405,7 +420,7 @@ def directory_management():
         if search_result.success:
             print("\n🔍 Python files found:")
             for entry in search_result.entries:
-                print(f"  - {entry['name']}")
+                print(f"  - {entry}")
 
     finally:
         agb.delete(session)

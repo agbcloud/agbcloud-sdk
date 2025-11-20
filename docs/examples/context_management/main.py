@@ -3,7 +3,7 @@
 import os
 
 from agb import AGB, ContextSync, SyncPolicy
-from agb.exceptions import AGBError
+from agb.exceptions import AGBError, ClearanceTimeoutError
 from agb.session_params import CreateSessionParams
 
 def main():
@@ -88,6 +88,33 @@ def main():
                 print(f"Context updated successfully to: {context.name}")
         except AGBError as e:
             print(f"Error updating context: {e}")
+
+        # Example 5: Clear context data
+        print("\nExample 5: Clearing context data...")
+        try:
+            clear_result = agb.context.clear(context_id=context.id)
+            print(f"Request ID: {clear_result.request_id}")
+            if clear_result.success:
+                print(f"✅ Context data cleared successfully")
+                print(f"   Context ID: {clear_result.context_id}")
+                print(f"   Final Status: {clear_result.status}")
+            else:
+                print(f"❌ Context data clearing failed: {clear_result.error_message}")
+        except ClearanceTimeoutError as e:
+            print(f"⏱️ Clear timed out: {e}")
+        except AGBError as e:
+            print(f"Error clearing context: {e}")
+        # Example 6: Get context by ID
+        print("\nExample 6: Getting context by ID...")
+        try:
+            result = agb.context.get(context_id=context.id)
+            print(f"Request ID: {result.request_id}")
+            if result.success and result.context:
+                print(f"✅ Got context by ID: {result.context.name} ({result.context.id})")
+            else:
+                print(f"Failed to get context by ID")
+        except AGBError as e:
+            print(f"Error getting context by ID: {e}")
 
         # Clean up
         print("\nCleaning up...")

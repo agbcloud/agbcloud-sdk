@@ -110,7 +110,10 @@ class TestAGB(unittest.TestCase):
 
         # Create AGB instance and session parameters
         agb = AGB(api_key="test-key")
-        params = CreateSessionParams(labels={"env": "test"})
+        params = CreateSessionParams(
+            image_id="agb-code-space-1",
+            labels={"env": "test"},
+        )
 
         # Test creating a session
         result = agb.create(params)
@@ -150,7 +153,8 @@ class TestAGB(unittest.TestCase):
         agb = AGB(api_key="test-key")
 
         # Test session creation with invalid response
-        result = agb.create()
+        params = CreateSessionParams(image_id="agb-code-space-1")
+        result = agb.create(params)
 
         # Verify the result indicates failure
         self.assertFalse(result.success)
@@ -185,7 +189,8 @@ class TestAGB(unittest.TestCase):
         agb = AGB(api_key="test-key")
 
         # Test session creation with failure response
-        result = agb.create()
+        params = CreateSessionParams(image_id="agb-code-space-1")
+        result = agb.create(params)
 
         # Verify the result indicates failure
         self.assertFalse(result.success)
@@ -212,7 +217,8 @@ class TestAGB(unittest.TestCase):
         agb = AGB(api_key="test-key")
 
         # Test session creation with exception
-        result = agb.create()
+        params = CreateSessionParams(image_id="agb-code-space-1")
+        result = agb.create(params)
 
         # Verify the result indicates failure
         self.assertFalse(result.success)

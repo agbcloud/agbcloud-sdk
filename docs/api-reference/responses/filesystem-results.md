@@ -24,8 +24,8 @@ Returned by `session.file_system.get_file_info()` operations.
 info_result = session.file_system.get_file_info("/tmp/test.txt")
 if info_result.success:
     file_info = info_result.file_info
-    print(f"File size: {file_info.get('size')}")
-    print(f"Permissions: {file_info.get('permissions')}")
+    print(f"File size: {file_info.get('size','N/A')}")
+    print(f"Permissions: {file_info.get('permissions','N/A')}")
 else:
     print(f"Error: {info_result.error_message}")
 ```
@@ -38,7 +38,7 @@ Returned by `session.file_system.list_directory()` operations.
 |----------|------|-------------|
 | `request_id` | `str` | Unique identifier for the API request |
 | `success` | `bool` | Whether the operation was successful |
-| `entries` | `list` | List of files and directories |
+| `entries` | `list` | List of files and directories  |
 | `error_message` | `str` | Error message if the operation failed |
 
 **Example:**
@@ -130,6 +130,10 @@ read_result = session.file_system.read_file("/tmp/test.txt")
 
 # Get file info
 info_result = session.file_system.get_file_info("/tmp/test.txt")
+
+# Create directory
+directory_result = session.file_system.create_directory('/tmp/trash')
+
 
 # Move file (can be used for deletion by moving to trash or temp location)
 move_result = session.file_system.move_file("/tmp/test.txt", "/tmp/trash/test.txt")

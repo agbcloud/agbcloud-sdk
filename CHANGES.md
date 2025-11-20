@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.5.0] - 2025-11-20
+
+### New Features
+- **Context Clear API**: Added `clear_async`, `get_clear_status`, and synchronous `clear` with
+  configurable timeout, poll interval, and explicit state tracking.
+- **SDK Telemetry**: Session creation now records SDK version and release status, with explicit
+  release flagging injected during the official build process.
+- **Context Sync Enhancements**: Introduced `UploadMode` and lifecycle enums for more flexible
+  synchronization policies.
+- **Session Parameters**: Enforced `image_id` as a required field in `CreateSessionParams`,
+  improving validation and error messaging.
+- **Testing Framework**: Expanded unit tests to cover Code, Command, FileSystem, ContextManager,
+  SessionParams, response models, and context clear flows.
+
+### Bug Fixes
+- Added `error_message` propagation to `ContextSyncResult`, ensuring API failures surface in sync
+  results.
+- Aligned sample code and tests to use valid `image_id` values and consistent data paths, fixing
+  persistence-related flakes.
+
+### Documentation
+- Updated context usage guide, sync policy docs, API references, and data persistence examples to
+  reflect the new features.
+
+### Testing & CI
+- Added a RecyclePolicy integration test and tightened context sync test coverage, including path
+  uniqueness checks.
+- CI now runs unit tests by default, installs pytest automatically, and includes pipeline
+  optimizations plus master-branch triggers.
+
+
 ## [0.4.0] - 2025-10-31
 
 ### New Features

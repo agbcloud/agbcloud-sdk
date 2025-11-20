@@ -10,11 +10,6 @@ The Extensions API allows you to:
 - Load extensions in browser sessions for automated testing
 - Integrate extensions with your browsing workflows
 
-## Examples
-
-1. [Basic Extension Management](basic_extension_management.py) - Demonstrates creating, listing, updating, and deleting extensions
-2. [Browser Session with Extensions](browser_session_with_extensions.py) - Shows how to create a browser session with extensions loaded
-
 ## Prerequisites
 
 To run these examples, you'll need:

@@ -56,3 +56,9 @@ class BrowserError(AGBError):
 
     def __init__(self, message="Browser operation error", *args, **kwargs):
         super().__init__(message, *args, **kwargs)
+
+class ClearanceTimeoutError(AGBError):
+    """Raised when the clearance task times out."""
+
+    def __init__(self, message="Clearance task timed out", *args, **kwargs):
+        super().__init__(message, *args, **kwargs)

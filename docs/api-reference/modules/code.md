@@ -1,6 +1,6 @@
 # Code Module API Reference
 
-The Code module provides code execution capabilities in the AGB cloud environment. It supports executing Python and JavaScript code with configurable timeouts and comprehensive error handling.
+The Code module provides code execution capabilities in the AGB cloud environment. It supports executing Python、JavaScript、Java and R language code with configurable timeouts and comprehensive error handling.
 
 ## Class Definition
 
@@ -143,6 +143,8 @@ else:
 
 Python code runs in a Python 3.x environment with access to standard libraries and many popular packages.
 
+**Important Note on Indentation**: When using multi-line Python code, ensure that your custom code starts from column 0 (no leading indentation). If your code has indentation, it may cause `IndentationError: unexpected indent`. All code must begin at the leftmost position without any leading spaces or tabs.
+
 #### Available Standard Libraries
 
 ```python
@@ -283,24 +285,28 @@ def execute_simple_code():
     try:
         # Execute Python code
         result = session.code.run_code("""
-        for i in range(5):
-            print(f"Count: {i}")
-        """, "python")
+for i in range(5):
+    print(f"Count: {i}")
+""", "python")
 
         if result.success:
             print("Python output:")
             print(result.result)
+        else:
+            print("Failed to execute code:", result.error_message)
 
         # Execute JavaScript code
         result = session.code.run_code("""
-        for (let i = 0; i < 5; i++) {
-            console.log(`Count: ${i}`);
-        }
-        """, "javascript")
+for (let i = 0; i < 5; i++) {
+    console.log(`Count: ${i}`);
+}
+""", "javascript")
 
         if result.success:
             print("JavaScript output:")
             print(result.result)
+        else:
+            print("Failed to execute code:", result.error_message)
 
     finally:
         agb.delete(session)
@@ -308,55 +314,6 @@ def execute_simple_code():
 execute_simple_code()
 ```
 
-### Multi-Step Code Execution
-
-```python
-def multi_step_execution():
-    agb = AGB()
-    params = CreateSessionParams(image_id="agb-code-space-1")
-    session = agb.create(params).session
-
-    try:
-        # Step 1: Setup data
-        setup_result = session.code.run_code("""
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        print(f"Data initialized: {data}")
-        """, "python")
-
-        if not setup_result.success:
-            print("Setup failed:", setup_result.error_message)
-            return
-
-        # Step 2: Process data
-        process_result = session.code.run_code("""
-        # Data persists between executions in the same session
-        filtered_data = [x for x in data if x % 2 == 0]
-        squared_data = [x**2 for x in filtered_data]
-        print(f"Filtered (even): {filtered_data}")
-        print(f"Squared: {squared_data}")
-        """, "python")
-
-        if process_result.success:
-            print("Processing output:")
-            print(process_result.result)
-
-        # Step 3: Calculate result
-        final_result = session.code.run_code("""
-        total = sum(squared_data)
-        average = total / len(squared_data)
-        print(f"Total: {total}")
-        print(f"Average: {average}")
-        """, "python")
-
-        if final_result.success:
-            print("Final output:")
-            print(final_result.result)
-
-    finally:
-        agb.delete(session)
-
-multi_step_execution()
-```
 
 ### Code Execution with File Integration
 
@@ -372,20 +329,20 @@ def code_with_files():
 
         # Process file with code
         result = session.code.run_code("""
-        # Read and process file
-        with open('/tmp/input.txt', 'r') as f:
-            lines = f.readlines()
+# Read and process file
+with open('/tmp/input.txt', 'r') as f:
+    lines = f.readlines()
 
-        # Process lines
-        processed_lines = [line.strip().upper() for line in lines]
+# Process lines
+processed_lines = [line.strip().upper() for line in lines]
 
-        # Write processed data
-        with open('/tmp/output.txt', 'w') as f:
-            for line in processed_lines:
-                f.write(f"Processed: {line}\\n")
+# Write processed data
+with open('/tmp/output.txt', 'w') as f:
+    for line in processed_lines:
+        f.write(f"Processed: {line}\\n")
 
-        print(f"Processed {len(processed_lines)} lines")
-        print("Processed lines:", processed_lines)
+print(f"Processed {len(processed_lines)} lines")
+print("Processed lines:", processed_lines)
         """, "python")
 
         if result.success:
@@ -397,7 +354,10 @@ def code_with_files():
             if output_result.success:
                 print("Output file content:")
                 print(output_result.content)
-
+            else:
+                    print("Failed to read output file:", output_result.error_message)
+        else:
+            print("Failed to execute code:", result.error_message)
     finally:
         agb.delete(session)
 
@@ -415,10 +375,10 @@ def robust_code_execution():
     try:
         # Code that will cause an error
         error_code = """
-        print("This will work")
-        result = 10 / 0  # This will cause an error
-        print("This won't be reached")
-        """
+print("This will work")
+result = 10 / 0  # This will cause an error
+print("This won't be reached")
+"""
 
         result = session.code.run_code(error_code, "python")
 
@@ -436,20 +396,21 @@ def robust_code_execution():
 
         # Try to recover with corrected code
         corrected_code = """
-        print("This will work")
-        try:
-            result = 10 / 0
-        except ZeroDivisionError as e:
-            print(f"Caught error: {e}")
-            result = 10 / 2
-        print(f"Result: {result}")
-        """
+print("This will work")
+try:
+    result = 10 / 0
+except ZeroDivisionError as e:
+    print(f"Caught error: {e}")
+    result = 10 / 2
+print(f"Result: {result}")
+"""
 
         corrected_result = session.code.run_code(corrected_code, "python")
         if corrected_result.success:
             print("Corrected code output:")
             print(corrected_result.result)
-
+        else:
+            print("Corrected code failed:", corrected_result.error_message)
     finally:
         agb.delete(session)
 
@@ -467,11 +428,11 @@ def timeout_example():
     try:
         # Long-running code with short timeout
         long_code = """
-        import time
-        print("Starting long operation...")
-        time.sleep(10)  # This will exceed the timeout
-        print("Operation completed!")
-        """
+import time
+print("Starting long operation...")
+time.sleep(10)  # This will exceed the timeout
+print("Operation completed!")
+"""
 
         # Set timeout to 5 seconds
         result = session.code.run_code(long_code, "python", timeout_s=5)
@@ -482,20 +443,23 @@ def timeout_example():
                 print("Partial output:", result.result)
             else:
                 print("Other error:", result.error_message)
-
+        else:
+            print("Long code output:")
+            print(result.result)
         # Shorter operation that will complete
         quick_code = """
-        import time
-        print("Starting quick operation...")
-        time.sleep(1)
-        print("Quick operation completed!")
-        """
+import time
+print("Starting quick operation...")
+time.sleep(1)
+print("Quick operation completed!")
+"""
 
         quick_result = session.code.run_code(quick_code, "python", timeout_s=5)
         if quick_result.success:
             print("Quick operation output:")
             print(quick_result.result)
-
+        else:
+            print("Quick operation failed:", quick_result.error_message)
     finally:
         agb.delete(session)
 
@@ -540,15 +504,18 @@ if not result.success:
     print(f"Execution failed: {result.error_message}")
     if result.result:
         print(f"Partial output: {result.result}")
+else:
+    print("Output:", result.result)
 ```
 
 ### 4. Use Session State Effectively
 
 ```python
 # ✅ Good: Leverage session state for multi-step operations
-session.code.run_code("data = [1, 2, 3, 4, 5]", "python")
-session.code.run_code("processed = [x*2 for x in data]", "python")
-result = session.code.run_code("print(processed)", "python")
+session.code.run_code("""
+data = [1, 2, 3, 4, 5] 
+processed = [x*2 for x in data]
+print(processed)""", "python")
 
 # ❌ Less efficient: Recreating data in each execution
 session.code.run_code("data = [1, 2, 3, 4, 5]; processed = [x*2 for x in data]; print(processed)", "python")
@@ -557,14 +524,16 @@ session.code.run_code("data = [1, 2, 3, 4, 5]; processed = [x*2 for x in data]; 
 ### 5. Validate Input Code
 
 ```python
-def safe_code_execution(session, code, language):
+def safe_code_execution(self, session, code, language):
     """Execute code with basic validation"""
 
     # Basic validation
     if not code.strip():
         return {"success": False, "error": "Empty code"}
-
-    if language not in ["python", "javascript"]:
+    normalized = language.lower().strip()
+    supported_languages = ['python', 'javascript', 'java', 'r']
+    
+    if normalized not in supported_languages:
         return {"success": False, "error": f"Unsupported language: {language}"}
 
     # Length check

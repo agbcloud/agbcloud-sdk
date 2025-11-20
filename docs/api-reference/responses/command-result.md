@@ -19,12 +19,12 @@ The `CommandResult` class represents the outcome of shell command execution oper
 
 ```python
 from agb import AGB
+from agb.session_params import CreateSessionParams
 
 # Initialize AGB client
 agb = AGB()
 
 # Create a session
-from agb.session_params import CreateSessionParams
 params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
 if result.success:
@@ -103,14 +103,11 @@ cmd_result = session.command.execute_command("whoami")
 ```python
 # Install packages (if available)
 cmd_result = session.command.execute_command("pip install requests")
-
 # Check Python version
-cmd_result = session.command.execute_command("python --version")
-
+cmd_result = session.command.execute_command("python3 --version")
 # Check Node.js version
 cmd_result = session.command.execute_command("node --version")
 ```
-
 ### Text Processing
 ```python
 # Search in files
@@ -177,16 +174,6 @@ if cmd_result.success:
 else:
     # Handle errors
     print(f"Command failed: {cmd_result.error_message}")
-```
-
-### Sanitize Input
-```python
-import shlex
-
-# Sanitize user input
-user_input = "ls -la /tmp"
-safe_command = shlex.quote(user_input)
-cmd_result = session.command.execute_command(safe_command)
 ```
 
 ### Handle Long Output

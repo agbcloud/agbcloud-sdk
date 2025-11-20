@@ -38,7 +38,8 @@ The example will:
 2. Create or get a test context
 3. Create a session with context synchronization
 4. Update the context name
-5. Clean up by deleting the session and context
+5. Clear context data (remove persistent data while keeping the context)
+6. Clean up by deleting the session and context
 
 ## Key Concepts
 

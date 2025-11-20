@@ -69,7 +69,10 @@ for ext in extensions:
 Updates an existing extension with a new ZIP file.
 
 ```python
-updated_extension = extensions_service.update("ext_abc123.zip", "/path/to/new_extension.zip")
+
+# extension.id is the ID value returned from the create method call
+updated_extension = extensions_service.update(extension.id, "/path/to/new_extension.zip")
+print(f"   Updated extension: {updated_extension.id}")
 ```
 
 **Parameters:**
@@ -88,7 +91,7 @@ updated_extension = extensions_service.update("ext_abc123.zip", "/path/to/new_ex
 Deletes an extension from the current context.
 
 ```python
-success = extensions_service.delete("ext_abc123.zip")
+success = extensions_service.delete(extension.id)
 if success:
     print("Extension deleted successfully")
 ```
@@ -110,6 +113,7 @@ ext2 = extensions_service.create("/path/to/ext2.zip")
 
 # Create extension option for browser integration
 ext_option = extensions_service.create_extension_option([ext1.id, ext2.id])
+print(f"   Extension option created with {len(ext_option.extension_ids)} extensions")
 ```
 
 **Parameters:**
@@ -163,4 +167,8 @@ session_params = CreateSessionParams(
 
 session_result = agb.create(session_params)
 session = session_result.session
+if session is not None:
+    print(f"   Session created: {session.session_id}")
+else:
+    raise Exception("Session creation failed: session is None")
 ```

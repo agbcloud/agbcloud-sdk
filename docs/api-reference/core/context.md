@@ -48,6 +48,40 @@ if result.success:
         print(f"Context ID: {context.id}, Name: {context.name}, Created: {context.created_at}")
 else:
     print("Failed to list contexts")
+
+# List contexts with pagination using next_token
+from agb.context import ContextListParams
+
+# Get first page with limited results
+params = ContextListParams(max_results=5)
+result = agb.context.list(params)
+if result.success:
+    print(f"First page: Found {len(result.contexts)} contexts")
+    for context in result.contexts:
+        print(f"Context ID: {context.id}, Name: {context.name}")
+
+    # Check if there are more pages and get next page using next_token
+    if result.next_token:
+        print(f"Total contexts: {result.total_count}")
+        print("Getting next page...")
+
+        # Use next_token to get the next page
+        next_params = ContextListParams(
+            max_results=5,
+            next_token=result.next_token
+        )
+        next_result = agb.context.list(next_params)
+
+        if next_result.success:
+            print(f"Next page: Found {len(next_result.contexts)} contexts")
+            for context in next_result.contexts:
+                print(f"Context ID: {context.id}, Name: {context.name}")
+        else:
+            print(f"Failed to get next page: {next_result.error_message}")
+    else:
+        print("No more pages available")
+else:
+    print("Failed to list contexts")
 ```
 
 ### get
@@ -131,7 +165,7 @@ else:
 
 ### delete
 
-Deletes a context.
+Deletes the specified context.
 
 ```python
 delete(context: Context) -> OperationResult
@@ -165,7 +199,7 @@ else:
 
 ### update
 
-Updates a context's properties.
+Updates the specified context.
 
 ```python
 update(context: Context) -> OperationResult
@@ -200,6 +234,104 @@ if result.success and result.context:
 else:
     print(f"Failed to get context: {result.error_message}")
 ```
+
+### clear
+Clears the context's persistent data.
+```python
+clear(context_id: str, timeout: int = 60, poll_interval: float = 2.0) -> ClearContextResult
+```
+**Parameters:**
+- `context_id` (str): The unique identifier of the context to clear.
+- `timeout` (int, optional): Timeout in seconds to wait for task completion. Default is 60 seconds.
+- `poll_interval` (float, optional): Interval in seconds between status polls. Default is 2.0 seconds.
+**Returns:**
+- `ClearContextResult`: A result object containing the final task result. The status field will be "available" on success.
+**State Transitions:**
+- "clearing": Data clearing is in progress
+- "available": Clearing completed successfully (final success state)
+**Example:**
+```python
+from agb import AGB
+# Initialize the SDK
+agb = AGB(api_key="your_api_key")
+# Get a context first
+result = agb.context.get("my-context")
+if result.success and result.context:
+    context = result.context
+    # Clear context data synchronously (wait for completion)
+    clear_result = agb.context.clear(context.id)
+    if clear_result.success:
+        print(f"Context data cleared successfully")
+        print(f"Final Status: {clear_result.status}")
+        # Expected output: Final Status: available
+        print(f"Request ID: {clear_result.request_id}")
+        # Expected: A valid UUID-format request ID
+    else:
+        print(f"Failed to clear context: {clear_result.error_message}")
+else:
+    print(f"Failed to get context: {result.error_message}")
+```
+### clear_async
+Asynchronously initiates a task to clear the context's persistent data.
+```python
+clear_async(context_id: str) -> ClearContextResult
+```
+**Parameters:**
+- `context_id` (str): The unique identifier of the context to clear.
+**Returns:**
+- `ClearContextResult`: A result object indicating the task has been successfully started, with status field set to "clearing".
+**Example:**
+```python
+from agb import AGB
+# Initialize the SDK
+agb = AGB(api_key="your_api_key")
+# Get a context first
+result = agb.context.get("my-context")
+if result.success and result.context:
+    context = result.context
+    # Start clearing context data asynchronously (non-blocking)
+    clear_result = agb.context.clear_async(context.id)
+    if clear_result.success:
+        print(f"Clear task started: Success={clear_result.success}, Status={clear_result.status}")
+        # Expected output: Clear task started: Success=True, Status=clearing
+        print(f"Request ID: {clear_result.request_id}")
+        # Expected: A valid UUID-format request ID
+    else:
+        print(f"Failed to start clear: {clear_result.error_message}")
+else:
+    print(f"Failed to get context: {result.error_message}")
+```
+### get_clear_status
+Queries the status of the clearing task.
+```python
+get_clear_status(context_id: str) -> ClearContextResult
+```
+**Parameters:**
+- `context_id` (str): The unique identifier of the context to check.
+**Returns:**
+- `ClearContextResult`: A result object containing the current task status.
+**State Transitions:**
+- "clearing": Data clearing is in progress
+- "available": Clearing completed successfully (final success state)
+**Example:**
+```python
+from agb import AGB
+# Initialize the SDK
+agb = AGB(api_key="your_api_key")
+# Get a context first
+result = agb.context.get("my-context")
+if result.success and result.context:
+    context = result.context
+    # Check clearing status
+    status_result = agb.context.get_clear_status(context.id)
+    if status_result.success:
+        print(f"Current status: {status_result.status}")
+        print(f"Request ID: {status_result.request_id}")
+        # Expected: Current status: clearing/available
+    else:
+        print(f"Failed to get status: {status_result.error_message}")
+else:
+    print(f"Failed to get context: {result.error_message}")
 
 ## File Operations
 

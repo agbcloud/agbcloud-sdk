@@ -35,9 +35,9 @@ agb = AGB(api_key="your_api_key_here")
 # Set AGB_API_KEY environment variable first
 agb = AGB()
 
-# With custom configuration
+# With custom configuration 
 from agb.config import Config
-config = Config(endpoint="https://custom.endpoint.com")
+config = Config(endpoint="https://custom.endpoint.com",timeout_ms=50000)
 agb = AGB(api_key="your_api_key", cfg=config)
 ```
 
@@ -55,22 +55,23 @@ Create a new session in the AGB cloud environment.
 
 - **`SessionResult`**: Result containing the created session and request ID.
 
+#### Important Notes
+
+ - **Warning**: `image_id` is required in the params. Please refer to the console for available image IDs: https://agb.cloud/console/image-management
+
 #### Example
 
 ```python
 from agb.session_params import CreateSessionParams
 
-# Create with default parameters
-params = CreateSessionParams(image_id="agb-code-space-1")
-result = agb.create(params)
-if result.success:
-    session = result.session
-    print(f"Created session: {session.session_id}")
-
 # Create with custom parameters
 params = CreateSessionParams(
-    image_id="agb-code-space-1"
+    image_id="agb-code-space-1" 
 )
+result = agb.create(params)
+
+# Recommended: Create without image_id to avoid errors
+params = CreateSessionParams()
 result = agb.create(params)
 ```
 
@@ -118,6 +119,8 @@ if result.success:
 ```
 
 ##### Pagination
+
+The `list` method supports retrieving specific pages of session data through the `page` parameter. This allows you to navigate through large result sets efficiently.
 
 ```python
 # Get page 2 with 5 items per page
@@ -172,7 +175,7 @@ if result.success:
 
 Get a session by its ID.
 
-This method retrieves a session by calling the GetSession API and returns a SessionResult containing the Session object and request ID.
+This method retrieves a session by session ID and returns a SessionResult containing the Session object and request ID.
 
 #### Parameters
 
@@ -237,13 +240,27 @@ class SessionResult:
 
 ### DeleteResult
 
-Result object returned by session deletion methods.
+Result object returned by session `delete` methods.
 
 ```python
 class DeleteResult:
     request_id: str     # Unique request identifier
     success: bool      # Whether deletion succeeded
     error_message: str # Error description (if failed)
+```
+### SessionListResult
+
+Result object returned by the `list` method.
+
+```python
+class SessionListResult:
+    request_id: str           # Unique request identifier
+    success: bool            # Whether the request succeeded
+    session_ids: List[str]   # List of session IDs
+    next_token: str          # Token for next page (empty if no more pages)
+    max_results: int         # Maximum results per page
+    total_count: int         # Total number of sessions matching the filter
+    error_message: str       # Error description (if failed)
 ```
 
 ### GetSessionResult
@@ -277,20 +294,6 @@ class GetSessionData:
     resource_url: str          # Resource URL
 ```
 
-### SessionListResult
-
-Result object returned by the list method.
-
-```python
-class SessionListResult:
-    request_id: str           # Unique request identifier
-    success: bool            # Whether the request succeeded
-    session_ids: List[str]   # List of session IDs
-    next_token: str          # Token for next page (empty if no more pages)
-    max_results: int         # Maximum results per page
-    total_count: int         # Total number of sessions matching the filter
-    error_message: str       # Error description (if failed)
-```
 
 ## Configuration
 
@@ -306,6 +309,15 @@ default_config = {
     "endpoint": "sdk-api.agb.cloud",
     "timeout_ms": 30000  # 30 seconds (maximum: 60000ms = 60 seconds)
 }
+```
+
+#### Environment Variable Configuration
+
+You can configure the apikey using the `AGB_API_KEY` environment variable if needed:
+
+```bash
+# Set custom apikey via environment variable
+export AGB_API_KEY="your_api_key_here"
 ```
 
 ## Best Practices
@@ -347,7 +359,8 @@ export AGB_API_KEY="your_api_key_here"
 
 ```python
 # Use environment variable
-agb = AGB()  # Automatically uses AGB_API_KEY
+# When api_key parameter is not provided, AGB will use os.getenv("AGB_API_KEY") to load the value
+agb = AGB(api_key="your_api_key")  # The api_key parameter gets its value from os.getenv("AGB_API_KEY")
 ```
 
 ### 4. Set Appropriate Timeouts

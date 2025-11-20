@@ -58,7 +58,7 @@ All sessions have access to the following modules:
 Get detailed session information including resource details.
 
 **Returns:**
-- `OperationResult`: Result containing session information and operation status.
+- `OperationResult`: Result containing the session information as data and request ID.
 
 **Example:**
 ```python

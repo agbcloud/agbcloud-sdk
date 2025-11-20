@@ -12,11 +12,11 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         api_key = os.environ.get("AGB_API_KEY")
         if not api_key:
             raise unittest.SkipTest("Skipping integration test: No API key available")
-        cls.agent_bay = AGB(api_key)
+        cls.agb = AGB(api_key)
 
         # Create a test context
         cls.context_name = f"test-file-url-py-{int(time.time())}"
-        context_result = cls.agent_bay.context.create(cls.context_name)
+        context_result = cls.agb.context.create(cls.context_name)
         if not context_result.success or not context_result.context:
             raise unittest.SkipTest("Failed to create context for file URL test")
         cls.context = context_result.context
@@ -27,7 +27,7 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         # Clean up created context
         if hasattr(cls, "context"):
             try:
-                cls.agent_bay.context.delete(cls.context)
+                cls.agb.context.delete(cls.context)
                 print(f"Deleted context: {cls.context.name} (ID: {cls.context.id})")
             except Exception as e:
                 print(f"Warning: Failed to delete context {cls.context.name}: {e}")
@@ -38,7 +38,7 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         Validate that a URL is returned.
         """
         test_path = "/tmp/integration_upload_test.txt"
-        result = self.agent_bay.context.get_file_upload_url(self.context.id, test_path)
+        result = self.agb.context.get_file_upload_url(self.context.id, test_path)
 
         self.assertTrue(result.request_id is not None and isinstance(result.request_id, str))
 
@@ -82,7 +82,7 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
             self.skipTest(f"Unexpected error during upload: {e}")
 
         # Fetch a presigned download URL for the same file and verify content
-        dl_result = self.agent_bay.context.get_file_download_url(self.context.id, test_path)
+        dl_result = self.agb.context.get_file_download_url(self.context.id, test_path)
         self.assertTrue(dl_result.success, "get_file_download_url should be successful")
         self.assertTrue(isinstance(dl_result.url, str) and len(dl_result.url) > 0, "Download URL should be non-empty")
         print(f"Download URL: {dl_result.url[:80]}... (RequestID: {dl_result.request_id})")
@@ -111,7 +111,7 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         file_name = os.path.basename(test_path)
 
         def list_contains():
-            res = self.agent_bay.context.list_files(self.context.id, "/tmp", page_number=1, page_size=50)
+            res = self.agb.context.list_files(self.context.id, "/tmp", page_number=1, page_size=50)
             if not res or not res.success:
                 return False, res, "/tmp"
             found_local = any(
@@ -146,7 +146,7 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
             self.assertTrue(found, "Uploaded file should appear in list_files")
 
         # Delete the file and verify it disappears from listing (with small retry)
-        op = self.agent_bay.context.delete_file(self.context.id, test_path)
+        op = self.agb.context.delete_file(self.context.id, test_path)
         self.assertTrue(op.success, "delete_file should be successful")
         print(f"Deleted file: {test_path}")
 
@@ -172,7 +172,7 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
 
         # Additionally, attempt to download after delete and log the status.
         # Some backends may keep presigned URLs valid until expiry even if the file is deleted.
-        post_dl = self.agent_bay.context.get_file_download_url(self.context.id, test_path)
+        post_dl = self.agb.context.get_file_download_url(self.context.id, test_path)
         if post_dl.success and isinstance(post_dl.url, str) and len(post_dl.url) > 0:
             try:
                 # Use more robust httpx configuration

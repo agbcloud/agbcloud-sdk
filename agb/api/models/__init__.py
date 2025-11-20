@@ -34,6 +34,8 @@ from .modify_context_request import ModifyContextRequest
 from .modify_context_response import ModifyContextResponse
 from .delete_context_request import DeleteContextRequest
 from .delete_context_response import DeleteContextResponse
+from .clear_context_request import ClearContextRequest
+from .clear_context_response import ClearContextResponse
 from .sync_context_request import SyncContextRequest
 from .sync_context_response import SyncContextResponse
 from .get_context_info_request import GetContextInfoRequest
@@ -80,6 +82,8 @@ __all__ = [
     "ModifyContextResponse",
     "DeleteContextRequest",
     "DeleteContextResponse",
+    "ClearContextRequest",
+    "ClearContextResponse",
     "SyncContextRequest",
     "SyncContextResponse",
     "GetContextInfoRequest",

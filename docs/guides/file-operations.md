@@ -20,7 +20,7 @@ content = session.file_system.read_file("/tmp/hello.txt").content
 print(content)  # "Hello World!"
 
 # Directory operations
-session.file_system.create_directory("/tmp/mydir")
+session.file_system.create_directory("/tmp/trash/")
 files = session.file_system.list_directory("/tmp").entries
 session.file_system.move_file("/tmp/hello.txt", "/tmp/trash/hello.txt")
 
@@ -78,7 +78,7 @@ list_result = session.file_system.list_directory("/tmp/project")
 if list_result.success:
     print("Directory contents:")
     for entry in list_result.entries:
-        print(f"- {entry['name']} ({entry['type']})")
+        print(f"- {entry['name']} ({entry['isDirectory']})")
 ```
 
 ### File Information
@@ -495,17 +495,6 @@ if not read_result.success:
         print("File doesn't exist - create it first")
     else:
         print(f"Other error: {read_result.error_message}")
-```
-
-**Permission Errors**
-```python
-# Some paths may not be writable
-write_result = session.file_system.write_file("/etc/restricted.txt", "content")
-if not write_result.success:
-    if "permission" in write_result.error_message.lower():
-        print("Permission denied - try /tmp/ directory")
-        # Retry with /tmp/
-        write_result = session.file_system.write_file("/tmp/file.txt", "content")
 ```
 
 **Directory Creation Issues**

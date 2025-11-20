@@ -34,8 +34,6 @@
 
 ### API Reference (`api-reference/`)
 - **[README.md](api-reference/README.md)** - API Overview
-- **[Core Classes](api-reference/core/)** - AGB client, Session, ExtensionsService
-- **[Modules](api-reference/modules/)** - Code, Command, FileSystem, Browser
 
 ### Example Code (`examples/`)
 - **[README.md](examples/README.md)** - Examples Overview

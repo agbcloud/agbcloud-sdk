@@ -141,8 +141,6 @@ Master file and directory operations:
 
 ### Browser Extensions (`extensions/`)
 Manage and use browser extensions:
-- **[Basic Extension Management](extensions/basic_extension_management.py)** - Create, list, update, delete extensions
-- **[Browser Session with Extensions](extensions/browser_session_with_extensions.py)** - Load extensions in browser sessions
 - Extension lifecycle management
 - Integration with browser automation workflows
 

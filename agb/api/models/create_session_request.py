@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, List, Optional
 
 class CreateMcpSessionRequestPersistenceDataList():
@@ -49,6 +50,7 @@ class CreateSessionRequest:
         labels: Optional[str] = None,
         persistence_data_list: Optional[List[CreateMcpSessionRequestPersistenceDataList]] = None,
         session_id: str = "",
+        sdk_stats: Optional[Dict[str, Any]] = None,
     ):
         self.authorization = authorization
         self.context_id = context_id
@@ -56,6 +58,7 @@ class CreateSessionRequest:
         self.labels = labels
         self.persistence_data_list = persistence_data_list
         self.session_id = session_id
+        self.sdk_stats = sdk_stats
 
 
     def get_body(self) -> Dict[str, Any]:
@@ -83,4 +86,11 @@ class CreateSessionRequest:
         params = {}
         if self.image_id:
             params["imageId"] = self.image_id
+
+        if self.sdk_stats:
+            # Serialize sdk_stats dict to JSON string for query parameter
+            # Use separators=(',', ':') to remove spaces, matching reference implementation
+            # This avoids space encoding issues with urlencode (spaces -> +)
+            json_str = json.dumps(self.sdk_stats, ensure_ascii=False, separators=(',', ':'))
+            params["sdkStats"] = json_str
         return params

@@ -15,9 +15,7 @@ from agb.api.models import (
     CreateSessionResponse,
     CreateMcpSessionRequestPersistenceDataList,
     GetSessionRequest,
-    GetSessionResponse,
     ListSessionRequest,
-    ListSessionResponse,
 )
 from agb.config import Config, load_config
 from agb.model.response import DeleteResult, SessionResult, GetSessionResult, GetSessionData, SessionListResult
@@ -25,6 +23,7 @@ from agb.session import BaseSession, Session
 from agb.session_params import CreateSessionParams
 from agb.context import ContextService
 from agb.logger import get_logger, log_operation_start, log_operation_success, log_warning
+from agb.version_utils import get_sdk_version, is_release_version
 
 logger = get_logger(__name__)
 
@@ -82,17 +81,42 @@ class AGB:
         """
         try:
             if params is None:
-                params = CreateSessionParams()
+                error_msg = "params is required and cannot be None"
+                logger.error(error_msg)
+                return SessionResult(
+                    request_id="",
+                    success=False,
+                    error_message=error_msg,
+                )
+
+            # Validate image_id is required
+            if not params.image_id or (isinstance(params.image_id, str) and not params.image_id.strip()):
+                error_msg = "image_id is required and cannot be empty or None"
+                logger.error(error_msg)
+                return SessionResult(
+                    request_id="",
+                    success=False,
+                    error_message=error_msg,
+                )
 
             request = CreateSessionRequest(authorization=f"Bearer {self.api_key}")
+            request.image_id = params.image_id
 
-            if params.image_id:
-                request.image_id = params.image_id
-
-             # Add labels if provided
+            # Add labels if provided
             if params.labels:
                 # Convert labels to JSON string
                 request.labels = json.dumps(params.labels)
+
+            # Add SDK stats for telemetry
+            sdk_version = get_sdk_version()
+            is_release = is_release_version()
+            sdk_stats = {
+                "source": "sdk",
+                "sdk_language": "python",
+                "sdk_version": sdk_version,
+                "is_release": is_release
+            }
+            request.sdk_stats = sdk_stats
 
             # Flag to indicate if we need to wait for context synchronization
             needs_context_sync = False

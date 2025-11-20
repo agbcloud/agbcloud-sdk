@@ -23,6 +23,27 @@ A comprehensive example showing how to:
 python context_sync_demo.py
 ```
 
+### File Archive Mode Demo (`file_archive_mode.py`)
+
+A comprehensive example showing how to:
+- Use Archive upload mode for automatic file compression
+- Create files that are automatically compressed into ZIP format
+- Verify archive behavior and file compression
+- Compare Archive mode vs File mode upload behavior
+
+**Key Features:**
+- Archive upload mode configuration using `UploadMode.ARCHIVE`
+- Automatic file compression into ZIP format during upload
+- File mode (`UploadMode.FILE`) preserves original files during upload
+- Archive mode compresses files for efficient storage and transfer
+- File type verification to confirm ZIP compression
+- Complete upload lifecycle demonstration
+
+**Usage:**
+```bash
+python file_archive_mode.py
+```
+
 ## Prerequisites
 
 - Python 3.10+
@@ -49,6 +70,15 @@ python context_sync_demo.py
 - Files and data created in one session can be accessed in another
 - Context sync ensures data is properly uploaded and downloaded
 - Both manual and automatic sync modes are supported
+
+### Upload Modes
+- **Archive Mode (`UploadMode.ARCHIVE`)**: Files are automatically compressed into ZIP format during upload
+  - Provides efficient storage and transfer for multiple files
+  - Reduces bandwidth usage and storage space
+  - Ideal for batch operations and large file collections
+- **File Mode (`UploadMode.FILE`)**: Files are uploaded in their original format without compression
+  - Preserves original file structure and format
+  - Better for scenarios requiring immediate file access
 
 ### Error Handling
 - All operations include proper error handling

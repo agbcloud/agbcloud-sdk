@@ -12,19 +12,18 @@ The `CodeExecutionResult` class represents the outcome of code execution operati
 |----------|------|-------------|
 | `request_id` | `str` | Unique identifier for the API request |
 | `success` | `bool` | Whether the operation was successful |
-| `result` | `str` | The execution output/result |
+| `result` | `str` | The execution result |
 | `error_message` | `str` | Error message if the operation failed |
 
 ## Usage
 
 ```python
 from agb import AGB
-
+from agb.session_params import CreateSessionParams
 # Initialize AGB client
 agb = AGB()
 
 # Create a session
-from agb.session_params import CreateSessionParams
 params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
 if result.success:
@@ -119,9 +118,16 @@ print("Done!")
 
 ### Handle Different Languages
 ```python
-languages = ["python", "javascript", "java", "r"]
-for lang in languages:
-    code_result = session.code.run_code(f"print('Hello from {lang}')", lang)
+# Define correct syntax for each language
+code_examples = {
+    "python": "print('Hello from Python')",
+    "javascript": "console.log('Hello from JavaScript');",
+    "java": "System.out.println(\"Hello from Java\");",
+    "r": "cat('Hello from R\\n')"
+}
+
+for lang, code in code_examples.items():
+    code_result = session.code.run_code(code, lang)
     if code_result.success:
         print(f"{lang}: {code_result.result}")
     else:

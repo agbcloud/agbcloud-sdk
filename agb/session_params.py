@@ -180,7 +180,9 @@ class CreateSessionParams:
         labels (Optional[Dict[str, str]]): Custom labels for the Session. These can be
             used for organizing and filtering sessions.
         image_id (Optional[str]): ID of the image to use for the session.
+
         context_syncs (Optional[List[ContextSync]]): List of context synchronization configurations.
+        browser_context (Optional[BrowserContext]): Optional configuration for browser data synchronization.
     """
 
     def __init__(
@@ -194,17 +196,17 @@ class CreateSessionParams:
         Initialize CreateSessionParams.
 
         Args:
-            labels (Optional[Dict[str, str]]): Custom labels for the Session.
-                Defaults to None.
+            labels (Optional[Dict[str, str]]): Custom labels for the Session. Defaults to None.
             image_id (Optional[str]): ID of the image to use for the session.
-                Defaults to None.
-            context_syncs (Optional[List[ContextSync]]): List of context synchronization configurations.
-                Defaults to None.
+            context_syncs (Optional[List[ContextSync]]): List of context synchronization configurations. Defaults to None.
+            browser_context (Optional[BrowserContext], optional): Browser context configuration.
+                If extension_ids are provided in BrowserContext, extension syncs will be
+                automatically added. Defaults to None.
         """
         self.labels = labels or {}
         self.image_id = image_id
         # Start with provided context_syncs
-        all_context_syncs = list(context_syncs or [])
+        all_context_syncs: List[ContextSync] = list(context_syncs or [])
         # Add extension context syncs from browser_context if available
         if browser_context and browser_context.extension_context_syncs:
             all_context_syncs.extend(browser_context.extension_context_syncs)

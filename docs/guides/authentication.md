@@ -11,7 +11,7 @@ Authentication with the AGB SDK is done using an API key. This key is used to au
 There are two main ways to provide your API key:
 
 1. **Direct Initialization**: Provide the API key directly when initializing the AGB client.
-2. **Environment Variable**: Set the `AGB_API_KEY` environment variable, and the SDK will use it automatically.
+2. **Environment Variable**: Set the `AGB_API_KEY` environment variable, and the SDK will use it automatically. *(Recommended)*
 
 ## Examples
 

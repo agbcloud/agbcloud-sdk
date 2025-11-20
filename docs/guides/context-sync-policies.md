@@ -11,12 +11,13 @@ Context sync policies control the synchronization behavior of data between local
 Controls file upload behavior and timing.
 
 ```python
-from agb.context_sync import UploadPolicy, UploadStrategy
+from agb.context_sync import UploadPolicy, UploadStrategy, UploadMode
 
 # Basic configuration
 upload_policy = UploadPolicy(
     auto_upload=True,  # Enable automatic upload
-    upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE  # Upload strategy
+    upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,  # Upload strategy
+    upload_mode=UploadMode.FILE  # Upload mode（default）
 )
 ```
 
@@ -24,6 +25,9 @@ upload_policy = UploadPolicy(
 - `auto_upload` (bool): Whether to enable automatic upload
 - `upload_strategy` (UploadStrategy): Upload strategy
   - `UPLOAD_BEFORE_RESOURCE_RELEASE`: Upload before resource release
+- `upload_mode` (UploadMode): Upload mode
+  - `FILE`: Upload files individually
+  - `ARCHIVE`: Upload files as archive
 
 ### 2. DownloadPolicy
 
@@ -80,7 +84,44 @@ extract_policy = ExtractPolicy(
 - `delete_src_file` (bool): Whether to delete source file after extraction
 - `extract_current_folder` (bool): Whether to extract to current folder
 
-### 5. BWList (Black/White List)
+### 5. RecyclePolicy
+
+Controls data retention and cleanup behavior.
+
+```python
+from agb.context_sync import RecyclePolicy, Lifecycle
+
+# Basic configuration
+recycle_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_30DAYS,  # Keep data for 30 days
+    paths=[""]
+)
+
+# Advanced configuration with specific paths
+recycle_policy = RecyclePolicy(
+    lifecycle=Lifecycle.LIFECYCLE_7DAYS,
+    paths=["temp", "logs"]  # Apply only to specific paths (relative paths)
+)
+```
+
+**Parameters:**
+- `lifecycle` (Lifecycle): Data retention period
+  - `LIFECYCLE_1DAY`: Keep data for 1 day
+  - `LIFECYCLE_3DAYS`: Keep data for 3 days
+  - `LIFECYCLE_5DAYS`: Keep data for 5 days
+  - `LIFECYCLE_10DAYS`: Keep data for 10 days
+  - `LIFECYCLE_15DAYS`: Keep data for 15 days
+  - `LIFECYCLE_30DAYS`: Keep data for 30 days
+  - `LIFECYCLE_90DAYS`: Keep data for 90 days
+  - `LIFECYCLE_180DAYS`: Keep data for 180 days
+  - `LIFECYCLE_360DAYS`: Keep data for 360 days
+  - `LIFECYCLE_FOREVER`: Keep data permanently (default)
+- `paths` (List[str]): Paths subject to recycle policy
+  - Empty string `""` applies to all paths relative to the session's context sync path (default)
+  - Specific paths should use relative paths from the context sync path specified in session creation
+  - Wildcard patterns are NOT supported
+
+### 6. BWList (Black/White List)
 
 Controls which file paths participate in sync.
 
@@ -102,8 +143,8 @@ bw_list = BWList(white_lists=[white_list])
 ```python
 from agb.context_sync import (
     SyncPolicy, UploadPolicy, DownloadPolicy,
-    DeletePolicy, ExtractPolicy, BWList, WhiteList,
-    UploadStrategy, DownloadStrategy
+    DeletePolicy, ExtractPolicy, RecyclePolicy, BWList, WhiteList,
+    UploadStrategy, DownloadStrategy, UploadMode, Lifecycle
 )
 
 # Create complete sync policy
@@ -111,7 +152,8 @@ sync_policy = SyncPolicy(
     # Upload policy
     upload_policy=UploadPolicy(
         auto_upload=True,
-        upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE
+        upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
+        upload_mode=UploadMode.FILE
     ),
 
     # Download policy
@@ -130,6 +172,12 @@ sync_policy = SyncPolicy(
         extract=True,
         delete_src_file=False,  # Keep source file
         extract_current_folder=True
+    ),
+
+    # Recycle policy
+    recycle_policy=RecyclePolicy(
+        lifecycle=Lifecycle.LIFECYCLE_30DAYS,
+        paths=[""]
     ),
 
     # Black/white list
@@ -158,7 +206,8 @@ Suitable for frequent code modification scenarios:
 dev_sync_policy = SyncPolicy(
     upload_policy=UploadPolicy(
         auto_upload=True,
-        upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE
+        upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
+        upload_mode=UploadMode.FILE
     ),
     download_policy=DownloadPolicy(
         auto_download=True,
@@ -169,6 +218,10 @@ dev_sync_policy = SyncPolicy(
         extract=True,
         delete_src_file=False,
         extract_current_folder=True
+    ),
+    recycle_policy=RecyclePolicy(
+        lifecycle=Lifecycle.LIFECYCLE_15DAYS,  # Keep dev data for 15 days
+        paths=[""]
     ),
     bw_list=BWList(
         white_lists=[
@@ -193,7 +246,8 @@ Suitable for stable production environments:
 prod_sync_policy = SyncPolicy(
     upload_policy=UploadPolicy(
         auto_upload=True,
-        upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE
+        upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
+        upload_mode=UploadMode.ARCHIVE  # Use archive mode for production
     ),
     download_policy=DownloadPolicy(
         auto_download=True,
@@ -204,6 +258,10 @@ prod_sync_policy = SyncPolicy(
         extract=True,
         delete_src_file=True,
         extract_current_folder=False
+    ),
+    recycle_policy=RecyclePolicy(
+        lifecycle=Lifecycle.LIFECYCLE_90DAYS,  # Keep prod data for 90 days
+        paths=[""]
     ),
     bw_list=BWList(
         white_lists=[
@@ -224,7 +282,8 @@ Suitable for processing large amounts of data:
 big_data_sync_policy = SyncPolicy(
     upload_policy=UploadPolicy(
         auto_upload=False,  # Disable auto upload, manual control
-        upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE
+        upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
+        upload_mode=UploadMode.ARCHIVE  # Use archive mode for large datasets
     ),
     download_policy=DownloadPolicy(
         auto_download=False,  # Disable auto download, on-demand download
@@ -235,6 +294,10 @@ big_data_sync_policy = SyncPolicy(
         extract=True,
         delete_src_file=True,
         extract_current_folder=True
+    ),
+    recycle_policy=RecyclePolicy(
+        lifecycle=Lifecycle.LIFECYCLE_30DAYS,  # Keep datasets for 30 days
+        paths=["datasets/processed"]  # Only apply to processed data (relative path)
     ),
     bw_list=BWList(
         white_lists=[

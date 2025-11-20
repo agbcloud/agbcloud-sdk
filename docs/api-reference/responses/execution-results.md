@@ -16,7 +16,7 @@ Returned by `session.code.run_code()` operations.
 |----------|------|-------------|
 | `request_id` | `str` | Unique identifier for the API request |
 | `success` | `bool` | Whether the operation was successful |
-| `result` | `str` | The execution output/result |
+| `result` | `str` | The execution result |
 | `error_message` | `str` | Error message if the operation failed |
 
 **Example:**
@@ -88,6 +88,7 @@ result = session.code.run_code(code, language)
 if result.success:
     # Process successful result
     output = result.result
+    print(f"Output: {output}")
 else:
     # Handle error
     print(f"Execution failed: {result.error_message}")
@@ -112,7 +113,7 @@ if not code.strip():
     print("Error: Empty code provided")
     return
 
-if language not in ["python", "javascript", "java", "r"]:
+if language.lower() not in ["python", "javascript", "java", "r"]:
     print(f"Error: Unsupported language: {language}")
     return
 

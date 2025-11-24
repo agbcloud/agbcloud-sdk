@@ -7,18 +7,6 @@ triggers:
       - "master"
     types:
       - merged
-
-params:
-  auto_commit_enabled:
-    name: Enable Auto Commit Documentation
-    type: boolean
-    default: true
-    description: "Whether to automatically commit generated documentation to current MR branch"
-  
-  python_docs_enabled:
-    name: Enable Python Documentation Generation
-    type: boolean
-    default: true
   
   runs_on_resources:
     name: Resource Specification
@@ -108,7 +96,6 @@ jobs:
       # Generate Python API documentation
       - id: generate-python-docs
         name: "Generate Python API Documentation"
-        when: ${{params.python_docs_enabled}}
         run: |
           # Check if it's a CI bot commit or Python documentation generation is disabled
           if [ "$CI_LOOP_DETECTED" = "true" ]; then
@@ -200,12 +187,6 @@ jobs:
           # Check if it's a CI bot commit or auto commit is disabled
           if [ "$CI_LOOP_DETECTED" = true ]; then
             echo "⚠️ Detected CI bot commit, skipping documentation commit"
-            exit 0
-          fi
-          
-          # Check if auto commit is enabled (enabled by default)
-          if [ "${{params.auto_commit_enabled}}" != "true" ]; then
-            echo "ℹ️ Auto commit is disabled, skipping"
             exit 0
           fi
           

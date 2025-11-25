@@ -58,7 +58,7 @@ def test_list_mcp_tools():
             from agb.api.models.list_mcp_tools_request import ListMcpToolsRequest
 
             request = ListMcpToolsRequest(
-                authorization=f"Bearer {api_key}", image_id="agb-code-space-1"
+                authorization=f"Bearer {api_key}", image_id="agb-code-space-2"
             )
 
             # Call list_mcp_tools

@@ -49,7 +49,7 @@ def test_agb_create_and_delete():
         # Test session creation
         print("\n2. Testing session creation...")
         try:
-            params = CreateSessionParams(image_id="agb-code-space-1")
+            params = CreateSessionParams(image_id="agb-code-space-2")
 
             result = agb.create(params)
 
@@ -154,7 +154,7 @@ def test_agb_with_custom_params():
         # Create session with custom parameters
         print("\n2. Testing session creation with custom parameters...")
         try:
-            params = CreateSessionParams(image_id="agb-code-space-1")
+            params = CreateSessionParams(image_id="agb-code-space-2")
 
             result = agb.create(params)
 

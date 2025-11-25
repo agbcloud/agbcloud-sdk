@@ -64,6 +64,7 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
         print(f"Generated context: {context.name} (ID: {context.id})")
         print(f"Context get request ID: {context_result.request_id}")
 
+        session = None  # Initialize session variable
         try:
             # Step 2: Create session with default RecyclePolicy (LIFECYCLE_FOREVER)
             recycle_policy = RecyclePolicy()  # Uses default LIFECYCLE_FOREVER and paths=[""]
@@ -85,7 +86,7 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
             )
 
             session_params = CreateSessionParams(
-                image_id="agb-code-space-1",
+                image_id="agb-code-space-2",
                 labels={
                     "test": f"recycle-policy-default-{self.unique_id}",
                     "type": "default-lifecycle"
@@ -155,6 +156,7 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
         context = context_result.context
         print(f"Generated context: {context.name} (ID: {context.id})")
 
+        session = None  # Initialize session variable
         try:
             # Create custom RecyclePolicy with 1-day lifecycle and specific paths
             custom_recycle_policy = RecyclePolicy(
@@ -182,7 +184,7 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
 
             # Create session with the contextSync
             session_params = CreateSessionParams(
-                image_id="agb-code-space-1",
+                image_id="agb-code-space-2",
                 labels={
                     "test": f"recycle-policy-custom-{self.unique_id}",
                     "type": "custom-lifecycle"
@@ -221,7 +223,7 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
         finally:
             # Cleanup
             print("Cleaning up: Deleting the session...")
-            if session in self.test_sessions:
+            if session is not None and session in self.test_sessions:
                 delete_result = self.agb.delete(session, sync_context=True)
                 self.assertTrue(delete_result.success, f"Failed to delete session: {delete_result.error_message}")
                 print(f"Session {session.session_id} deleted successfully")

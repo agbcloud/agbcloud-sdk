@@ -35,7 +35,7 @@ def test_watch_directory_file_modification():
     print("✅ AGB client initialized")
 
     # Create session with specified ImageId
-    session_params = CreateSessionParams(image_id="agb-code-space-1")
+    session_params = CreateSessionParams(image_id="agb-code-space-2")
     session_result = agb.create(session_params)
 
     if not session_result.success:

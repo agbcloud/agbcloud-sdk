@@ -54,7 +54,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
     def test_context_info_returns_context_status_data(self):
         """Test that context info returns parsed ContextStatusData."""
         # Create session for this test
-        session_params = CreateSessionParams(image_id="agb-code-space-1")
+        session_params = CreateSessionParams(image_id="agb-code-space-2")
         context_sync = ContextSync.new(
             self.context.id, "/home/wuying", SyncPolicy()
         )
@@ -111,7 +111,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
     async def test_context_sync_and_info(self):
         """Test syncing context and then getting info."""
         # Create session for this test
-        session_params = CreateSessionParams(image_id="agb-code-space-1")
+        session_params = CreateSessionParams(image_id="agb-code-space-2")
         context_sync = ContextSync.new(
             self.context.id, "/home/wuying", SyncPolicy()
         )
@@ -183,7 +183,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
     def test_context_info_with_params(self):
         """Test getting context info with specific parameters."""
         # Create session for this test
-        session_params = CreateSessionParams(image_id="agb-code-space-1")
+        session_params = CreateSessionParams(image_id="agb-code-space-2")
         context_sync = ContextSync.new(
             self.context.id, "/home/wuying", SyncPolicy()
         )
@@ -254,7 +254,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
             default_policy = SyncPolicy()
 
             # Create session parameters with context sync
-            session_params = CreateSessionParams(image_id="agb-code-space-1")
+            session_params = CreateSessionParams(image_id="agb-code-space-2")
             context_sync = ContextSync.new(context.id, sync_path, default_policy)
             session_params.context_syncs = [context_sync]
 
@@ -359,7 +359,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
 
                 # 8. Create a second session with the same context
                 print("Creating second session with the same context...")
-                session_params = CreateSessionParams(image_id="agb-code-space-1")
+                session_params = CreateSessionParams(image_id="agb-code-space-2")
                 context_sync = ContextSync.new(context.id, sync_path, default_policy)
                 session_params.context_syncs = [context_sync]
 

@@ -46,7 +46,7 @@ def test_create_session():
 
         print("\nCreating session...")
 
-        params = CreateSessionParams(image_id="code_latest")
+        params = CreateSessionParams(image_id="agb-code-space-2")
         result = agb.create(params)
 
         # Check result
@@ -355,10 +355,20 @@ def main():
 
         # Optional: Test deleting session
         print("\n" + "=" * 60)
-        print("Do you want to delete the recently created session? (y/n): ", end="")
+        print("Testing session deletion...")
         try:
-            choice = input().strip().lower()
-            if choice in ["y", "yes"]:
+            # Check if running in interactive mode (has stdin)
+            import sys
+            if sys.stdin.isatty():
+                print("Do you want to delete the recently created session? (y/n): ", end="")
+                choice = input().strip().lower()
+                should_delete = choice in ["y", "yes"]
+            else:
+                # In non-interactive mode (CI/automated tests), automatically delete session
+                print("Running in non-interactive mode, automatically deleting session...")
+                should_delete = True
+            
+            if should_delete:
                 print("Deleting session...")
                 delete_result = agb.delete(result.session)
                 print("delete_result =", delete_result)
@@ -366,8 +376,10 @@ def main():
                     print("✅ Session deleted successfully!")
                 else:
                     print(f"❌ Session deletion failed: {delete_result.error_message}")
-        except KeyboardInterrupt:
-            print("\nUser cancelled deletion operation")
+            else:
+                print("Session deletion skipped by user choice.")
+        except (KeyboardInterrupt, EOFError):
+            print("\nUser cancelled deletion operation or no input available")
 
     print("\n" + "=" * 60)
     print("Test completed")

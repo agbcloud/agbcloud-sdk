@@ -63,7 +63,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
         context = context_result.context
         print(f"Generated context: {context.name} (ID: {context.id})")
         print(f"Context get request ID: {context_result.request_id}")
-
+        session = None
         try:
             # Step 2: Create session with default FILE upload mode (using SyncPolicy default)
             sync_policy = SyncPolicy()  # Uses default uploadMode "File"
@@ -79,7 +79,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
             )
 
             session_params = CreateSessionParams(
-                image_id="agb-code-space-1",
+                image_id="agb-code-space-2",
                 labels={
                     "test": f"upload-mode-{self.unique_id}",
                     "type": "basic-functionality"
@@ -222,7 +222,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
 
         context = context_result.context
         print(f"Generated context: {context.name} (ID: {context.id})")
-
+        session = None
         try:
             # Create sync policy with Archive upload mode
             upload_policy = UploadPolicy(upload_mode=UploadMode.ARCHIVE)
@@ -242,7 +242,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
 
             # Create session with the contextSync
             session_params = CreateSessionParams(
-                image_id="agb-code-space-1",
+                image_id="agb-code-space-2",
                 labels={
                     "test": f"archive-mode-{self.unique_id}",
                     "type": "contextId-path-validation"
@@ -396,7 +396,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
             sync_policy = SyncPolicy(upload_policy=upload_policy)
 
             # Create session parameters with context sync
-            session_params = CreateSessionParams(image_id="agb-code-space-1")
+            session_params = CreateSessionParams(image_id="agb-code-space-2")
             context_sync = ContextSync.new(context.id, sync_path, sync_policy)
             session_params.context_syncs = [context_sync]
 

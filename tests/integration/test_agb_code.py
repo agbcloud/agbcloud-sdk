@@ -54,7 +54,7 @@ def test_create_session():
         # Record session creation start time
         create_start_time = time.time()
 
-        params = CreateSessionParams(image_id="agb-code-space-1")
+        params = CreateSessionParams(image_id="agb-code-space-2")
         result = agb.create(params)
 
         # Record session creation end time
@@ -417,10 +417,20 @@ def main():
 
         # Optional: Test session deletion
         print("\n" + "=" * 60)
-        print("Do you want to delete the created session? (y/n): ", end="")
+        print("Testing session deletion...")
         try:
-            choice = input().strip().lower()
-            if choice in ["y", "yes"]:
+            # Check if running in interactive mode (has stdin)
+            import sys
+            if sys.stdin.isatty():
+                print("Do you want to delete the created session? (y/n): ", end="")
+                choice = input().strip().lower()
+                should_delete = choice in ["y", "yes"]
+            else:
+                # In non-interactive mode (CI/automated tests), automatically delete session
+                print("Running in non-interactive mode, automatically deleting session...")
+                should_delete = True
+            
+            if should_delete:
                 print("Deleting session...")
 
                 # Record session deletion start time
@@ -450,9 +460,11 @@ def main():
                     f"Total API Time:  {create_duration + delete_duration:.3f} seconds"
                 )
                 print("=" * 60)
+            else:
+                print("Session deletion skipped by user choice.")
 
-        except KeyboardInterrupt:
-            print("\nUser cancelled deletion operation")
+        except (KeyboardInterrupt, EOFError):
+            print("\nUser cancelled deletion operation or no input available")
 
     print("\n" + "=" * 60)
     print("Test completed")

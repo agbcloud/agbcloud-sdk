@@ -50,76 +50,76 @@ global:
       - _call_mcp_tool_timeout
       - _call_mcp_tool_async
       - _call_mcp_tool
-    
+
     # Exclude private/internal methods (starting with underscore)
     exclude_private_methods: true
-    
+
     # Exclude validation methods from response docs
     exclude_validation_methods:
       - _validate_labels
       - _validate_session
       - _validate_config
-    
+
     # Exclude low-level API methods
     exclude_low_level_api:
       - _make_request
       - _handle_response
       - _process_result
-    
+
     # Exclude specific response types from documentation generation
     exclude_response_types:
       - ApiResponse          # Base class, not directly used by users
       - GetSessionData       # Internal data structure
       - FileChangeResult     # Internal file monitoring result
       - GetSessionResult     # Internal data structure
-    
+
     # Related guides for response types
     response_guides:
       SessionResult:
         title: "Session Management APIs"
         description: "Get a session by its ID or create a new session in the AGB cloud environment"
         url: "../../guides/session-management.md"
-      
+
       SessionListResult:
         title: "Session Listing APIs"
         description: "Returns paginated list of session IDs filtered by labels"
         url: "../../guides/session-management.md"
-      
+
       OperationResult:
         title: "Context and Session Management APIs"
         description: "Update context data, delete files, and manage session operations"
         url: "../../guides/context-usage-guide.md"
-      
+
       DeleteResult:
         title: "Session and Resource Deletion APIs"
         description: "Delete sessions and manage resource cleanup operations"
         url: "../../guides/session-management.md"
-      
+
       BoolResult:
         title: "File System Validation APIs"
         description: "File existence checks and validation operations"
         url: "../../guides/file-operations.md"
-      
+
       MultipleFileContentResult:
         title: "File Content Management APIs"
         description: "Read multiple files and batch file content operations"
         url: "../../guides/file-operations.md"
-      
+
       FileSearchResult:
         title: "File Search and Discovery APIs"
         description: "Search files by patterns and locate specific file content"
         url: "../../guides/file-operations.md"
-      
+
       FileInfoResult:
         title: "File Information and Metadata APIs"
         description: "Get file properties, permissions, and metadata information"
         url: "../../guides/file-operations.md"
-      
+
       FileContentResult:
         title: "File Content Access APIs"
         description: "Read file content and retrieve file data"
         url: "../../guides/file-operations.md"
-      
+
       DirectoryListResult:
         title: "Directory Management APIs"
         description: "List directory contents and navigate file system structure"
@@ -129,7 +129,7 @@ modules:
   # AGB main module
   agb:
     python: agb.agb
-    
+
     tutorial:
       url: ../../docs/quickstart.md
       text: Quick Start Guide
@@ -146,7 +146,7 @@ modules:
         module: context
 
     emoji: 🚀
-    category: core
+    category: .
 
   # Session module
   session:
@@ -170,7 +170,7 @@ modules:
         module: context-manager
 
     emoji: 🔧
-    category: core
+    category: .
 
   # Context module
   context:
@@ -192,7 +192,7 @@ modules:
         module: context-manager
 
     emoji: 💾
-    category: core
+    category: data_context
 
   # Context Manager module
   context-manager:
@@ -214,7 +214,7 @@ modules:
         module: session
 
     emoji: 🗂️
-    category: core
+    category: data_context
 
   # Context Sync module
   context-sync:
@@ -236,7 +236,7 @@ modules:
         module: context-manager
 
     emoji: 🔄
-    category: core
+    category: data_context
 
   # Logging module
   logging:
@@ -256,7 +256,7 @@ modules:
         module: agb
 
     emoji: 📝
-    category: core
+    category: reference
 
   # Extension module
   extension:
@@ -276,7 +276,7 @@ modules:
         module: browser
 
     emoji: 🧩
-    category: modules
+    category: reference
 
   # Command module
   command:
@@ -305,7 +305,7 @@ modules:
         module: file-system
 
     emoji: ⚡
-    category: modules
+    category: capabilities
 
   # File System module
   file-system:
@@ -334,7 +334,7 @@ modules:
         module: command
 
     emoji: 📁
-    category: modules
+    category: capabilities
 
   # Code module
   code:
@@ -364,7 +364,7 @@ modules:
         module: session
 
     emoji: 💻
-    category: modules
+    category: capabilities
 
   # Browser module
   browser:
@@ -376,8 +376,8 @@ modules:
       description: Complete guide to browser automation
 
     overview: |
-      The Browser module provides comprehensive browser automation capabilities including navigation, 
-      element interaction, screenshot capture, and content extraction. It enables automated testing 
+      The Browser module provides comprehensive browser automation capabilities including navigation,
+      element interaction, screenshot capture, and content extraction. It enables automated testing
       and web scraping workflows with support for proxy configuration, fingerprinting, and stealth mode.
 
     requirements:
@@ -397,5 +397,33 @@ modules:
         module: session
 
     emoji: 🌐
-    category: modules
+    category: capabilities
 
+  # Session Params module
+  session-params:
+    python: agb.session_params
+
+    tutorial:
+      url: ../../docs/guides/session-management.md
+      text: Session Management Guide
+      description: Learn how to configure sessions
+
+    overview: |
+      Configuration parameters for creating and managing AGB sessions.
+
+    related_resources:
+      - name: AGB API Reference
+        module: agb
+
+    emoji: ⚙️
+    category: reference
+
+  # Exceptions module
+  exceptions:
+    python: agb.exceptions
+
+    overview: |
+      Standard exceptions raised by the AGB SDK.
+
+    emoji: ⚠️
+    category: reference

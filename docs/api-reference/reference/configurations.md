@@ -303,6 +303,6 @@ params = CreateSessionParams(image_id="agb-code-space-1")
 
 ## Related Content
 
-- 🔧 **API Reference**: [AGB API](agb.md)
+- 🔧 **API Reference**: [AGB API](../01_agb.md)
 - 💡 **Examples**: [Session Examples](../../examples/README.md)
 - 📚 **Best Practices**: [Best Practices Guide](../../guides/best-practices.md)

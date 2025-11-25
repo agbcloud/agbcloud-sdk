@@ -47,7 +47,7 @@ else:
 
 Result object returned by command execution operations.
 
-For detailed information about the response object, see: **[CommandResult](../responses/command-result.md)**
+For detailed information about the response object, see: **[CommandResult](../reference/types.md#commandresult)**
 
 ### Usage Example
 
@@ -528,8 +528,8 @@ processed_result = session.file_system.read_file("/tmp/test.txt")
 
 ## Related Documentation
 
-- **[Session API](../core/session.md)** - Session management and lifecycle
-- **[Code Module](code.md)** - Code execution for complex processing
-- **[FileSystem Module](filesystem.md)** - File operations integration
+- **[Session API](../02_session.md)** - Session management and lifecycle
+- **[Code Module](code_execution.md)** - Code execution for complex processing
+- **[FileSystem Module](file_system.md)** - File operations integration
 - **[Command Execution Tutorial](../../guides/command-execution.md)** - User guide for command execution
 - **[Best Practices](../../guides/best-practices.md)** - Production deployment patterns

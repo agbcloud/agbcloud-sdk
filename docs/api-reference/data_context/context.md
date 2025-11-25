@@ -404,5 +404,5 @@ list_files(
 
 ## Related Resources
 
-- [Session API Reference](session.md)
+- [Session API Reference](../02_session.md)
 - [ContextManager API Reference](context-manager.md)

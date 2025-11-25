@@ -35,7 +35,7 @@ agb = AGB(api_key="your_api_key_here")
 # Set AGB_API_KEY environment variable first
 agb = AGB()
 
-# With custom configuration 
+# With custom configuration
 from agb.config import Config
 config = Config(endpoint="https://custom.endpoint.com",timeout_ms=50000)
 agb = AGB(api_key="your_api_key", cfg=config)
@@ -66,7 +66,7 @@ from agb.session_params import CreateSessionParams
 
 # Create with custom parameters
 params = CreateSessionParams(
-    image_id="agb-code-space-1" 
+    image_id="agb-code-space-1"
 )
 result = agb.create(params)
 
@@ -403,7 +403,7 @@ def create_session_with_retry(agb, max_retries=3):
 
 ## Related Content
 
-- 📋 **Parameters**: [Session Parameters](./session-params.md)
-- 🔧 **Sessions**: [Session API](./session.md)
+- 📋 **Parameters**: [Session Parameters](reference/configurations.md)
+- 🔧 **Sessions**: [Session API](02_session.md)
 - 💡 **Examples**: [Usage Examples](../../examples/README.md)
 - 📚 **Guides**: [Best Practices](../../guides/best-practices.md)

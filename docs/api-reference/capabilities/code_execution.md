@@ -118,7 +118,7 @@ public class MyClass {
 
 Result object returned by code execution operations.
 
-For detailed information about the response object, see: **[CodeExecutionResult](../responses/code-result.md)**
+For detailed information about the response object, see: **[CodeExecutionResult](../reference/types.md#codeexecutionresult)**
 
 ### Usage Example
 
@@ -554,8 +554,8 @@ def safe_code_execution(self, session, code, language):
 
 ## Related Documentation
 
-- **[Session API](../core/session.md)** - Session management and lifecycle
-- **[Command Module](command.md)** - Shell command execution
-- **[FileSystem Module](filesystem.md)** - File operations for code integration
+- **[Session API](../02_session.md)** - Session management and lifecycle
+- **[Command Module](shell_commands.md)** - Shell command execution
+- **[FileSystem Module](file_system.md)** - File operations for code integration
 - **[Code Execution Guide](../../guides/code-execution.md)** - User guide for code execution
 - **[Best Practices](../../guides/best-practices.md)** - Production deployment patterns

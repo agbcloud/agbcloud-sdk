@@ -32,32 +32,32 @@ agb.delete(session)
 
 | Class | Purpose | Documentation |
 |-------|---------|---------------|
-| **[AGB](core/agb.md)** | Main SDK client | Session creation and management |
-| **[Session](core/session.md)** | Session management | Session lifecycle and information |
-| **[CreateSessionParams](core/session-params.md)** | Session configuration | Parameters for session creation |
-| **[ExtensionsService](core/extensions.md)** | Extension management | Browser extension lifecycle |
-| **[ExtensionOption](core/extensions.md#extensionoption)** | Extension configuration | Browser extension integration |
+| **[AGB](01_agb.md)** | Main SDK client | Session creation and management |
+| **[Session](02_session.md)** | Session management | Session lifecycle and information |
+| **[CreateSessionParams](reference/configurations.md)** | Session configuration | Parameters for session creation |
+| **[ExtensionsService](reference/extensions.md)** | Extension management | Browser extension lifecycle |
+| **[ExtensionOption](reference/extensions.md#extensionoption)** | Extension configuration | Browser extension integration |
 
 ### 🔧 Modules
 
 | Module | Purpose | Documentation |
 |--------|---------|---------------|
-| **[Code](modules/code.md)** | Code execution | Python, JavaScript, Java, R execution |
-| **[Command](modules/command.md)** | Shell commands | Command execution and output |
-| **[FileSystem](modules/filesystem.md)** | File operations | File and directory management |
-| **[Browser](modules/browser.md)** | Web automation | Browser automation and web scraping |
+| **[Code](capabilities/code_execution.md)** | Code execution | Python, JavaScript, Java, R execution |
+| **[Command](capabilities/shell_commands.md)** | Shell commands | Command execution and output |
+| **[FileSystem](capabilities/file_system.md)** | File operations | File and directory management |
+| **[Browser](capabilities/browser.md)** | Web automation | Browser automation and web scraping |
 
 ### 📊 Response Types
 
 | Response Type | Purpose | Documentation |
 |---------------|---------|---------------|
-| **[SessionResult](responses/session-result.md)** | Session creation results | Success status and session object |
-| **[DeleteResult](responses/delete-result.md)** | Session deletion results | Deletion status and request ID |
-| **[CodeExecutionResult](responses/code-result.md)** | Code execution results | Output, success status, and errors |
-| **[CommandResult](responses/command-result.md)** | Command execution results | Command output and execution status |
-| **[FileContentResult](responses/filesystem-results.md#filecontentresult)** | File read results | File content and metadata |
-| **[DirectoryListResult](responses/filesystem-results.md#directorylistresult)** | Directory listing results | Directory entries and metadata |
-| **[FileInfoResult](responses/filesystem-results.md#fileinforesult)** | File info results | File metadata and properties |
+| **[SessionResult](reference/types.md#sessionresult)** | Session creation results | Success status and session object |
+| **[DeleteResult](reference/types.md#deleteresult)** | Session deletion results | Deletion status and request ID |
+| **[CodeExecutionResult](reference/types.md#codeexecutionresult)** | Code execution results | Output, success status, and errors |
+| **[CommandResult](reference/types.md#commandresult)** | Command execution results | Command output and execution status |
+| **[FileContentResult](reference/types.md#filecontentresult)** | File read results | File content and metadata |
+| **[DirectoryListResult](reference/types.md#directorylistresult)** | Directory listing results | Directory entries and metadata |
+| **[FileInfoResult](reference/types.md#fileinforesult)** | File info results | File metadata and properties |
 | **BoolResult** | Boolean operation results | Success/failure status for operations |
 
 
@@ -212,21 +212,21 @@ if not code_result.success:
 ## 📖 Detailed Documentation
 
 ### Core Classes
-- **[AGB Client](core/agb.md)** - Main SDK client class
-- **[Session Management](core/session.md)** - Session lifecycle and operations
-- **[Session Parameters](core/session-params.md)** - Configuration options
-- **[Extensions API](core/extensions.md)** - Browser extension management
+- **[AGB Client](01_agb.md)** - Main SDK client class
+- **[Session Management](02_session.md)** - Session lifecycle and operations
+- **[Session Parameters](reference/configurations.md)** - Configuration options
+- **[Extensions API](reference/extensions.md)** - Browser extension management
 
 ### Modules
-- **[Code Execution](modules/code.md)** - Python, JavaScript, Java, R execution
-- **[Command Execution](modules/command.md)** - Shell command operations
-- **[File System](modules/filesystem.md)** - File and directory management
-- **[Browser Automation](modules/browser.md)** - Web browser automation and scraping
+- **[Code Execution](capabilities/code_execution.md)** - Python, JavaScript, Java, R execution
+- **[Command Execution](capabilities/shell_commands.md)** - Shell command operations
+- **[File System](capabilities/file_system.md)** - File and directory management
+- **[Browser Automation](capabilities/browser.md)** - Web browser automation and scraping
 
 ### Response Types
-- **[Session Responses](responses/session-result.md)** - Session operation results
-- **[Execution Responses](responses/execution-results.md)** - Code and command results
-- **[File System Responses](responses/filesystem-results.md)** - File operation results
+- **[Session Responses](reference/types.md#sessionresult)** - Session operation results
+- **[Execution Responses](reference/types.md)** - Code and command results
+- **[File System Responses](reference/types.md)** - File operation results
 
 ## 🔗 Related Documentation
 

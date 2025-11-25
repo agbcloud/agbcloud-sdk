@@ -291,11 +291,11 @@ monitor_thread.join()
 ## Response Types
 
 For detailed information about response objects, see:
-- **[FileContentResult](../responses/filesystem-results.md#filecontentresult)** - File content and operation status
-- **[DirectoryListResult](../responses/filesystem-results.md#directorylistresult)** - Directory entries and metadata
-- **[FileInfoResult](../responses/filesystem-results.md#fileinforesult)** - File metadata and information
-- **[MultipleFileContentResult](../responses/filesystem-results.md#multiplefilecontentresult)** - Multiple file contents
-- **[FileSearchResult](../responses/filesystem-results.md#filesearchresult)** - File search results
+- **[FileContentResult](../reference/types.md#filecontentresult)** - File content and operation status
+- **[DirectoryListResult](../reference/types.md#directorylistresult)** - Directory entries and metadata
+- **[FileInfoResult](../reference/types.md#fileinforesult)** - File metadata and information
+- **[MultipleFileContentResult](../reference/types.md#multiplefilecontentresult)** - Multiple file contents
+- **[FileSearchResult](../reference/types.md#filesearchresult)** - File search results
 
 ### FileChangeEvent
 
@@ -818,8 +818,8 @@ result = session.file_system.read_file("/tmp/sorted.txt")
 
 ## Related Documentation
 
-- **[Session API](../core/session.md)** - Session management and lifecycle
-- **[Code Module](code.md)** - Code execution for file processing
-- **[Command Module](command.md)** - Shell commands for file operations
+- **[Session API](../02_session.md)** - Session management and lifecycle
+- **[Code Module](code_execution.md)** - Code execution for file processing
+- **[Command Module](shell_commands.md)** - Shell commands for file operations
 - **[File Operations Guide](../../guides/file-operations.md)** - User guide for file operations
 - **[Best Practices](../../guides/best-practices.md)** - Production deployment patterns

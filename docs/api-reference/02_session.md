@@ -472,7 +472,7 @@ result = with_session(agb, my_operation)
 
 ## Related Content
 
-- 🔧 **API Reference**: [AGB API](agb.md)
-- 📋 **Parameters**: [Session Parameters](session-params.md)
+- 🔧 **API Reference**: [AGB API](01_agb.md)
+- 📋 **Parameters**: [Session Parameters](reference/configurations.md)
 - 💡 **Examples**: [Session Examples](../../examples/README.md)
 - 📚 **Guides**: [Session Management](../../guides/session-management.md)

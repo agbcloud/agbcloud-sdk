@@ -160,4 +160,4 @@ The ContextManager provides comprehensive error handling and logging:
 ## Related Resources
 
 - [Context API Reference](context.md)
-- [Session API Reference](session.md)
+- [Session API Reference](../02_session.md)

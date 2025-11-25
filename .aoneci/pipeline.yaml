@@ -215,25 +215,24 @@ jobs:
           # 动态获取域名对应的IP地址
           echo "正在解析域名 IP 地址..."
           DOMAIN="${{ vars.agb_endpoint_pre }}"
-          echo "目标域名: $DOMAIN"
           
           # 尝试多种方法解析域名
           RESOLVED_IP=""
           if command -v dig >/dev/null 2>&1; then
             RESOLVED_IP=$(dig +short "$DOMAIN" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
-            echo "dig 解析结果: $RESOLVED_IP"
+            echo "dig 解析成功"
           elif command -v nslookup >/dev/null 2>&1; then
             echo "尝试使用 nslookup 解析域名..."
             RESOLVED_IP=$(nslookup "$DOMAIN" | grep -A1 "Name:" | grep "Address:" | awk '{print $2}' | head -1)
-            echo "nslookup 解析结果: $RESOLVED_IP"
+            echo "nslookup 解析成功"
           elif command -v python3 >/dev/null 2>&1; then
             echo "尝试使用 Python socket 解析域名..."
             RESOLVED_IP=$(python3 -c "import socket; print(socket.gethostbyname('$DOMAIN'))" 2>/dev/null || echo "")
-            echo "Python socket 解析结果: $RESOLVED_IP"
+            echo "Python socket 解析成功"
           fi
 
           if [ -n "$RESOLVED_IP" ]; then
-            echo "域名解析成功: $DOMAIN -> $RESOLVED_IP"
+            echo "域名解析成功"
             export AGB_ENDPOINT="http://$RESOLVED_IP"
           else
             echo "域名解析失败，使用原始域名"
@@ -246,8 +245,6 @@ jobs:
           pip install -e .[test,dev]
           
           echo "环境变量已设置："
-          echo "  AGB_API_KEY: ${AGB_API_KEY:0:10}...${AGB_API_KEY: -4}"
-          echo "  AGB_ENDPOINT: $AGB_ENDPOINT"
           
           echo "开始运行集成测试..."
           echo "=========================================="

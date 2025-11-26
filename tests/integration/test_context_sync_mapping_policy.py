@@ -39,13 +39,14 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
         print("\n" + "="*80)
         print("🚀 STARTING CONTEXT SYNC WITH MAPPING POLICY TEST")
         print("="*80)
-        
+
         # 1. Create a unique context name
         context_name = f"test-mapping-policy-{int(time.time())}"
         print(f"📝 Creating context with name: {context_name}")
-        
+
         context_result = self.ab.context.get(name=context_name, create=True)
-        self.assertIsNotNone(context_result.context)
+        self.assertTrue(context_result.success, f"Failed to create context: {getattr(context_result, 'error_message', 'Unknown error')}")
+        self.assertIsNotNone(context_result.context, "Context object is None despite success=True")
 
         context = context_result.context
         print(f"✅ Created context: {context.name} (ID: {context.id})")
@@ -78,8 +79,12 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             )
 
             # Create Browser session
+            # Wait 10s before creating session to ensure resource availability
+            print("Waiting 10s before creating Browser session...")
+            time.sleep(10)
             browser_session_result = self.ab.create(browser_session_params)
-            self.assertIsNotNone(browser_session_result.session)
+            self.assertTrue(browser_session_result.success, f"Failed to create Browser session: {browser_session_result.error_message}")
+            self.assertIsNotNone(browser_session_result.session, "Browser session object is None")
 
             browser_session = browser_session_result.session
             print(f"Created Browser session: {browser_session.session_id}")
@@ -118,6 +123,10 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             browser_delete_result = self.ab.delete(browser_session)
             print(f"Browser session deleted: {browser_session.session_id} (RequestID: {browser_delete_result.request_id})")
 
+            # Wait for resource release
+            print("Waiting 10s for Browser session resource release...")
+            time.sleep(10)
+
             # ========== Phase 2: Create Code session with MappingPolicy and verify data ==========
             print("========== Phase 2: Code Session - Access Data via MappingPolicy ==========")
 
@@ -142,8 +151,12 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             )
 
             # Create Code session
+            # Wait 10s before creating session to ensure resource availability
+            print("Waiting 10s before creating Code session...")
+            time.sleep(10)
             code_session_result = self.ab.create(code_session_params)
-            self.assertIsNotNone(code_session_result.session)
+            self.assertTrue(code_session_result.success, f"Failed to create Code session: {code_session_result.error_message}")
+            self.assertIsNotNone(code_session_result.session, "Code session object is None")
 
             code_session = code_session_result.session
             print(f"Created Code session: {code_session.session_id} with mapping from {browser_path} to {code_path}")
@@ -203,6 +216,9 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
                 # Ensure Code session is deleted
                 delete_result = self.ab.delete(code_session)
                 print(f"Code session deleted: {code_session.session_id} (RequestID: {delete_result.request_id})")
+                # Wait for resource release
+                print("Waiting 10s for Code session resource release...")
+                time.sleep(10)
 
         finally:
             # Ensure context is deleted

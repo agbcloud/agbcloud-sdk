@@ -20,41 +20,18 @@ class CallMcpToolRequest:
         self.server = server
         self.session_id = session_id
 
-    def _filter_args_for_body(self, args_data: Any) -> str:
-        """Filter out parameters that should not be included in request body"""
-        import json
-        
-        if isinstance(args_data, dict):
-            # Remove auto_gen_session as it should be a query parameter, not body parameter
-            filtered_args = {k: v for k, v in args_data.items() if k != "auto_gen_session"}
-            return json.dumps(filtered_args)
-        elif isinstance(args_data, list):
-            # For list, just convert directly
-            return json.dumps(args_data)
-        elif isinstance(args_data, str):
-            # For string, parse and filter if it's valid JSON
-            try:
-                parsed_data = json.loads(args_data)
-                if isinstance(parsed_data, dict):
-                    filtered_args = {k: v for k, v in parsed_data.items() if k != "auto_gen_session"}
-                    return json.dumps(filtered_args)
-                else:
-                    # If it's not a dict after parsing, use as-is
-                    return args_data
-            except (json.JSONDecodeError, TypeError):
-                # If not valid JSON, use as-is
-                return args_data
-        else:
-            # For other types, convert to string
-            return str(args_data)
-
     def get_body(self) -> Dict[str, Any]:
         """Convert request object to dictionary format"""
         body = {}
 
         if self.args:
-            # Use unified filtering method for all args types
-            body["args"] = self._filter_args_for_body(self.args)
+            # If args is a list or dict, convert to JSON string
+            if isinstance(self.args, (list, dict)):
+                import json
+
+                body["args"] = json.dumps(self.args)
+            else:
+                body["args"] = str(self.args)
 
         if self.session_id:
             body["sessionId"] = self.session_id
@@ -73,14 +50,10 @@ class CallMcpToolRequest:
         if self.image_id:
             params["imageId"] = self.image_id
         
-        # Handle auto_gen_session from args, default to False if not present
-        auto_gen_session = False  # Default value
-        
-        if self.args and isinstance(self.args, dict):
-            # Direct dict access
-            auto_gen_session = self.args.get("auto_gen_session", False)
-        
-        # Always set autoGenSession parameter
+        # Set auto_gen_session to False (disabled by default)
+        # This parameter controls whether to automatically generate a new session  if not exists
+        auto_gen_session = False
+        # Add autoGenSession as query parameter
         params["autoGenSession"] = str(auto_gen_session).lower()
         
         return params

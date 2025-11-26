@@ -261,6 +261,8 @@ class HTTPClient:
 
         Args:
             request (CallMcpToolRequest): Request object for calling MCP tool
+            read_timeout (Optional[int]): Read timeout in milliseconds
+            connect_timeout (Optional[int]): Connect timeout in milliseconds
 
         Returns:
             CallMcpToolResponse: Structured response object

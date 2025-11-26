@@ -55,12 +55,15 @@ class BaseService:
 
         Args:
             name (str): The name of the tool to call.
-            args (Dict[str, Any]): The arguments to pass to the tool.
+            args (Dict[str, Any]): The arguments to pass to the tool (can include auto_gen_session).
+            read_timeout (Optional[int]): Read timeout in milliseconds.
+            connect_timeout (Optional[int]): Connect timeout in milliseconds.
 
         Returns:
             OperationResult: The response from the tool with request ID.
         """
         try:
+            # Serialize args directly (including auto_gen_session if present)
             args_json = json.dumps(args, ensure_ascii=False)
 
             # use traditional API call

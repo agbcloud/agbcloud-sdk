@@ -88,12 +88,6 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             print("Waiting for Browser session to be ready...")
             time.sleep(15)
 
-            # Create directory in Browser session
-            print(f"Creating directory in Browser: {browser_path}")
-            browser_dir_result = browser_session.file_system.create_directory(browser_path)
-            self.assertIsNotNone(browser_dir_result.request_id)
-            self.assertTrue(browser_dir_result.success)
-
             # Create test file in Browser session
             test_file_path = f"{browser_path}/{test_file_name}"
             print(f"Creating test file in Browser: {test_file_path}")

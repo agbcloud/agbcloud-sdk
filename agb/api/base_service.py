@@ -63,7 +63,6 @@ class BaseService:
             OperationResult: The response from the tool with request ID.
         """
         try:
-            # Serialize args directly (including auto_gen_session if present)
             args_json = json.dumps(args, ensure_ascii=False)
 
             # use traditional API call

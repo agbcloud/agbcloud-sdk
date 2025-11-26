@@ -540,7 +540,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 ## Next Steps
 
-- Explore the [API Reference](../api-reference/capabilities/browser_automation.md) for detailed method documentation
+- Explore the [API Reference](../api-reference/capabilities/browser.md) for detailed method documentation
 - Check out [Browser Examples](../examples/browser/README.md) for practical use cases
 - Learn about [Session Management](session-management.md) for advanced session handling
 - Review [Best Practices](best-practices.md) for production deployments

@@ -17,7 +17,7 @@
 | I want to... | Recommended Documentation | Example Code |
 |-----------|----------|----------|
 | 🤖 Browser Automation | [Browser Automation Guide](guides/browser-automation.md) | [Browser Examples](examples/browser/README.md) |
-| 🧩 Browser Extensions | [Extensions API](api-reference/core/extensions.md) | [Extensions Examples](examples/extensions/README.md) |
+| 🧩 Browser Extensions | [Extensions API](api-reference/reference/extensions.md) | [Extensions Examples](examples/extensions/README.md) |
 | 🐍 Execute Code | [Code Execution Guide](guides/code-execution.md) | [Code Examples](examples/file_system/README.md) |
 | 💾 File Operations | [File Operations Guide](guides/file-operations.md) | [File Examples](examples/file_system/README.md) |
 | ⚡ Execute Commands | [Command Execution Guide](guides/command-execution.md) | [Command Examples](examples/session_creation/README.md) |

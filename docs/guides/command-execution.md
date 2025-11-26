@@ -833,7 +833,7 @@ command_code_integration()
 
 ## Related Documentation
 
-- **[Command Module API](../api-reference/capabilities/command_execution.md)** - Complete Command API reference
+- **[Command Module API](../api-reference/capabilities/shell_commands.md)** - Complete Command API reference
 - **[Code Execution Guide](../guides/code-execution.md)** - Integrating commands with code
 - **[File Operations Tutorial](file-operations.md)** - File management with commands
 - **[Session Management Guide](../guides/session-management.md)** - Managing command execution sessions

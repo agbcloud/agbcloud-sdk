@@ -522,4 +522,4 @@ session.file_system.write_file(filepath, "content")
 
 - **[Code Execution Guide](code-execution.md)** - Using files in code execution
 - **[Session Management](session-management.md)** - Managing file system sessions
-- **[API Reference](../api-reference/capabilities/file_operations.md)** - Complete FileSystem API documentation
+- **[API Reference](../api-reference/capabilities/file_system.md)** - Complete FileSystem API documentation

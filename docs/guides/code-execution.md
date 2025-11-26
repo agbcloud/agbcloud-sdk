@@ -722,5 +722,5 @@ if validate_python_syntax(code_to_check):
 - **[Session Management Guide](session-management.md)** - Managing code execution sessions
 - **[Command Execution Tutorial](../guides/command-execution.md)** - Running shell commands
 - **[File Operations Tutorial](../guides/file-operations.md)** - Working with files in code
-- **[API Reference](../api-reference/modules/code.md)** - Complete code execution API
+- **[API Reference](../api-reference/capabilities/code_execution.md)** - Complete code execution API
 - **[Examples](../examples/file_system/README.md)** - More code execution examples

@@ -589,4 +589,4 @@ for task in tasks:
 - **[Command Execution Tutorial](../guides/command-execution.md)** - Shell command operations
 - **[File Operations Tutorial](../guides/file-operations.md)** - File system management
 - **[Authentication Guide](authentication.md)** - API key setup and security
-- **[API Reference](../api-reference/core/session.md)** - Complete session API documentation
+- **[API Reference](../api-reference/02_session.md)** - Complete session API documentation

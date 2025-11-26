@@ -163,7 +163,7 @@ logging.basicConfig(level=logging.DEBUG)
 ## 📚 Additional Resources
 
 - [Browser Automation Guide](../../guides/browser-automation.md) - Comprehensive guide
-- [API Reference](../../api-reference/modules/browser.md) - Detailed API documentation
+- [API Reference](../../api-reference/capabilities/browser_automation.md) - Detailed API documentation
 - [Best Practices](../../guides/best-practices.md) - Production deployment tips
 - [Session Management](../../guides/session-management.md) - Advanced session handling
 

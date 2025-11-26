@@ -40,5 +40,5 @@ agb = AGB()
 
 ## Related Resources
 
-- [Sessions](../api-reference/core/session.md)
+- [Sessions](../api-reference/02_session.md)
 - [Best Practices](best-practices.md)

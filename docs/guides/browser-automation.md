@@ -540,8 +540,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 ## Next Steps
 
-- Explore the [API Reference](../api-reference/modules/browser.md) for detailed method documentation
+- Explore the [API Reference](../api-reference/capabilities/browser_automation.md) for detailed method documentation
 - Check out [Browser Examples](../examples/browser/README.md) for practical use cases
 - Learn about [Session Management](session-management.md) for advanced session handling
 - Review [Best Practices](best-practices.md) for production deployments
-- See [Extensions API](../api-reference/core/extensions.md) for browser extension management
+- See [Extensions API](../api-reference/reference/extensions.md) for browser extension management

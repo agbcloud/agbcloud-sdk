@@ -60,6 +60,6 @@ The example will:
 
 ## Related Documentation
 
-- [Context API Reference](../../api-reference/core/context.md)
-- [ContextManager API Reference](../../api-reference/core/context-manager.md)
-- [Session API Reference](../../api-reference/core/session.md)
+- [Context API Reference](../../api-reference/data_context/context.md)
+- [ContextManager API Reference](../../api-reference/data_context/context_manager.md)
+- [Session API Reference](../../api-reference/02_session.md)

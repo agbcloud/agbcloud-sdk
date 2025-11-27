@@ -147,8 +147,6 @@ When successfully retrieved, the session object provides access to:
 - **resource_url**: URL to access the session resource
 - **resource_id**: Internal resource identifier
 - **app_instance_id**: Application instance identifier
-- **vpc_resource**: Whether the session uses VPC resources
-- **network_interface_ip**: IP address of the network interface
 - **http_port**: HTTP port for the session
 - **token**: Authentication token for the session
 

@@ -143,11 +143,9 @@ class GetSessionData:
         resource_id: str = "",
         session_id: str = "",
         success: bool = False,
-        http_port: str = "",
-        network_interface_ip: str = "",
-        token: str = "",
-        vpc_resource: bool = False,
         resource_url: str = "",
+        http_port: str = "",
+        token: str = "",
     ):
         """
         Initialize GetSessionData.
@@ -157,21 +155,17 @@ class GetSessionData:
             resource_id (str): Resource ID.
             session_id (str): Session ID.
             success (bool): Success status.
-            http_port (str): HTTP port for VPC sessions.
-            network_interface_ip (str): Network interface IP for VPC sessions.
-            token (str): Token for VPC sessions.
-            vpc_resource (bool): Whether this session uses VPC resources.
             resource_url (str): Resource URL for accessing the session.
+            http_port (str): HTTP port.
+            token (str): Token.
         """
         self.app_instance_id = app_instance_id
         self.resource_id = resource_id
         self.session_id = session_id
         self.success = success
-        self.http_port = http_port
-        self.network_interface_ip = network_interface_ip
-        self.token = token
-        self.vpc_resource = vpc_resource
         self.resource_url = resource_url
+        self.http_port = http_port
+        self.token = token
 
 class GetSessionResult(ApiResponse):
     """Result of GetSession operations."""
@@ -215,7 +209,7 @@ class SessionListResult(ApiResponse):
         request_id: str = "",
         success: bool = False,
         error_message: str = "",
-        session_ids: List[str] = None,
+        session_ids: Optional[List[str]] = None,
         next_token: str = "",
         max_results: int = 0,
         total_count: int = 0,
@@ -227,7 +221,7 @@ class SessionListResult(ApiResponse):
             request_id (str): The request ID.
             success (bool): Whether the operation was successful.
             error_message (str): Error message if the operation failed.
-            session_ids (List[str]): List of session IDs.
+            session_ids (Optional[List[str]]): List of session IDs.
             next_token (str): Token for the next page of results.
             max_results (int): Number of results per page.
             total_count (int): Total number of results available.

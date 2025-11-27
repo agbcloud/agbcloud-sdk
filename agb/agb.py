@@ -177,6 +177,12 @@ class AGB:
             if resource_url is not None:
                 session.resource_url = resource_url
 
+            if response.data:
+                session.app_instance_id = response.data.app_instance_id or ""
+                session.resource_id = response.data.resource_id or ""
+                session.http_port = str(response.data.http_port) if response.data.http_port else ""
+                session.token = response.data.token or ""
+
             # Store image_id used for this session
             session.image_id = params.image_id or ""
 
@@ -471,18 +477,15 @@ class AGB:
                     resource_id=response.data.resource_id or "",
                     session_id=response.data.session_id or session_id,
                     success=True,
+                    resource_url=response.data.resource_url or "",
                     http_port=response.data.http_port or "",
-                    network_interface_ip=response.data.network_interface_ip or "",
                     token=response.data.token or "",
-                    vpc_resource=response.data.vpc_resource or False,
-                    resource_url=response.data.resource_url or ""
                 )
 
             # Log API response with key details
             key_fields = {}
             if data:
                 key_fields["session_id"] = data.session_id
-                key_fields["vpc_resource"] = "yes" if data.vpc_resource else "no"
 
             logger.info(f"GetSession API response - RequestID: {request_id}, Success: {success}")
             if key_fields:
@@ -498,13 +501,6 @@ class AGB:
                 error_message="",
             )
 
-        except Exception as e:
-            logger.error(f"Failed to parse response: {str(e)}")
-            return GetSessionResult(
-                request_id=request_id,
-                success=False,
-                error_message=f"Failed to parse response: {str(e)}",
-            )
         except Exception as e:
             logger.error(f"Error calling GetSession: {e}")
             return GetSessionResult(
@@ -555,8 +551,6 @@ class AGB:
             # Store additional session data - set attributes directly
             session.app_instance_id = get_result.data.app_instance_id or ""
             session.resource_id = get_result.data.resource_id or ""
-            session.vpc_resource = get_result.data.vpc_resource or False
-            session.network_interface_ip = get_result.data.network_interface_ip or ""
             session.http_port = get_result.data.http_port or ""
             session.token = get_result.data.token or ""
 

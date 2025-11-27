@@ -9,8 +9,6 @@ class SessionData:
         app_instance_id: Optional[str] = None,
         resource_id: Optional[str] = None,
         resource_url: Optional[str] = None,
-        vpc_resource: Optional[bool] = None,
-        network_interface_ip: Optional[str] = None,
         http_port: Optional[str] = None,
         token: Optional[str] = None,
     ):
@@ -18,8 +16,6 @@ class SessionData:
         self.app_instance_id = app_instance_id
         self.resource_id = resource_id
         self.resource_url = resource_url
-        self.vpc_resource = vpc_resource
-        self.network_interface_ip = network_interface_ip
         self.http_port = http_port
         self.token = token
 
@@ -31,8 +27,6 @@ class SessionData:
             app_instance_id=data.get("appInstanceId"),
             resource_id=data.get("resourceId"),
             resource_url=data.get("resourceUrl"),
-            vpc_resource=data.get("vpcResource"),
-            network_interface_ip=data.get("networkInterfaceIp"),
             http_port=data.get("httpPort"),
             token=data.get("token"),
         )
@@ -44,8 +38,6 @@ class SessionData:
             "appInstanceId": self.app_instance_id,
             "resourceId": self.resource_id,
             "resourceUrl": self.resource_url,
-            "vpcResource": self.vpc_resource,
-            "networkInterfaceIp": self.network_interface_ip,
             "httpPort": self.http_port,
             "token": self.token,
         }

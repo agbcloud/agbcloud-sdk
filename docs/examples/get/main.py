@@ -53,8 +53,6 @@ def main():
     print(f"  Resource URL: {session.resource_url}")
     print(f"  Resource ID: {session.resource_id}")
     print(f"  App Instance ID: {session.app_instance_id}")
-    print(f"  VPC Resource: {session.vpc_resource}")
-    print(f"  Network Interface IP: {session.network_interface_ip}")
     print(f"  Http Port: {session.http_port}")
     print(f"  Token: {session.token}")
 

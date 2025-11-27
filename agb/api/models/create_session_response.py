@@ -15,6 +15,7 @@ class SessionData:
         task_id: Optional[str] = None,
         network_interface_ip: Optional[str] = None,
         http_port: Optional[int] = None,
+        token: Optional[str] = None,
     ):
         self.app_instance_id = app_instance_id
         self.resource_id = resource_id
@@ -25,6 +26,7 @@ class SessionData:
         self.task_id = task_id
         self.network_interface_ip = network_interface_ip
         self.http_port = http_port
+        self.token = token
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SessionData":
@@ -39,6 +41,7 @@ class SessionData:
             task_id=data.get("taskId"),
             network_interface_ip=data.get("networkInterfaceIp"),
             http_port=data.get("httpPort"),
+            token=data.get("token"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -53,6 +56,7 @@ class SessionData:
             "taskId": self.task_id,
             "networkInterfaceIp": self.network_interface_ip,
             "httpPort": self.http_port,
+            "token": self.token,
         }
 
 

@@ -50,7 +50,7 @@ async def main():
         )
 
         # Configure context synchronization
-        sync_path = "/home/wuying/demo-data"
+        sync_path = "/home/demo-data"
         context_sync = ContextSync.new(
             context.id,
             sync_path,

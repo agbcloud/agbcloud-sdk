@@ -450,7 +450,7 @@ class TestContextManager(unittest.TestCase):
         # Mock the response from the API
         mock_response = MagicMock()
         mock_response.is_successful.return_value = True
-        mock_response.get_context_status.return_value = '[{"type": "data", "data": "[{\\"contextId\\": \\"ctx-123\\", \\"path\\": \\"/home/wuying\\", \\"status\\": \\"completed\\", \\"taskType\\": \\"upload\\", \\"startTime\\": 1640995200, \\"finishTime\\": 1640995260, \\"errorMessage\\": \\"\\"}]"}]'
+        mock_response.get_context_status.return_value = '[{"type": "data", "data": "[{\\"contextId\\": \\"ctx-123\\", \\"path\\": \\"/home/data\\", \\"status\\": \\"completed\\", \\"taskType\\": \\"upload\\", \\"startTime\\": 1640995200, \\"finishTime\\": 1640995260, \\"errorMessage\\": \\"\\"}]"}]'
         mock_response.request_id = "req-123"
         self.session.get_client().get_context_info.return_value = mock_response
 
@@ -464,7 +464,7 @@ class TestContextManager(unittest.TestCase):
 
         status_data = result.context_status_data[0]
         self.assertEqual(status_data.context_id, "ctx-123")
-        self.assertEqual(status_data.path, "/home/wuying")
+        self.assertEqual(status_data.path, "/home/data")
         self.assertEqual(status_data.status, "completed")
         self.assertEqual(status_data.task_type, "upload")
         self.assertEqual(status_data.start_time, 1640995200)

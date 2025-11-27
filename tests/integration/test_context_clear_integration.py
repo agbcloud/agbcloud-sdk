@@ -96,7 +96,7 @@ class TestContextClearIntegration(unittest.TestCase):
             params = CreateSessionParams(
                 image_id="agb-code-space-2",
                 context_syncs=[
-                    ContextSync(context_id=context.id, path="/home/wuying/test_data")
+                    ContextSync(context_id=context.id, path="/home/test_data")
                 ]
             )
 
@@ -293,7 +293,7 @@ class TestContextClearIntegration(unittest.TestCase):
         params = CreateSessionParams(
             image_id="agb-code-space-2",
             context_syncs=[
-                ContextSync(context_id=context.id, path="/home/wuying/test_after_clear")
+                ContextSync(context_id=context.id, path="/home/test_after_clear")
             ]
         )
 

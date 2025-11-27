@@ -130,8 +130,8 @@ from agb.context_sync import BWList, WhiteList
 
 # Create white list
 white_list = WhiteList(
-    path="/home/wuying/data",  # Include path
-    exclude_paths=["/home/wuying/data/temp", "/home/wuying/data/cache"]  # Exclude sub-paths
+    path="/home/data",  # Include path
+    exclude_paths=["/home/data/temp", "/home/data/cache"]  # Exclude sub-paths
 )
 
 # Create black/white list configuration
@@ -160,7 +160,7 @@ MappingPolicy enables cross-Platform data persistence by mapping data from an or
 **Example:**
 ```python
 # Data was originally created at /tmp/mapping in a browser session
-# Now access it at /home/wuying/下载 in a code session
+# Now access it at /home/data in a code session
 mapping_policy = MappingPolicy(path="/tmp/mapping")
 
 sync_policy = SyncPolicy(
@@ -174,7 +174,7 @@ sync_policy = SyncPolicy(
 # Use in ContextSync with different target path
 context_sync = ContextSync.new(
     context_id=context.id,
-    path="/home/wuying/下载",  # New target path
+    path="/home/data",  # New target path
     policy=sync_policy
 )
 ```
@@ -225,11 +225,11 @@ sync_policy = SyncPolicy(
     bw_list=BWList(
         white_lists=[
             WhiteList(
-                path="/home/wuying/project",
+                path="/home/project",
                 exclude_paths=[
-                    "/home/wuying/project/temp",
-                    "/home/wuying/project/logs",
-                    "/home/wuying/project/.git"
+                    "/home/project/temp",
+                    "/home/project/logs",
+                    "/home/project/.git"
                 ]
             )
         ]
@@ -272,11 +272,11 @@ dev_sync_policy = SyncPolicy(
     bw_list=BWList(
         white_lists=[
             WhiteList(
-                path="/home/wuying/project",
+                path="/home/project",
                 exclude_paths=[
-                    "/home/wuying/project/node_modules",
-                    "/home/wuying/project/.git",
-                    "/home/wuying/project/temp"
+                    "/home/project/node_modules",
+                    "/home/project/.git",
+                    "/home/project/temp"
                 ]
             )
         ]
@@ -312,7 +312,7 @@ prod_sync_policy = SyncPolicy(
     bw_list=BWList(
         white_lists=[
             WhiteList(
-                path="/home/wuying/data",
+                path="/home/data",
                 exclude_paths=[]  # Don't exclude any paths
             )
         ]
@@ -348,10 +348,10 @@ big_data_sync_policy = SyncPolicy(
     bw_list=BWList(
         white_lists=[
             WhiteList(
-                path="/home/wuying/datasets",
+                path="/home/datasets",
                 exclude_paths=[
-                    "/home/wuying/datasets/raw",  # Exclude raw data
-                    "/home/wuying/datasets/temp"
+                    "/home/datasets/raw",  # Exclude raw data
+                    "/home/datasets/temp"
                 ]
             )
         ]
@@ -371,7 +371,7 @@ session_params = CreateSessionParams(image_id="agb-code-space-1")
 # Create Context sync configuration
 context_sync = ContextSync.new(
     context_id=context.id,
-    path="/home/wuying/my-workspace",
+    path="/home/my-workspace",
     policy=sync_policy  # Use the policy defined above
 )
 

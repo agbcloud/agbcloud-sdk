@@ -163,7 +163,7 @@ context = agb.context.get('test',True).context
 # Create Context sync configuration
 context_sync = ContextSync.new(
     context_id=context.id,
-    path="/home/wuying/my-data",  # Mount path in session
+    path="/home/my-data",  # Mount path in session
     policy=sync_policy
 )
 
@@ -269,7 +269,7 @@ sync_policy = SyncPolicy(
 # Query specific Context and path info
 context_info = session.context.info(
     context_id=context.id,
-    path="/home/wuying/my-data",
+    path="/home/my-data",
     task_type="upload"  # Only query upload tasks
 )
 
@@ -283,7 +283,7 @@ if context_info.success:
 ### 3. Cross-Session Data Persistence
 
 ```python
-context_sync = ContextSync.new(context_id=context.id, path="/home/wuying/my-data", policy=SyncPolicy())
+context_sync = ContextSync.new(context_id=context.id, path="/home/my-data", policy=SyncPolicy())
 session_params = CreateSessionParams(image_id="agb-code-space-1", context_syncs=[context_sync])
 
 session1_result = agb.create(session_params)
@@ -291,7 +291,7 @@ if session1_result.success:
     session1 = session1_result.session
 
     # Create file in first session
-    file_path = "/home/wuying/my-data/persistent-data.txt"
+    file_path = "/home/my-data/persistent-data.txt"
     create_result = session1.file_system.write_file(file_path, "This is persistent data")
 
     if create_result.success:

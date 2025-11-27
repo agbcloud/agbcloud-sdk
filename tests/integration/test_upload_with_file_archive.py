@@ -387,9 +387,9 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
         print(f"Created context: {context.name} (ID: {context.id})")
 
         try:
-            # 2. Create a session with context sync, using a timestamped path under /home/wuying/
+            # 2. Create a session with context sync, using a timestamped path under /home
             timestamp = int(time.time())
-            sync_path = f"/home/wuying/test-path-py-{timestamp}"
+            sync_path = f"/home/test-path-py-{timestamp}"
 
             # Use ARCHIVE upload mode for first session
             upload_policy = UploadPolicy(upload_mode=UploadMode.ARCHIVE)

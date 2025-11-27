@@ -56,7 +56,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
         # Create session for this test
         session_params = CreateSessionParams(image_id="agb-code-space-2")
         context_sync = ContextSync.new(
-            self.context.id, "/home/wuying", SyncPolicy()
+            self.context.id, "/home", SyncPolicy()
         )
         session_params.context_syncs = [context_sync]
 
@@ -113,7 +113,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
         # Create session for this test
         session_params = CreateSessionParams(image_id="agb-code-space-2")
         context_sync = ContextSync.new(
-            self.context.id, "/home/wuying", SyncPolicy()
+            self.context.id, "/home", SyncPolicy()
         )
         session_params.context_syncs = [context_sync]
 
@@ -161,7 +161,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
             for data in context_info.context_status_data:
                 if data.context_id == self.context.id:
                     found_context = True
-                    self.assertEqual(data.path, "/home/wuying")
+                    self.assertEqual(data.path, "/home")
                     # Status might vary, but should not be empty
                     self.assertIsNotNone(data.status)
                     self.assertNotEqual(data.status, "")
@@ -185,7 +185,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
         # Create session for this test
         session_params = CreateSessionParams(image_id="agb-code-space-2")
         context_sync = ContextSync.new(
-            self.context.id, "/home/wuying", SyncPolicy()
+            self.context.id, "/home", SyncPolicy()
         )
         session_params.context_syncs = [context_sync]
 
@@ -202,7 +202,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
 
             # Get context info with parameters
             context_info = session.context.info(
-                context_id=self.context.id, path="/home/wuying", task_type=None
+                context_id=self.context.id, path="/home", task_type=None
             )
 
             # Verify that we have a request ID
@@ -222,7 +222,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
             # If we have status data, verify it matches our filters
             for data in context_info.context_status_data:
                 if data.context_id == self.context.id:
-                    self.assertEqual(data.path, "/home/wuying")
+                    self.assertEqual(data.path, "/home")
 
         finally:
             # Clean up session
@@ -246,9 +246,9 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
         print(f"Created context: {context.name} (ID: {context.id})")
 
         try:
-            # 2. Create a session with context sync, using a timestamped path under /home/wuying/
+            # 2. Create a session with context sync, using a timestamped path under /home
             timestamp = int(time.time())
-            sync_path = f"/home/wuying/test-path-py-{timestamp}"
+            sync_path = f"/home/test-path-py-{timestamp}"
 
             # Use default policy
             default_policy = SyncPolicy()

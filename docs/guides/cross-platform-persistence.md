@@ -30,7 +30,7 @@ session_params.add_context_sync(context_id, "/target/path", sync_policy)
 
 By default, context data persistence is tied to the specific path where it was created. The **MappingPolicy** feature solves this limitation by allowing you to map the original path to a different target path in new sessions. This means:
 
-- Data created at `/tmp/mapping` can be accessed in a new session using a completely different path like `/home/wuying/下载`
+- Data created at `/tmp/mapping` can be accessed in a new session using a completely different path like `/home/data`
 - The new session doesn't need to use the same path - it can use any path you specify, and MappingPolicy will map the original data to this new location
 
 This enables true cross-environment data persistence between different image types (browser, code, etc.) with flexible path configuration.
@@ -105,7 +105,7 @@ ab.delete(session)
 
 ```python
 # Define the target path for the new session
-target_path = "/home/wuying/下载"
+target_path = "/home/data"
 
 # Create mapping policy with the original path
 mapping_policy = MappingPolicy(path=original_path)
@@ -275,7 +275,7 @@ def main():
     try:
         # Define paths
         browser_path = "/tmp/mapping"
-        code_path = "/home/wuying/下载"
+        code_path = "/home/data"
         filename = "cross-platform-test.txt"
         content = "Data created in browser session, accessed in code session"
         
@@ -325,7 +325,7 @@ if __name__ == "__main__":
 browser_path = "/tmp/mapping"
 
 # Target code session path
-code_path = "/home/wuying/下载"
+code_path = "/home/data"
 
 # Create mapping policy
 mapping_policy = MappingPolicy(path=browser_path)
@@ -335,7 +335,7 @@ mapping_policy = MappingPolicy(path=browser_path)
 
 ```python
 # Original code session path
-code_path = "/home/wuying/project"
+code_path = "/home/project"
 
 # Target browser session path
 browser_path = "/tmp/workspace"

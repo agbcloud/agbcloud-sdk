@@ -55,7 +55,7 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
         try:
             # Define paths
             browser_path = "/tmp/mapping"
-            code_path = "/home/wuying/下载"
+            code_path = "/home/data"
             test_file_name = "cross-platform-test.txt"
             test_content = "This file was created in browser session and should be accessible in code session"
 

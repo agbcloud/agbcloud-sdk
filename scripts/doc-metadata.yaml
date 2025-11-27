@@ -296,10 +296,10 @@ modules:
     python: agb.context_sync
 
     tutorials:
-      - url: ../../docs/guides/context-sync-policies.md
+      - url: ../../../docs/guides/context-sync-policies.md
         text: Context Sync Policies Guide
         description: Learn about context synchronization policies
-      - url: ../../docs/guides/cross-platform-persistence.md
+      - url: ../../../docs/guides/cross-platform-persistence.md
         text: Cross-Platform Data Persistence Guide
         description: Enable cross-environment data persistence with MappingPolicy
 

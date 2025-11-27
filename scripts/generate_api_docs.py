@@ -259,10 +259,70 @@ def load_metadata() -> dict[str, Any]:
     with open(METADATA_PATH, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f) or {}
 
-
 def get_module_name_from_path(module_path: str) -> str:
     """Extract module name from Python module path (e.g., agb.session -> session)."""
     return module_path.split('.')[-1]
+
+def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:
+    """Generate tutorial section markdown."""
+    module_config = metadata.get('modules', {}).get(module_name, {})
+    
+    # Check for new tutorials array format first
+    tutorials = module_config.get('tutorials')
+    if tutorials and isinstance(tutorials, list):
+        tutorial_links = []
+        for tutorial in tutorials:
+            url = tutorial.get('url', '')
+            text = tutorial.get('text', '')
+            description = tutorial.get('description', '')
+            if url and text:
+                tutorial_links.append(f"- **[{text}]({url})** - {description}")
+        
+        if tutorial_links:
+            return f"## Related Tutorials\n\n" + "\n".join(tutorial_links) + "\n\n"
+    
+    # Fallback to single tutorial format for backward compatibility
+    tutorial = module_config.get('tutorial')
+    if not tutorial:
+        return ""
+
+    emoji = module_config.get('emoji', '📖')
+
+    # Calculate correct relative path based on category depth
+    # From: docs/api-reference/{category}/{file}.md
+    # To: docs/quickstart.md or docs/guides/...
+    category = module_config.get('category', '.')
+
+    # If category is root (.), depth is 1 (just api-reference)
+    if category == '.':
+        depth = 1
+    else:
+        # category depth + 1 for api-reference
+        category_depth = len(category.split('/'))
+        depth = category_depth + 1
+
+    up_levels = '../' * depth
+
+    # Replace the hardcoded path with dynamically calculated one
+    tutorial_url = tutorial['url']
+    # Extract the part after 'docs/' from the URL
+    import re
+    docs_match = re.search(r'docs/(.+)$', tutorial_url)
+    if docs_match:
+        tutorial_url = f"{up_levels}{docs_match.group(1)}"
+
+    return f"""## {emoji} Related Tutorial
+
+    - [{tutorial['text']}]({tutorial_url}) - {tutorial['description']}
+
+"""
+
+
+def get_module_name_from_path(module_path: str) -> str:
+    """Extract module name from Python module path (e.g., agb.context_sync -> context-sync)."""
+    module_name = module_path.split('.')[-1]
+    # Convert underscore to hyphen to match configuration keys
+    return module_name.replace('_', '-')
 
 
 def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:

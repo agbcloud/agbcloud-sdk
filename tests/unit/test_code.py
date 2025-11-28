@@ -213,9 +213,9 @@ class TestCode(unittest.TestCase):
         result = self.code.run_code("print('test')", "python")
 
         self.assertTrue(result.success)
-        # Verify default timeout is 300
+        # Verify default timeout is 60
         call_args = self.code._call_mcp_tool.call_args
-        self.assertEqual(call_args[0][1]["timeout_s"], 300)
+        self.assertEqual(call_args[0][1]["timeout_s"], 60)
 
 
 if __name__ == "__main__":

@@ -90,6 +90,10 @@ class TestAGB(unittest.TestCase):
         mock_data.success = True
         mock_data.session_id = "new-session-id"
         mock_data.resource_url = "http://resource.url"
+        mock_data.app_instance_id = "app-instance-id"
+        mock_data.resource_id = "resource-id"
+        mock_data.http_port = 8080
+        mock_data.token = "token"
         mock_response.data = mock_data
         mock_response.request_id = "create-request-id"
 
@@ -102,7 +106,8 @@ class TestAGB(unittest.TestCase):
                 "sessionId": "new-session-id",
                 "resourceUrl": "http://resource.url",
                 "success": True
-            }
+            },
+            "requestId": "create-request-id"
         }
 
         mock_client.create_mcp_session.return_value = mock_response

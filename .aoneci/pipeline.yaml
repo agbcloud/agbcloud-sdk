@@ -179,6 +179,7 @@ jobs:
           python-version: "${{params.python_version}}"
       - id: run-tests
         run: |
+          set -e
           echo "执行单元测试..."
           pip install --upgrade pip
           pip install -e .[test]

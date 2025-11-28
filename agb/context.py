@@ -479,6 +479,12 @@ class ContextService:
         Returns:
             OperationResult: Result object containing success status and request ID.
         """
+        if context is None:
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message="context cannot be None",
+            )
         # Validate context.id
         if not context.id or (isinstance(context.id, str) and not context.id.strip()):
             error_msg = "context.id cannot be empty or None"
@@ -550,6 +556,12 @@ class ContextService:
         Returns:
             OperationResult: Result object containing success status and request ID.
         """
+        if context is None:
+            return OperationResult(
+                success=False,
+                error_message="context cannot be None",
+                request_id=""
+            )
         # Validate context.id
         if not context.id or (isinstance(context.id, str) and not context.id.strip()):
             error_msg = "context.id cannot be empty or None"

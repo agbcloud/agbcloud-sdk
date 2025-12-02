@@ -18,9 +18,9 @@
 |-----------|----------|----------|
 | 🤖 Browser Automation | [Browser Automation Guide](guides/browser-automation.md) | [Browser Examples](examples/browser/README.md) |
 | 🧩 Browser Extensions | [Extensions API](api-reference/reference/extensions.md) | [Extensions Examples](examples/extensions/README.md) |
-| 🐍 Execute Code | [Code Execution Guide](guides/code-execution.md) | [Code Examples](examples/file_system/README.md) |
+| 🐍 Execute Code | [Code Execution Guide](guides/code-execution.md) | [Code Examples](examples/README.md) |
 | 💾 File Operations | [File Operations Guide](guides/file-operations.md) | [File Examples](examples/file_system/README.md) |
-| ⚡ Execute Commands | [Command Execution Guide](guides/command-execution.md) | [Command Examples](examples/session_creation/README.md) |
+| ⚡ Execute Commands | [Command Execution Guide](guides/command-execution.md) | [Command Examples](examples/README.md) |
 
 ## 📚 Documentation Structure
 
@@ -50,7 +50,7 @@ pip install agbcloud-sdk
 export AGB_API_KEY="your_api_key"
 ```
 
-**Important**: When using AGB, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account You can view and manage your available images in the [AGB Console Image Management](https://agb.cloud/console/image-management) page.
+**Important**: When using AGB, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account. You can view and manage your available images in the [AGB Console Image Management](https://agb.cloud/console/image-management) page.
 
 ### First Example
 ```python

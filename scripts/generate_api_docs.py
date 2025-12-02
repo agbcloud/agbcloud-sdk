@@ -1091,6 +1091,9 @@ def format_markdown(raw_content: str, title: str, module_name: str, metadata: di
     if resources_section:
         content = content.rstrip() + "\n\n" + resources_section
 
+    # Trim trailing spaces from each line
+    content = "\n".join([line.rstrip() for line in content.splitlines()])
+
     # Add footer
     content = content.rstrip() + "\n\n---\n\n*Documentation generated automatically from source code using pydoc-markdown.*\n"
     return content

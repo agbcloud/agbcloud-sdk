@@ -151,8 +151,8 @@ class ExtensionsService:
         Args:
             agb (AGB): The AGB client instance.
             context_id (str, optional): The context ID or name. If empty or not provided,
-                                       a default context name will be generated automatically.
-                                       If the context doesn't exist, it will be automatically created.
+                a default context name will be generated automatically.
+                If the context doesn't exist, it will be automatically created.
 
         Note:
             The service automatically detects if the context exists. If not,
@@ -211,6 +211,9 @@ class ExtensionsService:
         """
         Lists all available browser extensions within this context from the cloud.
         Uses the context service to list files under the extensions directory.
+
+        Returns:
+            List[Extension]: A list of Extension objects.
         """
         try:
             # Use context service to list files in the extensions directory
@@ -238,7 +241,19 @@ class ExtensionsService:
             raise AGBError(f"An error occurred while listing browser extensions: {e}") from e
 
     def create(self, local_path: str) -> Extension:
-        """Uploads a new browser extension from a local path into the current context."""
+        """
+        Uploads a new browser extension from a local path into the current context.
+
+        Args:
+            local_path (str): Path to the local extension file (must be .zip).
+
+        Returns:
+            Extension: The created Extension object.
+
+        Raises:
+            FileNotFoundError: If the local file does not exist.
+            ValueError: If the file format is not supported.
+        """
         if not os.path.exists(local_path):
             raise FileNotFoundError(f"The specified local file was not found: {local_path}")
 
@@ -259,7 +274,20 @@ class ExtensionsService:
         return Extension(id=extension_id, name=extension_name)
 
     def update(self, extension_id: str, new_local_path: str) -> Extension:
-        """Updates an existing browser extension in the current context with a new file."""
+        """
+        Updates an existing browser extension in the current context with a new file.
+
+        Args:
+            extension_id (str): The ID of the extension to update.
+            new_local_path (str): Path to the new local extension file.
+
+        Returns:
+            Extension: The updated Extension object.
+
+        Raises:
+            FileNotFoundError: If the new local file does not exist.
+            ValueError: If the extension ID is not found.
+        """
         if not os.path.exists(new_local_path):
             raise FileNotFoundError(f"The specified new local file was not found: {new_local_path}")
 
@@ -323,7 +351,15 @@ class ExtensionsService:
             return False
 
     def delete(self, extension_id: str) -> bool:
-        """Deletes a browser extension from the current context."""
+        """
+        Deletes a browser extension from the current context.
+
+        Args:
+            extension_id (str): The ID of the extension to delete.
+
+        Returns:
+            bool: True if deletion was successful, False otherwise.
+        """
         remote_path = f"{EXTENSIONS_BASE_PATH}/{extension_id}"
         try:
             # Use context service to delete the file

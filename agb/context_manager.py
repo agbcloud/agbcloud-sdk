@@ -73,6 +73,17 @@ class ContextManager:
         path: Optional[str] = None,
         task_type: Optional[str] = None,
     ) -> ContextInfoResult:
+        """
+        Get detailed information about context synchronization status.
+
+        Args:
+            context_id (Optional[str]): The ID of the context to query.
+            path (Optional[str]): Specific path within the context to query.
+            task_type (Optional[str]): Filter by task type (e.g., "upload", "download").
+
+        Returns:
+            ContextInfoResult: Result object containing status information.
+        """
         request = GetContextInfoRequest(
             authorization=f"Bearer {self.session.get_api_key()}",
             session_id=self.session.get_session_id(),
@@ -175,15 +186,15 @@ class ContextManager:
             session.context.sync(callback=lambda success: logger.info(f"Done: {success}"))
 
         Args:
-            context_id: ID of the context to sync
-            path: Path to sync
-            mode: Sync mode
-            callback: Optional callback function that receives success status
-            max_retries: Maximum number of retries for polling (default: 150)
-            retry_interval: Milliseconds to wait between retries (default: 1500)
+            context_id (Optional[str]): ID of the context to sync.
+            path (Optional[str]): Path to sync.
+            mode (Optional[str]): Sync mode.
+            callback (Optional[Callable[[bool], None]]): Optional callback function that receives success status.
+            max_retries (int): Maximum number of retries for polling. Defaults to 150.
+            retry_interval (int): Milliseconds to wait between retries. Defaults to 1500.
 
         Returns:
-            ContextSyncResult: Result of the sync operation
+            ContextSyncResult: Result of the sync operation.
         """
         request = SyncContextRequest(
             authorization=f"Bearer {self.session.get_api_key()}",
@@ -245,11 +256,11 @@ class ContextManager:
         Polls the info interface to check if sync is completed and calls callback.
 
         Args:
-            callback: Callback function that receives success status
-            context_id: ID of the context to check
-            path: Path to check
-            max_retries: Maximum number of retries
-            retry_interval: Milliseconds to wait between retries
+            callback (Callable[[bool], None]): Callback function that receives success status.
+            context_id (Optional[str]): ID of the context to check.
+            path (Optional[str]): Path to check.
+            max_retries (int): Maximum number of retries.
+            retry_interval (int): Milliseconds to wait between retries.
         """
         for retry in range(max_retries):
             try:
@@ -313,13 +324,13 @@ class ContextManager:
         Async version of polling for sync completion.
 
         Args:
-            context_id: ID of the context to check
-            path: Path to check
-            max_retries: Maximum number of retries
-            retry_interval: Milliseconds to wait between retries
+            context_id (Optional[str]): ID of the context to check.
+            path (Optional[str]): Path to check.
+            max_retries (int): Maximum number of retries.
+            retry_interval (int): Milliseconds to wait between retries.
 
         Returns:
-            bool: True if sync completed successfully, False otherwise
+            bool: True if sync completed successfully, False otherwise.
         """
         for retry in range(max_retries):
             try:

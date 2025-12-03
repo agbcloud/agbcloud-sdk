@@ -22,7 +22,12 @@ class ApiResponse:
         self.request_id = request_id
 
     def get_request_id(self) -> str:
-        """Returns the unique identifier for the API request."""
+        """
+        Returns the unique identifier for the API request.
+
+        Returns:
+            str: The request ID.
+        """
         return self.request_id
 
 

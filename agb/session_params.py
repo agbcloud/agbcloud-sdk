@@ -70,11 +70,9 @@ class BrowserContext:
         Args:
             context_id (str): ID of the browser context to bind to the session.
                              This identifies the browser instance for the session.
-
-            auto_upload (bool, optional): Whether to automatically upload browser data
+            auto_upload (bool): Whether to automatically upload browser data
                                         when the session ends. Defaults to True.
-
-            extension_option (Optional[ExtensionOption], optional): Extension configuration object containing
+            extension_option (Optional[ExtensionOption]): Extension configuration object containing
                                                                    context_id and extension_ids. This encapsulates
                                                                    all extension-related configuration.
                                                                    Defaults to None.
@@ -199,7 +197,7 @@ class CreateSessionParams:
             labels (Optional[Dict[str, str]]): Custom labels for the Session. Defaults to None.
             image_id (Optional[str]): ID of the image to use for the session.
             context_syncs (Optional[List[ContextSync]]): List of context synchronization configurations. Defaults to None.
-            browser_context (Optional[BrowserContext], optional): Browser context configuration.
+            browser_context (Optional[BrowserContext]): Browser context configuration.
                 If extension_ids are provided in BrowserContext, extension syncs will be
                 automatically added. Defaults to None.
         """

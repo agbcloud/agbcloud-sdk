@@ -198,6 +198,17 @@ def prune_members(container, module_name: str, exclude_methods: list = None, glo
         if isinstance(member, docspec.Variable) and member.name == 'logger':
             continue
 
+        # Filter out TypeVar definitions
+        # These usually appear as simple variable assignments in the module scope
+        # We'll check if the value looks like a TypeVar instantiation
+        if isinstance(member, docspec.Variable):
+            # If it's a single-letter variable name like T, T_co, etc., it's likely a TypeVar
+            if len(member.name) <= 4 and member.name.startswith('T'):
+                continue
+            # Or if the value indicates it's a TypeVar (if value is available in docspec)
+            if member.value and 'TypeVar' in str(member.value):
+                continue
+
         # Apply smart filtering for methods
         if isinstance(member, docspec.Function):
             if should_exclude_method(member, exclude_methods, global_rules):
@@ -1012,12 +1023,28 @@ def normalize_class_headers(content: str) -> str:
     return '\n'.join(fixed_lines)
 
 
+def remove_typevar_definitions(content: str) -> str:
+    """
+    Remove TypeVar definitions from documentation.
+    Matches patterns like: T = TypeVar("T", ...)
+    """
+    import re
+
+    # Pattern to match TypeVar code blocks
+    # Matches: ```python\nT = TypeVar("T", ...)\n```
+    pattern = r'^```python\n\w+\s*=\s*TypeVar\(.*?\)\n```\n\n'
+
+    content = re.sub(pattern, '', content, flags=re.MULTILINE)
+    return content
+
+
 def format_markdown(raw_content: str, title: str, module_name: str, metadata: dict[str, Any]) -> str:
     """Enhanced markdown formatting with metadata injection."""
     content = raw_content.lstrip()
 
     # Remove unwanted content
     content = remove_logger_definitions(content)
+    content = remove_typevar_definitions(content)
     content = remove_sessioninfo_class(content)
 
     # Fix code block indentation in Example sections

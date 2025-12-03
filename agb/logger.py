@@ -33,12 +33,12 @@ class AGBLogger:
         Setup the logger with custom configuration.
 
         Args:
-            level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-            log_file: Path to log file (optional)
-            enable_console: Whether to enable console logging
-            enable_file: Whether to enable file logging
-            rotation: Log file rotation size
-            retention: Log file retention period
+            level (str): Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Defaults to "INFO".
+            log_file (Optional[Union[str, Path]]): Path to log file (optional). Defaults to None.
+            enable_console (bool): Whether to enable console logging. Defaults to True.
+            enable_file (bool): Whether to enable file logging. Defaults to True.
+            rotation (str): Log file rotation size. Defaults to "10 MB".
+            retention (str): Log file retention period. Defaults to "30 days".
         """
         if cls._initialized:
             return
@@ -106,10 +106,10 @@ class AGBLogger:
         Get a logger instance.
 
         Args:
-            name: Logger name (optional)
+            name (Optional[str]): Logger name (optional). Defaults to None.
 
         Returns:
-            Configured logger instance
+            logger: Configured logger instance.
         """
         if not cls._initialized:
             cls.setup()
@@ -124,7 +124,7 @@ class AGBLogger:
         Set the logging level.
 
         Args:
-            level: New log level
+            level (str): New log level.
         """
         cls._log_level = level.upper()
         if cls._initialized:
@@ -150,24 +150,36 @@ def get_logger(name: str):
     Convenience function to get a named logger.
 
     Args:
-        name: Logger name
+        name (str): Logger name.
 
     Returns:
-        Named logger instance
+        logger: Named logger instance.
     """
     return AGBLogger.get_logger(name)
 
 
 # Compatibility functions for common logging patterns
 def log_api_call(api_name: str, request_data: str = "") -> None:
-    """Log API call with consistent formatting."""
+    """
+    Log API call with consistent formatting.
+
+    Args:
+        api_name (str): Name of the API being called.
+        request_data (str): Data sent with the request. Defaults to "".
+    """
     log.opt(depth=1).info(f"🔗 API Call: {api_name}")
     if request_data:
         log.opt(depth=1).debug(f"📤 Request: {request_data}")
 
 
 def log_api_response(response_data: str, success: bool = True) -> None:
-    """Log API response with consistent formatting."""
+    """
+    Log API response with consistent formatting.
+
+    Args:
+        response_data (str): Data received in the response.
+        success (bool): Whether the API call was successful. Defaults to True.
+    """
     if success:
         log.opt(depth=1).info("✅ API Response received")
         log.opt(depth=1).info(f"📥 Response: {response_data}")
@@ -177,27 +189,51 @@ def log_api_response(response_data: str, success: bool = True) -> None:
 
 
 def log_operation_start(operation: str, details: str = "") -> None:
-    """Log the start of an operation."""
+    """
+    Log the start of an operation.
+
+    Args:
+        operation (str): Name of the operation.
+        details (str): Additional details about the operation. Defaults to "".
+    """
     log.opt(depth=1).info(f"🚀 Starting: {operation}")
     if details:
         log.opt(depth=1).debug(f"📋 Details: {details}")
 
 
 def log_operation_success(operation: str, result: str = "") -> None:
-    """Log successful operation completion."""
+    """
+    Log successful operation completion.
+
+    Args:
+        operation (str): Name of the operation.
+        result (str): Result details of the operation. Defaults to "".
+    """
     log.opt(depth=1).info(f"✅ Completed: {operation}")
     if result:
         log.opt(depth=1).debug(f"📊 Result: {result}")
 
 
 def log_operation_error(operation: str, error: str) -> None:
-    """Log operation error."""
+    """
+    Log operation error.
+
+    Args:
+        operation (str): Name of the operation.
+        error (str): Error message.
+    """
     log.opt(depth=1).error(f"❌ Failed: {operation}")
     log.opt(depth=1).error(f"💥 Error: {error}")
 
 
 def log_warning(message: str, details: str = "") -> None:
-    """Log warning with consistent formatting."""
+    """
+    Log warning with consistent formatting.
+
+    Args:
+        message (str): Warning message.
+        details (str): Additional details about the warning. Defaults to "".
+    """
     log.opt(depth=1).warning(f"⚠️  {message}")
     if details:
         log.opt(depth=1).warning(f"📝 Details: {details}")

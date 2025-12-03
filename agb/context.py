@@ -612,7 +612,16 @@ class ContextService:
             )
 
     def get_file_download_url(self, context_id: str, file_path: str) -> FileUrlResult:
-        """Get a presigned download URL for a file in a context."""
+        """
+        Get a presigned download URL for a file in a context.
+
+        Args:
+            context_id (str): The ID of the context.
+            file_path (str): The path of the file within the context.
+
+        Returns:
+            FileUrlResult: Result object containing the download URL.
+        """
         # Validate required parameters
         if not context_id or (isinstance(context_id, str) and not context_id.strip()):
             error_msg = "context_id cannot be empty or None"
@@ -663,7 +672,16 @@ class ContextService:
         )
 
     def get_file_upload_url(self, context_id: str, file_path: str) -> FileUrlResult:
-        """Get a presigned upload URL for a file in a context."""
+        """
+        Get a presigned upload URL for a file in a context.
+
+        Args:
+            context_id (str): The ID of the context.
+            file_path (str): The path of the file within the context.
+
+        Returns:
+            FileUrlResult: Result object containing the upload URL.
+        """
         # Validate required parameters
         if not context_id or (isinstance(context_id, str) and not context_id.strip()):
             error_msg = "context_id cannot be empty or None"
@@ -714,7 +732,16 @@ class ContextService:
         )
 
     def delete_file(self, context_id: str, file_path: str) -> OperationResult:
-        """Delete a file in a context."""
+        """
+        Delete a file in a context.
+
+        Args:
+            context_id (str): The ID of the context.
+            file_path (str): The path of the file within the context.
+
+        Returns:
+            OperationResult: Result object containing success status.
+        """
         # Validate required parameters
         if not context_id or (isinstance(context_id, str) and not context_id.strip()):
             error_msg = "context_id cannot be empty or None"
@@ -767,13 +794,17 @@ class ContextService:
         page_number: int = 1,
         page_size: int = 50,
     ) -> ContextFileListResult:
-        """List files under a specific folder path in a context.
+        """
+        List files under a specific folder path in a context.
 
         Args:
             context_id (str): The ID of the context.
             parent_folder_path (Optional[str]): The parent folder path. Can be empty or None.
             page_number (int): Page number for pagination. Defaults to 1.
             page_size (int): Page size for pagination. Defaults to 50.
+
+        Returns:
+            ContextFileListResult: Result object containing list of file entries.
         """
         # Validate required parameters
         if not context_id or (isinstance(context_id, str) and not context_id.strip()):
@@ -985,17 +1016,17 @@ class ContextService:
         - "available": Clearing completed successfully (final success state)
 
         Args:
-        context_id: Unique ID of the context to clear.
-        timeout: Timeout in seconds to wait for task completion. Defaults to 60.
-        poll_interval: Interval in seconds between status polls. Defaults to 2.0.
+            context_id (str): Unique ID of the context to clear.
+            timeout (int): Timeout in seconds to wait for task completion. Defaults to 60.
+            poll_interval (float): Interval in seconds between status polls. Defaults to 2.0.
 
-    Returns:
-        ClearContextResult object containing the final task result.
-        The status field will be "available" on success.
+        Returns:
+            ClearContextResult: ClearContextResult object containing the final task result.
+                The status field will be "available" on success.
 
-    Raises:
-        ClearanceTimeoutError: If the task fails to complete within the timeout.
-        AGBError: If an API or network error occurs during execution.
+        Raises:
+            ClearanceTimeoutError: If the task fails to complete within the timeout.
+            AGBError: If an API or network error occurs during execution.
         """
         # 1. Asynchronously start the clearing task
         start_result = self.clear_async(context_id)

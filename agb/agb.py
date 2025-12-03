@@ -73,8 +73,8 @@ class AGB:
         Create a new session in the AGB cloud environment.
 
         Args:
-            params (Optional[CreateSessionParams], optional): Parameters for
-              creating the session.Defaults to None.
+            params (Optional[CreateSessionParams]): Parameters for creating the session.
+                Defaults to None.
 
         Returns:
             SessionResult: Result containing the created session and request ID.
@@ -248,11 +248,11 @@ class AGB:
         Returns paginated list of session IDs filtered by labels.
 
         Args:
-            labels (Optional[Dict[str, str]], optional): Labels to filter sessions.
+            labels (Optional[Dict[str, str]]): Labels to filter sessions.
                 Defaults to None (empty dict).
-            page (Optional[int], optional): Page number for pagination (starting from 1).
+            page (Optional[int]): Page number for pagination (starting from 1).
                 Defaults to None (returns first page).
-            limit (Optional[int], optional): Maximum number of items per page.
+            limit (Optional[int]): Maximum number of items per page.
                 Defaults to None (uses default of 10).
 
         Returns:
@@ -400,7 +400,7 @@ class AGB:
 
         Args:
             session (BaseSession): The session to delete.
-            sync_context (bool, optional): Whether to sync context before deletion. Defaults to False.
+            sync_context (bool): Whether to sync context before deletion. Defaults to False.
 
         Returns:
             DeleteResult: Result indicating success or failure and request ID.

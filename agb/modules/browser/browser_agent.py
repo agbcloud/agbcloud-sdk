@@ -112,10 +112,10 @@ class BrowserAgent(BaseService):
         Navigates a specific page to the given URL.
 
         Args:
-            url: The URL to navigate to.
+            url (str): The URL to navigate to.
 
         Returns:
-            A string indicating the result of the navigation.
+            str: A string indicating the result of the navigation.
         """
         if not self.browser.is_initialized():
             raise BrowserError(
@@ -229,6 +229,9 @@ class BrowserAgent(BaseService):
         """
         Asynchronously closes the remote browser agent session.
         This will terminate the browser process managed by the agent.
+
+        Returns:
+            bool: True if the session was closed successfully, False otherwise.
         """
         try:
             response = self._call_mcp_tool_timeout("page_use_close_session", args={})
@@ -250,10 +253,11 @@ class BrowserAgent(BaseService):
         Perform an action on a web page, using ActOptions to configure behavior.
 
         Args:
-            page (Optional[Page]): The Playwright Page object to act on. If None, the agent's
-                                   currently focused page will be used automatically.
             action_input (Union[ObserveResult, ActOptions]): The action to perform, either as a
                                                              pre-defined ObserveResult or custom ActOptions.
+            page (Optional[Page]): The Playwright Page object to act on. If None, the agent's
+                                   currently focused page will be used automatically.
+
         Returns:
             ActResult: The result of the action.
         """
@@ -276,9 +280,9 @@ class BrowserAgent(BaseService):
         Asynchronously perform an action on a web page.
 
         Args:
+            action_input (Union[ObserveResult, ActOptions]): The action to perform.
             page (Optional[Page]): The Playwright Page object to act on. If None, the agent's
                                    currently focused page will be used automatically.
-            action_input (Union[ObserveResult, ActOptions]): The action to perform.
 
         Returns:
             ActResult: The result of the action.
@@ -435,9 +439,9 @@ class BrowserAgent(BaseService):
         Observe elements or state on a web page.
 
         Args:
+            options (ObserveOptions): Options to configure the observation behavior.
             page (Optional[Page]): The Playwright Page object to observe. If None, the agent's
                                    currently focused page will be used.
-            options (ObserveOptions): Options to configure the observation behavior.
 
         Returns:
             Tuple[bool, List[ObserveResult]]: A tuple containing a success boolean and a list
@@ -462,9 +466,9 @@ class BrowserAgent(BaseService):
         Asynchronously observe elements or state on a web page.
 
         Args:
+            options (ObserveOptions): Options to configure the observation behavior.
             page (Optional[Page]): The Playwright Page object to observe. If None, the agent's
                                    currently focused page will be used.
-            options (ObserveOptions): Options to configure the observation behavior.
 
         Returns:
             Tuple[bool, List[ObserveResult]]: A tuple containing a success boolean and a list
@@ -531,9 +535,9 @@ class BrowserAgent(BaseService):
         Extract information from a web page.
 
         Args:
+            options (ExtractOptions): Options to configure the extraction, including schema.
             page (Optional[Page]): The Playwright Page object to extract from. If None, the agent's
                                    currently focused page will be used.
-            options (ExtractOptions): Options to configure the extraction, including schema.
 
         Returns:
             Tuple[bool, T]: A tuple containing a success boolean and the extracted data as a
@@ -558,9 +562,9 @@ class BrowserAgent(BaseService):
         Asynchronously extract information from a web page.
 
         Args:
+            options (ExtractOptions): Options to configure the extraction, including schema.
             page (Optional[Page]): The Playwright Page object to extract from. If None, the agent's
                                    currently focused page will be used.
-            options (ExtractOptions): Options to configure the extraction, including schema.
 
         Returns:
             Tuple[bool, T]: A tuple containing a success boolean and the extracted data as a
@@ -666,10 +670,13 @@ class BrowserAgent(BaseService):
     def _get_page_and_context_index(self, page):
         """
         Given a Playwright Page object, return its page index within the context and the context index within the browser.
+
         Args:
-            page: Playwright Page object
+            page (Page): Playwright Page object.
+
         Returns:
-            (str, int): (page_index, context_index)
+            (str, int): A tuple containing (page_index, context_index).
+
         Raises:
             BrowserError: If indices cannot be determined.
         """
@@ -692,10 +699,13 @@ class BrowserAgent(BaseService):
     async def _get_page_and_context_index_async(self, page):
         """
         Async version of _get_page_and_context_index for getting page and context indices asynchronously.
+
         Args:
-            page: Playwright Page object
+            page (Page): Playwright Page object.
+
         Returns:
-            (str, int): (page_index, context_index)
+            (str, int): A tuple containing (page_index, context_index).
+
         Raises:
             BrowserError: If indices cannot be determined.
         """

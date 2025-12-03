@@ -49,19 +49,42 @@ class BaseSession:
         self.context = ContextManager(self)
 
     def get_api_key(self) -> str:
-        """Return the API key for this session."""
+        """
+        Return the API key for this session.
+
+        Returns:
+            str: The API key.
+        """
         return self.agb.api_key
 
     def get_session_id(self) -> str:
-        """Return the session_id for this session."""
+        """
+        Return the session_id for this session.
+
+        Returns:
+            str: The session ID.
+        """
         return self.session_id
 
     def get_client(self):
-        """Return the HTTP client for this session."""
+        """
+        Return the HTTP client for this session.
+
+        Returns:
+            Client: The HTTP client instance.
+        """
         return self.agb.client
 
     def find_server_for_tool(self, tool_name: str) -> str:
-        """Find the server that provides the specified tool."""
+        """
+        Find the server that provides the specified tool.
+
+        Args:
+            tool_name (str): Name of the tool to find.
+
+        Returns:
+            str: The server name.
+        """
         # For now, return a default server name
         return "default-server"
 
@@ -70,10 +93,10 @@ class BaseSession:
         Validates labels parameter for label operations.
 
         Args:
-            labels: The labels to validate
+            labels (Dict[str, str]): The labels to validate.
 
         Returns:
-            None if validation passes, or OperationResult with error if validation fails
+            Optional[OperationResult]: None if validation passes, or OperationResult with error if validation fails.
         """
         # Check if labels is None
         if labels is None:
@@ -326,9 +349,9 @@ class BaseSession:
         Get a link associated with the current session.
 
         Args:
-            protocol_type (Optional[str], optional): The protocol type to use for the
+            protocol_type (Optional[str]): The protocol type to use for the
                 link. Defaults to None.
-            port (Optional[int], optional): The port to use for the link.
+            port (Optional[int]): The port to use for the link.
 
         Returns:
             OperationResult: Result containing the link as data and request ID.
@@ -382,8 +405,7 @@ class BaseSession:
         Delete a session by session object.
 
         Args:
-            session (BaseSession): The session to delete.
-            sync_context (bool, optional): Whether to sync context before deletion. Defaults to False.
+            sync_context (bool): Whether to sync context before deletion. Defaults to False.
 
         Returns:
             DeleteResult: Result indicating success or failure and request ID.

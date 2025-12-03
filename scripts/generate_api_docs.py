@@ -194,6 +194,10 @@ def prune_members(container, module_name: str, exclude_methods: list = None, glo
         if isinstance(member, docspec.Indirection):
             continue
 
+        # Filter out logger variable
+        if isinstance(member, docspec.Variable) and member.name == 'logger':
+            continue
+
         # Apply smart filtering for methods
         if isinstance(member, docspec.Function):
             if should_exclude_method(member, exclude_methods, global_rules):
@@ -587,8 +591,9 @@ def remove_logger_definitions(content: str) -> str:
     import re
 
     # Pattern to match logger code block at the beginning
-    # Matches: ```python\nlogger = get_logger("...")\n```
-    pattern = r'^```python\nlogger = get_logger\(["\'].*?["\']\)\n```\n\n'
+    # Matches: ```python\nlogger = get_logger(...)\n```
+    # Updated to match both string literals and variables like __name__
+    pattern = r'^```python\nlogger = get_logger\(.*?\)\n```\n\n'
 
     content = re.sub(pattern, '', content, flags=re.MULTILINE)
     return content

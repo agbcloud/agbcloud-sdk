@@ -19,6 +19,11 @@ This directory contains the complete user guide for AGB SDK, designed with a pro
   - Recommended configurations for different scenarios
   - Performance tuning and troubleshooting
 
+- **[cross-platform-persistence.md](cross-platform-persistence.md)** - Cross-Platform Data Persistence Guide
+  - Cross-platform data persistence using MappingPolicy
+  - Path mapping between different session types
+  - Browser to code session data sharing
+
 - **[code-execution.md](code-execution.md)** - Code Execution Guide
   - Python and JavaScript code execution
   - Code execution best practices

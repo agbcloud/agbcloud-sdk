@@ -8,15 +8,6 @@ params:
     default: "agbcloud/agbcloud-docs"
     description: "Target GitHub repository (format: username/repo-name)"
 
-  docs_sync_mode:
-    name: Documentation Sync Mode
-    type: string
-    default: "full"
-    options:
-      - "incremental"  # Only sync changed files
-      - "full"         # Fully sync the entire docs directory
-    description: "Choose how to sync documentation files"
-
   runs_on_resources:
     name: Resource Specification
     description: "Runtime container resource specification"
@@ -39,7 +30,7 @@ jobs:
       - uses: checkout
         inputs:
           fetch-depth: 0
-          ref: 'master'
+          ref: 'dev'
           username: 'wuying-ai-team'
           token: ${{secrets.wuying_ai_team_private_token}}
 
@@ -120,23 +111,23 @@ jobs:
           fi
 
           # Check GitHub username variable
-          if [ -z "${{vars.sweetcoder_li_github_username}}" ]; then
-            echo "❌ sweetcoder_li_github_username not configured in GitLab Variables"
-            echo "Please add sweetcoder_li_github_username to GitLab CI/CD Variables"
+          if [ -z "${{vars.agbaccount_github_username}}" ]; then
+            echo "❌ agbaccount_github_username not configured in GitLab Variables"
+            echo "Please add agbaccount_github_username to GitLab CI/CD Variables"
             exit 1
           fi
 
           # Check GitHub email variable
-          if [ -z "${{vars.sweetcoder_li_github_email}}" ]; then
-            echo "❌ sweetcoder_li_github_email not configured in GitLab Variables"
-            echo "Please add sweetcoder_li_github_email to GitLab CI/CD Variables"
+          if [ -z "${{vars.agbaccount_github_email}}" ]; then
+            echo "❌ agbaccount_github_email not configured in GitLab Variables"
+            echo "Please add agbaccount_github_email to GitLab CI/CD Variables"
             exit 1
           fi
 
           echo "✅ GitHub credentials and user information validated"
           echo "  - Token: Configured"
-          echo "  - Username: ${{vars.sweetcoder_li_github_username}}"
-          echo "  - Email: ${{vars.sweetcoder_li_github_email}}"
+          echo "  - Username: ${{vars.agbaccount_github_username}}"
+          echo "  - Email: ${{vars.agbaccount_github_email}}"
 
           # Determine target repository
           GITHUB_REPO="${{params.github_repo}}"
@@ -207,7 +198,6 @@ jobs:
 
           echo "✅ GitHub configuration validated"
           echo "  - Repository: $GITHUB_REPO"
-          echo "  - Sync Mode: ${{params.docs_sync_mode}}"
           echo "  - Token: Valid and authenticated"
           echo "  - Repository Access: Confirmed"
 
@@ -220,13 +210,11 @@ jobs:
           echo "🚀 Starting documentation push to GitHub..."
 
           GITHUB_REPO="${{params.github_repo}}"
-          SYNC_MODE="${{params.docs_sync_mode}}"
 
           echo "📋 Push Configuration:"
           echo "  - Repository: $GITHUB_REPO"
           echo "  - Development Branch: (will be randomly generated)"
           echo "  - Base Branch: main"
-          echo "  - Sync Mode: $SYNC_MODE"
           echo "  - Files Count: $DOCS_FILES_COUNT"
 
           # Create working directory
@@ -319,13 +307,12 @@ jobs:
           git fetch origin
 
           # Determine base branch
-          PR_TARGET_BRANCH="main"
+          PR_TARGET_BRANCH="dev"
 
-          # Generate random development branch name
-          TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
-          RANDOM_SUFFIX=$(openssl rand -hex 4 2>/dev/null || echo $(( RANDOM % 10000 )))
-          GITHUB_BRANCH="docs-sync-${TIMESTAMP}-${RANDOM_SUFFIX}"
+          # Set Development Branch to dev
+          GITHUB_BRANCH="dev"
 
+<<<<<<< HEAD
           echo "🔄 Creating random development branch: $GITHUB_BRANCH"
           echo "📋 Base branch: $PR_TARGET_BRANCH"
 <<<<<<< ours
@@ -337,52 +324,86 @@ jobs:
 =======
 >>>>>>> theirs
 =======
+=======
+          echo "🔄 Target branch: $GITHUB_BRANCH"
+>>>>>>> ci(docs): optimize docs sync workflow and fix config validation
 
           # Save branch name to environment for later steps
           echo "GITHUB_BRANCH=$GITHUB_BRANCH" >> $AONE_CI_ENV
 
+<<<<<<< HEAD
 >>>>>>> theirs
           # Check if base branch exists
           if git show-ref --verify --quiet "refs/remotes/origin/$PR_TARGET_BRANCH"; then
             echo "✅ Found base branch: $PR_TARGET_BRANCH"
             git checkout -b "$GITHUB_BRANCH" "origin/$PR_TARGET_BRANCH"
+=======
+          # Check if target branch exists
+          if git show-ref --verify --quiet "refs/remotes/origin/$GITHUB_BRANCH"; then
+            echo "✅ Found target branch: $GITHUB_BRANCH"
+            git checkout -b "$GITHUB_BRANCH" "origin/$GITHUB_BRANCH"
+>>>>>>> ci(docs): optimize docs sync workflow and fix config validation
           else
-            echo "⚠️ Base branch $PR_TARGET_BRANCH not found, trying main..."
+            echo "⚠️ Target branch $GITHUB_BRANCH not found on remote, creating new branch from default..."
+            # Try to find a base to branch off from if dev doesn't exist yet
             if git show-ref --verify --quiet "refs/remotes/origin/main"; then
               git checkout -b "$GITHUB_BRANCH" "origin/main"
-              PR_TARGET_BRANCH="main"
             elif git show-ref --verify --quiet "refs/remotes/origin/master"; then
               git checkout -b "$GITHUB_BRANCH" "origin/master"
-              PR_TARGET_BRANCH="master"
             else
-              echo "❌ No suitable base branch found (main/master)"
-              exit 1
+              # If explicit base not found, just use current HEAD
+              git checkout -b "$GITHUB_BRANCH"
             fi
           fi
 
-          echo "✅ Created random development branch '$GITHUB_BRANCH' from '$PR_TARGET_BRANCH'"
+          echo "✅ Switched to branch '$GITHUB_BRANCH'"
 
           # Sync documentation files
           echo "📋 Syncing documentation files..."
 
-          if [ "$SYNC_MODE" = "full" ]; then
-            # Full sync: Remove existing docs directory and copy fresh
-            echo "🔄 Full sync mode: Replacing entire docs directory"
-            rm -rf docs/
-            mkdir -p docs/
-          else
-            # Incremental sync: Keep existing structure, only update files
-            echo "📈 Incremental sync mode: Updating changed files"
-            mkdir -p docs/
-          fi
+          # Ensure target directory structure exists
+          mkdir -p docs/api-reference
+          mkdir -p docs/examples
+          mkdir -p docs/guides
 
-          # Copy documentation files
-          echo "📂 Copying documentation files..."
+          # Copy documentation files using safe copy (cp -Rf) for specific directories only
+          # This will overwrite files with same name but keep other files in destination
+          echo "📂 Copying specific documentation directories..."
 
-          # Copy entire docs directory structure
+          # Copy specific directories
           if [ -d "../../docs" ]; then
-            cp -r ../../docs/* ./docs/ 2>/dev/null || true
-            echo "✅ Documentation files copied successfully"
+            # Sync api-reference
+            if [ -d "../../docs/api-reference" ]; then
+              echo "Syncing api-reference..."
+              # Safe clean: only if target directory exists
+              if [ -d "./docs/api-reference" ]; then
+                 rm -rf ./docs/api-reference/*
+              fi
+              mkdir -p ./docs/api-reference
+              cp -Rfv ../../docs/api-reference/* ./docs/api-reference/
+            fi
+
+            # Sync examples
+            if [ -d "../../docs/examples" ]; then
+              echo "Syncing examples..."
+              if [ -d "./docs/examples" ]; then
+                 rm -rf ./docs/examples/*
+              fi
+              mkdir -p ./docs/examples
+              cp -Rfv ../../docs/examples/* ./docs/examples/
+            fi
+
+            # Sync guides
+            if [ -d "../../docs/guides" ]; then
+              echo "Syncing guides..."
+              if [ -d "./docs/guides" ]; then
+                 rm -rf ./docs/guides/*
+              fi
+              mkdir -p ./docs/guides
+              cp -Rfv ../../docs/guides/* ./docs/guides/
+            fi
+
+            echo "✅ Documentation directories synced successfully"
           else
             echo "❌ Source docs directory not found"
             exit 1
@@ -406,7 +427,6 @@ jobs:
             COMMIT_MESSAGE="🤖 Auto-sync documentation from GitLab CI [$COMMIT_TIMESTAMP]
 
             - Synced $TOTAL_FILES documentation files
-            - Sync mode: $SYNC_MODE
             - Source: GitLab CI Pipeline
             - Triggered by: Documentation update"
 
@@ -414,12 +434,13 @@ jobs:
             git commit -m "$COMMIT_MESSAGE"
 
             # Push new branch to GitHub (ensure remote branch is created)
-            echo "⬆️ Pushing new development branch to GitHub..."
-            if git push -u origin "$GITHUB_BRANCH"; then
+            echo "⬆️ Pushing changes to GitHub branch $GITHUB_BRANCH..."
+            if git push origin "$GITHUB_BRANCH"; then
               echo "✅ Documentation successfully pushed to GitHub!"
               echo "🔗 View at: https://github.com/${GITHUB_REPO}/tree/${GITHUB_BRANCH}/docs"
+
               echo "📋 Branch Details:"
-              echo "  - Development Branch: $GITHUB_BRANCH"
+              echo "  - Branch: $GITHUB_BRANCH"
               echo "  - Files Changed: $TOTAL_FILES"
               echo "  - Repository: $GITHUB_REPO"
             else
@@ -444,7 +465,6 @@ jobs:
           echo "📂 Files Processed: ${DOCS_FILES_COUNT:-0}"
           echo "🎯 Target Repository: ${GITHUB_REPO:-'Not specified'}"
           echo "🌿 Development Branch: ${GITHUB_BRANCH:-'Generated randomly'}"
-          echo "🔄 Sync Mode: ${{params.docs_sync_mode}}"
           echo "🎯 Base Branch: main"
 
 

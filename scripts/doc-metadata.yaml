@@ -295,10 +295,13 @@ modules:
   context-sync:
     python: agb.context_sync
 
-    tutorial:
-      url: ../../docs/guides/context-sync-policies.md
-      text: Context Sync Policies Guide
-      description: Learn about context synchronization policies
+    tutorials:
+      - url: ../../docs/guides/context-sync-policies.md
+        text: Context Sync Policies Guide
+        description: Learn about context synchronization policies
+      - url: ../../docs/guides/cross-platform-persistence.md
+        text: Cross-Platform Data Persistence Guide
+        description: Enable cross-environment data persistence with MappingPolicy
 
     overview: |
       The Context Sync module provides advanced context synchronization capabilities

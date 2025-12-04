@@ -138,12 +138,53 @@ white_list = WhiteList(
 bw_list = BWList(white_lists=[white_list])
 ```
 
+### 7. MappingPolicy
+
+Controls cross-Platform path mapping for data persistence.
+
+```python
+from agb.context_sync import MappingPolicy
+
+# Basic configuration
+mapping_policy = MappingPolicy(
+    path="/tmp/mapping"  # Original path where data was stored
+)
+```
+
+**Parameters:**
+- `path` (str): The original Linux path where data was stored in the previous session
+
+**Usage:**
+MappingPolicy enables cross-Platform data persistence by mapping data from an original path to a different target path in new sessions. This is particularly useful when sharing data between different session types (browser, code, etc.).
+
+**Example:**
+```python
+# Data was originally created at /tmp/mapping in a browser session
+# Now access it at /home/wuying/下载 in a code session
+mapping_policy = MappingPolicy(path="/tmp/mapping")
+
+sync_policy = SyncPolicy(
+    upload_policy=UploadPolicy(),
+    download_policy=DownloadPolicy(),
+    delete_policy=DeletePolicy(),
+    extract_policy=ExtractPolicy(),
+    mapping_policy=mapping_policy  # Add mapping policy
+)
+
+# Use in ContextSync with different target path
+context_sync = ContextSync.new(
+    context_id=context.id,
+    path="/home/wuying/下载",  # New target path
+    policy=sync_policy
+)
+```
+
 ## Complete Sync Policy Configuration
 
 ```python
 from agb.context_sync import (
     SyncPolicy, UploadPolicy, DownloadPolicy,
-    DeletePolicy, ExtractPolicy, RecyclePolicy, BWList, WhiteList,
+    DeletePolicy, ExtractPolicy, RecyclePolicy, BWList, WhiteList, MappingPolicy,
     UploadStrategy, DownloadStrategy, UploadMode, Lifecycle
 )
 
@@ -192,6 +233,11 @@ sync_policy = SyncPolicy(
                 ]
             )
         ]
+    ),
+
+    # Mapping policy
+    mapping_policy=MappingPolicy(
+        path="/tmp/mapping"
     )
 )
 ```

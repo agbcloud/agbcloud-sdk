@@ -268,6 +268,19 @@ def get_module_name_from_path(module_path: str) -> str:
 def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:
     """Generate tutorial section markdown."""
     module_config = metadata.get('modules', {}).get(module_name, {})
+    
+    tutorials = module_config.get('tutorials')
+    if tutorials and isinstance(tutorials, list):
+        tutorial_links = []
+        for tutorial in tutorials:
+            url = tutorial.get('url', '')
+            text = tutorial.get('text', '')
+            description = tutorial.get('description', '')
+            if url and text:
+                tutorial_links.append(f"- **[{text}]({url})** - {description}")
+        
+        if tutorial_links:
+            return f"## Related Tutorials\n\n" + "\n".join(tutorial_links) + "\n\n"
     tutorial = module_config.get('tutorial')
     if not tutorial:
         return ""

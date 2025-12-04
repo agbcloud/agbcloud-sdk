@@ -45,18 +45,14 @@ def main():
         result = agb.create(params)
 
         if not result.success:
-            print(f"❌ Session creation failed: {result.error_message}")
-            return
+            raise AssertionError(f"Session creation failed: {result.error_message}")
 
         print(f"✅ Session created: {result.session.session_id}")
 
         # Test Java code execution using the format from R test
         print("\nTesting Java code execution using R test format...")
-        java_code = """public class Test {
-    public static void main(String[] args) {
-        System.out.println("Java is supported");
-    }
-}"""
+        # The server wraps the code in a class and main method, so we only provide the body
+        java_code = 'System.out.println("Java is supported");'
 
         print("Java code to execute:")
         print(java_code)
@@ -64,20 +60,19 @@ def main():
         # Run the Java code
         code_result = result.session.code.run_code(java_code, "java", timeout_s=30)
 
-        if code_result.success:
-            print("✅ Java code execution succeeded!")
-            print(f"Output:\n{code_result.result}")
-        else:
-            print("❌ Java code execution failed!")
-            print(f"Error: {code_result.error_message}")
+        if not code_result.success:
+            raise AssertionError(f"Java code execution failed! Error: {code_result.error_message}")
+
+        print("✅ Java code execution succeeded!")
+        print(f"Output:\n{code_result.result}")
 
         # Clean up - delete session
         print("\nDeleting session...")
         delete_result = agb.delete(result.session)
-        if delete_result.success:
-            print("✅ Session deleted successfully!")
-        else:
-            print(f"❌ Session deletion failed: {delete_result.error_message}")
+        if not delete_result.success:
+            raise AssertionError(f"Session deletion failed: {delete_result.error_message}")
+
+        print("✅ Session deleted successfully!")
 
     except Exception as e:
         print(f"❌ Error occurred: {e}")

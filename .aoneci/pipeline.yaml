@@ -309,7 +309,14 @@ jobs:
               echo "⚠️  测试文件不存在: $test_path"
             fi
           done
+<<<<<<< HEAD
           
+=======
+
+          # 👇 在这里插入 1 分钟等待,等待之前创建的资源回收完成，否则会引起资源不足的失败问题
+          sleep 60
+
+>>>>>>> ci:sleep 1 minute to wait for resource recyle finish
           # 执行 pytest 测试文件
           for test_file in "${pytest_files[@]}"; do
             test_path="tests/integration/$test_file"

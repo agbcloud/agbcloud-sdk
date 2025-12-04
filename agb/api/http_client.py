@@ -597,7 +597,7 @@ class HTTPClient:
             logger.debug(
                 f"Response Body: {result.get('json', result.get('text', 'No content'))}"
             )
-            logger.debug(f"Request ID in result: {result.get('request_id', 'NOT_FOUND')}")
+            logger.info(f"Request ID in result: {result.get('request_id', 'NOT_FOUND')}")
             logger.debug("=" * 50)
 
             return result

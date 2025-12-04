@@ -329,9 +329,12 @@ jobs:
           echo "🔄 Creating random development branch: $GITHUB_BRANCH"
           echo "📋 Base branch: $PR_TARGET_BRANCH"
           
+<<<<<<< ours
           # Save branch name to environment for later steps
           echo "GITHUB_BRANCH=$GITHUB_BRANCH" >> $AONE_CI_ENV
           
+=======
+>>>>>>> theirs
           # Check if base branch exists
           if git show-ref --verify --quiet "refs/remotes/origin/$PR_TARGET_BRANCH"; then
             echo "✅ Found base branch: $PR_TARGET_BRANCH"

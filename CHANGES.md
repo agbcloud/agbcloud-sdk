@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.6.0] - 2025-12-04
+
+### New Features
+- **Context Sync Mapping Policy**: Added `MappingPolicy` support for cross-platform data persistence between Browser and Code sessions
+- **API Documentation Generation**: Automated API reference documentation generation with Google-style docstrings and GitHub Pages sync
+- **Integration Testing Infrastructure**: Enhanced CI/CD pipeline with dedicated integration test job and dynamic endpoint resolution
+
+### Breaking Changes
+- **Session Class Refactoring**: Removed `BaseSession` class and merged functionality into `Session` class. Removed deprecated `find_server_for_tool` method.
+
+### Enhancements
+- **Documentation**: Complete restructuring of API reference, examples, and guides. Added cross-platform persistence guide and embedded code snippets for VitePress
+- **Code Quality**: Unified all docstrings to Google style format with type annotations throughout codebase
+- **API Improvements**: Added timeout configuration and improved argument filtering for MCP tool calls
+
+### Bug Fixes
+- **Integration Tests**: Fixed exit code reporting to correctly indicate test failures in CI/CD pipelines
+- **Context Service**: Added null checks to prevent exceptions in context operations
+- **Documentation**: Fixed broken links and incorrect references throughout documentation
+- **Test Infrastructure**: Enhanced test stability and reliability, added special handling for CEASED account status
+
+### Testing & CI/CD
+- Added integration test job to CI/CD pipeline with comprehensive test coverage
+- Improved test stability with proper wait times and resource cleanup
+- Added CI bot guard to prevent infinite loops and enhanced error detection
+- Fixed AONE documentation pipeline configuration and optimized documentation workflow
+
+
 ## [0.5.0] - 2025-11-20
 
 ### New Features

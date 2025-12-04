@@ -54,7 +54,7 @@ session.command.execute_command("tar -czf logs.tar.gz /var/log/*.log")
 ### 3. Installing Packages
 If your session image permits (e.g., has `sudo` or is root), you can install tools.
 ```python
-session.command.execute_command("apt-get update && apt-get install -y jq")
+session.command.execute_command("apt-get update && apt-get install -y jq", timeout_ms=30000)
 ```
 
 ## Best Practices
@@ -67,4 +67,4 @@ session.command.execute_command("apt-get update && apt-get install -y jq")
 
 For complete scripts demonstrating data processing pipelines, log analysis, and system monitoring scripts, please refer to the executable example:
 
-- **[Complete Example Script](../examples/command_execution/main.py)**
+- **[Complete Example Script](../examples/command_execution/README.md)**

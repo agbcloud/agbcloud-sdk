@@ -22,8 +22,10 @@ if TYPE_CHECKING:
     from agb.agb import AGB
 
 
-class BaseSession:
-    """Base session class with common functionality"""
+class Session:
+    """
+    Session represents a session in the AGB cloud environment.
+    """
 
     def __init__(self, agb: "AGB", session_id: str):
         self.agb = agb
@@ -74,19 +76,6 @@ class BaseSession:
             Client: The HTTP client instance.
         """
         return self.agb.client
-
-    def find_server_for_tool(self, tool_name: str) -> str:
-        """
-        Find the server that provides the specified tool.
-
-        Args:
-            tool_name (str): Name of the tool to find.
-
-        Returns:
-            str: The server name.
-        """
-        # For now, return a default server name
-        return "default-server"
 
     def _validate_labels(self, labels: Dict[str, str]) -> Optional[OperationResult]:
         """
@@ -495,13 +484,3 @@ class BaseSession:
                 success=False,
                 error_message=f"Failed to delete session {self.session_id}: {e}",
             )
-
-
-class Session(BaseSession):
-    """
-    Session represents a session in the AGB cloud environment.
-    This class is kept for backward compatibility.
-    """
-
-    def __init__(self, agb: "AGB", session_id: str):
-        super().__init__(agb, session_id)

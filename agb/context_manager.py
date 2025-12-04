@@ -8,7 +8,7 @@ import threading
 import asyncio
 
 if TYPE_CHECKING:
-    from agb.session import BaseSession
+    from agb.session import Session
 
 # Initialize logger for this module
 logger = get_logger("context_manager")
@@ -64,7 +64,7 @@ class ContextSyncResult(ApiResponse):
 
 
 class ContextManager:
-    def __init__(self, session: "BaseSession"):
+    def __init__(self, session: "Session"):
         self.session = session
 
     def info(

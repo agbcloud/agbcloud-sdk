@@ -42,10 +42,10 @@ class Code(BaseService):
         Execute code in the specified language with a timeout.
 
         Args:
-            code: The code to execute.
-            language: The programming language of the code. Supported languages are:
+            code (str): The code to execute.
+            language (str): The programming language of the code. Supported languages are:
                 'python', 'javascript', 'java', 'r'.
-            timeout_s: The timeout for the code execution in seconds. Default is 60s.
+            timeout_s (int): The timeout for the code execution in seconds. Default is 60s.
 
         Returns:
             CodeExecutionResult: Result object containing success status, execution

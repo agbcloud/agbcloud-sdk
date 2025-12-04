@@ -3,11 +3,6 @@
 
 # Global documentation configuration
 global:
-  # Requirements for different image types
-  image_requirements:
-    browser_latest: "Browser automation features require the `browser_latest` image"
-    code_latest: "Code execution features require the `code_latest` image"
-
   # Common best practices
   best_practices:
     error_handling: "Always check for errors after API calls and handle them appropriately"
@@ -50,131 +45,76 @@ global:
       - _call_mcp_tool_timeout
       - _call_mcp_tool_async
       - _call_mcp_tool
-<<<<<<< ours
 
     # Exclude private/internal methods (starting with underscore)
     exclude_private_methods: true
 
-=======
-    
-    # Exclude private/internal methods (starting with underscore)
-    exclude_private_methods: true
-    
->>>>>>> theirs
     # Exclude validation methods from response docs
     exclude_validation_methods:
       - _validate_labels
       - _validate_session
       - _validate_config
-<<<<<<< ours
 
-=======
-    
->>>>>>> theirs
     # Exclude low-level API methods
     exclude_low_level_api:
       - _make_request
       - _handle_response
       - _process_result
-<<<<<<< ours
 
-=======
-    
->>>>>>> theirs
     # Exclude specific response types from documentation generation
     exclude_response_types:
       - ApiResponse          # Base class, not directly used by users
       - GetSessionData       # Internal data structure
       - FileChangeResult     # Internal file monitoring result
       - GetSessionResult     # Internal data structure
-<<<<<<< ours
 
-=======
-    
->>>>>>> theirs
     # Related guides for response types
     response_guides:
       SessionResult:
         title: "Session Management APIs"
         description: "Get a session by its ID or create a new session in the AGB cloud environment"
         url: "../../guides/session-management.md"
-<<<<<<< ours
 
-=======
-      
->>>>>>> theirs
       SessionListResult:
         title: "Session Listing APIs"
         description: "Returns paginated list of session IDs filtered by labels"
         url: "../../guides/session-management.md"
-<<<<<<< ours
 
-=======
-      
->>>>>>> theirs
       OperationResult:
         title: "Context and Session Management APIs"
         description: "Update context data, delete files, and manage session operations"
         url: "../../guides/context-usage-guide.md"
-<<<<<<< ours
 
-=======
-      
->>>>>>> theirs
       DeleteResult:
         title: "Session and Resource Deletion APIs"
         description: "Delete sessions and manage resource cleanup operations"
         url: "../../guides/session-management.md"
-<<<<<<< ours
 
-=======
-      
->>>>>>> theirs
       BoolResult:
         title: "File System Validation APIs"
         description: "File existence checks and validation operations"
         url: "../../guides/file-operations.md"
-<<<<<<< ours
 
-=======
-      
->>>>>>> theirs
       MultipleFileContentResult:
         title: "File Content Management APIs"
         description: "Read multiple files and batch file content operations"
         url: "../../guides/file-operations.md"
-<<<<<<< ours
 
-=======
-      
->>>>>>> theirs
       FileSearchResult:
         title: "File Search and Discovery APIs"
         description: "Search files by patterns and locate specific file content"
         url: "../../guides/file-operations.md"
-<<<<<<< ours
 
-=======
-      
->>>>>>> theirs
       FileInfoResult:
         title: "File Information and Metadata APIs"
         description: "Get file properties, permissions, and metadata information"
         url: "../../guides/file-operations.md"
-<<<<<<< ours
 
-=======
-      
->>>>>>> theirs
       FileContentResult:
         title: "File Content Access APIs"
         description: "Read file content and retrieve file data"
         url: "../../guides/file-operations.md"
-<<<<<<< ours
 
-=======
-      
->>>>>>> theirs
       DirectoryListResult:
         title: "Directory Management APIs"
         description: "List directory contents and navigate file system structure"
@@ -184,11 +124,7 @@ modules:
   # AGB main module
   agb:
     python: agb.agb
-<<<<<<< ours
 
-=======
-    
->>>>>>> theirs
     tutorial:
       url: ../../docs/quickstart.md
       text: Quick Start Guide
@@ -205,11 +141,7 @@ modules:
         module: context
 
     emoji: 🚀
-<<<<<<< ours
     category: .
-=======
-    category: core
->>>>>>> theirs
 
   # Session module
   session:
@@ -233,11 +165,7 @@ modules:
         module: context-manager
 
     emoji: 🔧
-<<<<<<< ours
     category: .
-=======
-    category: core
->>>>>>> theirs
 
   # Context module
   context:
@@ -259,11 +187,7 @@ modules:
         module: context-manager
 
     emoji: 💾
-<<<<<<< ours
     category: data_context
-=======
-    category: core
->>>>>>> theirs
 
   # Context Manager module
   context-manager:
@@ -285,11 +209,7 @@ modules:
         module: session
 
     emoji: 🗂️
-<<<<<<< ours
     category: data_context
-=======
-    category: core
->>>>>>> theirs
 
   # Context Sync module
   context-sync:
@@ -314,11 +234,7 @@ modules:
         module: context-manager
 
     emoji: 🔄
-<<<<<<< ours
     category: data_context
-=======
-    category: core
->>>>>>> theirs
 
   # Logging module
   logging:
@@ -338,11 +254,7 @@ modules:
         module: agb
 
     emoji: 📝
-<<<<<<< ours
     category: reference
-=======
-    category: core
->>>>>>> theirs
 
   # Extension module
   extension:
@@ -362,11 +274,7 @@ modules:
         module: browser
 
     emoji: 🧩
-<<<<<<< ours
     category: reference
-=======
-    category: modules
->>>>>>> theirs
 
   # Command module
   command:
@@ -395,11 +303,7 @@ modules:
         module: file-system
 
     emoji: ⚡
-<<<<<<< ours
     category: capabilities
-=======
-    category: modules
->>>>>>> theirs
 
   # File System module
   file-system:
@@ -428,11 +332,7 @@ modules:
         module: command
 
     emoji: 📁
-<<<<<<< ours
     category: capabilities
-=======
-    category: modules
->>>>>>> theirs
 
   # Code module
   code:
@@ -448,7 +348,7 @@ modules:
       It supports multiple programming languages including Python, JavaScript, and more.
 
     requirements:
-      - "Requires `code_latest` image for code execution features"
+      - "Requires `agb-code-space-1` image for code execution features"
 
     best_practices:
       - "Validate code syntax before execution"
@@ -462,11 +362,7 @@ modules:
         module: session
 
     emoji: 💻
-<<<<<<< ours
     category: capabilities
-=======
-    category: modules
->>>>>>> theirs
 
   # Browser module
   browser:
@@ -478,17 +374,12 @@ modules:
       description: Complete guide to browser automation
 
     overview: |
-<<<<<<< ours
       The Browser module provides comprehensive browser automation capabilities including navigation,
       element interaction, screenshot capture, and content extraction. It enables automated testing
-=======
-      The Browser module provides comprehensive browser automation capabilities including navigation, 
-      element interaction, screenshot capture, and content extraction. It enables automated testing 
->>>>>>> theirs
       and web scraping workflows with support for proxy configuration, fingerprinting, and stealth mode.
 
     requirements:
-      - "Requires `browser_latest` image for browser automation features"
+      - "Requires `agb-browser-use-1` image for browser automation features"
 
     best_practices:
       - "Initialize browser with appropriate options before use"
@@ -504,7 +395,6 @@ modules:
         module: session
 
     emoji: 🌐
-<<<<<<< ours
     category: capabilities
 
   # Session Params module
@@ -535,7 +425,3 @@ modules:
 
     emoji: ⚠️
     category: reference
-=======
-    category: modules
-
->>>>>>> theirs

@@ -5,9 +5,10 @@
 Sessions are the core concept in AGB SDK. A session represents an isolated cloud environment where you can execute code, run commands, manage files, and interact with cloud storage. This guide covers everything you need to know about managing sessions effectively.
 **Important**: Image ID Management. When creating sessions, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account. You can view and manage your available images in the [AGB Console Image Management](https://agb.cloud/console/image-management) page.
 
-## 1. Session Lifecycle
-
-Understanding the lifecycle of a session is crucial for resource management and cost control.
+## Quick Reference (1 minute)
+```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
 
 agb = AGB()
 
@@ -586,8 +587,4 @@ for task in tasks:
 - **[Command Execution Tutorial](../guides/command-execution.md)** - Shell command operations
 - **[File Operations Tutorial](../guides/file-operations.md)** - File system management
 - **[Authentication Guide](authentication.md)** - API key setup and security
-<<<<<<< HEAD
-- **[API Reference](../api-reference/02_session.md)** - Complete session API documentation
-=======
 - **[API Reference](../api-reference/session.md)** - Complete session API documentation
->>>>>>> docs: refactor examples and guides structure

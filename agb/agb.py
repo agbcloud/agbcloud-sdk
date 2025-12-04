@@ -19,7 +19,7 @@ from agb.api.models import (
 )
 from agb.config import Config, load_config
 from agb.model.response import DeleteResult, SessionResult, GetSessionResult, GetSessionData, SessionListResult
-from agb.session import BaseSession, Session
+from agb.session import Session
 from agb.session_params import CreateSessionParams
 from agb.context import ContextService
 from agb.logger import get_logger, log_operation_start, log_operation_success, log_warning
@@ -394,12 +394,12 @@ class AGB:
                 error_message=f"Failed to list sessions: {e}",
             )
 
-    def delete(self, session: BaseSession, sync_context: bool = False) -> DeleteResult:
+    def delete(self, session: Session, sync_context: bool = False) -> DeleteResult:
         """
         Delete a session by session object.
 
         Args:
-            session (BaseSession): The session to delete.
+            session (Session): The session to delete.
             sync_context (bool): Whether to sync context before deletion. Defaults to False.
 
         Returns:

@@ -1,698 +1,357 @@
-# Browser Module API Reference
+# Browser API Reference
 
-The Browser module provides comprehensive browser automation capabilities with AI-powered natural language operations.
+## 🌐 Related Tutorial
 
-## Classes
+- [Browser Automation Guide](../../guides/browser-automation.md) - Complete guide to browser automation
 
-### Browser
+## Overview
 
-Main browser management class that handles browser lifecycle and provides access to automation capabilities.
+The Browser module provides comprehensive browser automation capabilities including navigation,
+element interaction, screenshot capture, and content extraction. It enables automated testing
+and web scraping workflows with support for proxy configuration, fingerprinting, and stealth mode.
 
-#### Constructor
+
+## Requirements
+
+- Requires `agb-browser-use-1` image for browser automation features
+
+
+
+## BrowserProxy
 
 ```python
-Browser(session: Session)
+class BrowserProxy()
 ```
 
-**Parameters:**
-- `session` (Session): The AGB session instance
+Browser proxy configuration.
+Supports two types of proxy: custom proxy, built-in proxy.
+built-in proxy support two strategies: restricted and polling.
 
-#### Methods
-
-##### initialize
+## BrowserViewport
 
 ```python
-def initialize(option: BrowserOption) -> bool
+class BrowserViewport()
 ```
 
-Initialize the browser instance with the given options synchronously.
+Browser viewport options.
 
-**Parameters:**
-- `option` (BrowserOption): Browser configuration options
+## BrowserScreen
 
-**Returns:**
-- `bool`: True if successful, False otherwise
-
-**Example:**
 ```python
-option = BrowserOption(use_stealth=True,solve_captchas=True)
-success = session.browser.initialize(option)
+class BrowserScreen()
 ```
 
-##### initialize_async
+Browser screen options.
+
+## BrowserFingerprint
 
 ```python
-async def initialize_async(option: BrowserOption) -> bool
+class BrowserFingerprint()
+```
+
+Browser fingerprint options.
+
+## BrowserOption
+
+```python
+class BrowserOption()
+```
+
+browser initialization options.
+
+## Browser
+
+```python
+class Browser(BaseService)
+```
+
+Browser provides browser-related operations for the session.
+
+### initialize
+
+```python
+def initialize(option: "BrowserOption") -> bool
+```
+
+Initialize the browser instance with the given options.
+Returns True if successful, False otherwise.
+
+### initialize\_async
+
+```python
+async def initialize_async(option: "BrowserOption") -> bool
 ```
 
 Initialize the browser instance with the given options asynchronously.
+Returns True if successful, False otherwise.
 
-**Parameters:**
-- `option` (BrowserOption): Browser configuration options
-
-**Returns:**
-- `bool`: True if successful, False otherwise
-
-**Example:**
-```python
-option = BrowserOption(use_stealth=True)
-success = await session.browser.initialize_async(option)
-```
-
-##### get_endpoint_url
+## ActOptions
 
 ```python
-def get_endpoint_url() -> str
+class ActOptions()
 ```
 
-Returns the CDP endpoint URL for connecting external automation frameworks.
+Options for configuring the behavior of the act method.
 
-**Returns:**
-- `str`: CDP WebSocket endpoint URL
-
-**Raises:**
-- `BrowserError`: If browser is not initialized
-
-**Example:**
-```python
-from playwright.async_api import async_playwright
-if session.browser.is_initialized():
-    endpoint_url = session.browser.get_endpoint_url()
-    async with async_playwright() as p:
-        browser = await p.chromium.connect_over_cdp(endpoint_url)
-```
-
-##### is_initialized
+## ActResult
 
 ```python
-def is_initialized() -> bool
+class ActResult()
 ```
 
-Check if the browser instance is initialized and ready for use.
+Result of the act method.
 
-**Returns:**
-- `bool`: True if initialized, False otherwise
-
-##### get_option
+## ObserveOptions
 
 ```python
-def get_option() -> Optional[BrowserOption]
+class ObserveOptions()
 ```
 
-Get the current BrowserOption used to initialize the browser，or None if not set.
+Options for configuring the behavior of the observe method.
 
-**Returns:**
-- `Optional[BrowserOption]`: Current browser options or None if not set
-
-#### Properties
-
-##### agent
+## ObserveResult
 
 ```python
-agent: BrowserAgent
+class ObserveResult()
 ```
 
-Access to the AI-powered browser agent for natural language operations.
+Result of the observe method.
 
----
-
-### BrowserOption
-
-Configuration class for browser initialization options.
-
-#### Constructor
+## ExtractOptions
 
 ```python
-BrowserOption(
-    use_stealth: bool = False,
-    user_agent: Optional[str] = None,
-    viewport: Optional[BrowserViewport] = None,
-    screen: Optional[BrowserScreen] = None,
-    fingerprint: Optional[BrowserFingerprint] = None,
-    proxies: Optional[List[BrowserProxy]] = None,
-    solve_captchas: bool = False,
-    extension_path: Optional[str] = "/tmp/extensions/",
-)
+class ExtractOptions(Generic[T])
 ```
 
-**Parameters:**
-- `use_stealth` (bool): Enable stealth mode to avoid detection by anti-bot systems
-- `user_agent` (str): Custom user agent string
-- `viewport` (BrowserViewport): Browser viewport configuration
-- `screen` (BrowserScreen): Screen size configuration
-- `fingerprint` (BrowserFingerprint): Fingerprint customization options (only effective when `use_stealth` is set to true)
-- `proxies` (List[BrowserProxy]): Proxy configuration (max 1 proxy)
-- `extension_path` (str | None): Path to directory containing browser extensions.
-- `solve_captchas` (bool): Automatically solve captchas during browsing.
+Options for configuring the behavior of the extract method.
 
-
-**Example:**
-```python
-option = BrowserOption(
-    use_stealth=True,
-    solve_captchas=True,
-    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-    viewport=BrowserViewport(width=1366, height=768),
-    proxies=[BrowserProxy(proxy_type="custom", server="127.0.0.1:8080")]
-)
-```
-
----
-
-### BrowserViewport
-
-Browser viewport size configuration.
-
-#### Constructor
+## BrowserAgent
 
 ```python
-BrowserViewport(width: int = 1920, height: int = 1080)
+class BrowserAgent(BaseService)
 ```
 
-**Parameters:**
-- `width` (int): Viewport width in pixels
-- `height` (int): Viewport height in pixels
+BrowserAgent handles browser automation and agent logic.
 
----
-
-### BrowserScreen
-
-Browser screen size configuration.
-
-#### Constructor
-
-```python
-BrowserScreen(width: int = 1920, height: int = 1080)
-```
-
-**Parameters:**
-- `width` (int): Screen width in pixels
-- `height` (int): Screen height in pixels
-
----
-
-### BrowserFingerprint
-
-Browser fingerprint customization options.
-
-#### Constructor
-
-```python
-BrowserFingerprint(
-    devices: List[Literal["desktop", "mobile"]] = None,
-    operating_systems: Optional[List[Literal["windows", "macos", "linux","android", "ios"]]
-        ] = None,
-    locales: Optional[List[str]] = None,
-)
-```
-
-**Parameters:**
-- `devices` (List[str]): Device types to emulate
-- `operating_systems` (List[str]): Operating systems to emulate
-- `locales` (List[str]): Locale codes to use
-
-**Example:**
-```python
-fingerprint = BrowserFingerprint(
-    devices=["desktop"],
-    operating_systems=["windows", "macos"],
-    locales=["en-US", "zh-CN"]
-)
-```
-
----
-
-### BrowserProxy
-
-Proxy configuration for browser connections.
-
-#### Constructor
-
-```python
-BrowserProxy(
-    proxy_type: Literal["custom", "built-in"],
-    server: Optional[str] = None,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-    strategy: Optional[Literal["restricted", "polling"]] = None,
-    pollsize: int = 10
-)
-```
-
-**Parameters:**
-- `proxy_type` (str): Type of proxy - "custom" or "built-in"
-- `server` (str): Proxy server address (required for custom type)
-- `username` (str): Proxy username (optional for custom type)
-- `password` (str): Proxy password (optional for custom type)
-- `strategy` (str): Strategy for built-in proxy - "restricted" or "polling"
-- `pollsize` (int): Pool size for polling strategy
-
-**Examples:**
-
-Custom proxy:
-```python
-custom_proxy = BrowserProxy(
-    proxy_type="custom",
-    server="127.0.0.1:8080",
-    username="username",
-    password="password"
-)
-```
-
-Built-in proxy with polling:
-```python
-builtin_proxy = BrowserProxy(
-    proxy_type="built-in",
-    strategy="polling",
-    pollsize=10
-)
-```
-
----
-
-### BrowserAgent
-
-AI-powered browser agent for natural language automation.
-
-#### Constructor
-
-```python
-BrowserAgent(session, browser)
-```
-
-**Parameters:**
-- `session`: AGB session instance
-- `browser`: Browser instance
-
-#### Methods
-
-##### act
-
-```python
-def act( action_input: Union[ObserveResult, ActOptions],page: None) -> ActResult
-```
-
-Perform an action on the given Playwright Page object using natural language.
-
-**Parameters:**
-- `page`(Optional[Page]): The Playwright Page object to act on. If None, the agent's currently focused page will be used automatically.
-- `action_input` (Union[ObserveResult, ActOptions]): The action to perform,either as a pre-defined ObserveResult or custom ActOptions.
-
-**Returns:**
-- `ActResult`: Result of the action
-
-**Example:**
-```python
-result = session.browser.agent.act(ActOptions(
-    action="Click the submit button"
-), page)
-```
-
-##### act_async
-
-```python
-async def act_async(action_input: Union[ObserveResult, ActOptions], page: None)-> ActResult
-```
-
-Asynchronously perform an action on a web page.
-
-**Parameters:**
-- `action_input` (Union[ObserveResult, ActOptions]): Action configuration
-- `page`: Playwright Page object
-
-**Returns:**
-- `ActResult`: Result of the action
-
-##### observe
-
-```python
-def observe(options: ObserveOptions, page) -> Tuple[bool, List[ObserveResult]]
-```
-
-Observe elements or state on the given Playwright Page object.
-
-**Parameters:**
-- `options` (ObserveOptions): Observation configuration
-- `page`: Playwright Page object
-
-**Returns:**
-- `Tuple[bool, List[ObserveResult]]`: A tuple containing a success status and list of observed elements
-
-**Example:**
-```python
-success, results = session.browser.agent.observe(ObserveOptions(
-    instruction="Find all clickable buttons"
-), page)
-```
-
-##### observe_async
-
-```python
-async def observe_async(options: ObserveOptions, page: None) -> Tuple[bool, List[ObserveResult]]
-```
-
- Asynchronously observe elements or state on the given Playwright Page object.
-
-##### extract
-
-```python
-def extract(options: ExtractOptions[T],page: None ) -> Tuple[bool, T]
-```
-
-Extract structured information from the given Playwright Page object.
-
-**Parameters:**
-- `options` (ExtractOptions[T]): Extraction configuration with schema
-- `page`: Playwright Page object
-
-**Returns:**
-- `Tuple[bool, T]`: A tuple containing a success boolean and the extracted data as a Pydantic model instance, or None on failure.
-
-**Example:**
-```python
-success, data = session.browser.agent.extract(ExtractOptions(
-    instruction="Extract product information",
-    schema=ProductSchema
-), page)
-```
-
-##### extract_async
-
-```python
-async def extract_async(options: ExtractOptions[T],page: None ) -> Tuple[bool, T]
-```
-
-
-Asynchronously extract structured information from the given Playwright Page object.
-
-**Example:**
-```python
-from pydantic import BaseModel
-from agb.modules.browser import ExtractOptions
-
-# Define the data structure
-class ProductInfo(BaseModel):
-    name: str
-    price: str
-    description: str
-
-# Extract product information asynchronously
-success, product_data = await session.browser.agent.extract_async(
-    page=page,
-    options=ExtractOptions(
-        instruction="Extract product details including name, price and description",
-        schema=ProductInfo,
-        use_text_extract=True
-    )
-)
-```
-
-##### navigate_async
+### navigate\_async
 
 ```python
 async def navigate_async(url: str) -> str
 ```
 
-Asynchronously navigates a specific page to the given URL.
+Navigates a specific page to the given URL.
 
-**Parameters:**
-- `url` (str): The URL to navigate to
+**Arguments**:
 
-**Returns:**
-- `str`: A string indicating the result of the navigation
+- `url` _str_ - The URL to navigate to.
 
-**Raises:**
-- `BrowserError`: If browser is not initialized
 
-**Example:**
+**Returns**:
+
+    str: A string indicating the result of the navigation.
+
+### screenshot
+
 ```python
-# Navigate to a specific URL
-result = await session.browser.agent.navigate_async("https://example.com")
-print(result)  # Navigation result message
+def screenshot(page=None,
+               full_page: bool = True,
+               quality: int = 80,
+               clip: Optional[Dict[str, float]] = None,
+               timeout: Optional[int] = None) -> str
 ```
 
-##### screenshot_async
+Takes a screenshot of the specified page.
+
+**Arguments**:
+
+- `page` _Optional[Page]_ - The Playwright Page object to take a screenshot of. If None,
+  the agent's currently focused page will be used.
+- `full_page` _bool_ - Whether to capture the full scrollable page.
+- `quality` _int_ - The quality of the image (0-100), for JPEG format.
+- `clip` _Optional[Dict[str, float]]_ - An object specifying the clipping region {x, y, width, height}.
+- `timeout` _Optional[int]_ - Custom timeout for the operation in milliseconds.
+
+
+**Returns**:
+
+    str: A base64 encoded data URL of the screenshot, or an error message.
+
+### screenshot\_async
 
 ```python
-async def screenshot_async(
-    page=None,
-    full_page: bool = True,
-    quality: int = 80,
-    clip: Optional[Dict[str, float]] = None,
-    timeout: Optional[int] = None,
-) -> str
+async def screenshot_async(page=None,
+                           full_page: bool = True,
+                           quality: int = 80,
+                           clip: Optional[Dict[str, float]] = None,
+                           timeout: Optional[int] = None) -> str
 ```
 
 Asynchronously takes a screenshot of the specified page.
 
-**Parameters:**
-- `page` (Optional[Page]): The Playwright Page object to take a screenshot of. If None, the agent's currently focused page will be used automatically
-- `full_page` (bool): Whether to capture the full scrollable page.
-- `quality` (int): The quality of the image (0-100), for JPEG format.
-- `clip` (Optional[Dict[str, float]]): An object specifying the clipping region{x, y, width, height}
-- `timeout` (Optional[int]): Custom timeout for the operation in milliseconds
+**Arguments**:
 
-**Returns:**
-- `str`: A base64 encoded data URL of the screenshot, or an error message
+- `page` _Optional[Page]_ - The Playwright Page object to take a screenshot of. If None,
+  the agent's currently focused page will be used.
+- `full_page` _bool_ - Whether to capture the full scrollable page.
+- `quality` _int_ - The quality of the image (0-100), for JPEG format.
+- `clip` _Optional[Dict[str, float]]_ - An object specifying the clipping region {x, y, width, height}.
+- `timeout` _Optional[int]_ - Custom timeout for the operation in milliseconds.
 
-**Raises:**
-- `BrowserError`: If browser is not initialized
 
-**Example:**
-```python
-# Take a full page screenshot
-screenshot_data = await session.browser.agent.screenshot_async(page)
+**Returns**:
 
-# Take a screenshot with custom quality and clipping
-screenshot_data = await session.browser.agent.screenshot_async(
-    page=page,
-    full_page=False,
-    quality=90,
-    clip={"x": 0, "y": 0, "width": 800, "height": 600},
-    timeout=10000
-)
-```
+    str: A base64 encoded data URL of the screenshot, or an error message.
 
----
-
-### ActOptions
-
-Configuration options for browser actions.
-
-#### Constructor
+### close\_async
 
 ```python
-ActOptions(
-    action: str,
-    timeoutMS: Optional[int] = None,
-    iframes: Optional[bool] = None,
-    dom_settle_timeout_ms: Optional[int] = None,
-    variables: Optional[Dict[str, str]] = None,
-    use_vision: Optional[bool] = None,
-)
+async def close_async() -> bool
 ```
 
-**Parameters:**
-- `action` (str): Natural language description of the action to perform
-- `timeoutMS` (int): Timeout in milliseconds for the action
-- `iframes` (bool): Whether to include iframe content in the action
-- `dom_settle_timeout_ms` (int): Time to wait for DOM to settle after action
-- `use_vision` (bool): Attach a viewport screenshot to help the model interpret visually-indicated states (optional).
-- `variables` (Dict[str, str]): allows users to pass key-value pairs to customize and parameterize their automation instructions.
----
+Asynchronously closes the remote browser agent session.
+This will terminate the browser process managed by the agent.
 
-### ActResult
+**Returns**:
 
-Result of a browser action.
+    bool: True if the session was closed successfully, False otherwise.
 
-#### Properties
+### act
 
 ```python
-success: bool    # Whether the action succeeded
-message: str    # Result message or error description
+def act(action_input: Union[ObserveResult, ActOptions],
+        page=None) -> "ActResult"
 ```
 
----
+Perform an action on a web page, using ActOptions to configure behavior.
 
-### ObserveOptions
+**Arguments**:
 
-Configuration options for page observation.
+- `action_input` _Union[ObserveResult, ActOptions]_ - The action to perform, either as a
+  pre-defined ObserveResult or custom ActOptions.
+- `page` _Optional[Page]_ - The Playwright Page object to act on. If None, the agent's
+  currently focused page will be used automatically.
 
-#### Constructor
+
+**Returns**:
+
+    ActResult: The result of the action.
+
+### act\_async
 
 ```python
-ObserveOptions(
-    instruction: str,
-    iframes: Optional[bool] = None,
-    dom_settle_timeout_ms: Optional[int] = None,
-    use_vision: Optional[bool] = None,
-)
+async def act_async(action_input: Union[ObserveResult, ActOptions],
+                    page=None) -> "ActResult"
 ```
 
-**Parameters:**
-- `instruction` (str): Natural language description of what to observe
-- `iframes` (bool): Whether to include iframe content
-- `dom_settle_timeout_ms` (int): Time to wait for DOM to settle
-- `use_vision` (bool): Attach a viewport screenshot to help the model interpret visually-indicated states (optional).
+Asynchronously perform an action on a web page.
 
----
+**Arguments**:
 
-### ObserveResult
+- `action_input` _Union[ObserveResult, ActOptions]_ - The action to perform.
+- `page` _Optional[Page]_ - The Playwright Page object to act on. If None, the agent's
+  currently focused page will be used automatically.
 
-Result of a page observation.
 
-#### Properties
+**Returns**:
+
+    ActResult: The result of the action.
+
+### observe
 
 ```python
-selector: str   # CSS selector for the observed element
-description: str  # Description of the observed element
-method: str   # Suggested interaction method
-arguments: dict  # Arguments for the interaction method
+def observe(options: ObserveOptions,
+            page=None) -> Tuple[bool, List[ObserveResult]]
 ```
 
----
+Observe elements or state on a web page.
 
-### ExtractOptions
+**Arguments**:
 
-Configuration options for the behavior of the extract method.
+- `options` _ObserveOptions_ - Options to configure the observation behavior.
+- `page` _Optional[Page]_ - The Playwright Page object to observe. If None, the agent's
+  currently focused page will be used.
 
-#### Constructor
+
+**Returns**:
+
+  Tuple[bool, List[ObserveResult]]: A tuple containing a success boolean and a list
+  of observation results.
+
+### observe\_async
 
 ```python
-ExtractOptions(
-    instruction: str,
-    schema: Type[T],
-    use_text_extract: Optional[bool] = None,
-    selector: Optional[str] = None,
-    iframe: Optional[bool] = None,
-    dom_settle_timeout_ms: Optional[int] = None,
-    use_vision: Optional[bool] = None,
-)
+async def observe_async(options: ObserveOptions,
+                        page=None) -> Tuple[bool, List[ObserveResult]]
 ```
 
-**Parameters:**
-- `instruction` (str): Natural language description of what to extract
-- `schema` (Type[T]): Pydantic model class defining the expected data structure
-- `use_text_extract` (bool): Whether to use text-based extraction
-- `selector` (str): CSS selector to focus extraction on specific elements
-- `iframe` (bool): Whether to include iframe content (note: parameter name is `iframe`, not `iframes`)
-- `dom_settle_timeout_ms` (int): Time to wait for DOM to settle
-- `use_vision` (bool): Attach a viewport screenshot to help the model interpret visually-indicated states (optional).
+Asynchronously observe elements or state on a web page.
 
-**Example:**
-```python
-from pydantic import BaseModel
+**Arguments**:
 
-class Product(BaseModel):
-    name: str
-    price: str
-    rating: float
+- `options` _ObserveOptions_ - Options to configure the observation behavior.
+- `page` _Optional[Page]_ - The Playwright Page object to observe. If None, the agent's
+  currently focused page will be used.
 
-options = ExtractOptions(
-    instruction="Extract product details from the page",
-    schema=Product,
-    use_text_extract=True
-)
-```
 
-## Exceptions
+**Returns**:
 
-### BrowserError
+  Tuple[bool, List[ObserveResult]]: A tuple containing a success boolean and a list
+  of observation results.
 
-Exception raised for browser-related errors.
+### extract
 
 ```python
-class BrowserError(AGBError):
-    pass
+def extract(options: ExtractOptions, page=None) -> Tuple[bool, T]
 ```
 
-**Usage:**
-```python
-from agb.exceptions import BrowserError
+Extract information from a web page.
 
-try:
-    success = session.browser.initialize(option)
-    if not success:
-        raise BrowserError("Browser initialization failed")
-except BrowserError as e:
-    print(f"Browser error: {e}")
-```
+**Arguments**:
 
-## Usage Examples
+- `options` _ExtractOptions_ - Options to configure the extraction, including schema.
+- `page` _Optional[Page]_ - The Playwright Page object to extract from. If None, the agent's
+  currently focused page will be used.
 
-### Basic Browser Setup
 
-```python
-import asyncio
-from agb import AGB
-from agb.session_params import CreateSessionParams
-from agb.modules.browser import BrowserOption, BrowserViewport
-from playwright.async_api import async_playwright
+**Returns**:
 
-async def setup_browser():
-    # Create session
-    agb = AGB(api_key="your-api-key")
-    params = CreateSessionParams(image_id="agb-browser-use-1")
-    result = agb.create(params)
-    session = result.session
+  Tuple[bool, T]: A tuple containing a success boolean and the extracted data as a
+  Pydantic model instance, or None on failure.
 
-    # Configure and initialize browser
-    option = BrowserOption(
-        use_stealth=True,
-        viewport=BrowserViewport(width=1366, height=768)
-    )
-
-    success = await session.browser.initialize_async(option)
-    if not success:
-        raise RuntimeError("Failed to initialize browser")
-
-    # Connect Playwright
-    endpoint_url = session.browser.get_endpoint_url()
-    async with async_playwright() as p:
-        browser = await p.chromium.connect_over_cdp(endpoint_url)
-        page = await browser.new_page()
-
-        # Your automation code here
-
-        await browser.close()
-
-    agb.delete(session)
-```
-
-### AI Agent Operations
+### extract\_async
 
 ```python
-from agb.modules.browser import ActOptions, ObserveOptions, ExtractOptions
-from pydantic import BaseModel
-
-# Perform actions
-act_result = await session.browser.agent.act_async(ActOptions(
-    action="Fill the search box with 'Python automation' and press Enter"
-), page)
-
-# Observe page elements
-success, results = await session.browser.agent.observe_async(ObserveOptions(
-    instruction="Find all search result links"
-), page)
-
-# Extract structured data
-class SearchResult(BaseModel):
-    title: str
-    url: str
-    description: str
-
-success, data = await session.browser.agent.extract_async(ExtractOptions(
-    instruction="Extract search results information",
-    schema=SearchResult
-), page)
+async def extract_async(options: ExtractOptions, page=None) -> Tuple[bool, T]
 ```
+
+Asynchronously extract information from a web page.
+
+**Arguments**:
+
+- `options` _ExtractOptions_ - Options to configure the extraction, including schema.
+- `page` _Optional[Page]_ - The Playwright Page object to extract from. If None, the agent's
+  currently focused page will be used.
+
+
+**Returns**:
+
+  Tuple[bool, T]: A tuple containing a success boolean and the extracted data as a
+  Pydantic model instance, or None on failure.
 
 ## Best Practices
 
-1. **Always check initialization status** before performing operations
-2. **Use appropriate timeouts** for different types of operations
-3. **Handle exceptions properly** with try-catch blocks
-4. **Clean up resources** by closing browsers and deleting sessions
-5. **Use stealth mode** when needed to avoid detection
-6. **Configure proxies** for IP rotation when required
-7. **Implement retry logic** for critical operations
+1. Initialize browser with appropriate options before use
+2. Wait for page load completion before interacting with elements
+3. Use appropriate selectors (CSS, XPath) for reliable element identification
+4. Handle navigation timeouts and errors gracefully
+5. Take screenshots for debugging and verification
+6. Clean up browser resources after automation tasks
+7. Configure proxy settings properly for network requirements
+
+## Related Resources
+
+- [Session API Reference](../session.md)
+
+---
+
+*Documentation generated automatically from source code using pydoc-markdown.*

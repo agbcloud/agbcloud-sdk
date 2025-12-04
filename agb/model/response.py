@@ -5,7 +5,7 @@ API response models for AGB SDK.
 from typing import TYPE_CHECKING, Any, List, Optional
 
 if TYPE_CHECKING:
-    from agb.session import BaseSession
+    from agb.session import Session
 
 
 class ApiResponse:
@@ -39,7 +39,7 @@ class SessionResult(ApiResponse):
         request_id: str = "",
         success: bool = False,
         error_message: str = "",
-        session: Optional["BaseSession"] = None,
+        session: Optional["Session"] = None,
     ):
         """
         Initialize a SessionResult.
@@ -47,7 +47,7 @@ class SessionResult(ApiResponse):
         Args:
             request_id (str, optional): Unique identifier for the API request.
                 Defaults to "".
-            session (Optional[BaseSession], optional): The session object. Defaults to None.
+            session (Optional[Session], optional): The session object. Defaults to None.
             success (bool, optional): Whether the operation was successful.
                 Defaults to False.
             error_message (str, optional): Error message if the operation failed.

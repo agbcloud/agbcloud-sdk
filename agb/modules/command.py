@@ -40,8 +40,8 @@ class Command(BaseService):
         Execute a command in the cloud environment with a specified timeout.
 
         Args:
-            command: The command to execute.
-            timeout_ms: The timeout for the command execution in milliseconds.
+            command (str): The command to execute.
+            timeout_ms (int): The timeout for the command execution in milliseconds. Defaults to 1000.
 
         Returns:
             CommandResult: Result object containing success status, command output,

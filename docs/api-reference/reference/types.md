@@ -1,252 +1,285 @@
-# Types & Schemas
+# Response Types & Schemas
 
 This section details the response types and schemas used throughout the AGB SDK.
 
 ## SessionResult
 
-`SessionResult` is the response type returned by session creation operations in the AGB SDK.
+Result of operations returning a single Session
 
-### Overview
+### API Methods Using This Response Type
 
-The `SessionResult` class represents the outcome of operations that create or return a session object, such as `AGB.create()`.
-
-### Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `request_id` | `str` | Unique identifier for the API request |
-| `success` | `bool` | Whether the operation was successful |
-| `error_message` | `str` | Error message if the operation failed |
-| `session` | `Optional[BaseSession]` | The session object (if successful) |
-
-### Usage
-
-```python
-from agb import AGB
-from agb.session_params import CreateSessionParams
-
-# Initialize AGB client
-agb = AGB()
-
-# Create a session
-params = CreateSessionParams(
-    image_id="agb-code-space-1"
-)
-result = agb.create(params)
-
-# Check if successful
-if result.success:
-    session = result.session
-    print(f"Session created: {session.session_id}")
-    print(f"Request ID: {result.request_id}")
-else:
-    print(f"Failed to create session: {result.error_message}")
-```
-
-### Success Response
-
-When the operation is successful:
-
-```python
-result.success = True
-result.session = <Session object>
-result.error_message = ""
-result.request_id = "req_123456789"
-```
-
-### Error Response
-
-When the operation fails:
-
-```python
-result.success = False
-result.session = None
-result.error_message = "Invalid image_id provided"
-result.request_id = "req_123456789"
-```
-
----
-
-## SessionListResult
-
-`SessionListResult` is the response type returned by session listing operations in the AGB SDK.
-
-### Overview
-
-The `SessionListResult` class represents the outcome of operations that retrieve a paginated list of session IDs, such as `AGB.list()`.
+- `AGB.create()`
+- `AGB.get()`
 
 ### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `request_id` | `str` | Unique identifier for the API request |
-| `success` | `bool` | Whether the operation was successful |
-| `error_message` | `str` | Error message if the operation failed |
-| `session_ids` | `List[str]` | List of session IDs matching the filter criteria |
-| `next_token` | `str` | Token for retrieving the next page (empty if no more pages) |
-| `max_results` | `int` | Maximum number of results per page |
-| `total_count` | `int` | Total number of sessions matching the filter criteria |
+| `request_id` | `Any` | Unique identifier for the API request. Defaults to "". |
+| `session` | `Any` | The session object. Defaults to None. |
+| `success` | `Any` | Whether the operation was successful. Defaults to False. |
+| `error_message` | `Any` | Error message if the operation failed. Defaults to "". |
 
-### Usage
+### Related Guide
 
-```python
-from agb import AGB
+📖 **[Session Management APIs](../../guides/session-management.md)**
 
-# Initialize AGB client
-agb = AGB()
+Get a session by its ID or create a new session in the AGB cloud environment
 
-# List all sessions
-result = agb.list()
-
-# Check if successful
-if result.success:
-    print(f"Found {result.total_count} total sessions")
-    print(f"Showing {len(result.session_ids)} session IDs on this page")
-    print(f"Request ID: {result.request_id}")
-
-    for session_id in result.session_ids:
-        print(f"Session ID: {session_id}")
-
-    # Check if there are more pages
-    if result.next_token:
-        print("More pages available")
-else:
-    print(f"Failed to list sessions: {result.error_message}")
-```
-
-### Pagination
-
-The `SessionListResult` supports pagination through the `next_token` mechanism.
 
 ---
 
 ## DeleteResult
 
-`DeleteResult` is the response type returned by session deletion operations in the AGB SDK.
+Result of delete operations
 
-### Overview
+### API Methods Using This Response Type
 
-The `DeleteResult` class represents the outcome of operations that delete resources, such as `AGB.delete()`.
+- `session.delete()`
+- `AGB.delete()`
 
 ### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `request_id` | `str` | Unique identifier for the API request |
-| `success` | `bool` | Whether the operation was successful |
-| `error_message` | `str` | Error message if the operation failed |
+| `request_id` | `Any` | Unique identifier for the API request. Defaults to "". |
+| `success` | `Any` | Whether the delete operation was successful. Defaults to False. |
+| `error_message` | `Any` | Error message if the operation failed. Defaults to "". |
 
-### Usage
+### Related Guide
 
-```python
-from agb import AGB
+📖 **[Session and Resource Deletion APIs](../../guides/session-management.md)**
 
-# Initialize AGB client
-agb = AGB()
+Delete sessions and manage resource cleanup operations
 
-# ... (create session) ...
-
-# Delete the session
-delete_result = agb.delete(session)
-
-# Check if deletion was successful
-if delete_result.success:
-    print("Session deleted successfully")
-    print(f"Request ID: {delete_result.request_id}")
-else:
-    print(f"Failed to delete session: {delete_result.error_message}")
-```
 
 ---
 
-## Execution Results
+## OperationResult
 
-This section covers the response types for code and command execution operations.
+Result of general operations
 
-### Response Types
+### API Methods Using This Response Type
 
-#### CodeExecutionResult
+- `session.set_labels()`
+- `session.get_labels()`
+- `session.info()`
+- `session.get_link()`
+- `agb.context.update()`
+- `agb.context.delete()`
+- `agb.context.delete_file()`
 
-Returned by `session.code.run_code()` operations.
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `request_id` | `str` | Unique identifier for the API request |
-| `success` | `bool` | Whether the operation was successful |
-| `result` | `str` | The execution result |
-| `error_message` | `str` | Error message if the operation failed |
-
-#### CommandResult
-
-Returned by `session.command.execute_command()` operations.
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `request_id` | `str` | Unique identifier for the API request |
-| `success` | `bool` | Whether the operation was successful |
-| `output` | `str` | The command output (stdout) |
-| `error_message` | `str` | Error message if the operation failed |
+| `request_id` | `Any` | Unique identifier for the API request. Defaults to "". |
+| `success` | `Any` | Whether the operation was successful. Defaults to False. |
+| `data` | `Any` | Data returned by the operation. Defaults to None. |
+| `error_message` | `Any` | Error message if the operation failed. Defaults to "". |
+
+### Related Guide
+
+📖 **[Context and Session Management APIs](../../guides/context-usage-guide.md)**
+
+Update context data, delete files, and manage session operations
+
 
 ---
 
-## File System Results
+## BoolResult
 
-This section covers the response types for file system operations.
+Result of operations returning a boolean value
 
-### Response Types
+### API Methods Using This Response Type
 
-#### FileInfoResult
+- `session.file_system.create_directory()`
+- `session.file_system.edit_file()`
+- `session.file_system.move_file()`
+- `session.file_system.write_file()`
 
-Returned by `session.file_system.get_file_info()` operations.
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `request_id` | `str` | Unique identifier for the API request |
-| `success` | `bool` | Whether the operation was successful |
-| `file_info` | `dict` | File information (size, permissions, etc.) |
-| `error_message` | `str` | Error message if the operation failed |
-
-#### DirectoryListResult
-
-Returned by `session.file_system.list_directory()` operations.
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `request_id` | `str` | Unique identifier for the API request |
-| `success` | `bool` | Whether the operation was successful |
-| `entries` | `list` | List of files and directories  |
-| `error_message` | `str` | Error message if the operation failed |
+| `request_id` | `Any` | Unique identifier for the API request. Defaults to "". |
+| `success` | `Any` | Whether the operation was successful. Defaults to False. |
+| `data` | `Any` | The boolean result. Defaults to None. |
+| `error_message` | `Any` | Error message if the operation failed. Defaults to "". |
 
-#### FileContentResult
+### Related Guide
 
-Returned by `session.file_system.read_file()` operations.
+📖 **[File System Validation APIs](../../guides/file-operations.md)**
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `request_id` | `str` | Unique identifier for the API request |
-| `success` | `bool` | Whether the operation was successful |
-| `content` | `str` | File content |
-| `error_message` | `str` | Error message if the operation failed |
+File existence checks and validation operations
 
-#### MultipleFileContentResult
 
-Returned by `session.file_system.read_multiple_files()` operations.
+---
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `request_id` | `str` | Unique identifier for the API request |
-| `success` | `bool` | Whether the operation was successful |
-| `contents` | `dict` | Dictionary mapping file paths to content |
-| `error_message` | `str` | Error message if the operation failed |
+## SessionListResult
 
-#### FileSearchResult
+Result of operations returning a list of Sessions
 
-Returned by `session.file_system.search_files()` operations.
+### API Methods Using This Response Type
+
+- `AGB.list()`
+
+### Properties
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `request_id` | `str` | Unique identifier for the API request |
-| `success` | `bool` | Whether the operation was successful |
-| `matches` | `list` | List of matching file paths |
-| `error_message` | `str` | Error message if the operation failed |
+| `request_id` | `Any` | The request ID. |
+| `success` | `Any` | Whether the operation was successful. |
+| `error_message` | `Any` | Error message if the operation failed. |
+| `session_ids` | `Any` | List of session IDs. |
+| `next_token` | `Any` | Token for the next page of results. |
+| `max_results` | `Any` | Number of results per page. |
+| `total_count` | `Any` | Total number of results available. |
 
+### Related Guide
+
+📖 **[Session Listing APIs](../../guides/session-management.md)**
+
+Returns paginated list of session IDs filtered by labels
+
+
+---
+
+## FileInfoResult
+
+Result of file info operations
+
+### API Methods Using This Response Type
+
+- `session.file_system.get_file_info()`
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `request_id` | `Any` | Unique identifier for the API request. Defaults to "". |
+| `success` | `Any` | Whether the operation was successful. Defaults to False. |
+| `file_info` | `Any` | File information. Defaults to None. |
+| `error_message` | `Any` | Error message if the operation failed. Defaults to "". |
+
+### Related Guide
+
+📖 **[File Information and Metadata APIs](../../guides/file-operations.md)**
+
+Get file properties, permissions, and metadata information
+
+
+---
+
+## FileContentResult
+
+Result of file read operations
+
+### API Methods Using This Response Type
+
+- `session.file_system.read_file()`
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `request_id` | `Any` | Unique identifier for the API request. Defaults to "". |
+| `success` | `Any` | Whether the operation was successful. Defaults to False. |
+| `content` | `Any` | File content. Defaults to "". |
+| `error_message` | `Any` | Error message if the operation failed. Defaults to "". |
+
+### Related Guide
+
+📖 **[File Content Access APIs](../../guides/file-operations.md)**
+
+Read file content and retrieve file data
+
+
+---
+
+## MultipleFileContentResult
+
+Result of multiple file read operations
+
+### API Methods Using This Response Type
+
+- `session.file_system.read_multiple_files()`
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `request_id` | `Any` | Unique identifier for the API request. Defaults to "". |
+| `success` | `Any` | Whether the operation was successful. Defaults to False. |
+| `contents` | `Any` | Dictionary of file paths to file contents. Defaults to None. |
+| `error_message` | `Any` | Error message if the operation failed. Defaults to "". |
+
+### Related Guide
+
+📖 **[File Content Management APIs](../../guides/file-operations.md)**
+
+Read multiple files and batch file content operations
+
+
+---
+
+## DirectoryListResult
+
+Result of directory listing operations
+
+### API Methods Using This Response Type
+
+- `session.file_system.list_directory()`
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `request_id` | `Any` | Unique identifier for the API request. Defaults to "". |
+| `success` | `Any` | Whether the operation was successful. Defaults to False. |
+| `entries` | `Any` | Directory entries. Defaults to None. |
+| `error_message` | `Any` | Error message if the operation failed. Defaults to "". |
+
+### Related Guide
+
+📖 **[Directory Management APIs](../../guides/file-operations.md)**
+
+List directory contents and navigate file system structure
+
+
+---
+
+## FileSearchResult
+
+Result of file search operations
+
+### API Methods Using This Response Type
+
+- `session.file_system.search_files()`
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `request_id` | `Any` | Unique identifier for the API request. Defaults to "". |
+| `success` | `Any` | Whether the operation was successful. Defaults to False. |
+| `matches` | `Any` | Matching file paths. Defaults to None. |
+| `error_message` | `Any` | Error message if the operation failed. Defaults to "". |
+
+### Related Guide
+
+📖 **[File Search and Discovery APIs](../../guides/file-operations.md)**
+
+Search files by patterns and locate specific file content
+
+
+---
+
+
+## Base Response Type
+
+All response types inherit from `ApiResponse`, which provides the basic `request_id` property for tracking API requests.
+
+---
+
+*Documentation generated automatically from source code.*

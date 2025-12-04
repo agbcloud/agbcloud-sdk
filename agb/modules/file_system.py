@@ -273,7 +273,7 @@ class FileSystem(BaseService):
         Create a new directory at the specified path.
 
         Args:
-            path: The path of the directory to create.
+            path (str): The path of the directory to create.
 
         Returns:
             BoolResult: Result object containing success status and error message if
@@ -305,9 +305,9 @@ class FileSystem(BaseService):
         Edit a file by replacing occurrences of oldText with newText.
 
         Args:
-            path: The path of the file to edit.
-            edits: A list of dictionaries specifying oldText and newText.
-            dry_run: If True, preview changes without applying them.
+            path (str): The path of the file to edit.
+            edits (List[Dict[str, str]]): A list of dictionaries specifying oldText and newText.
+            dry_run (bool): If True, preview changes without applying them. Defaults to False.
 
         Returns:
             BoolResult: Result object containing success status and error message if
@@ -337,7 +337,7 @@ class FileSystem(BaseService):
         Get information about a file or directory.
 
         Args:
-            path: The path of the file or directory to inspect.
+            path (str): The path of the file or directory to inspect.
 
         Returns:
             FileInfoResult: Result object containing file info and error message if any.
@@ -416,7 +416,7 @@ class FileSystem(BaseService):
         List the contents of a directory.
 
         Args:
-            path: The path of the directory to list.
+            path (str): The path of the directory to list.
 
         Returns:
             DirectoryListResult: Result object containing directory entries and error
@@ -507,8 +507,8 @@ class FileSystem(BaseService):
         Move a file or directory from source path to destination path.
 
         Args:
-            source: The source path of the file or directory.
-            destination: The destination path.
+            source (str): The source path of the file or directory.
+            destination (str): The destination path.
 
         Returns:
             BoolResult: Result object containing success status and error message if
@@ -632,7 +632,7 @@ class FileSystem(BaseService):
         Read the contents of a file.
 
         Args:
-            path: The path of the file to read.
+            path (str): The path of the file to read.
 
         Returns:
             FileContentResult: Result object containing file content and error message
@@ -706,9 +706,9 @@ class FileSystem(BaseService):
         Write content to a file. Automatically handles large files by chunking.
 
         Args:
-            path: The path of the file to write.
-            content: The content to write to the file.
-            mode: The write mode ("overwrite" or "append").
+            path (str): The path of the file to write.
+            content (str): The content to write to the file.
+            mode (str): The write mode ("overwrite" or "append"). Defaults to "overwrite".
 
         Returns:
             BoolResult: Result object containing success status and error message if
@@ -755,7 +755,7 @@ class FileSystem(BaseService):
         Read the contents of multiple files at once.
 
         Args:
-            paths: A list of file paths to read.
+            paths (List[str]): A list of file paths to read.
 
         Returns:
             MultipleFileContentResult: Result object containing a dictionary mapping
@@ -861,9 +861,10 @@ class FileSystem(BaseService):
         Search for files in the specified path using a pattern.
 
         Args:
-            path: The base directory path to search in.
-            pattern: The glob pattern to search for.
-            exclude_patterns: Optional list of patterns to exclude from the search.
+            path (str): The base directory path to search in.
+            pattern (str): The glob pattern to search for.
+            exclude_patterns (Optional[List[str]]): Optional list of patterns to exclude from the search.
+                Defaults to None.
 
         Returns:
             FileSearchResult: Result object containing matching file paths and error
@@ -994,12 +995,12 @@ class FileSystem(BaseService):
         Watch a directory for file changes and call the callback function when changes occur.
 
         Args:
-            path: The directory path to monitor for file changes.
-            callback: Callback function that will be called with a list of FileChangeEvent
+            path (str): The directory path to monitor for file changes.
+            callback (Callable[[List[FileChangeEvent]], None]): Callback function that will be called with a list of FileChangeEvent
                 objects when changes are detected.
-            interval: Polling interval in seconds. Defaults to 1.0.
-            stop_event: Optional threading.Event to stop the monitoring. If not provided,
-                a new Event will be created and returned via the thread object.
+            interval (float): Polling interval in seconds. Defaults to 1.0.
+            stop_event (Optional[threading.Event]): Optional threading.Event to stop the monitoring. If not provided,
+                a new Event will be created and returned via the thread object. Defaults to None.
 
         Returns:
             threading.Thread: The monitoring thread. Call thread.start() to begin monitoring.

@@ -19,10 +19,4 @@ Demonstrates the simplest way to persist data: downloading specific files (like 
 ### Context Sync Demo (`context_sync_demo.py`)
 Shows bidirectional synchronization (uploading inputs, processing them, and downloading outputs).
 
-<<<<<<< ours
-- [Context API Reference](../../api-reference/data_context/context.md)
-- [ContextManager API Reference](../../api-reference/data_context/context_manager.md)
-- [Session API Reference](../../api-reference/02_session.md)
-=======
 <<< ./context_sync_demo.py
->>>>>>> theirs

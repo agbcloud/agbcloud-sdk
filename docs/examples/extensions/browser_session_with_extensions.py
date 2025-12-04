@@ -24,7 +24,7 @@ from agb.agb import AGB
 from agb.extension import ExtensionsService, ExtensionOption
 from agb.session_params import CreateSessionParams, BrowserContext
 from agb.modules.browser.browser import BrowserOption
-from agb.session import BaseSession
+from agb.session import Session
 
 # Optional Playwright import for verification
 try:
@@ -96,7 +96,7 @@ def create_sample_extension_zip(name: str) -> str:
     return zip_path
 
 
-async def verify_extensions_loaded(session: BaseSession):
+async def verify_extensions_loaded(session: Session):
     """Verify that extensions are loaded in the browser using Playwright."""
     if not PLAYWRIGHT_AVAILABLE or async_playwright is None:
         print("   Playwright not available, skipping extension verification")
@@ -154,7 +154,7 @@ async def main():
     # Create ExtensionsService
     extensions_service = ExtensionsService(agb, "browser_extensions_example")
 
-    session: Optional[BaseSession] = None
+    session: Optional[Session] = None
     extension1 = None
     extension2 = None
     ext1_path = None

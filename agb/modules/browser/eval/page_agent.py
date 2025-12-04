@@ -13,7 +13,7 @@ from agb.modules.browser.browser import BrowserOption
 from agb.model.response import SessionResult
 from agb.modules.browser.browser_agent import ActOptions, ExtractOptions, ObserveOptions, ActResult, ObserveResult
 from agb.modules.browser.eval.local_page_agent import LocalSession,LocalMCPClient
-from agb.session import BaseSession
+from agb.session import Session
 from agb.api.base_service import BaseService
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class PageAgent:
         self._metrics_enabled = enable_metrics
         self._metrics: Dict[str, int] = {}
         self.reset_metrics()
-        self.session: Optional[BaseSession] = None
+        self.session: Optional[Session] = None
         self.agb: Optional[AGB] = None
         self.browser: Optional[Any] = None
         self.current_page: Optional[Page] = None

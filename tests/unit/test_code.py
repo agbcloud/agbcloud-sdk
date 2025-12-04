@@ -27,9 +27,6 @@ class DummySession:
     def get_client(self):
         return self.client
 
-    def find_server_for_tool(self, tool_name: str) -> str:
-        return "default-server"
-
 
 class TestCodeExecutionResult(unittest.TestCase):
     """Test CodeExecutionResult class."""

@@ -1,34 +1,84 @@
-# Exceptions
+# Exceptions API Reference
 
-This section lists the exceptions raised by the AGB SDK. All exceptions inherit from `AGBError`.
+## Overview
+
+Standard exceptions raised by the AGB SDK.
+
+
+
 
 ## AGBError
+
+```python
+class AGBError(Exception)
+```
+
 Base exception for all AGB SDK errors.
 
 ## AuthenticationError
-Raised when there is an authentication error (e.g., invalid API key).
+
+```python
+class AuthenticationError(AGBError)
+```
+
+Raised when there is an authentication error.
 
 ## APIError
-Raised when there is an error with the AGB API (e.g., network issues, 5xx errors).
 
-**Attributes:**
-- `status_code`: HTTP status code of the response (if applicable).
+```python
+class APIError(AGBError)
+```
+
+Raised when there is an error with the API.
 
 ## FileError
-Raised for errors related to file operations (e.g., file not found, permission denied).
+
+```python
+class FileError(AGBError)
+```
+
+Raised for errors related to file operations.
 
 ## CommandError
+
+```python
+class CommandError(AGBError)
+```
+
 Raised for errors related to command execution.
 
 ## SessionError
-Raised for errors related to session operations (e.g., creation failure, session lost).
+
+```python
+class SessionError(AGBError)
+```
+
+Raised for errors related to session operations.
 
 ## ApplicationError
+
+```python
+class ApplicationError(AGBError)
+```
+
 Raised for errors related to application operations.
 
 ## BrowserError
-Raised for errors related to browser operations (e.g., navigation failed, element not found).
+
+```python
+class BrowserError(AGBError)
+```
+
+Raised for errors related to browser operations.
 
 ## ClearanceTimeoutError
+
+```python
+class ClearanceTimeoutError(AGBError)
+```
+
 Raised when the clearance task times out.
 
+---
+
+*Documentation generated automatically from source code using pydoc-markdown.*

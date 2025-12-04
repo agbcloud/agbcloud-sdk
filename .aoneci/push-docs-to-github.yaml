@@ -7,7 +7,7 @@ params:
     type: string
     default: "agbcloud/agbcloud-docs"
     description: "Target GitHub repository (format: username/repo-name)"
-  
+
   docs_sync_mode:
     name: Documentation Sync Mode
     type: string
@@ -16,7 +16,7 @@ params:
       - "incremental"  # Only sync changed files
       - "full"         # Fully sync the entire docs directory
     description: "Choose how to sync documentation files"
-  
+
   runs_on_resources:
     name: Resource Specification
     description: "Runtime container resource specification"
@@ -34,7 +34,7 @@ jobs:
       - "${{params.runs_on_resources}}"
     image: alios-8u
     timeout: 20m
-    
+
     steps:
       - uses: checkout
         inputs:
@@ -42,40 +42,40 @@ jobs:
           ref: 'master'
           username: 'wuying-ai-team'
           token: ${{secrets.wuying_ai_team_private_token}}
-      
+
       # Check documentation changes
       - id: check-docs-changes
         name: "Check Documentation Changes"
         run: |
           echo "📋 Checking for documentation changes..."
-          
+
           # Check if docs directory exists
           if [ ! -d "docs" ]; then
             echo "❌ docs directory not found"
             exit 1
           fi
-          
+
           # Check if there are files in docs directory
           DOCS_FILES=$(find docs -type f -name "*.md" 2>/dev/null | wc -l)
           if [ "$DOCS_FILES" -eq 0 ]; then
             echo "⚠️ No markdown files found in docs directory"
             exit 1
           fi
-          
+
           echo "✅ Found $DOCS_FILES documentation files"
           echo "DOCS_FILES_COUNT=$DOCS_FILES" >> $AONE_CI_ENV
-          
+
           # Display documentation structure
           echo "📁 Documentation structure:"
           tree docs || find docs -type f | head -20
-      
+
       # GitHub connectivity diagnosis step
       - id: github-connectivity-diagnosis
         name: "GitHub Connectivity Diagnosis"
         run: |
           echo "🔍 Running GitHub connectivity diagnosis..."
           echo "=================================="
-          
+
           # Basic network connectivity test
           echo "1. Testing basic network connectivity:"
           if ping -c 3 8.8.8.8 > /dev/null 2>&1; then
@@ -83,9 +83,9 @@ jobs:
           else
             echo "   ⚠️ Internet connectivity: Limited (ping failed, trying HTTP)"
           fi
-          
-          
-          
+
+
+
           # GitHub HTTPS connection
           echo "2. Testing GitHub HTTPS connectivity:"
           if curl -s --connect-timeout 10 https://github.com > /dev/null; then
@@ -93,7 +93,7 @@ jobs:
           else
             echo "   ❌ GitHub HTTPS connection: FAILED"
           fi
-          
+
           # GitHub API connection
           echo "3. Testing GitHub API connectivity:"
           API_RESPONSE=$(curl -s -w "%{http_code}" https://api.github.com -o /dev/null)
@@ -104,56 +104,56 @@ jobs:
           fi
           echo "=================================="
           echo "✅ Diagnosis completed"
-      
+
       # Validate GitHub configuration
       - id: validate-github-config
         name: "Validate GitHub Configuration"
         run: |
           echo "🔧 Validating GitHub configuration..."
-          
+
           # Check GitHub Token
-          if [ -z "${{secrets.sweetcoder_li_github_token}}" ]; then
-            echo "❌ sweetcoder_li_github_token not configured in GitLab secrets"
-            echo "Please add sweetcoder_li_github_token to GitLab CI/CD Variables"
+          if [ -z "${{secrets.agbaccount_github_token}}" ]; then
+            echo "❌ agbaccount_github_token not configured in GitLab secrets"
+            echo "Please add agbaccount_github_token to GitLab CI/CD Variables"
             echo "Required permissions: repo, workflow"
             exit 1
           fi
-          
+
           # Check GitHub username variable
           if [ -z "${{vars.sweetcoder_li_github_username}}" ]; then
             echo "❌ sweetcoder_li_github_username not configured in GitLab Variables"
             echo "Please add sweetcoder_li_github_username to GitLab CI/CD Variables"
             exit 1
           fi
-          
+
           # Check GitHub email variable
           if [ -z "${{vars.sweetcoder_li_github_email}}" ]; then
             echo "❌ sweetcoder_li_github_email not configured in GitLab Variables"
             echo "Please add sweetcoder_li_github_email to GitLab CI/CD Variables"
             exit 1
           fi
-          
+
           echo "✅ GitHub credentials and user information validated"
           echo "  - Token: Configured"
           echo "  - Username: ${{vars.sweetcoder_li_github_username}}"
           echo "  - Email: ${{vars.sweetcoder_li_github_email}}"
-          
+
           # Determine target repository
           GITHUB_REPO="${{params.github_repo}}"
-          
+
           if [ -z "$GITHUB_REPO" ]; then
             echo "❌ GitHub repository not specified"
             echo "Please set github_repo parameter"
             exit 1
           fi
-          
+
           # Validate repository name format
           if [[ ! "$GITHUB_REPO" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]]; then
             echo "❌ Invalid GitHub repository format: $GITHUB_REPO"
             echo "Expected format: username/repository-name"
             exit 1
           fi
-          
+
           # Test network connectivity
           echo "🌐 Testing network connectivity..."
           if ! ping -c 1 github.com > /dev/null 2>&1; then
@@ -165,12 +165,12 @@ jobs:
             fi
           fi
           echo "✅ Network connectivity to GitHub confirmed"
-          
+
           # Validate GitHub Token basic validity
           echo "🔐 Testing GitHub token validity..."
-          TOKEN_TEST=$(curl -s -w "%{http_code}" -H "Authorization: token ${{secrets.sweetcoder_li_github_token}}" \
+          TOKEN_TEST=$(curl -s -w "%{http_code}" -H "Authorization: token ${{secrets.agbaccount_github_token}}" \
                        "https://api.github.com/user" -o /dev/null)
-          
+
           if [ "$TOKEN_TEST" != "200" ]; then
             echo "❌ GitHub token validation failed (HTTP $TOKEN_TEST)"
             case "$TOKEN_TEST" in
@@ -183,12 +183,12 @@ jobs:
             exit 1
           fi
           echo "✅ GitHub token is valid"
-          
+
           # Validate target repository access permissions
           echo "🔍 Testing repository access..."
-          REPO_TEST=$(curl -s -w "%{http_code}" -H "Authorization: token ${{secrets.sweetcoder_li_github_token}}" \
+          REPO_TEST=$(curl -s -w "%{http_code}" -H "Authorization: token ${{secrets.agbaccount_github_token}}" \
                       "https://api.github.com/repos/${GITHUB_REPO}" -o /dev/null)
-          
+
           if [ "$REPO_TEST" != "200" ]; then
             echo "❌ Repository access validation failed (HTTP $REPO_TEST)"
             case "$REPO_TEST" in
@@ -204,42 +204,42 @@ jobs:
             exit 1
           fi
           echo "✅ Repository access confirmed"
-          
+
           echo "✅ GitHub configuration validated"
           echo "  - Repository: $GITHUB_REPO"
           echo "  - Sync Mode: ${{params.docs_sync_mode}}"
           echo "  - Token: Valid and authenticated"
           echo "  - Repository Access: Confirmed"
-          
+
           echo "GITHUB_REPO=$GITHUB_REPO" >> $AONE_CI_ENV
-      
+
       # Push documentation to GitHub
       - id: push-to-github
         name: "Push Documentation to GitHub"
         run: |
           echo "🚀 Starting documentation push to GitHub..."
-          
+
           GITHUB_REPO="${{params.github_repo}}"
           SYNC_MODE="${{params.docs_sync_mode}}"
-          
+
           echo "📋 Push Configuration:"
           echo "  - Repository: $GITHUB_REPO"
           echo "  - Development Branch: (will be randomly generated)"
           echo "  - Base Branch: main"
           echo "  - Sync Mode: $SYNC_MODE"
           echo "  - Files Count: $DOCS_FILES_COUNT"
-          
+
           # Create working directory
           GITHUB_WORK_DIR="$PWD/.github-docs-sync"
           mkdir -p "$GITHUB_WORK_DIR"
           cd "$GITHUB_WORK_DIR"
-          
+
           # Configure Git - Get user information directly from Variables
           echo "🔧 Configuring Git user information..."
 
           # Get username and email directly from Variables
-          GITHUB_USERNAME="${{vars.sweetcoder_li_github_username}}"
-          GITHUB_EMAIL="${{vars.sweetcoder_li_github_email}}"
+          GITHUB_USERNAME="${{vars.agbaccount_github_username}}"
+          GITHUB_EMAIL="${{vars.agbaccount_github_email}}"
 
           echo "📋 Git configuration:"
           echo "  - Username: $GITHUB_USERNAME"
@@ -251,23 +251,23 @@ jobs:
 
           # Configure Git credential handling to ensure proper use of GitHub Token
           git config --global credential.helper store
-          echo "https://${GITHUB_USERNAME}:${{secrets.sweetcoder_li_github_token}}@github.com" > ~/.git-credentials
+          echo "https://${GITHUB_USERNAME}:${{secrets.agbaccount_github_token}}@github.com" > ~/.git-credentials
 
           echo "✅ Git configured with GitHub account information"
-          
+
           # Validate GitHub Token and repository access permissions
           echo "🔐 Validating GitHub access..."
-          
+
           # Test GitHub API access
           echo "Testing GitHub API access..."
-          if ! curl -s -H "Authorization: token ${{secrets.sweetcoder_li_github_token}}" \
+          if ! curl -s -H "Authorization: token ${{secrets.agbaccount_github_token}}" \
                "https://api.github.com/repos/${GITHUB_REPO}" > /dev/null; then
             echo "❌ Failed to access GitHub API"
             echo "Please check:"
             echo "  1. GitHub token is valid and not expired"
             echo "  2. Token has 'repo' permissions"
             echo "  3. Repository ${GITHUB_REPO} exists and is accessible"
-            
+
             # Test basic GitHub API connectivity
             echo "Testing basic GitHub connectivity..."
             if curl -s "https://api.github.com" > /dev/null; then
@@ -277,22 +277,22 @@ jobs:
             fi
             exit 1
           fi
-          
+
           echo "✅ GitHub API access validated"
-          
+
           # Clone GitHub repository
           echo "📥 Cloning GitHub repository..."
-          
+
           # Set Git credential helper timeout
           git config --global credential.helper 'cache --timeout=300'
-          
+
           # Attempt to clone GitHub repository
-          if ! git clone "https://${GITHUB_USERNAME}:${{secrets.sweetcoder_li_github_token}}@github.com/${GITHUB_REPO}.git" github-repo; then
+          if ! git clone "https://${GITHUB_USERNAME}:${{secrets.agbaccount_github_token}}@github.com/${GITHUB_REPO}.git" github-repo; then
             echo "❌ Failed to clone GitHub repository"
             echo "Debugging information:"
             echo "  - Repository: ${GITHUB_REPO}"
             echo "  - Git version: $(git --version)"
-            
+
             # Try alternative clone method
             echo "Trying alternative clone method..."
             if ! git clone "https://github.com/${GITHUB_REPO}.git" github-repo; then
@@ -306,34 +306,41 @@ jobs:
               echo "✅ Repository cloned without authentication"
               echo "⚠️ Will configure authentication for push operations"
               cd github-repo
-              git remote set-url origin "https://${{secrets.sweetcoder_li_github_token}}@github.com/${GITHUB_REPO}.git"
+              git remote set-url origin "https://${{secrets.agbaccount_github_token}}@github.com/${GITHUB_REPO}.git"
               cd ..
             fi
           else
             echo "✅ Repository cloned successfully with authentication"
           fi
-          
+
           cd github-repo
-          
+
           # Fetch all remote branch information
           git fetch origin
-          
+
           # Determine base branch
           PR_TARGET_BRANCH="main"
-          
+
           # Generate random development branch name
           TIMESTAMP=$(date '+%Y%m%d-%H%M%S')
           RANDOM_SUFFIX=$(openssl rand -hex 4 2>/dev/null || echo $(( RANDOM % 10000 )))
           GITHUB_BRANCH="docs-sync-${TIMESTAMP}-${RANDOM_SUFFIX}"
-          
+
           echo "🔄 Creating random development branch: $GITHUB_BRANCH"
           echo "📋 Base branch: $PR_TARGET_BRANCH"
+<<<<<<< ours
           
 <<<<<<< ours
           # Save branch name to environment for later steps
           echo "GITHUB_BRANCH=$GITHUB_BRANCH" >> $AONE_CI_ENV
           
 =======
+>>>>>>> theirs
+=======
+
+          # Save branch name to environment for later steps
+          echo "GITHUB_BRANCH=$GITHUB_BRANCH" >> $AONE_CI_ENV
+
 >>>>>>> theirs
           # Check if base branch exists
           if git show-ref --verify --quiet "refs/remotes/origin/$PR_TARGET_BRANCH"; then
@@ -352,12 +359,12 @@ jobs:
               exit 1
             fi
           fi
-          
+
           echo "✅ Created random development branch '$GITHUB_BRANCH' from '$PR_TARGET_BRANCH'"
-          
+
           # Sync documentation files
           echo "📋 Syncing documentation files..."
-          
+
           if [ "$SYNC_MODE" = "full" ]; then
             # Full sync: Remove existing docs directory and copy fresh
             echo "🔄 Full sync mode: Replacing entire docs directory"
@@ -368,10 +375,10 @@ jobs:
             echo "📈 Incremental sync mode: Updating changed files"
             mkdir -p docs/
           fi
-          
+
           # Copy documentation files
           echo "📂 Copying documentation files..."
-          
+
           # Copy entire docs directory structure
           if [ -d "../../docs" ]; then
             cp -r ../../docs/* ./docs/ 2>/dev/null || true
@@ -380,16 +387,16 @@ jobs:
             echo "❌ Source docs directory not found"
             exit 1
           fi
-          
+
           # Display synced files
           echo "📋 Synced files:"
           find docs -type f | head -10
           TOTAL_FILES=$(find docs -type f | wc -l)
           echo "📊 Total files synced: $TOTAL_FILES"
-          
+
           # Check for changes
           git add docs/
-          
+
           if git diff --staged --quiet; then
             echo "📝 No changes detected in documentation"
             echo "✅ Documentation is already up to date"
@@ -402,10 +409,10 @@ jobs:
             - Sync mode: $SYNC_MODE
             - Source: GitLab CI Pipeline
             - Triggered by: Documentation update"
-            
+
             echo "💾 Committing changes..."
             git commit -m "$COMMIT_MESSAGE"
-            
+
             # Push new branch to GitHub (ensure remote branch is created)
             echo "⬆️ Pushing new development branch to GitHub..."
             if git push -u origin "$GITHUB_BRANCH"; then
@@ -420,12 +427,12 @@ jobs:
               exit 1
             fi
           fi
-          
+
           # Clean up working directory
           cd ../../
           rm -rf "$GITHUB_WORK_DIR"
           echo "🧹 Cleanup completed"
-      
+
       # Generate push report
       - id: generate-report
         name: "Generate Push Report"
@@ -439,12 +446,12 @@ jobs:
           echo "🌿 Development Branch: ${GITHUB_BRANCH:-'Generated randomly'}"
           echo "🔄 Sync Mode: ${{params.docs_sync_mode}}"
           echo "🎯 Base Branch: main"
-          
-          
+
+
           echo "=================================="
           echo "🔗 GitHub Repository: https://github.com/${GITHUB_REPO}"
           echo "📖 Documentation: https://github.com/${GITHUB_REPO}/tree/${GITHUB_BRANCH}/docs"
-          
+
           echo "📝 Development Branch: https://github.com/${GITHUB_REPO}/tree/${GITHUB_BRANCH}"
-          
+
           echo "=================================="

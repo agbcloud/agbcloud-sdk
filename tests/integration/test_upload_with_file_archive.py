@@ -55,11 +55,11 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
         # Step 1: Create context using context.get method
         context_name = f"test-file-mode-context-{self.unique_id}"
         print(f"Creating context with name: {context_name}")
-        
+
         context_result = self.agb.context.get(context_name, create=True)
         self.assertTrue(context_result.success, f"Failed to create context: {context_result.error_message}")
         self.assertIsNotNone(context_result.context)
-        
+
         context = context_result.context
         print(f"Generated context: {context.name} (ID: {context.id})")
         print(f"Context get request ID: {context_result.request_id}")
@@ -67,7 +67,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
         try:
             # Step 2: Create session with default FILE upload mode (using SyncPolicy default)
             sync_policy = SyncPolicy()  # Uses default uploadMode "File"
-            
+
             # Verify default upload mode is FILE
             self.assertEqual(sync_policy.upload_policy.upload_mode, UploadMode.FILE)
             sync_path =  f"/tmp/test"
@@ -94,7 +94,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(session_result.success, f"Failed to create session: {session_result.error_message}")
             self.assertIsNotNone(session_result.session)
             self.assertIsNotNone(session_result.request_id)
-            
+
             session = session_result.session
             self.test_sessions.append(session)
 
@@ -106,7 +106,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
             session_info = self.agb.get_session(session.session_id)
             self.assertTrue(session_info.success, f"Failed to get session info: {session_info.error_message}")
             self.assertIsNotNone(session_info.data)
-            
+
             print(f"App Instance ID: {session_info.data.app_instance_id}")
             print(f"Get session request ID: {session_info.request_id}")
 
@@ -116,16 +116,16 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
 
             # Write a 5KB file using FileSystem
             print("Writing 5KB file using FileSystem...")
-            
+
             # Generate 5KB content (approximately 5120 bytes)
             content_size = 5 * 1024  # 5KB
             base_content = "Archive mode test successful! This is a test file created in the session path. "
             repeated_content = base_content * (content_size // len(base_content) + 1)
             file_content = repeated_content[:content_size]
-            
+
             # Create file path in the session path directory
             file_path = f"{sync_path}/test-file-5kb.txt"
-            
+
             print(f"Creating file: {file_path}")
             print(f"File content size: {len(file_content)} bytes")
 
@@ -143,28 +143,28 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
             print("Testing context sync functionality...")
             # Call context sync before getting info
             print("Calling context sync before getting info...")
-            
+
             # Use asyncio.run to handle the async sync method
             sync_result = await session.context.sync()
-            
+
             self.assertTrue(sync_result.success, f"Failed to sync context")
             self.assertIsNotNone(sync_result.request_id)
-            
+
             print(f"✅ Context sync successful!")
             print(f"Sync request ID: {sync_result.request_id}")
 
             # Now call context info after sync
             print("Calling context info after sync...")
             info_result = session.context.info()
-            
+
             self.assertTrue(info_result.success, f"Failed to get context info: {info_result.error_message}")
             self.assertIsNotNone(info_result.request_id)
             self.assertIsNotNone(info_result.context_status_data)
-            
+
             print(f"✅ Context info successful!")
             print(f"Info request ID: {info_result.request_id}")
             print(f"Context status data count: {len(info_result.context_status_data)}")
-            
+
             # Log context status details
             if len(info_result.context_status_data) > 0:
                 print("Context status details:")
@@ -173,7 +173,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
 
             # List files in context sync directory
             print("Listing files in context sync directory...")
-            
+
             list_result = self.agb.context.list_files(context.id, sync_path, page_number=1, page_size=10)
 
             # Verify ListFiles success
@@ -216,7 +216,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
 
         context_name = f"archive-mode-context-{self.unique_id}"
         context_result = self.agb.context.get(context_name, create=True)
-        
+
         self.assertTrue(context_result.success, f"Failed to create context: {context_result.error_message}")
         self.assertIsNotNone(context_result.context)
 
@@ -264,7 +264,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
             session_info = self.agb.get_session(session.session_id)
             self.assertTrue(session_info.success, f"Failed to get session info: {session_info.error_message}")
             self.assertIsNotNone(session_info.data)
-            
+
             print(f"App Instance ID: {session_info.data.app_instance_id}")
 
             print(f"✅ Session created successfully with ID: {session.session_id}")
@@ -275,16 +275,16 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
 
             # Write a 5KB file using FileSystem
             print("Writing 5KB file using FileSystem...")
-            
+
             # Generate 5KB content (approximately 5120 bytes)
             content_size = 5 * 1024  # 5KB
             base_content = "Archive mode test successful! This is a test file created in the session path. "
             repeated_content = base_content * (content_size // len(base_content) + 1)
             file_content = repeated_content[:content_size]
-            
+
             # Create file path in the session path directory
             file_path = "/tmp/archive-mode-test/test-file-5kb.txt"
-            
+
             print(f"Creating file: {file_path}")
             print(f"File content size: {len(file_content)} bytes")
 
@@ -302,28 +302,28 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
             print("Testing context sync functionality...")
             # Call context sync before getting info
             print("Calling context sync before getting info...")
-            
+
             # Use asyncio.run to handle the async sync method
             sync_result = await session.context.sync()
-            
+
             self.assertTrue(sync_result.success, f"Failed to sync context")
             self.assertIsNotNone(sync_result.request_id)
-            
+
             print(f"✅ Context sync successful!")
             print(f"Sync request ID: {sync_result.request_id}")
 
             # Now call context info after sync
             print("Calling context info after sync...")
             info_result = session.context.info()
-            
+
             self.assertTrue(info_result.success, f"Failed to get context info: {info_result.error_message}")
             self.assertIsNotNone(info_result.request_id)
             self.assertIsNotNone(info_result.context_status_data)
-            
+
             print(f"✅ Context info successful!")
             print(f"Info request ID: {info_result.request_id}")
             print(f"Context status data count: {len(info_result.context_status_data)}")
-            
+
             # Log context status details
             if len(info_result.context_status_data) > 0:
                 print("Context status details:")
@@ -332,10 +332,10 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
 
             # List files in context sync directory
             print("Listing files in context sync directory...")
-            
+
             # Use the sync directory path
             sync_dir_path = "/tmp/archive-mode-test"
-            
+
             list_result = self.agb.context.list_files(context.id, sync_dir_path, page_number=1, page_size=10)
 
             # Verify ListFiles success
@@ -353,7 +353,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
                     print(f"  [{index}] FilePath: {entry.file_path}")
                     print(f"      FileType: {entry.file_type}")
                     print(f"      FileName: {entry.file_name}")
-                    
+
 
             print("✅ All ARCHIVE upload mode tests passed!")
 
@@ -441,11 +441,11 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
 
                 self.assertTrue(context_info.success, f"Failed to get context info: {context_info.error_message}")
                 self.assertIsNotNone(context_info.context_status_data)
-        
+
                 print(f"✅ Context info successful!")
                 print(f"Info request ID: {context_info.request_id}")
                 print(f"Context status data count: {len(context_info.context_status_data)}")
-                
+
                 # Log context status details
                 if len(context_info.context_status_data) > 0:
                     print("Context status details:")
@@ -454,9 +454,9 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
                     time.sleep(1)
                 else:
                     print("Warning: Could not find upload status after all retries")
-                
+
                 # 7. List files in context sync directory
-            
+
                 list_result = self.agb.context.list_files(context.id, sync_path, page_number=1, page_size=10)
 
                 # Verify ListFiles success
@@ -495,18 +495,18 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
     def test_invalid_upload_mode_validation(self):
         """Test that invalid upload_mode values raise ValueError."""
         print("\n=== Testing invalid upload_mode validation ===")
-        
+
         # Test with invalid string value
         with self.assertRaises(ValueError) as context:
             UploadPolicy(upload_mode="InvalidMode")
-        
+
         error_message = str(context.exception)
         self.assertIn("Invalid upload_mode value", error_message)
         self.assertIn("InvalidMode", error_message)
         self.assertIn("Valid values are", error_message)
         self.assertIn("File", error_message)
         self.assertIn("Archive", error_message)
-        
+
         print("✅ Invalid upload_mode validation test passed!")
         print(f"Expected error message: {error_message}")
 

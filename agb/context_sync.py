@@ -202,6 +202,25 @@ class WhiteList:
     path: str = ""
     exclude_paths: List[str] = field(default_factory=list)
 
+    def __post_init__(self):
+        """Validate that paths don't contain wildcard patterns"""
+        if self._contains_wildcard(self.path):
+            raise ValueError(
+                f"Wildcard patterns are not supported in path. Got: {self.path}. "
+                "Please use exact directory paths instead."
+            )
+        for exclude_path in self.exclude_paths:
+            if self._contains_wildcard(exclude_path):
+                raise ValueError(
+                    f"Wildcard patterns are not supported in exclude_paths. Got: {exclude_path}. "
+                    "Please use exact directory paths instead."
+                )
+
+    @staticmethod
+    def _contains_wildcard(path: str) -> bool:
+        """Check if path contains wildcard characters"""
+        return bool(re.search(r'[*?\[\]]', path))
+
     def to_dict(self):
         return {"path": self.path, "excludePaths": self.exclude_paths}
 
@@ -224,6 +243,25 @@ class BWList:
             )
         }
 
+@dataclass
+class MappingPolicy:
+    """
+    Defines the mapping policy for cross-platform context synchronization
+
+    Attributes:
+        path: The original path from a different OS that should be mapped to the current context path
+    """
+
+    path: str = ""
+
+    @classmethod
+    def default(cls):
+        """Creates a new mapping policy with default values"""
+        return cls()
+
+    def to_dict(self):
+        return {"path": self.path}
+
 
 @dataclass
 class SyncPolicy:
@@ -237,6 +275,7 @@ class SyncPolicy:
         extract_policy: Defines the extract policy
         recycle_policy: Defines the recycle policy
         bw_list: Defines the black and white list
+        mapping_policy: Defines the mapping policy for cross-platform context synchronization
     """
 
     upload_policy: Optional[UploadPolicy] = None
@@ -245,6 +284,7 @@ class SyncPolicy:
     extract_policy: Optional[ExtractPolicy] = None
     recycle_policy: Optional[RecyclePolicy] = None
     bw_list: Optional[BWList] = None
+    mapping_policy: Optional[MappingPolicy] = None
 
     def __post_init__(self):
         """Post-initialization to ensure all policies have default values if not provided"""
@@ -275,6 +315,8 @@ class SyncPolicy:
             result["recyclePolicy"] = self.recycle_policy.to_dict()
         if self.bw_list:
             result["bwList"] = self.bw_list.to_dict()
+        if self.mapping_policy:
+            result["mappingPolicy"] = self.mapping_policy.to_dict()
         return result
 
 

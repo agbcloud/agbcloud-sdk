@@ -302,7 +302,15 @@ jobs:
                 echo "❌ $test_file: FAILED"
                 failed_tests+=("$test_file")
               fi
+<<<<<<< HEAD
               
+=======
+
+              # Wait for resource cleanup
+              echo "等待5秒以释放资源..."
+              sleep 5
+
+>>>>>>> ci: wait 5 seconds after each case finish
               echo "------------------------------------------"
               echo ""
             else
@@ -332,7 +340,15 @@ jobs:
                 echo "❌ $test_file: FAILED"
                 failed_tests+=("$test_file")
               fi
+<<<<<<< HEAD
               
+=======
+
+              # Wait for resource cleanup
+              echo "等待5秒以释放资源..."
+              sleep 5
+
+>>>>>>> ci: wait 5 seconds after each case finish
               echo "------------------------------------------"
               echo ""
             else

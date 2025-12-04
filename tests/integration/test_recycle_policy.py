@@ -55,11 +55,11 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
         # Step 1: Create context using context.get method
         context_name = f"test-default-recycle-context-{self.unique_id}"
         print(f"Creating context with name: {context_name}")
-        
+
         context_result = self.agb.context.get(context_name, create=True)
         self.assertTrue(context_result.success, f"Failed to create context: {context_result.error_message}")
         self.assertIsNotNone(context_result.context)
-        
+
         context = context_result.context
         print(f"Generated context: {context.name} (ID: {context.id})")
         print(f"Context get request ID: {context_result.request_id}")
@@ -68,7 +68,7 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
         try:
             # Step 2: Create session with default RecyclePolicy (LIFECYCLE_FOREVER)
             recycle_policy = RecyclePolicy()  # Uses default LIFECYCLE_FOREVER and paths=[""]
-            
+
             # Verify default values
             self.assertEqual(recycle_policy.lifecycle, Lifecycle.LIFECYCLE_FOREVER)
             self.assertEqual(recycle_policy.paths, [""])
@@ -101,7 +101,7 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(session_result.success, f"Failed to create session: {session_result.error_message}")
             self.assertIsNotNone(session_result.session)
             self.assertIsNotNone(session_result.request_id)
-            
+
             session = session_result.session
             self.test_sessions.append(session)
 
@@ -113,7 +113,7 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
             session_info = self.agb.get_session(session.session_id)
             self.assertTrue(session_info.success, f"Failed to get session info: {session_info.error_message}")
             self.assertIsNotNone(session_info.data)
-            
+
             print(f"App Instance ID: {session_info.data.app_instance_id}")
             print(f"Get session request ID: {session_info.request_id}")
             result = session.file_system.create_directory(f"{sync_path}/test")
@@ -149,7 +149,7 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
 
         context_name = f"test-custom-recycle-context-{self.unique_id}"
         context_result = self.agb.context.get(context_name, create=True)
-        
+
         self.assertTrue(context_result.success, f"Failed to create context: {context_result.error_message}")
         self.assertIsNotNone(context_result.context)
 
@@ -212,7 +212,7 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
             result = session.file_system.create_directory("/tmp/custom-recycle-test/test-data")
             self.assertTrue(result.success)
             print(f"Created directory /tmp/custom-recycle-test/test-data")
-            
+
             write_result = session.file_system.write_file("/tmp/custom-recycle-test/test-data/test.txt", "test data")
             self.assertTrue(write_result.success)
             read_result = session.file_system.read_file("/tmp/custom-recycle-test/test-data/test.txt")

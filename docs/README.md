@@ -1,81 +1,94 @@
 # AGB SDK Documentation
 
-## 🎯 Quick Navigation
+Welcome to the comprehensive documentation for the AGB SDK.
 
-### 👋 New Users
-- **[5-Minute Quick Start](quickstart.md)** - Experience AGB immediately
-- **[Session Management](guides/session-management.md)** - Manage your automation sessions
-- **[Code Execution Getting Started](guides/code-execution.md)** - The simplest use case
+## Core Concept: The Session
 
-### 🚀 Experienced Users
-- **[API Reference Documentation](api-reference/README.md)** - Complete API documentation
-- **[Best Practices](guides/best-practices.md)** - Production environment usage
-- **[Session Management](guides/session-management.md)** - Advanced session management
+Sessions are the fundamental building blocks of the AGB SDK. A session represents an isolated, secure cloud environment (sandbox) that provides **tools and execution context** for your AI agents. Instead of running locally, your agents use sessions to securely execute code, run shell commands, browse the web, and manage files in the cloud.
 
-### 📋 By Use Case
+### Supported Environments
 
-| I want to... | Recommended Documentation | Example Code |
-|-----------|----------|----------|
-| 🤖 Browser Automation | [Browser Automation Guide](guides/browser-automation.md) | [Browser Examples](examples/browser/README.md) |
-| 🧩 Browser Extensions | [Extensions API](api-reference/reference/extensions.md) | [Extensions Examples](examples/extensions/README.md) |
-| 🐍 Execute Code | [Code Execution Guide](guides/code-execution.md) | [Code Examples](examples/README.md) |
-| 💾 File Operations | [File Operations Guide](guides/file-operations.md) | [File Examples](examples/file_system/README.md) |
-| ⚡ Execute Commands | [Command Execution Guide](guides/command-execution.md) | [Command Examples](examples/README.md) |
+Unlike other sandboxes that only support code execution, AGB provides specialized environments (Images) tailored for different AI agent capabilities:
 
-## 📚 Documentation Structure
+| Environment Type | Image ID Pattern | Key Capabilities | Ideal For |
+| :--- | :--- | :--- | :--- |
+| **Code Space** | `agb-code-space-*` | - Python, Node.js, Java, R runtimes<br>- Shell access & File system<br>- Pre-installed data science libs | Data analysis, Code interpretation, Math solving, Backend logic. |
+| **Browser Use** | `agb-browser-use-*` | - **Headless Browser** automation<br>- AI-driven navigation & extraction<br>- Chrome Extension support | Web scraping, UI testing, Web-browsing agents, Data extraction. |
+| **Computer Use** | *(Coming Soon)* | - coordinate-based mouse/keyboard control<br>- window/app management<br>- screenshot capture | Desktop application operations, Software automation testing, Document processing tasks. |
 
-### Core Guides (`guides/`)
-- **[browser-automation.md](guides/browser-automation.md)** - AI-Powered Browser Automation Guide
-- **[session-management.md](guides/session-management.md)** - Complete Session Management Guide
-- **[code-execution.md](guides/code-execution.md)** - Code Execution Guide
-- **[command-execution.md](guides/command-execution.md)** - Command Execution Guide
-- **[file-operations.md](guides/file-operations.md)** - File Operations Guide
-- **[best-practices.md](guides/best-practices.md)** - Best Practices and Troubleshooting
+### Session Lifecycle
 
-### API Reference (`api-reference/`)
-- **[README.md](api-reference/README.md)** - API Overview
+Understanding the lifecycle of a session is crucial for resource management and cost control.
 
-### Example Code (`examples/`)
-- **[README.md](examples/README.md)** - Examples Overview
-- **[browser/](examples/browser/README.md)** - Browser Automation Examples
-- **[extensions/](examples/extensions/README.md)** - Browser Extension Examples
-- **[file_system/](examples/file_system/README.md)** - File Operations Examples
-- **[session_creation/](examples/session_creation/README.md)** - Session Creation Examples
+1.  **Creation**: AGB allocates a fresh cloud environment based on your specified `image_id`.
+2.  **Active**: The session maintains state (files, variables, processes) between operations.
+3.  **Timeout (Auto-Shutdown)**: Sessions are automatically reclaimed after **30 minutes** of inactivity by default to prevent runaway costs.
+4.  **Deletion**: Explicitly deleting a session releases resources immediately.
 
-## 🚀 Quick Start
-
-### Installation
-```bash
-pip install agbcloud-sdk
-export AGB_API_KEY="your_api_key"
-```
-
-**Important**: When using AGB, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account. You can view and manage your available images in the [AGB Console Image Management](https://agb.cloud/console/image-management) page.
-
-### First Example
 ```python
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
-# Create client
 agb = AGB()
 
-# Create code execution session
-params = CreateSessionParams(image_id="agb-code-space-1")
-session = agb.create(params).session
+# Example: Create a Code Execution Session
+code_params = CreateSessionParams(image_id="agb-code-space-1")
+code_session = agb.create(code_params).session
 
-# Execute code
-result = session.code.run_code("print('Hello AGB!')", "python")
-print(result.result)
+# ... perform operations ...
 
-# Cleanup
-agb.delete(session)
+# Clean up
+agb.delete(code_session)
 ```
 
-## 📞 Get Help
+### Key Capabilities
 
-- 🐛 **[Issue Feedback](https://github.com/agbcloud/agbcloud-sdk/issues)** - Report bugs or request features
-- 📖 **[Complete Quick Start](quickstart.md)** - Detailed getting started tutorial
-- 🔧 **[Best Practices](guides/best-practices.md)** - Production environment usage guide
+-   **Labels**: Tag sessions with custom key-value pairs (e.g., `user_id`, `env`) for organization and filtering.
+-   **Networking**: Use `session.get_link(port=30100)` to expose internal services (like TensorBoard or web apps) securely to the public internet.
+-   **Data Persistence**: By default, session storage is ephemeral. Use **Context Sync** to synchronize local files with the remote session automatically.
+-   **Resource Monitoring**: Retrieve real-time status and resource usage via `session.info()`.
 
 ---
+
+## Documentation Index
+
+### 📘 Guides & Concepts
+
+Master the fundamental building blocks of AGB.
+
+-   **[Session Management Guide](guides/session-management.md)**
+    Detailed API usage for creating, managing, and recovering sessions.
+
+-   **[Browser Automation](guides/browser-automation.md)**
+    Control headless browsers with AI-powered natural language actions.
+
+-   **[Code Execution](guides/code-execution.md)**
+    Run Python, JS, Java, and R code in secure sandboxes.
+
+-   **[File Operations](guides/file-operations.md)**
+    Read, write, and monitor files in your remote environment.
+
+-   **[Command Execution](guides/command-execution.md)**
+    Execute shell commands and system tools.
+
+-   **[Data Persistence](guides/context-usage-guide.md)**
+    Sync local context to remote sessions.
+
+-   **[Best Practices](guides/best-practices.md)**
+    Production patterns for reliability and performance.
+
+### 🚀 Examples
+
+Practical, runnable code snippets for every feature.
+
+-   **[Session Management Examples](examples/session_management/README.md)**
+-   **[Code Execution Examples](examples/code_execution/README.md)**
+-   **[File System Examples](examples/file_system/README.md)**
+-   **[Browser Examples](examples/browser/README.md)**
+-   **[Extension Examples](examples/extensions/README.md)**
+
+### ⚙️ API Reference
+
+Low-level API documentation.
+
+-   **[API Reference Index](api-reference/README.md)**

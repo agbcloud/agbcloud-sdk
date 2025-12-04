@@ -1,4 +1,5 @@
 import os
+import sys
 import threading
 import time
 
@@ -28,7 +29,12 @@ def test_watch_directory():
     print("=== Testing watch_directory functionality ===\n")
 
     # Initialize AGB client
-    api_key = get_api_key()
+    try:
+        api_key = get_api_key()
+    except ValueError as e:
+        print(f"❌ {e}")
+        return False
+
     agb = AGB(api_key=api_key)
     print("✅ AGB client initialized")
 
@@ -38,7 +44,7 @@ def test_watch_directory():
 
     if not session_result.success:
         print(f"❌ Failed to create session: {session_result.error_message}")
-        return
+        return False
 
     session = session_result.session
     print(f"✅ Session created successfully with ID: {session.session_id}")
@@ -55,6 +61,7 @@ def test_watch_directory():
         for event in events:
             print(f"   - {event.event_type}: {event.path} ({event.path_type})")
 
+    test_success = False
     try:
         # Create the test directory
         print("\n1. Creating test directory...")
@@ -143,6 +150,7 @@ def test_watch_directory():
         if len(detected_events) > 0:
             print("\n✅ watch_directory test completed successfully!")
             print("The directory monitoring is working and detecting file changes.")
+            test_success = True
         else:
             print("\n⚠️  No events were detected. This might indicate an issue.")
 
@@ -154,6 +162,8 @@ def test_watch_directory():
             print("✅ Session deleted successfully")
         else:
             print(f"❌ Failed to delete session: {delete_result.error_message}")
+
+    return test_success
 
 
 def test_watch_directory_no_deduplication():
@@ -167,7 +177,12 @@ def test_watch_directory_no_deduplication():
     print("=== Testing watch_directory without deduplication ===\n")
 
     # Initialize AGB client
-    api_key = get_api_key()
+    try:
+        api_key = get_api_key()
+    except ValueError as e:
+        print(f"❌ {e}")
+        return False
+
     agb = AGB(api_key=api_key)
     print("✅ AGB client initialized")
 
@@ -177,7 +192,7 @@ def test_watch_directory_no_deduplication():
 
     if not session_result.success:
         print(f"❌ Failed to create session: {session_result.error_message}")
-        return
+        return False
 
     session = session_result.session
     print(f"✅ Session created successfully with ID: {session.session_id}")
@@ -194,6 +209,7 @@ def test_watch_directory_no_deduplication():
         for event in events:
             print(f"   - {event.event_type}: {event.path} ({event.path_type})")
 
+    test_success = False
     try:
         # Create the test directory
         print("\n1. Creating test directory...")
@@ -274,6 +290,7 @@ def test_watch_directory_no_deduplication():
                 print("✅ Duplicate events are being reported (no deduplication)")
             else:
                 print("ℹ️  No duplicate events detected in this run")
+            test_success = True
         else:
             print("⚠️  No events were detected. This might indicate an issue.")
 
@@ -285,6 +302,8 @@ def test_watch_directory_no_deduplication():
             print("✅ Session deleted successfully")
         else:
             print(f"❌ Failed to delete session: {delete_result.error_message}")
+
+    return test_success
 
 
 def test_watch_directory_file_modification():
@@ -301,7 +320,12 @@ def test_watch_directory_file_modification():
     print("=== Testing file modification monitoring ===\n")
 
     # Initialize AGB client
-    api_key = get_api_key()
+    try:
+        api_key = get_api_key()
+    except ValueError as e:
+        print(f"❌ {e}")
+        return False
+
     agb = AGB(api_key=api_key)
     print("✅ AGB client initialized")
 
@@ -311,7 +335,7 @@ def test_watch_directory_file_modification():
 
     if not session_result.success:
         print(f"❌ Failed to create session: {session_result.error_message}")
-        return
+        return False
 
     session = session_result.session
     print(f"✅ Session created successfully with ID: {session.session_id}")
@@ -322,7 +346,7 @@ def test_watch_directory_file_modification():
     create_dir_result = session.file_system.create_directory(test_dir)
     if not create_dir_result.success:
         print(f"❌ Failed to create directory: {create_dir_result.error_message}")
-        return
+        return False
     print("✅ Test directory created")
 
     # Create initial file
@@ -331,7 +355,7 @@ def test_watch_directory_file_modification():
     write_result = session.file_system.write_file(test_file, "Initial content")
     if not write_result.success:
         print(f"❌ Failed to create initial file: {write_result.error_message}")
-        return
+        return False
     print("✅ Initial file created")
 
     # Storage for captured events
@@ -348,6 +372,8 @@ def test_watch_directory_file_modification():
                 print(f"🔔 Captured modify event: {event.path} ({event.path_type})")
 
     monitor_thread = None
+    test_passed = False
+
     try:
         # Start monitoring
         print(f"\n3. Starting directory monitoring...")
@@ -430,6 +456,7 @@ def test_watch_directory_file_modification():
 
             if valid_events > 0:
                 print("✅ File modification monitoring test passed!")
+                test_passed = True
             else:
                 print("❌ No valid modification events detected")
 
@@ -450,11 +477,19 @@ def test_watch_directory_file_modification():
             print(f"❌ Failed to delete session: {delete_result.error_message}")
 
     print("\n=== File modification monitoring test completed ===")
+    return test_passed
 
 
 if __name__ == "__main__":
-    test_watch_directory()
+    success1 = test_watch_directory()
     print("\n" + "=" * 60 + "\n")
-    test_watch_directory_no_deduplication()
+    success2 = test_watch_directory_no_deduplication()
     print("\n" + "=" * 60 + "\n")
-    test_watch_directory_file_modification()
+    success3 = test_watch_directory_file_modification()
+
+    if success1 and success2 and success3:
+        print("\n🎉 All tests passed!")
+        sys.exit(0)
+    else:
+        print("\n💥 Some tests failed!")
+        sys.exit(1)

@@ -411,9 +411,12 @@ def main():
     # Test session creation
     result, agb, create_duration = test_create_session()
 
+    exit_code = 0
     if result and result.success and agb:
         # Test code execution functionality
         code_test_success = test_run_code(result.session)
+        if not code_test_success:
+            exit_code = 1
 
         # Optional: Test session deletion
         print("\n" + "=" * 60)
@@ -429,7 +432,7 @@ def main():
                 # In non-interactive mode (CI/automated tests), automatically delete session
                 print("Running in non-interactive mode, automatically deleting session...")
                 should_delete = True
-            
+
             if should_delete:
                 print("Deleting session...")
 
@@ -449,6 +452,7 @@ def main():
                     print("✅ Session deleted successfully!")
                 else:
                     print(f"❌ Session deletion failed: {delete_result.error_message}")
+                    exit_code = 1
 
                 # Print total time statistics
                 print("\n" + "=" * 60)
@@ -465,10 +469,16 @@ def main():
 
         except (KeyboardInterrupt, EOFError):
             print("\nUser cancelled deletion operation or no input available")
+    else:
+        exit_code = 1
 
     print("\n" + "=" * 60)
-    print("Test completed")
+    if exit_code == 0:
+        print("Test completed successfully")
+    else:
+        print("Test failed")
     print("=" * 60)
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

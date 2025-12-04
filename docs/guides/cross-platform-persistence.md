@@ -167,12 +167,12 @@ from agb.session_params import CreateSessionParams
 class CrossPlatformDataManager:
     def __init__(self, api_key):
         self.ab = AGB(api_key)
-    
+
     def create_context(self, context_name):
         """Create a new context for cross-platform data sharing"""
         context_result = self.ab.context.get(name=context_name, create=True)
         return context_result.context
-    
+
     def create_data_session(self, context, original_path, image_id="agb-browser-use-1"):
         """Create a session to generate and persist data"""
         # Create sync policy without mapping for data creation
@@ -182,7 +182,7 @@ class CrossPlatformDataManager:
             delete_policy=DeletePolicy(),
             extract_policy=ExtractPolicy()
         )
-        
+
         # Create session
         context_sync = ContextSync.new(context.id, original_path, sync_policy)
         session_params = CreateSessionParams(
@@ -190,15 +190,15 @@ class CrossPlatformDataManager:
             context_syncs=[context_sync],
             labels={"type": "data-creation"}
         )
-        
+
         session_result = self.ab.create(session_params)
         return session_result.session
-    
-    def create_access_session(self, context, original_path, target_path, image_id="agb-code-space-2"):
+
+    def create_access_session(self, context, original_path, target_path, image_id="agb-code-space-1"):
         """Create a session to access data via mapping policy"""
         # Create mapping policy
         mapping_policy = MappingPolicy(path=original_path)
-        
+
         # Create sync policy with mapping
         sync_policy = SyncPolicy(
             upload_policy=UploadPolicy(),
@@ -207,7 +207,7 @@ class CrossPlatformDataManager:
             extract_policy=ExtractPolicy(),
             mapping_policy=mapping_policy
         )
-        
+
         # Create session
         context_sync = ContextSync.new(context.id, target_path, sync_policy)
         session_params = CreateSessionParams(
@@ -215,45 +215,45 @@ class CrossPlatformDataManager:
             context_syncs=[context_sync],
             labels={"type": "data-access"}
         )
-        
+
         session_result = self.ab.create(session_params)
         return session_result.session
-    
+
     def create_and_persist_data(self, session, path, filename, content):
         """Create data in session and persist it"""
         # Wait for session to be ready
         time.sleep(15)
-        
+
         # Create directory if needed (Linux command)
         mkdir_cmd = f'mkdir -p "{path}"'
         session.command.execute_command(mkdir_cmd)
-        
+
         # Create file (Linux command)
         file_path = f"{path}/{filename}"
         create_cmd = f'echo "{content}" > "{file_path}"'
         result = session.command.execute_command(create_cmd)
-        
+
         # Verify file creation (Linux command)
         verify_cmd = f'cat "{file_path}"'
         verify_result = session.command.execute_command(verify_cmd)
         print(f"Created file content: {verify_result.output}")
-        
+
         # Sync to persist
         sync_result = asyncio.run(session.context.sync())
         print(f"Data persistence result: {sync_result.success}")
-        
+
         return sync_result.success
-    
+
     def access_persisted_data(self, session, path, filename):
         """Access previously persisted data in new session"""
         # Wait for data to be downloaded
         time.sleep(15)
-        
+
         # Check if file exists (Linux command)
         file_path = f"{path}/{filename}"
         check_cmd = f'test -f "{file_path}" && echo "EXISTS" || echo "NOT_FOUND"'
         check_result = session.command.execute_command(check_cmd)
-        
+
         if "EXISTS" in check_result.output:
             # Read file content (Linux command)
             read_cmd = f'cat "{file_path}"'
@@ -268,21 +268,21 @@ class CrossPlatformDataManager:
 def main():
     # Initialize manager
     manager = CrossPlatformDataManager("your-api-key")
-    
+
     # Create context
     context = manager.create_context(f"cross-platform-demo-{int(time.time())}")
-    
+
     try:
         # Define paths
         browser_path = "/tmp/mapping"
         code_path = "/home/data"
         filename = "cross-platform-test.txt"
         content = "Data created in browser session, accessed in code session"
-        
+
         # Phase 1: Create data in browser session
         print("=== Phase 1: Creating data in browser session ===")
         browser_session = manager.create_data_session(context, browser_path)
-        
+
         try:
             success = manager.create_and_persist_data(
                 browser_session, browser_path, filename, content
@@ -291,23 +291,23 @@ def main():
                 raise Exception("Failed to persist data")
         finally:
             manager.ab.delete(browser_session)
-        
+
         # Phase 2: Access data in code session
         print("=== Phase 2: Accessing data in code session ===")
         code_session = manager.create_access_session(context, browser_path, code_path)
-        
+
         try:
             accessed_content = manager.access_persisted_data(
                 code_session, code_path, filename
             )
-            
+
             if accessed_content and content in accessed_content:
                 print("✅ Cross-platform data access successful!")
             else:
                 print("❌ Cross-platform data access failed!")
         finally:
             manager.ab.delete(code_session)
-    
+
     finally:
         # Clean up context
         manager.ab.context.delete(context)

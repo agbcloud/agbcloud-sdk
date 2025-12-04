@@ -349,9 +349,12 @@ def main():
     # Test session creation
     result, agb = test_create_session()
 
+    exit_code = 0
     if result and result.success and agb:
         # Test filesystem operation functionality
         filesystem_test_success = test_filesystem_operations(result.session)
+        if not filesystem_test_success:
+            exit_code = 1
 
         # Optional: Test deleting session
         print("\n" + "=" * 60)
@@ -367,7 +370,7 @@ def main():
                 # In non-interactive mode (CI/automated tests), automatically delete session
                 print("Running in non-interactive mode, automatically deleting session...")
                 should_delete = True
-            
+
             if should_delete:
                 print("Deleting session...")
                 delete_result = agb.delete(result.session)
@@ -376,14 +379,21 @@ def main():
                     print("✅ Session deleted successfully!")
                 else:
                     print(f"❌ Session deletion failed: {delete_result.error_message}")
+                    exit_code = 1
             else:
                 print("Session deletion skipped by user choice.")
         except (KeyboardInterrupt, EOFError):
             print("\nUser cancelled deletion operation or no input available")
+    else:
+        exit_code = 1
 
     print("\n" + "=" * 60)
-    print("Test completed")
+    if exit_code == 0:
+        print("Test completed successfully")
+    else:
+        print("Test failed")
     print("=" * 60)
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

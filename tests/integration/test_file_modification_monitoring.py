@@ -1,6 +1,7 @@
 import os
 import threading
 import time
+import sys
 
 from agb import AGB
 from agb.session_params import CreateSessionParams
@@ -189,7 +190,7 @@ if __name__ == "__main__":
     success = test_watch_directory_file_modification()
     if success:
         print("\n🎉 All tests passed!")
-        exit(0)
+        sys.exit(0)
     else:
         print("\n💥 Some tests failed!")
-        exit(1)
+        sys.exit(1)

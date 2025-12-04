@@ -495,15 +495,19 @@ def main():
         success = test_session_set_labels()
         if success:
             print("\n✅ All setLabels tests completed successfully!")
+            sys.exit(0)
         else:
             print("\n❌ Some setLabels tests failed!")
+            sys.exit(1)
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Test interrupted by user")
+        sys.exit(1)
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
         import traceback
         traceback.print_exc()
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

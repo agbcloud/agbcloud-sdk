@@ -1,5 +1,6 @@
 """Integration test for GetSession API"""
 import os
+import sys
 import pytest
 from agb import AGB
 from agb.session_params import CreateSessionParams
@@ -86,4 +87,10 @@ def test_get_session_api():
             print(f"Warning: Failed to delete session: {delete_result.error_message}")
 
 if __name__ == "__main__":
-    test_get_session_api()
+    try:
+        test_get_session_api()
+        print("\n✅ All tests passed!")
+        sys.exit(0)
+    except Exception as e:
+        print(f"\n❌ Tests failed: {e}")
+        sys.exit(1)

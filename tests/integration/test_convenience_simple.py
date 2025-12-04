@@ -6,6 +6,7 @@ Test for AGB create and delete interfaces
 
 import os
 import sys
+import traceback
 
 # Add project root directory to Python path
 project_root = os.path.dirname(
@@ -85,8 +86,8 @@ def test_agb_create_and_delete():
                 try:
                     sessions = agb.list()
                     print(f"✅ Found {len(sessions)} sessions in local cache")
-                    for i, session in enumerate(sessions):
-                        print(f"   Session {i+1}: {session.session_id}")
+                    for i, session_item in enumerate(sessions):
+                        print(f"   Session {i+1}: {session_item.session_id}")
                 except Exception as e:
                     print(f"⚠️ Error listing sessions: {e}")
 
@@ -105,33 +106,33 @@ def test_agb_create_and_delete():
                     if delete_result.success:
                         print("✅ Session deleted successfully")
                         print(f"   Request ID: {delete_result.request_id}")
+                        return True
                     else:
                         print(
                             f"❌ Failed to delete session: {delete_result.error_message}"
                         )
                         print(f"   Request ID: {delete_result.request_id}")
+                        return False
 
                 except Exception as e:
                     print(f"❌ Error deleting session: {e}")
-                    import traceback
-
                     traceback.print_exc()
+                    return False
 
             else:
                 print(f"❌ Session creation failed: {result.error_message}")
                 print(f"   Request ID: {result.request_id}")
+                return False
 
         except Exception as e:
             print(f"❌ Error creating session: {e}")
-            import traceback
-
             traceback.print_exc()
+            return False
 
     except Exception as e:
         print(f"❌ Test failed: {e}")
-        import traceback
-
         traceback.print_exc()
+        return False
 
 
 def test_agb_with_custom_params():
@@ -172,33 +173,39 @@ def test_agb_with_custom_params():
                 if delete_result.success:
                     print("✅ Custom session deleted successfully")
                     print(f"   Request ID: {delete_result.request_id}")
+                    return True
                 else:
                     print(
                         f"❌ Failed to delete custom session: {delete_result.error_message}"
                     )
+                    return False
 
             else:
                 print(f"❌ Custom session creation failed: {result.error_message}")
+                return False
 
         except Exception as e:
             print(f"❌ Error creating custom session: {e}")
-            import traceback
-
             traceback.print_exc()
+            return False
 
     except Exception as e:
         print(f"❌ Custom parameters test failed: {e}")
-        import traceback
-
         traceback.print_exc()
+        return False
 
 
 if __name__ == "__main__":
     # Run basic create and delete test
-    test_agb_create_and_delete()
+    success1 = test_agb_create_and_delete()
 
     # Run custom parameters test
-    test_agb_with_custom_params()
+    success2 = test_agb_with_custom_params()
 
     print("\n=== Test Summary ===")
-    print("All tests completed. Check the output above for results.")
+    if success1 and success2:
+        print("✅ All tests passed.")
+        sys.exit(0)
+    else:
+        print("❌ Some tests failed.")
+        sys.exit(1)

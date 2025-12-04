@@ -6,6 +6,7 @@ Test code for list_mcp_tools interface
 
 import os
 import sys
+import traceback
 
 # Add project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -28,11 +29,11 @@ def get_api_key():
 def test_list_mcp_tools():
     """Test list_mcp_tools interface"""
 
-    # API key
-    api_key = get_api_key()
-    print(f"Using API Key: {api_key[:10]}...{api_key[-4:]}")
-
     try:
+        # API key
+        api_key = get_api_key()
+        print(f"Using API Key: {api_key[:10]}...{api_key[-4:]}")
+
         print("Initializing AGB client...")
 
         # Create AGB instance
@@ -43,64 +44,60 @@ def test_list_mcp_tools():
         print("Testing list_mcp_tools interface...")
         print("=" * 60)
 
-        try:
-            # Import the client directly to test the interface
-            from agb.api.client import Client
-            from agb.config import Config
+        # Import the client directly to test the interface
+        from agb.api.client import Client
+        from agb.config import Config
 
-            # Create config
-            cfg = Config(endpoint="sdk-api.agb.cloud", timeout_ms=60000)
+        # Create config
+        cfg = Config(endpoint="sdk-api.agb.cloud", timeout_ms=60000)
 
-            # Create client
-            client = Client(cfg)
+        # Create client
+        client = Client(cfg)
 
-            # Create request
-            from agb.api.models.list_mcp_tools_request import ListMcpToolsRequest
+        # Create request
+        from agb.api.models.list_mcp_tools_request import ListMcpToolsRequest
 
-            request = ListMcpToolsRequest(
-                authorization=f"Bearer {api_key}", image_id="agb-code-space-2"
-            )
+        request = ListMcpToolsRequest(
+            authorization=f"Bearer {api_key}", image_id="agb-code-space-2"
+        )
 
-            # Call list_mcp_tools
-            print("   Calling list_mcp_tools...")
-            response = client.list_mcp_tools(request)
+        # Call list_mcp_tools
+        print("   Calling list_mcp_tools...")
+        response = client.list_mcp_tools(request)
 
-            print("   ✅ list_mcp_tools call successful!")
+        print("   ✅ list_mcp_tools call successful!")
 
-            # Check if response is successful
-            if response.is_successful():
-                print("   ✅ HTTP request successful")
+        # Check if response is successful
+        if response.is_successful():
+            print("   ✅ HTTP request successful")
 
-                # Get tools list
-                tools_list = response.get_tools_list()
-                if tools_list:
-                    print(f"   Tools list: {tools_list}")
-                else:
-                    print("   Tools list: None or empty")
-
-                # Check for errors
-                error_msg = response.get_error_message()
-                if error_msg:
-                    print(f"   ⚠️  Error message: {error_msg}")
-                else:
-                    print("   ✅ No error messages")
-
+            # Get tools list
+            tools_list = response.get_tools_list()
+            if tools_list:
+                print(f"   Tools list: {tools_list}")
             else:
-                print("   ❌ HTTP request failed")
-                error_msg = response.get_error_message()
-                if error_msg:
-                    print(f"   Error: {error_msg}")
+                print("   Tools list: None or empty")
 
-        except Exception as e:
-            print(f"   ❌ Error testing list_mcp_tools: {e}")
-            import traceback
+            # Check for errors
+            error_msg = response.get_error_message()
+            if error_msg:
+                print(f"   ⚠️  Error message: {error_msg}")
+                # Is this a failure? If HTTP 200 but error msg? Usually yes.
+                # But SDK logic might differ. Let's assume if is_successful() is true, it's okay.
+            else:
+                print("   ✅ No error messages")
 
-            traceback.print_exc()
+            return True
+
+        else:
+            print("   ❌ HTTP request failed")
+            error_msg = response.get_error_message()
+            if error_msg:
+                print(f"   Error: {error_msg}")
+            return False
 
     except Exception as e:
         print(f"❌ Error in test: {e}")
-        import traceback
-
         traceback.print_exc()
         return False
 
@@ -111,15 +108,20 @@ def main():
     print("=" * 50)
 
     try:
-        test_list_mcp_tools()
+        if test_list_mcp_tools():
+            print("\n✅ Test passed")
+            sys.exit(0)
+        else:
+            print("\n❌ Test failed")
+            sys.exit(1)
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Test interrupted by user")
+        sys.exit(1)
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
-        import traceback
-
         traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

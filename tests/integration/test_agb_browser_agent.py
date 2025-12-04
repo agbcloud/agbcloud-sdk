@@ -13,6 +13,7 @@ across multiple sessions. It shows the complete workflow of:
 
 import asyncio
 import os
+import sys
 import time
 
 from playwright.async_api import async_playwright
@@ -29,7 +30,7 @@ async def main():
     api_key = os.environ.get("AGB_API_KEY")
     if not api_key:
         print("Error: AGB_API_KEY environment variable not set")
-        return
+        sys.exit(1)
 
     # Initialize AGB client
     config = Config(
@@ -50,7 +51,7 @@ async def main():
         session_result = agb.create(params)
         if not session_result.success or not session_result.session:
             print(f"Failed to create first session: {session_result.error_message}")
-            return
+            sys.exit(1)
 
         session1 = session_result.session
         print(f"First session created with ID: {session1.session_id}")
@@ -67,7 +68,7 @@ async def main():
         init_success = await session1.browser.initialize_async(browser_option)
         if not init_success:
             print("Failed to initialize browser")
-            return
+            sys.exit(1)
 
         print("Browser initialized successfully")
 
@@ -75,7 +76,7 @@ async def main():
         endpoint_url = session1.browser.get_endpoint_url()
         if not endpoint_url:
             print("Failed to get browser endpoint URL")
-            return
+            sys.exit(1)
 
         print(f"Browser endpoint URL: {endpoint_url}")
 
@@ -148,7 +149,7 @@ async def main():
 
         if not delete_result.success:
             print(f"Failed to delete first session: {delete_result.error_message}")
-            return
+            sys.exit(1)
 
         print(
             f"First session deleted successfully (RequestID: {delete_result.request_id})"
@@ -164,7 +165,7 @@ async def main():
 
         if not session_result2.success or not session_result2.session:
             print(f"Failed to create second session: {session_result2.error_message}")
-            return
+            sys.exit(1)
 
         session2 = session_result2.session
         print(f"Second session created with ID: {session2.session_id}")
@@ -176,7 +177,7 @@ async def main():
         init_success2 = await session2.browser.initialize_async(browser_option)
         if not init_success2:
             print("Failed to initialize browser in second session")
-            return
+            sys.exit(1)
 
         print("Second session browser initialized successfully")
 
@@ -184,9 +185,11 @@ async def main():
         endpoint_url2 = session2.browser.get_endpoint_url()
         if not endpoint_url2:
             print("Failed to get browser endpoint URL for second session")
-            return
+            sys.exit(1)
 
         print(f"Second session browser endpoint URL: {endpoint_url2}")
+
+        test_passed = True
 
         # Check cookies in second session
         async with async_playwright() as p:
@@ -215,6 +218,7 @@ async def main():
             if missing_cookies:
                 print(f"✗ Missing test cookies: {missing_cookies}")
                 print("Cookie persistence test FAILED")
+                test_passed = False
             else:
                 # Verify cookie values
                 all_values_match = True
@@ -239,6 +243,7 @@ async def main():
                     )
                 else:
                     print("Cookie persistence test FAILED due to value mismatches")
+                    test_passed = False
 
             await browser2.close()
             print("Second session browser operations completed")
@@ -253,9 +258,18 @@ async def main():
             )
         else:
             print(f"Failed to delete second session: {delete_result2.error_message}")
+            # If cleanup fails, we might want to signal it, but if the test passed otherwise,
+            # strict CI might fail. Let's just print for now unless we want strict strict.
+            # Given "failed return", let's ensure if cleanup fails it's also an error if strict,
+            # but usually logic failure is prioritized.
+            pass
+
+        if not test_passed:
+            sys.exit(1)
 
     except Exception as e:
         print(f"Error during demo: {e}")
+        sys.exit(1)
 
     finally:
         # Clean up completed

@@ -1,21 +1,20 @@
-# Context Management Example
+# Context Management Examples
 
-This example demonstrates how to use the AGB Context API to manage persistent storage contexts.
+This directory demonstrates how to upload files and data into the session environment using the Context Manager.
 
-## Features Demonstrated
+## Overview
 
-- **List Contexts**: Retrieve all available contexts
-- **Create Context**: Create a new context or get an existing one
-- **Update Context**: Modify context properties
-- **Session Integration**: Create sessions with context synchronization
-- **Cleanup**: Properly delete sessions and contexts
+The **Context Manager** allows you to prepare the environment before your code or commands run. It handles:
+- Uploading local files to the remote session.
+- Creating files from in-memory strings/bytes.
+- Setting environment variables.
 
-## Prerequisites
+## Examples
 
-- Python 3.10+
-- AGB SDK installed
-- Valid AGB API key
+### Basic Context Usage (`main.py`)
+Shows how to upload a local file and verify its existence in the remote session.
 
+<<<<<<< ours
 ## Setup
 
 1. Set your API key as an environment variable:
@@ -63,3 +62,6 @@ The example will:
 - [Context API Reference](../../api-reference/data_context/context.md)
 - [ContextManager API Reference](../../api-reference/data_context/context_manager.md)
 - [Session API Reference](../../api-reference/02_session.md)
+=======
+<<< ./main.py
+>>>>>>> theirs

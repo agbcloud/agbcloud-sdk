@@ -1,204 +1,55 @@
 # AGB SDK Examples
 
-This directory contains practical examples demonstrating how to use the AGB SDK effectively. Examples are organized by complexity and use case to help you find the right starting point.
+Practical, runnable examples demonstrating the capabilities of the AGB SDK.
 
-## 🚀 Quick Start Examples
+## Example Catalog
 
-### Basic Usage
-- **[Session Creation](session_creation/README.md)** - Creating and managing your first session
-- **[File Operations](file_system/README.md)** - File and directory management
+| Category | Example | Description |
+|----------|---------|-------------|
+| **Start Here** | [**Session Management**](session_management/README.md) | Create, retrieve, and manage session lifecycle. |
+| | [**Code Execution**](code_execution/README.md) | Run Python, JavaScript, Java, and R code. |
+| | [**Command Execution**](command_execution/README.md) | Execute shell commands and system tools. |
+| | [**File Operations**](file_system/README.md) | Read, write, upload, and manage files in the cloud. |
+| **Browser** | [**Basic Navigation**](browser/README.md) | Open URLs, click buttons, and take screenshots. |
+| | [**Data Extraction**](browser/README.md) | Extract structured data from web pages using AI. |
+| | [**Browser Examples**](browser/README.md) | Full list of browser automation examples. |
+| **Advanced** | [**Browser Extensions**](extensions/README.md) | Load and manage Chrome extensions in your sessions. |
+| | [**Context Sync**](data_persistence/README.md) | Sync local context to remote sessions. |
+| | [**Directory Monitoring**](directory_monitoring/README.md) | Watch for file changes in real-time. |
 
-### Browser Automation
-- **[Browser Examples](browser/README.md)** - AI-powered browser automation examples
-- **[Extensions Examples](extensions/README.md)** - Browser extension management and integration
+## How to Run
 
-## 📚 By Use Case
-
-### Development & Debugging
-```python
-# Quick code execution
-from agb import AGB
-
-from agb.session_params import CreateSessionParams
-
-agb = AGB()
-params = CreateSessionParams(image_id="agb-code-space-1")
-session = agb.create(params).session
-
-result = session.code.run_code("""
-import sys
-print(f"Python version: {sys.version}")
-print("Hello from AGB!")
-""", "python")
-
-print(result.result)
-agb.delete(session)
-```
-
-### Data Processing
-```python
-from agb import AGB
-from agb.session_params import CreateSessionParams
-
-agb = AGB()
-# File processing pipeline
-params = CreateSessionParams(image_id="agb-code-space-1")
-session = agb.create(params).session
-
-# Upload data
-session.file_system.write_file("/tmp/data.csv", "name,age\nAlice,25\nBob,30")
-
-# Process data
-session.code.run_code("""
-import pandas as pd
-df = pd.read_csv('/tmp/data.csv')
-df['age_group'] = df['age'].apply(lambda x: 'young' if x < 30 else 'adult')
-df.to_csv('/tmp/processed.csv', index=False)
-print("Data processed successfully")
-""", "python")
-
-# Download results
-result = session.file_system.read_file("/tmp/processed.csv")
-print("Processed data:", result.content)
-```
-
-
-## 📁 Directory Structure
-
-```
-examples/
-├── README.md                    # This file - examples overview
-├── browser/                     # Browser automation examples
-│   ├── basic_navigation.py     # Basic browser navigation
-│   ├── data_extraction.py      # Data extraction examples
-│   ├── natural_language_actions.py # AI-powered actions
-│   └── README.md               # Browser examples guide
-├── extensions/                  # Browser extension examples
-│   ├── basic_extension_management.py  # Extension CRUD operations
-│   ├── browser_session_with_extensions.py # Browser with extensions
-│   └── README.md               # Extensions examples guide
-├── session_creation/            # Session creation examples
-│   ├── main.py                 # Basic session creation
-│   └── README.md               # Session creation guide
-├── file_system/                # File operations examples
-│   ├── main.py                 # File system operations
-│   └── README.md               # File operations guide
-```
-
-## 🎯 Getting Started
-
-### 1. Choose Your Starting Point
-
-**New to AGB?** Start with:
-- [Session Creation](session_creation/README.md)
-- [File Operations](file_system/README.md)
-- [Browser Automation](browser/README.md)
-- [Extensions Management](extensions/README.md)
-
-**Experienced Developer?** Jump to:
-- [Advanced Browser Examples](browser/README.md)
-- [Data Extraction](browser/README.md)
-- [Extensions Integration](extensions/README.md)
-
-### 2. Run Examples
-
-All examples are self-contained Python scripts. To run them:
-
-```bash
-# Set your API key
-export AGB_API_KEY="your_api_key_here"
-
-# Run any example
-python docs/examples/session_creation/main.py
-python docs/examples/file_system/main.py
-python docs/examples/browser/basic_navigation.py
-python docs/examples/extensions/basic_extension_management.py
-```
-
-### 3. Modify and Experiment
-
-Each example includes:
-- ✅ Complete, runnable code
-- 📝 Detailed comments explaining each step
-- 🔧 Customization suggestions
-- ❌ Error handling patterns
-
-## 📋 Available Examples
-
-### Session Creation (`session_creation/`)
-Learn the fundamentals of AGB sessions:
-- Basic session creation and management
-- Session configuration with custom images
-- Error handling patterns
-- Session lifecycle best practices
-
-### File System Operations (`file_system/`)
-Master file and directory operations:
-- Reading and writing files
-- Directory navigation and management
-- File permissions and metadata
-- Batch file operations
-
-### Browser Extensions (`extensions/`)
-Manage and use browser extensions:
-- Extension lifecycle management
-- Integration with browser automation workflows
-
-
-## 🔧 Prerequisites
-
-Before running examples, ensure you have:
-
-1. **AGB SDK installed**:
+1. **Install the SDK**:
    ```bash
    pip install agbcloud-sdk
    ```
 
-2. **API key configured**:
+2. **Set your API Key**:
    ```bash
-   export AGB_API_KEY="your_api_key"
+   export AGB_API_KEY="your_api_key_here"
    ```
 
-3. **Python 3.10+** (for running examples locally)
+3. **Run a script**:
+   ```bash
+   # Run from the project root
+   python docs/examples/session_management/create_session.py
+   ```
 
-## 💡 Tips for Using Examples
+## Key Concepts Demonstrated
 
-### Customization
-- Modify timeout values for your use case
-- Adjust file paths and names
-- Use different image IDs for different environments
-- Experiment with different code languages
+- **Session Lifecycle**: All examples show proper `create` -> `use` -> `delete` patterns.
+- **Error Handling**: Check `result.success` and handle `result.error_message`.
+- **Resource Management**: Use `try...finally` blocks to ensure sessions are cleaned up.
 
-### Error Handling
-- Always check result.success before proceeding
-- Log request_id for debugging
-- Implement retry logic for production use
-- Clean up sessions in finally blocks
+## Troubleshooting
 
-### Performance
-- Reuse sessions for multiple operations
-- Use concurrent execution for independent tasks
-- Monitor resource usage with session.info()
-- Batch operations when possible
+- **Authentication Error**: Double-check your `AGB_API_KEY`.
+- **Image ID Error**: Ensure you are using a valid `image_id` (e.g., `agb-code-space-1` or `agb-browser-use-1`).
+- **Timeout Error**: Some operations might take longer depending on network conditions; try increasing timeout values.
 
-## 🤝 Contributing Examples
+## Contributing
 
-Have a useful example? We'd love to include it! Examples should be:
-- **Self-contained**: Runnable without external dependencies
-- **Well-documented**: Clear comments and explanations
-- **Error-handled**: Proper error checking and cleanup
-- **Practical**: Solving real-world problems
-
-## 📞 Getting Help
-
-If you have questions about examples:
-- 📖 Check the [API Reference](../api-reference/README.md)
-- 📚 Read the [Guides](../guides/README.md)
-- 🐛 [Report Issues](https://github.com/agbcloud/agbcloud-sdk/issues)
-
-## 🔗 Related Documentation
-
-- **[Getting Started Guide](../quickstart.md)** - First steps with AGB
-- **[Session Management](../guides/session-management.md)** - Session lifecycle
-- **[Code Execution Guide](../guides/code-execution.md)** - Running code
-- **[API Reference](../api-reference/README.md)** - Complete API docs
+Have a useful example? We'd love to include it! Please ensure your example is:
+- **Self-contained**: Runnable without external dependencies.
+- **Well-documented**: Clear comments and explanations.
+- **Error-handled**: Proper error checking and cleanup.

@@ -385,16 +385,20 @@ def main():
         success = test_session_get_link()
         if success:
             print("\n✅ All tests completed successfully!")
+            sys.exit(0)
         else:
             print("\n❌ Some tests failed!")
+            sys.exit(1)
 
     except KeyboardInterrupt:
         print("\n\n⚠️  Test interrupted by user")
+        sys.exit(1)
     except Exception as e:
         print(f"\n❌ Unexpected error: {e}")
         import traceback
 
         traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ Simple Java code execution test
 
 import os
 import sys
+import traceback
 
 # Add project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -30,11 +31,11 @@ def main():
     print("Simple Java Code Execution Test")
     print("=" * 60)
 
-    # API key
-    api_key = get_api_key()
-    print(f"Using API Key: {api_key[:8]}...{api_key[-4:]}")
-
     try:
+        # API key
+        api_key = get_api_key()
+        print(f"Using API Key: {api_key[:8]}...{api_key[-4:]}")
+
         # Create AGB instance
         agb = AGB(api_key=api_key)
         print(f"✅ AGB client initialized successfully")
@@ -76,9 +77,8 @@ def main():
 
     except Exception as e:
         print(f"❌ Error occurred: {e}")
-        import traceback
-
         traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -1,32 +1,19 @@
-# Extensions Examples
+# Browser Extensions Examples
 
-This directory contains examples demonstrating how to use the Extensions API to manage and load browser extensions in AGB sessions.
+This directory demonstrates how to install and use Chrome extensions in the AGB browser environment.
 
 ## Overview
 
-The Extensions API allows you to:
-- Upload browser extensions from local ZIP files
-- Manage extension lifecycle (create, list, update, delete)
-- Load extensions in browser sessions for automated testing
-- Integrate extensions with your browsing workflows
+You can enhance the browser agent's capabilities by installing standard Chrome extensions (`.crx` files).
 
-## Prerequisites
+## Examples
 
-To run these examples, you'll need:
-- AGB Python SDK installed
-- An API key for AGB services
-- Browser extension ZIP files (Chrome extensions in .zip format)
+### Basic Extension Management (`basic_extension_management.py`)
+Shows how to upload a `.crx` file and install it into the browser session.
 
-## Usage
+<<< ./basic_extension_management.py
 
-Set your API key as an environment variable:
+### Browser Session with Extensions (`browser_session_with_extensions.py`)
+A comprehensive example of creating a browser session with pre-installed extensions.
 
-```bash
-export AGB_API_KEY=your_api_key_here
-```
-
-Then run any example:
-
-```bash
-python basic_extension_management.py
-```
+<<< ./browser_session_with_extensions.py

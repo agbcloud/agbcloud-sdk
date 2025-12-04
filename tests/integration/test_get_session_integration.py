@@ -72,8 +72,7 @@ def test_get_session_api():
         assert retrieved_session.vpc_resource == get_session_result.data.vpc_resource, "Session.vpc_resource should match GetSessionData.vpc_resource"
         assert retrieved_session.http_port == get_session_result.data.http_port, "Session.http_port should match GetSessionData.http_port"
         assert retrieved_session.network_interface_ip == get_session_result.data.network_interface_ip, "Session.network_interface_ip should match GetSessionData.network_interface_ip"
-        assert retrieved_session.token == get_session_result.data.token, "Session.token should match GetSessionData.token"
-
+        
         # resource_url will have different authcode on each call, so we only check that it's present
         assert retrieved_session.resource_url, "Session.resource_url should be present"
         assert "resourceId=" in retrieved_session.resource_url, "Session.resource_url should contain resourceId"

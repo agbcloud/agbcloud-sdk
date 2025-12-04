@@ -7,6 +7,7 @@ triggers:
       - "master"
     types:
       - merged
+<<<<<<< HEAD
 <<<<<<< ours
 =======
 
@@ -31,6 +32,8 @@ params:
       - "4-16Gi"
       - "8-32Gi"
       - "16-64Gi"
+=======
+>>>>>>> ci: fix aone doc pipeline config
 
 jobs:
   # Auto documentation generation job
@@ -38,7 +41,7 @@ jobs:
     continue-on-error: false
     name: "Auto Generate Documentation"
     runs-on:
-      - "${{params.runs_on_resources}}"
+      - "4-16Gi"
     image: alios-8u
     timeout: 45m
     retry:
@@ -46,28 +49,28 @@ jobs:
       when:
         - runner_system_failure
         - stuck_or_timeout_failure
-    
+
     steps:
       - uses: checkout
         inputs:
           fetch-depth: 0
           username: 'wuying-ai-team'
           token: ${{secrets.wuying_ai_team_private_token}}
-      
+
       # Check if it's a CI bot commit to avoid infinite loops
       - id: check-ci-loop
         name: "Check CI Loop"
         continue-on-error: false
         run: |
           echo "🔍 Checking if this is a CI bot commit..."
-          
+
           # Get latest commit information
           LATEST_COMMIT_MESSAGE=$(git log -1 --pretty=format:"%s" | cat)
           LATEST_COMMIT_AUTHOR=$(git log -1 --pretty=format:"%ae" | cat)
-          
+
           echo "Latest commit message: $LATEST_COMMIT_MESSAGE"
           echo "Latest commit author: $LATEST_COMMIT_AUTHOR"
-          
+
           # Check if it's a CI bot commit
           if [[ "$LATEST_COMMIT_MESSAGE" == *"🤖 Auto-generate documentation"* ]] || \
              [[ "$LATEST_COMMIT_AUTHOR" == "wuying-ai-team@alibabacloud.com" ]]; then
@@ -78,13 +81,13 @@ jobs:
             echo "✅ Not a CI bot commit, continuing with documentation generation"
             echo "CI_LOOP_DETECTED=false" >> $AONE_CI_ENV
           fi
-      
+
       # 设置多语言环境
       - uses: setup-env
         inputs:
           python-version: '3.11'
           pip-cache: true
-      
+
       # Create temporary documentation directory
       - id: setup-temp-docs
         name: "Setup Temporary Documentation Directory"
@@ -94,20 +97,20 @@ jobs:
             echo "⚠️ Detected CI bot commit, skipping temporary documentation directory creation"
             exit 0
           fi
-          
+
           echo "📁 Creating CI/CD temporary documentation directory..."
-          
+
           # Use workspace directory instead of /tmp to ensure sharing between steps
           TEMP_DOCS_DIR="$PWD/.temp-docs"
           mkdir -p "$TEMP_DOCS_DIR"
-          
+
           echo "✅ Temporary documentation directory created: $TEMP_DOCS_DIR"
           echo "TEMP_DOCS_DIR=$TEMP_DOCS_DIR" >> $AONE_CI_ENV
-          
+
           # Display directory structure
           echo "📋 Temporary directory structure:"
           tree "$TEMP_DOCS_DIR" || ls -la "$TEMP_DOCS_DIR"
-      
+
       # Generate Python API documentation
       - id: generate-python-docs
         name: "Generate Python API Documentation"
@@ -121,23 +124,23 @@ jobs:
             echo "⚠️ Detected CI bot commit, skipping Python API documentation generation"
             exit 0
           fi
-          
+
           echo "🐍 Starting Python API documentation generation..."
           echo "  - CI_LOOP_DETECTED: ${CI_LOOP_DETECTED:-not set}"
           # Install dependencies
           python -m pip config set global.timeout 300
           python -m pip config set global.retries 3
           python -m pip install --upgrade pip
-          
+
           # Install project dependencies first to ensure all modules can be imported
           pip install -e .
-          
+
           # Install additional dependencies required for documentation generation
           pip install docspec pyyaml pydoc-markdown loguru pydantic
-          
+
           # Generate documentation
           python scripts/generate_api_docs.py
-          
+
           # Verify generated documentation
           if [ -d "docs/api-reference" ]; then
             echo "📋 Verifying generated API documentation:"
@@ -147,14 +150,14 @@ jobs:
           else
             echo "⚠️ Generated API documentation directory not found: docs/api-reference"
           fi
-          
+
           # Copy generated Python API documentation to temporary directory
           if [ -d "docs/api-reference" ]; then
             echo "📋 Copying generated Python API documentation to temporary directory..."
             # Ensure temporary directory exists
             mkdir -p "$TEMP_DOCS_DIR"
             cp -r docs/api-reference "$TEMP_DOCS_DIR/" 2>/dev/null || true
-            
+
             # Display copied files
             COPIED_FILES=$(find "$TEMP_DOCS_DIR/" -type f 2>/dev/null || true)
             if [ -n "$COPIED_FILES" ]; then
@@ -168,7 +171,7 @@ jobs:
           fi
           tree "$TEMP_DOCS_DIR" || ls -la "$TEMP_DOCS_DIR"
           echo "✅ Python API documentation generation completed and staged"
-      
+
       # Copy documentation from temporary directory to project directory and stage
       - id: copy-and-stage-docs
         name: "Copy Documentation to Project and Stage"
@@ -178,18 +181,18 @@ jobs:
             echo "⚠️ Detected CI bot commit, skipping documentation copy and staging"
             exit 0
           fi
-          
+
           echo "📋 Copying documentation from temporary directory to project directory and staging..."
-          
+
           # Check if temporary directory exists with files
           if [ ! -d "$TEMP_DOCS_DIR" ]; then
             echo "⚠️ Temporary documentation directory does not exist: $TEMP_DOCS_DIR"
             exit 0
           fi
-          
+
           echo "📁 Temporary directory contents:"
           find "$TEMP_DOCS_DIR" -type f 2>/dev/null || echo "Temporary directory is empty"
-          
+
           # Copy and stage Python API documentation
           if [ -d "$TEMP_DOCS_DIR/api-reference" ] && [ "$(find "$TEMP_DOCS_DIR/api-reference" -type f 2>/dev/null)" ]; then
             echo "📋 Copying Python API documentation to project directory..."
@@ -198,7 +201,7 @@ jobs:
             git add docs/api-reference/
             echo "✅ Python API documentation copied and staged"
           fi
-      
+
       # Commit documentation changes
       - id: commit-docs
         name: "Commit Documentation Changes"
@@ -208,6 +211,7 @@ jobs:
             echo "⚠️ Detected CI bot commit, skipping documentation commit"
             exit 0
           fi
+<<<<<<< HEAD
           
 <<<<<<< ours
 =======
@@ -218,27 +222,30 @@ jobs:
           fi
           
 >>>>>>> theirs
+=======
+
+>>>>>>> ci: fix aone doc pipeline config
           tree "$TEMP_DOCS_DIR" || ls -la "$TEMP_DOCS_DIR"
           echo "📤 Starting to check and commit documentation changes..."
-          
+
           # Configure Git user information (authentication handled by checkout component)
           git config --global user.name "wuying-ai-team"
           git config --global user.email "wuying-ai-team@alibabacloud.com"
           echo "✅ Git user configuration completed"
-          
+
           # Check if there are files in staging area (documentation copied from temporary directory has been added to staging area)
           STAGED_FILES=$(git diff --cached --name-only)
-          
+
           if [ -z "$STAGED_FILES" ]; then
             echo "ℹ️  No files in staging area, skipping commit step"
             echo "📋 Checking temporary directory status:"
             find "$TEMP_DOCS_DIR" -type f 2>/dev/null || echo "Temporary directory is empty"
             exit 0
           fi
-          
+
           echo "📋 Documentation files in staging area:"
           echo "$STAGED_FILES"
-          
+
           # Since files are copied from controlled temporary directory, they should all be documentation-related files
           # But still perform validation to ensure safety
           NON_DOC_FILES=$(echo "$STAGED_FILES" | grep -v -E "docs/api-reference/" || true)
@@ -246,7 +253,7 @@ jobs:
             echo "⚠️  Warning: Found unexpected file types:"
             echo "$NON_DOC_FILES"
             echo "📋 These files will not be committed"
-            
+
             # Reset staging area, keep only documentation files
             git reset HEAD
             DOC_FILES=$(echo "$STAGED_FILES" | grep -E "docs/api-reference/" || true)
@@ -258,7 +265,7 @@ jobs:
                 fi
               done
             fi
-            
+
             # Re-check staging area
             STAGED_FILES=$(git diff --cached --name-only)
             if [ -z "$STAGED_FILES" ]; then
@@ -266,31 +273,31 @@ jobs:
               exit 0
             fi
           fi
-          
+
           echo "📝 Preparing to commit the following documentation files:"
           echo "$STAGED_FILES"
-          
+
           # Save current branch name and target branch
           CURRENT_BRANCH=$(git branch --show-current)
           TARGET_BRANCH="${{git.merge_request.targetBranch}}"
-          
+
           # Handle manual trigger case where target branch is null/empty
           if [ -z "$TARGET_BRANCH" ] || [ "$TARGET_BRANCH" = "null" ]; then
             TARGET_BRANCH="master"
             echo "⚠️ Target branch is null/empty (manual trigger), defaulting to main branch"
           fi
-          
+
           TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
           DOC_BRANCH="docs/auto-generate-${TIMESTAMP}"
-          
+
           echo "🌿 Current branch: $CURRENT_BRANCH"
-          echo "🎯 Target branch: $TARGET_BRANCH" 
+          echo "🎯 Target branch: $TARGET_BRANCH"
           echo "📄 Documentation branch: $DOC_BRANCH"
-          
+
           # Create clean documentation branch based on target branch
           echo "🌿 Creating clean documentation branch..."
           git fetch origin "$TARGET_BRANCH" || echo "⚠️ Unable to fetch target branch, using current state"
-          
+
           # Create new documentation branch based on target branch
           if git show-ref --verify --quiet "refs/remotes/origin/$TARGET_BRANCH"; then
             echo "✅ Creating documentation branch based on remote target branch origin/$TARGET_BRANCH"
@@ -299,10 +306,10 @@ jobs:
             echo "⚠️ Remote target branch does not exist, creating documentation branch based on current HEAD"
             git checkout -b "$DOC_BRANCH"
           fi
-          
+
           # Copy documentation files to new branch
           echo "📋 Applying documentation files to clean branch..."
-          
+
           # Re-copy documentation files to new branch
           if [ -d "$TEMP_DOCS_DIR/api-reference" ] && [ "$(find "$TEMP_DOCS_DIR/api-reference" -type f 2>/dev/null)" ]; then
             echo "📋 Applying Python API documentation..."
@@ -310,7 +317,7 @@ jobs:
             cp -r "$TEMP_DOCS_DIR/api-reference"/* docs/api-reference/ 2>/dev/null || true
             git add docs/api-reference/
           fi
-          
+
           # Check if there are files to commit
           FINAL_STAGED_FILES=$(git diff --cached --name-only)
           if [ -z "$FINAL_STAGED_FILES" ]; then
@@ -319,10 +326,10 @@ jobs:
             git branch -D "$DOC_BRANCH"
             exit 0
           fi
-          
+
           echo "📝 Preparing to commit the following documentation files on clean branch:"
           echo "$FINAL_STAGED_FILES"
-          
+
           # Create commit message
           COMMIT_MESSAGE="🤖 Auto-generate documentation
 
@@ -332,20 +339,20 @@ jobs:
           Generator: wuying-ai-team
           Trigger branch: ${{git.branch}}
           Commit ID: ${{git.commitId}}"
-          
+
           # Commit documentation changes on clean branch
           git commit -m "$COMMIT_MESSAGE"
           echo "✅ Documentation changes committed on clean branch $DOC_BRANCH"
-          
+
           # Push documentation branch to remote and create CR review
           git push origin "$DOC_BRANCH"
           echo "✅ Documentation branch pushed to remote"
-          
+
           # Use git push refs/for syntax to create CR review
           echo "🔄 Pushing to CR review system..."
           git push origin "HEAD:refs/for/$TARGET_BRANCH" || {
             echo "⚠️ Failed to push using refs/for, trying alternative methods..."
-            
+
             # If refs/for fails, try using git command to create MR
             if command -v git-review >/dev/null 2>&1; then
               echo "📋 Using git-review to create review..."
@@ -354,11 +361,11 @@ jobs:
               echo "📋 git-review not available, logging CR information for subsequent processing..."
             fi
           }
-          
+
           # Switch back to original branch
           git checkout "$CURRENT_BRANCH"
           echo "🔄 Switched back to original branch: $CURRENT_BRANCH"
-          
+
           # Output CR creation results
           echo ""
           echo "✅ Documentation branch and CR review creation completed!"

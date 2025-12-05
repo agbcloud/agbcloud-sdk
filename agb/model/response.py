@@ -232,3 +232,60 @@ class SessionListResult(ApiResponse):
         self.next_token = next_token
         self.max_results = max_results
         self.total_count = total_count
+class WindowInfoResult(ApiResponse):
+    """Result of window info operations."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        window: Any = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.window = window
+        self.error_message = error_message
+
+class AppOperationResult(ApiResponse):
+    """Result of application operations like start/stop."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.error_message = error_message
+
+class ProcessListResult(ApiResponse):
+    """Result of operations returning a list of Processes."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        data: Optional[List[Any]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.data = data if data is not None else []
+        self.error_message = error_message
+
+class InstalledAppListResult(ApiResponse):
+    """Result of operations returning a list of InstalledApps."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        data: Optional[List[Any]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.data = data if data is not None else []
+        self.error_message = error_message
+

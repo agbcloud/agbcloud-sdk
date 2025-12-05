@@ -299,6 +299,9 @@ class BrowserOption:
         solve_captchas: bool = False,
         proxies: Optional[List[BrowserProxy]] = None,
         extension_path: Optional[str] = "/tmp/extensions/",
+        cmd_args: Optional[list[str]] = None,
+        default_navigate_url: Optional[str] = None,
+        browser_type: Optional[Literal["chrome", "chromium"]] = None,
     ):
         self.use_stealth = use_stealth
         self.user_agent = user_agent
@@ -309,6 +312,9 @@ class BrowserOption:
         self.solve_captchas = solve_captchas
         self.proxies = proxies
         self.extension_path = extension_path
+        self.cmd_args = cmd_args
+        self.default_navigate_url = default_navigate_url
+        self.browser_type = browser_type
 
         # Check fingerprint persistent if provided
         if fingerprint_persistent:
@@ -329,6 +335,15 @@ class BrowserOption:
                 raise ValueError("extension_path must be a string")
             if not extension_path.strip():
                 raise ValueError("extension_path cannot be empty")
+
+        # Validate cmd_args if provided
+        if cmd_args is not None:
+            if not isinstance(cmd_args, list):
+                raise ValueError("cmd_args must be a list")
+
+        # Validate browser_type
+        if browser_type is not None and browser_type not in ["chrome", "chromium"]:
+            raise ValueError("browser_type must be 'chrome' or 'chromium'")
 
     def to_map(self):
         option_map = dict()
@@ -354,6 +369,12 @@ class BrowserOption:
             option_map["proxies"] = [proxy.to_map() for proxy in self.proxies]
         if self.extension_path is not None:
             option_map['extensionPath'] = self.extension_path
+        if self.cmd_args is not None:
+            option_map['cmdArgs'] = self.cmd_args
+        if self.default_navigate_url is not None:
+            option_map['defaultNavigateUrl'] = self.default_navigate_url
+        if self.browser_type is not None:
+            option_map['browserType'] = self.browser_type
         return option_map
 
     @classmethod
@@ -410,6 +431,18 @@ class BrowserOption:
                     for proxy_data in proxy_list
                     if isinstance(proxy_data, dict)
                 ]
+        if m.get('cmdArgs') is not None:
+            cmd_args = m.get('cmdArgs')
+            if isinstance(cmd_args, list):
+                instance.cmd_args = cmd_args
+        if m.get('defaultNavigateUrl') is not None:
+            default_navigate_url = m.get('defaultNavigateUrl')
+            if isinstance(default_navigate_url, str):
+                instance.default_navigate_url = default_navigate_url
+        if m.get('browserType') is not None:
+            browser_type = m.get('browserType')
+            if isinstance(browser_type, str):
+                instance.browser_type = browser_type
         return instance
 
 
@@ -507,6 +540,12 @@ class Browser(BaseService):
             self._endpoint_url = None
             self._option = None
             return False
+
+    def destroy(self):
+        """
+        Destroy the browser instance.
+        """
+        self._stop_browser()
 
     def _stop_browser(self):
         """

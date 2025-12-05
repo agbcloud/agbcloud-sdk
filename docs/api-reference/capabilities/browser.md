@@ -93,6 +93,15 @@ async def initialize_async(option: "BrowserOption") -> bool
 Initialize the browser instance with the given options asynchronously.
 Returns True if successful, False otherwise.
 
+### destroy
+
+```python
+def destroy()
+```
+
+Destroy the browser instance.
+This method stops the browser process and releases associated resources.
+
 
 ## BrowserFingerprintGenerator
 

@@ -29,6 +29,16 @@ A more advanced example showing how to persist browser fingerprint across multip
 
 <<< ./browser_fingerprint_persistence.py
 
+### Browser Type Selection (`browser_type_example.py`)
+Demonstrates how to select between Chrome and Chromium browsers when using computer use images. Shows browser type configuration, verification, and best practices for choosing the right browser.
+
+<<< ./browser_type_example.py
+
+### Browser Command Arguments (`browser_command_args.py`)
+Shows how to launch the browser with custom command-line arguments and a default navigation URL. Useful for disabling specific Chrome features or starting the browser on a specific page.
+
+<<< ./browser_command_args.py
+
 ### Natural Language Actions (`natural_language_actions.py`)
 Demonstrates how to use natural language instructions (e.g., "Click the 'Sign Up' button") to interact with the page, which simplifies automation logic.
 

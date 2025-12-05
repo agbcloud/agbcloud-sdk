@@ -155,6 +155,51 @@ restricted_proxy = BrowserProxy(
 )
 ```
 
+### Browser Type Selection
+
+Choose between Chrome and Chromium browsers (only available for computer use images):
+
+```python
+# Use Google Chrome
+chrome_option = BrowserOption(browser_type="chrome")
+
+# Use Chromium (open-source)
+chromium_option = BrowserOption(browser_type="chromium")
+
+# Use Default (Chromium)
+default_option = BrowserOption()
+```
+
+**Note:** chrome only support for computer use image
+
+### Custom Command Arguments
+
+Pass custom command-line arguments to the browser:
+
+```python
+# Disable specific Chrome features
+option = BrowserOption(
+    cmd_args=[
+        "--disable-features=PrivacySandboxSettings4",
+        "--disable-notifications",
+        "--no-first-run"
+    ]
+)
+```
+
+### Default Navigation URL
+
+Set a default URL for the browser to navigate to on startup:
+
+```python
+# Useful for debugging: navigate to Chrome version page
+debug_option = BrowserOption(
+    default_navigate_url="chrome://version/"
+)
+```
+
+**Note:** For Browser Initialize operations, it's **highly recommended** to use Chrome internal pages (e.g., `chrome://version/`, `chrome://settings/`) or extension pages instead of internet URLs. Navigating to internet pages during initialization may cause timeout of browser launch.
+
 ## AI Agent Operations
 
 AGB's AI Agent allows you to control browsers using natural language, making complex automation tasks much simpler.

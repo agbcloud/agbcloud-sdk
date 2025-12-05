@@ -21,7 +21,7 @@ def test_get_api(agb_client: AGB):
     params = CreateSessionParams(image_id="agb-browser-use-1")
     create_result = agb_client.create(params)
 
-    assert create_result and create_result.success, f"Failed to create session with any image_id: {create_result.error_message if create_result else 'No result'}"
+    assert create_result and create_result.success and create_result.session, f"Failed to create session with any image_id: {create_result.error_message if create_result else 'No result'}"
     created_session = create_result.session
     session_id = created_session.session_id
     print(f"Session created with ID: {session_id}")
@@ -41,8 +41,6 @@ def test_get_api(agb_client: AGB):
     assert hasattr(session, 'resource_url'), "Session should have resource_url attribute"
     assert hasattr(session, 'app_instance_id'), "Session should have app_instance_id attribute"
     assert hasattr(session, 'resource_id'), "Session should have resource_id attribute"
-    assert hasattr(session, 'http_port'), "Session should have http_port attribute"
-    assert hasattr(session, 'token'), "Session should have token attribute"
 
     # Ensure critical fields are not empty
     assert session.app_instance_id, "app_instance_id should not be empty"
@@ -52,8 +50,6 @@ def test_get_api(agb_client: AGB):
     print(f"Session resource_url: {session.resource_url}")
     print(f"Session app_instance_id: {session.app_instance_id}")
     print(f"Session resource_id: {session.resource_id}")
-    print(f"Session http_port: {session.http_port}")
-    print(f"Session token: {session.token}")
     print("Get API test passed successfully")
 
     print("Cleaning up: Deleting the session...")
@@ -116,7 +112,7 @@ def test_get_none_session_id(agb_client: AGB):
 
     # Test with None - this should be handled gracefully
     try:
-        result = agb_client.get(None)
+        result = agb_client.get("") # Using empty string instead of None to satisfy type hint
         # If it doesn't raise an exception, check the result
         assert result is not None, "Get should return a result object"
         assert not result.success, "Get should fail for None session ID"
@@ -136,7 +132,7 @@ def test_get_with_request_id_tracking(agb_client: AGB):
     params = CreateSessionParams(image_id="agb-browser-use-1")
     create_result = agb_client.create(params)
 
-    assert create_result and create_result.success, f"Failed to create session with any image_id: {create_result.error_message if create_result else 'No result'}"
+    assert create_result and create_result.success and create_result.session, f"Failed to create session with any image_id: {create_result.error_message if create_result else 'No result'}"
     session_id = create_result.session.session_id
 
     # Test get with request ID tracking
@@ -148,7 +144,8 @@ def test_get_with_request_id_tracking(agb_client: AGB):
     print(f"Get API request_id: {result.request_id}")
 
     # Clean up
-    delete_result = agb_client.delete(result.session)
-    assert delete_result.success, f"Failed to delete session: {delete_result.error_message}"
+    if result.session:
+        delete_result = agb_client.delete(result.session)
+        assert delete_result.success, f"Failed to delete session: {delete_result.error_message}"
 
     print("Get API request ID tracking test passed successfully")

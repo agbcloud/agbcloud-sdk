@@ -6,7 +6,7 @@ This guide explains how to execute shell commands in the AGB cloud environment.
 
 The `session.command` module provides a direct interface to the underlying Linux shell of your cloud session. It allows you to run system tools, manage processes, and perform operations that aren't covered by the specialized File or Code APIs.
 
-## Quick Start
+## Quick Reference (1 minute)
 
 ```python
 # Execute a simple command
@@ -35,7 +35,7 @@ else:
   session.command.execute_command("wget large-file.zip", timeout_ms=60000)
   ```
 
-## Common Use Cases
+## Basic Usage (5-10 minutes)
 
 ### 1. System Diagnostics
 Check CPU, memory, and disk usage.
@@ -63,8 +63,23 @@ session.command.execute_command("apt-get update && apt-get install -y jq", timeo
 2. **Check Exit Status**: Always check `result.success`.
 3. **Use Absolute Paths**: To avoid ambiguity about the current working directory.
 
-## Advanced Examples
+## Troubleshooting
 
-For complete scripts demonstrating data processing pipelines, log analysis, and system monitoring scripts, please refer to the executable example:
+### Command Not Found
+- Use absolute paths (e.g. `/bin/ls` instead of `ls`) if PATH is issues.
+- Verify the tool is installed in the image.
 
-- **[Complete Example Script](../examples/command_execution/README.md)**
+### Permission Denied
+- Commands run as the default user.
+- Use `sudo` if needed and permitted.
+
+### Command Timeout
+- Long running commands (like `apt-get install`) may hit default timeout.
+- Increase `timeout_ms` parameter in `execute_command`.
+
+## Related Documentation
+
+- **[Code Execution Guide](code-execution.md)** - Running Python/JS code
+- **[Session Management Guide](session-management.md)** - Managing sessions
+- **[API Reference](../api-reference/capabilities/shell_commands.md)** - Complete Command API
+- **[Examples](../examples/command_execution/README.md)** - Advanced scripts

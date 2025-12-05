@@ -2,6 +2,7 @@ import os
 import time
 import unittest
 import httpx
+import sys
 
 from agb import AGB
 
@@ -193,4 +194,8 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    result = unittest.main(exit=False)
+    if result.result.wasSuccessful():
+        sys.exit(0)
+    else:
+        sys.exit(1)

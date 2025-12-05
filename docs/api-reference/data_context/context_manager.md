@@ -36,6 +36,11 @@ class ContextSyncResult(ApiResponse)
 class ContextManager()
 ```
 
+Manages context operations within a session in the AGB cloud environment.
+
+The ContextManager provides methods to get information about context synchronization
+status and to synchronize contexts with the session.
+
 ### info
 
 ```python
@@ -79,17 +84,17 @@ session.context.sync(callback=lambda success: logger.info(f"Done: {success}"))
 
 **Arguments**:
 
-- `context_id` _Optional[str]_ - ID of the context to sync.
-- `path` _Optional[str]_ - Path to sync.
-- `mode` _Optional[str]_ - Sync mode.
-- `callback` _Optional[Callable[[bool], None]]_ - Optional callback function that receives success status.
+- `context_id` _Optional[str]_ - Optional ID of the context to synchronize. If provided, `path` must also be provided.
+- `path` _Optional[str]_ - Optional path where the context should be mounted. If provided, `context_id` must also be provided.
+- `mode` _Optional[str]_ - Optional synchronization mode (e.g., "upload", "download")
+- `callback` _Optional[Callable[[bool], None]]_ - Optional callback function that receives success status. If provided, the method runs in background and calls callback when complete
 - `max_retries` _int_ - Maximum number of retries for polling. Defaults to 150.
 - `retry_interval` _int_ - Milliseconds to wait between retries. Defaults to 1500.
 
 
 **Returns**:
 
-    ContextSyncResult: Result of the sync operation.
+    ContextSyncResult: Result object containing success status and request ID
 
 ## Related Resources
 

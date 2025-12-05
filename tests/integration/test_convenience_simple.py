@@ -196,16 +196,20 @@ def test_agb_with_custom_params():
 
 
 if __name__ == "__main__":
-    # Run basic create and delete test
-    success1 = test_agb_create_and_delete()
+    try:
+        # Run basic create and delete test
+        success1 = test_agb_create_and_delete()
 
-    # Run custom parameters test
-    success2 = test_agb_with_custom_params()
+        # Run custom parameters test
+        success2 = test_agb_with_custom_params()
 
-    print("\n=== Test Summary ===")
-    if success1 and success2:
-        print("✅ All tests passed.")
-        sys.exit(0)
-    else:
-        print("❌ Some tests failed.")
+        print("\n=== Test Summary ===")
+        if success1 and success2:
+            print("✅ All tests passed.")
+            sys.exit(0)
+        else:
+            print("❌ Some tests failed.")
+            sys.exit(1)
+    except Exception as e:
+        print(f"\n❌ Tests failed with unexpected exception: {e}")
         sys.exit(1)

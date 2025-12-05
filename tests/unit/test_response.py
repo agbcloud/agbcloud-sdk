@@ -241,8 +241,6 @@ class TestGetSessionData(unittest.TestCase):
             resource_id="res-1",
             session_id="session-1",
             success=True,
-            http_port="8080",
-            token="token-123",
             resource_url="http://10.0.0.1:8080",
         )
 
@@ -250,8 +248,6 @@ class TestGetSessionData(unittest.TestCase):
         self.assertEqual(data.resource_id, "res-1")
         self.assertEqual(data.session_id, "session-1")
         self.assertTrue(data.success)
-        self.assertEqual(data.http_port, "8080")
-        self.assertEqual(data.token, "token-123")
         self.assertEqual(data.resource_url, "http://10.0.0.1:8080")
 
     def test_get_session_data_defaults(self):
@@ -262,8 +258,6 @@ class TestGetSessionData(unittest.TestCase):
         self.assertEqual(data.resource_id, "")
         self.assertEqual(data.session_id, "")
         self.assertFalse(data.success)
-        self.assertEqual(data.http_port, "")
-        self.assertEqual(data.token, "")
         self.assertEqual(data.resource_url, "")
 
 

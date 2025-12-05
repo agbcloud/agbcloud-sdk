@@ -55,7 +55,7 @@ This directory contains the complete user guide for AGB SDK, designed with a pro
 ## 📖 Guide Features
 
 ### 🎯 Progressive Learning Structure
-Each guide follows a unified progressive structure:
+Each feature guide (like Session, Context, File Operations) follows a unified progressive structure:
 
 ```markdown
 # Guide Title

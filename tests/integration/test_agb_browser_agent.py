@@ -2,12 +2,12 @@
 """
 Browser Cookie Persistence Example
 
-This example demonstrates how to test browser cookie functionality
+This example demonstrates how to use Browser Context to persist cookies
 across multiple sessions. It shows the complete workflow of:
-1. Creating a session
+1. Creating a session with Browser Context
 2. Setting cookies in the browser
-3. Deleting the session
-4. Creating a new session
+3. Deleting the session with context synchronization
+4. Creating a new session with the same Browser Context
 5. Verifying that cookies persist across sessions
 """
 
@@ -20,12 +20,13 @@ from playwright.async_api import async_playwright
 
 from agb import AGB
 from agb.config import Config
+from agb.context_sync import ContextSync, SyncPolicy
 from agb.modules.browser.browser import BrowserOption, BrowserViewport
 from agb.session_params import CreateSessionParams
 
 
 async def main():
-    """Demonstrate browser cookie persistence."""
+    """Demonstrate browser context cookie persistence."""
     # Get API key from environment
     api_key = os.environ.get("AGB_API_KEY")
     if not api_key:
@@ -41,11 +42,34 @@ async def main():
     agb = AGB(api_key=api_key, cfg=config)
     print("AGB client initialized")
 
+    # Create a unique context name for this demo
+    context_name = f"browser-cookie-demo-{int(time.time())}"
+
     try:
-        # Step 1: Create first session
-        print("Step 1: Creating first session.")
+        # Step 1: Create or get a persistent context for browser data
+        print(f"Step 1: Creating context '{context_name}'...")
+        context_result = agb.context.get(context_name, create=True)
+
+        if not context_result.success or not context_result.context:
+            print(f"Failed to create context: {context_result.error_message}")
+            sys.exit(1)
+
+        context = context_result.context
+        print(f"Context created with ID: {context.id}")
+
+        # Step 2: Create first session with Browser Context
+        print("Step 2: Creating first session with Browser Context...")
+        # Sync /tmp/agb_browser_data where browser profile is stored
+        sync_policy = SyncPolicy()
+        context_sync = ContextSync.new(
+            context_id=context.id,
+            path="/tmp/agb_browser_data",
+            policy=sync_policy
+        )
+
         params = CreateSessionParams(
             image_id="agb-browser-use-1",  # Browser image ID
+            context_syncs=[context_sync]
         )
 
         session_result = agb.create(params)
@@ -56,33 +80,9 @@ async def main():
         session1 = session_result.session
         print(f"First session created with ID: {session1.session_id}")
 
-        # Step 2: Initialize browser and set cookies
-        print("Step 2: Initializing browser and setting test cookies...")
-
-        browser_option = BrowserOption(
-            use_stealth=True,
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            viewport=BrowserViewport(width=1366, height=768),
-        )
-        # Initialize browser
-        init_success = await session1.browser.initialize_async(browser_option)
-        if not init_success:
-            print("Failed to initialize browser")
-            sys.exit(1)
-
-        print("Browser initialized successfully")
-
-        # Get endpoint URL
-        endpoint_url = session1.browser.get_endpoint_url()
-        if not endpoint_url:
-            print("Failed to get browser endpoint URL")
-            sys.exit(1)
-
-        print(f"Browser endpoint URL: {endpoint_url}")
-
         # Test data
-        test_url = "https://www.github.com"
-        test_domain = "github.com"
+        test_url = "https://www.baidu.com"
+        test_domain = "baidu.com"
 
         # Define test cookies
         test_cookies = [
@@ -106,12 +106,35 @@ async def main():
             },
         ]
 
+        # Step 3: Initialize browser and set cookies
+        print("Step 3: Initializing browser and setting test cookies...")
+
+        browser_option = BrowserOption(
+            use_stealth=True,
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            viewport=BrowserViewport(width=1366, height=768),
+        )
+
+        # Initialize browser
+        init_success = await session1.browser.initialize_async(browser_option)
+        if not init_success:
+            print("Failed to initialize browser")
+            sys.exit(1)
+
+        print("Browser initialized successfully")
+
+        # Get endpoint URL
+        endpoint_url = session1.browser.get_endpoint_url()
+        if not endpoint_url:
+            print("Failed to get browser endpoint URL")
+            sys.exit(1)
+
+        print(f"Browser endpoint URL: {endpoint_url}")
+
         # Connect with Playwright and set cookies
         async with async_playwright() as p:
             browser = await p.chromium.connect_over_cdp(endpoint_url)
-            context_p = (
-                browser.contexts[0] if browser.contexts else await browser.new_context()
-            )
+            context_p = browser.contexts[0] if browser.contexts else await browser.new_context()
             page = await context_p.new_page()
 
             # Navigate to test URL first (required before setting cookies)
@@ -120,7 +143,7 @@ async def main():
             await page.wait_for_timeout(2000)
 
             # Add test cookies
-            await context_p.add_cookies(test_cookies)
+            await context_p.add_cookies(test_cookies)  # type: ignore
             print(f"Added {len(test_cookies)} test cookies")
 
             # Verify cookies were set
@@ -143,9 +166,14 @@ async def main():
             await browser.close()
             print("First session browser operations completed")
 
-        # Step 4: Delete first session
-        print("Step 4: Deleting first session...")
-        delete_result = agb.delete(session1)
+            # Wait for browser to save cookies to file
+            print("Waiting for browser to save cookies to file...")
+            await asyncio.sleep(2)
+            print("Wait completed")
+
+        # Step 4: Delete first session with context synchronization
+        print("Step 4: Deleting first session with context synchronization...")
+        delete_result = agb.delete(session1, sync_context=True)
 
         if not delete_result.success:
             print(f"Failed to delete first session: {delete_result.error_message}")
@@ -155,12 +183,12 @@ async def main():
             f"First session deleted successfully (RequestID: {delete_result.request_id})"
         )
 
-        # Wait a moment for cleanup
-        print("Waiting for cleanup to complete...")
+        # Wait for context sync to complete
+        print("Waiting for context synchronization to complete...")
         time.sleep(3)
 
-        # Step 5: Create second session
-        print("Step 5: Creating second session...")
+        # Step 5: Create second session with same Browser Context
+        print("Step 5: Creating second session with same Browser Context...")
         session_result2 = agb.create(params)
 
         if not session_result2.success or not session_result2.session:
@@ -189,11 +217,9 @@ async def main():
 
         print(f"Second session browser endpoint URL: {endpoint_url2}")
 
-        test_passed = True
-
         # Check cookies in second session
-        async with async_playwright() as p:
-            browser2 = await p.chromium.connect_over_cdp(endpoint_url2)
+        async with async_playwright() as p2:
+            browser2 = await p2.chromium.connect_over_cdp(endpoint_url2)
             context2 = (
                 browser2.contexts[0]
                 if browser2.contexts
@@ -212,7 +238,7 @@ async def main():
             expected_cookie_names = {"demo_cookie_1", "demo_cookie_2"}
             found_cookie_names = set(cookie_dict2.keys())
 
-            print("Checking cookie persistence...")
+            print("Checking test cookie persistence...")
             missing_cookies = expected_cookie_names - found_cookie_names
 
             if missing_cookies:
@@ -241,6 +267,7 @@ async def main():
                     print(
                         "🎉 Cookie persistence test PASSED! All cookies persisted correctly across sessions."
                     )
+                    test_passed = True
                 else:
                     print("Cookie persistence test FAILED due to value mismatches")
                     test_passed = False
@@ -258,24 +285,26 @@ async def main():
             )
         else:
             print(f"Failed to delete second session: {delete_result2.error_message}")
-            # If cleanup fails, we might want to signal it, but if the test passed otherwise,
-            # strict CI might fail. Let's just print for now unless we want strict strict.
-            # Given "failed return", let's ensure if cleanup fails it's also an error if strict,
-            # but usually logic failure is prioritized.
-            pass
 
         if not test_passed:
             sys.exit(1)
 
     except Exception as e:
         print(f"Error during demo: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
     finally:
-        # Clean up completed
-        print("Cleanup completed")
+        # Clean up context
+        if 'context' in locals() and context:
+            try:
+                agb.context.delete(context)
+                print(f"Context '{context_name}' deleted")
+            except Exception as e:
+                print(f"Warning: Failed to delete context: {e}")
 
-    print("\nBrowser Cookie Persistence Demo completed!")
+    print("\nBrowser Context Cookie Persistence Demo completed!")
 
 
 if __name__ == "__main__":

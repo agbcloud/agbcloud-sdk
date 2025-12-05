@@ -53,8 +53,6 @@ def main():
     print(f"  Resource URL: {session.resource_url}")
     print(f"  Resource ID: {session.resource_id}")
     print(f"  App Instance ID: {session.app_instance_id}")
-    print(f"  Http Port: {session.http_port}")
-    print(f"  Token: {session.token}")
 
     # The session object can be used for further operations
     # For example, you can execute commands, work with files, etc.

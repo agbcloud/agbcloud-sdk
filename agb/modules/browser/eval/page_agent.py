@@ -202,7 +202,7 @@ class PageAgent:
     async def get_current_page(self) -> Page:
         if self.current_page is None:
             raise RuntimeError("Current page is not available. Make sure to navigate to a page first.")
-        
+
         cdp_session = None
         try:
             cdp_session = await self.current_page.context.new_cdp_session(self.current_page)
@@ -250,7 +250,7 @@ class PageAgent:
         try:
             if self.browser is None:
                 raise RuntimeError("Browser is not initialized. Call initialize() first.")
-            
+
             self.current_page = await self.browser.new_page()
             await self.current_page.goto(url, wait_until=wait_until, timeout=timeout_ms)
             return f"Successfully navigated to {url}"
@@ -266,7 +266,7 @@ class PageAgent:
         try:
             if self.session is None:
                 raise RuntimeError("Session is not initialized. Call initialize() first.")
-            
+
             await self.session.browser.agent.navigate_async(url)
             return f"Successfully navigated to {url}"
         except Exception as e:
@@ -279,7 +279,7 @@ class PageAgent:
         try:
             if self.session is None:
                 raise RuntimeError("Session is not initialized. Call initialize() first.")
-            
+
             data_url_or_error = await self.session.browser.agent.screenshot_async()
             if data_url_or_error.startswith("screenshot failed:"):
                 logger.error(data_url_or_error)
@@ -288,7 +288,7 @@ class PageAgent:
                 error_msg = f"screenshot failed: Unexpected format from SDK: {data_url_or_error[:100]}"
                 logger.error(error_msg)
                 return error_msg
-                
+
             base64_data = data_url_or_error.split(',', 1)[1]
             return base64_data
 
@@ -314,7 +314,7 @@ class PageAgent:
         try:
             if self.session is None:
                 raise RuntimeError("Session is not initialized. Call initialize() first.")
-            
+
             options = ExtractOptions(
                 instruction=instruction,
                 schema=schema,
@@ -347,7 +347,7 @@ class PageAgent:
         try:
             if self.session is None:
                 raise RuntimeError("Session is not initialized. Call initialize() first.")
-            
+
             logger.info("Starting observation...")
             options = ObserveOptions(
                 instruction=instruction,
@@ -378,12 +378,12 @@ class PageAgent:
         try:
             if self.session is None:
                 raise RuntimeError("Session is not initialized. Call initialize() first.")
-            
+
             logger.info(f"Attempting to execute action: {action_input}")
             if isinstance(action_input, str):
                 options = ActOptions(
                     action=action_input,
-                    use_vision=use_vision,    
+                    use_vision=use_vision,
                 )
                 return await self.session.browser.agent.act_async(action_input=options, page=self.current_page)
             else:

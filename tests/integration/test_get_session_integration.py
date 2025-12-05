@@ -54,8 +54,6 @@ def test_get_session_api():
         print(f"ResourceID: {get_session_result.data.resource_id}")
 
         # Validate new fields added from GetSession response
-        print(f"HttpPort: {get_session_result.data.http_port}")
-        print(f"Token: {'***' if get_session_result.data.token else ''}")
         print(f"ResourceUrl: {get_session_result.data.resource_url}")
 
         # Test get() method which should populate session fields from GetSession
@@ -68,7 +66,6 @@ def test_get_session_api():
         retrieved_session = get_result.session
         assert retrieved_session is not None, "Session should not be None"
         assert retrieved_session.session_id == session_id, f"Expected SessionID {session_id}, got {retrieved_session.session_id}"
-        assert retrieved_session.http_port == get_session_result.data.http_port, "Session.http_port should match GetSessionData.http_port"
 
         # resource_url will have different authcode on each call, so we only check that it's present
         assert retrieved_session.resource_url, "Session.resource_url should be present"

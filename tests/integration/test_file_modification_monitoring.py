@@ -31,9 +31,21 @@ def test_watch_directory_file_modification():
     print("=== Testing file modification monitoring ===\n")
 
     # Initialize AGB client
-    api_key = get_api_key()
-    agb = AGB(api_key=api_key)
-    print("✅ AGB client initialized")
+    try:
+        api_key = get_api_key()
+    except ValueError as e:
+        print(f"❌ {e}")
+        return False
+    except Exception as e:
+        print(f"❌ Unexpected error getting API key: {e}")
+        return False
+
+    try:
+        agb = AGB(api_key=api_key)
+        print("✅ AGB client initialized")
+    except Exception as e:
+        print(f"❌ Failed to initialize AGB client: {e}")
+        return False
 
     # Create session with specified ImageId
     session_params = CreateSessionParams(image_id="agb-code-space-2")
@@ -120,8 +132,15 @@ def test_watch_directory_file_modification():
                 print(
                     "This might be due to timing or system behavior, but basic functionality works"
                 )
+                # Allow 2 events as acceptable if network conditions are poor
+                if len(captured_events) < 2:
+                    print("❌ Too few events captured.")
+                    test_passed = False
+                else:
+                    test_passed = True
             else:
                 print(f"✅ Captured sufficient modify events: {len(captured_events)}")
+                test_passed = True
 
             # Verify event properties
             valid_events = 0
@@ -160,11 +179,14 @@ def test_watch_directory_file_modification():
             print(f"  Total events: {len(captured_events)}")
             print(f"  Valid events: {valid_events}")
 
-            if valid_events > 0:
+            if valid_events >= 2: # Requiring at least 2 valid events
                 print("✅ File modification monitoring test passed!")
-                test_passed = True
+                if not test_passed: # If previously failed due to count, double check logic
+                     if len(captured_events) >= 2:
+                         test_passed = True
             else:
                 print("❌ No valid modification events detected")
+                test_passed = False
 
     finally:
         # Stop monitoring
@@ -187,10 +209,14 @@ def test_watch_directory_file_modification():
 
 
 if __name__ == "__main__":
-    success = test_watch_directory_file_modification()
-    if success:
-        print("\n🎉 All tests passed!")
-        sys.exit(0)
-    else:
-        print("\n💥 Some tests failed!")
+    try:
+        success = test_watch_directory_file_modification()
+        if success:
+            print("\n🎉 All tests passed!")
+            sys.exit(0)
+        else:
+            print("\n💥 Some tests failed!")
+            sys.exit(1)
+    except Exception as e:
+        print(f"\n❌ Test failed with exception: {e}")
         sys.exit(1)

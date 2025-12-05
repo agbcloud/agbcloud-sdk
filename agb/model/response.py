@@ -149,8 +149,6 @@ class GetSessionData:
         session_id: str = "",
         success: bool = False,
         resource_url: str = "",
-        http_port: str = "",
-        token: str = "",
     ):
         """
         Initialize GetSessionData.
@@ -161,16 +159,12 @@ class GetSessionData:
             session_id (str): Session ID.
             success (bool): Success status.
             resource_url (str): Resource URL for accessing the session.
-            http_port (str): HTTP port.
-            token (str): Token.
         """
         self.app_instance_id = app_instance_id
         self.resource_id = resource_id
         self.session_id = session_id
         self.success = success
         self.resource_url = resource_url
-        self.http_port = http_port
-        self.token = token
 
 class GetSessionResult(ApiResponse):
     """Result of GetSession operations."""

@@ -348,7 +348,7 @@ class TestContextManager(unittest.TestCase):
         self.manager._poll_for_completion_async = mock_poll
 
         async def run_test():
-            result = await self.manager.sync(context_id="ctx-123")
+            result = await self.manager.sync(context_id="ctx-123", path="/tmp/test")
             return result
 
         result = asyncio.run(run_test())
@@ -387,7 +387,7 @@ class TestContextManager(unittest.TestCase):
         self.manager._poll_for_completion = mock_poll
 
         async def run_test():
-            result = await self.manager.sync(context_id="ctx-123", callback=test_callback)
+            result = await self.manager.sync(context_id="ctx-123", path="/tmp/test", callback=test_callback)
             return result
 
         result = asyncio.run(run_test())
@@ -413,7 +413,7 @@ class TestContextManager(unittest.TestCase):
         self.session.client.sync_context = MagicMock(return_value=mock_sync_response)
 
         async def run_test():
-            result = await self.manager.sync(context_id="ctx-123")
+            result = await self.manager.sync(context_id="ctx-123", path="/tmp/test")
             return result
 
         result = asyncio.run(run_test())
@@ -508,7 +508,7 @@ class TestContextManager(unittest.TestCase):
         self.session.client.sync_context = MagicMock(return_value=mock_sync_response_1)
 
         async def run_test_1():
-            result = await self.manager.sync(context_id="invalid-ctx")
+            result = await self.manager.sync(context_id="invalid-ctx", path="/tmp/test")
             return result
 
         result_1 = asyncio.run(run_test_1())
@@ -529,7 +529,7 @@ class TestContextManager(unittest.TestCase):
         self.session.client.sync_context = MagicMock(return_value=mock_sync_response_2)
 
         async def run_test_2():
-            result = await self.manager.sync(context_id="ctx-123")
+            result = await self.manager.sync(context_id="ctx-123", path="/tmp/test")
             return result
 
         result_2 = asyncio.run(run_test_2())
@@ -560,7 +560,7 @@ class TestContextManager(unittest.TestCase):
             callback_called.append(success)
 
         async def run_test():
-            result = await self.manager.sync(context_id="ctx-123", callback=test_callback)
+            result = await self.manager.sync(context_id="ctx-123", path="/tmp/test", callback=test_callback)
             return result
 
         result = asyncio.run(run_test())
@@ -571,6 +571,64 @@ class TestContextManager(unittest.TestCase):
         self.assertEqual(result.request_id, "req-sync-callback-error")
         # Callback should not be called when API fails
         self.assertEqual(len(callback_called), 0)
+
+    def test_sync_validation_error_context_id_only(self):
+        """Test sync method validation when only context_id is provided."""
+        import asyncio
+
+        async def run_test():
+            result = await self.manager.sync(context_id="ctx-123")
+            return result
+
+        result = asyncio.run(run_test())
+
+        self.assertFalse(result.success)
+        self.assertIn("context_id and path must be provided together", result.error_message)
+        self.assertEqual(result.request_id, "")
+
+    def test_sync_validation_error_path_only(self):
+        """Test sync method validation when only path is provided."""
+        import asyncio
+
+        async def run_test():
+            result = await self.manager.sync(path="/tmp/test")
+            return result
+
+        result = asyncio.run(run_test())
+
+        self.assertFalse(result.success)
+        self.assertIn("context_id and path must be provided together", result.error_message)
+        self.assertEqual(result.request_id, "")
+
+    def test_sync_no_parameters(self):
+        """Test sync method with no parameters (sync all contexts)."""
+        import asyncio
+
+        # Mock sync response
+        mock_sync_response = SyncContextResponse(
+            status_code=200,
+            json_data={
+                "success": True,
+                "message": "Sync started",
+            },
+            request_id="req-sync-all",
+        )
+        mock_sync_response.is_successful = MagicMock(return_value=True)
+        self.session.client.sync_context = MagicMock(return_value=mock_sync_response)
+
+        async def mock_poll(context_id, path, max_retries, retry_interval):
+            return True
+        self.manager._poll_for_completion_async = mock_poll
+
+        async def run_test():
+            result = await self.manager.sync()
+            return result
+
+        result = asyncio.run(run_test())
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.error_message, "")
+        self.assertEqual(result.request_id, "req-sync-all")
 
 
 if __name__ == "__main__":

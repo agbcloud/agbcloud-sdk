@@ -2,6 +2,8 @@ import os
 import uuid
 import time
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from typing import TYPE_CHECKING, List, Optional
 
 from agb.exceptions import AGBError
@@ -199,13 +201,40 @@ class ExtensionsService:
         except Exception as e:
             raise AGBError(f"An error occurred while requesting the upload URL: {e}") from e
 
-        # 2. Use the presigned URL to upload the file directly
+        # 2. Use the presigned URL to upload the file directly with retry and timeout
+        # Configure retry strategy for OSS uploads
+        retry_strategy = Retry(
+            total=3,  # Maximum number of retries
+            backoff_factor=2,  # Exponential backoff: 2, 4, 8 seconds
+            status_forcelist=[429, 500, 502, 503, 504],  # Retry on these status codes
+            allowed_methods=["PUT"],  # Only retry PUT requests
+        )
+
+        # Create session with retry adapter
+        session = requests.Session()
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+
+        # Upload timeout: 120 seconds (file uploads may take longer)
+        upload_timeout = 120
+
         try:
             with open(local_path, 'rb') as f:
-                response = requests.put(pre_signed_url, data=f)
+                logger.info(f"Uploading file to OSS: {local_path} -> {remote_path}")
+                response = session.put(
+                    pre_signed_url,
+                    data=f,
+                    timeout=upload_timeout
+                )
                 response.raise_for_status()  # This will raise an HTTPError if the status is 4xx or 5xx
+                logger.info(f"Successfully uploaded file to OSS: {remote_path}")
+        except requests.exceptions.Timeout as e:
+            raise AGBError(f"Upload timeout after {upload_timeout} seconds: {e}") from e
         except requests.exceptions.RequestException as e:
             raise AGBError(f"An error occurred while uploading the file: {e}") from e
+        finally:
+            session.close()
 
     def list(self) -> List[Extension]:
         """

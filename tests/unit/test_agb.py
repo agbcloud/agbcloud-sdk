@@ -92,8 +92,6 @@ class TestAGB(unittest.TestCase):
         mock_data.resource_url = "http://resource.url"
         mock_data.app_instance_id = "app-instance-id"
         mock_data.resource_id = "resource-id"
-        mock_data.http_port = 8080
-        mock_data.token = "token"
         mock_response.data = mock_data
         mock_response.request_id = "create-request-id"
 

@@ -20,7 +20,35 @@ Context synchronization refers to the process of syncing local files with cloud 
 - **Download Sync**: Download files from cloud Context to local
 - **Policy Control**: Can configure automatic sync policies and timing
 
-## Basic Usage
+
+## Quick Reference (1 minute)
+
+```python
+from agb import AGB
+from agb.context_sync import ContextSync, SyncPolicy
+from agb.session_params import CreateSessionParams
+
+agb = AGB()
+
+# 1. Create/Get Context
+context = agb.context.get("my-project", create=True).context
+
+# 2. Use Context in Session
+sync = ContextSync.new(
+    context_id=context.id,
+    path="/home/project",  # Mount path in session
+    policy=SyncPolicy()    # Default sync policy
+)
+
+params = CreateSessionParams(
+    image_id="agb-code-space-1",
+    context_syncs=[sync]
+)
+
+session = agb.create(params).session
+```
+
+## Basic Usage (5-10 minutes)
 
 ### 1. Initialize AGB Client
 
@@ -393,7 +421,7 @@ def cleanup_context_resources(agb_client, context):
         print(f"Cleanup failed: {str(e)}")
 ```
 
-## Common Issues
+## Troubleshooting
 
 ### 1. Context Creation Failed
 - Check if API Key is valid
@@ -414,13 +442,9 @@ def cleanup_context_resources(agb_client, context):
 - Set reasonable sync policies to avoid frequent syncing
 - Use pagination for large file lists
 
-## Summary
+## Related Documentation
 
-Context functionality provides powerful persistent storage capabilities for the AGB SDK. Through proper use of Context and sync mechanisms, you can:
-
-- Share data between different sessions
-- Implement persistent data storage
-- Support large file transfer and management
-- Provide flexible data sync policies
-
-Through the examples and best practices in this guide, you can fully leverage Context functionality to build more powerful and reliable applications.
+- **[Context Sync Policies Guide](context-sync-policies.md)** - Detailed sync configuration
+- **[File Operations Guide](file-operations.md)** - Managing files in sessions
+- **[Session Management Guide](session-management.md)** - Creating sessions with Context
+- **[API Reference](../api-reference/data_context/context.md)** - Complete Context API

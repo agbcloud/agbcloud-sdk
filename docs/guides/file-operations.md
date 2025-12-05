@@ -27,7 +27,7 @@ session.file_system.move_file("/tmp/hello.txt", "/tmp/trash/hello.txt")
 agb.delete(session)
 ```
 
-## Step-by-Step Guide (5-10 minutes)
+## Basic Usage (5-10 minutes)
 
 ### File Reading and Writing
 

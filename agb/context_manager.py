@@ -64,6 +64,14 @@ class ContextSyncResult(ApiResponse):
 
 
 class ContextManager:
+    """
+    Manages context operations within a session in the AGB cloud environment.
+
+    The ContextManager provides methods to get information about context synchronization
+    status and to synchronize contexts with the session.
+
+    """
+
     def __init__(self, session: "Session"):
         self.session = session
 
@@ -186,16 +194,33 @@ class ContextManager:
             session.context.sync(callback=lambda success: logger.info(f"Done: {success}"))
 
         Args:
-            context_id (Optional[str]): ID of the context to sync.
-            path (Optional[str]): Path to sync.
-            mode (Optional[str]): Sync mode.
-            callback (Optional[Callable[[bool], None]]): Optional callback function that receives success status.
+            context_id (Optional[str]): Optional ID of the context to synchronize. If provided, `path` must also be provided.
+            path (Optional[str]): Optional path where the context should be mounted. If provided, `context_id` must also be provided.
+            mode (Optional[str]): Optional synchronization mode (e.g., "upload", "download")
+            callback (Optional[Callable[[bool], None]]): Optional callback function that receives success status. If provided, the method runs in background and calls callback when complete
             max_retries (int): Maximum number of retries for polling. Defaults to 150.
             retry_interval (int): Milliseconds to wait between retries. Defaults to 1500.
 
         Returns:
-            ContextSyncResult: Result of the sync operation.
+            ContextSyncResult: Result object containing success status and request ID
         """
+
+        # Validate that context_id and path are provided together or both omitted
+        has_context_id = context_id is not None and context_id.strip() != ""
+        has_path = path is not None and path.strip() != ""
+
+        if has_context_id != has_path:
+            error_message = (
+                "context_id and path must be provided together or both omitted. "
+                "If you want to sync a specific context, both context_id and path are required. "
+                "If you want to sync all contexts, omit both parameters."
+            )
+            return ContextSyncResult(
+                request_id="",
+                success=False,
+                error_message=error_message
+            )
+
         request = SyncContextRequest(
             authorization=f"Bearer {self.session.get_api_key()}",
             session_id=self.session.get_session_id(),

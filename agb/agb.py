@@ -180,8 +180,6 @@ class AGB:
             if response.data:
                 session.app_instance_id = response.data.app_instance_id or ""
                 session.resource_id = response.data.resource_id or ""
-                session.http_port = str(response.data.http_port) if response.data.http_port else ""
-                session.token = response.data.token or ""
 
             # Store image_id used for this session
             session.image_id = params.image_id or ""
@@ -478,8 +476,6 @@ class AGB:
                     session_id=response.data.session_id or session_id,
                     success=True,
                     resource_url=response.data.resource_url or "",
-                    http_port=response.data.http_port or "",
-                    token=response.data.token or "",
                 )
 
             # Log API response with key details
@@ -551,8 +547,6 @@ class AGB:
             # Store additional session data - set attributes directly
             session.app_instance_id = get_result.data.app_instance_id or ""
             session.resource_id = get_result.data.resource_id or ""
-            session.http_port = get_result.data.http_port or ""
-            session.token = get_result.data.token or ""
 
         logger.info(f"Successfully retrieved session: {session_id}")
 

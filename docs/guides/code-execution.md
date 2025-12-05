@@ -38,7 +38,7 @@ Default execution timeout is 60 seconds. For long-running tasks:
 session.code.run_code("import time; time.sleep(100)", "python", timeout_s=120)
 ```
 
-## Advanced Patterns
+## Advanced Usage (15-30 minutes)
 
 For production applications, consider implementing these advanced patterns. Complete implementations are available in the examples directory.
 

@@ -34,8 +34,6 @@ class Session:
         self.image_id = ""
         self.app_instance_id = ""
         self.resource_id = ""
-        self.http_port = ""
-        self.token = ""
 
         # Initialize all modules
         self._init_modules()

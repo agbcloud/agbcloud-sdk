@@ -7,6 +7,7 @@ Based on golang/examples/context_sync_example/main.go
 import os
 import time
 import unittest
+import sys
 
 from agb import AGB
 from agb.context_manager import ContextStatusData
@@ -561,4 +562,8 @@ class TestContextGetIntegration(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    result = unittest.main(exit=False)
+    if result.result.wasSuccessful():
+        sys.exit(0)
+    else:
+        sys.exit(1)

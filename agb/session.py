@@ -12,9 +12,11 @@ from agb.model.response import OperationResult, DeleteResult
 from agb.modules.browser import Browser
 from agb.modules.code import Code
 from agb.modules.command import Command
+from agb.modules.computer import Computer
 from agb.modules.file_system import FileSystem
 from agb.context_manager import ContextManager
 from agb.logger import get_logger
+
 
 logger = get_logger(__name__)
 
@@ -44,7 +46,8 @@ class Session:
         self.file_system = FileSystem(self)
         self.code = Code(self)
         self.browser = Browser(self)
-
+        self.computer = Computer(self)
+        
         # Initialize context manager
         self.context = ContextManager(self)
 

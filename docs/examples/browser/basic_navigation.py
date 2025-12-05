@@ -47,8 +47,6 @@ async def main():
         # Configure browser options
         option = BrowserOption(
             use_stealth=True,
-            viewport=BrowserViewport(width=1366, height=768),
-            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         )
 
         # Initialize browser
@@ -65,7 +63,8 @@ async def main():
 
         async with async_playwright() as p:
             browser = await p.chromium.connect_over_cdp(endpoint_url)
-            page = await browser.new_page()
+            context = browser.contexts[0]
+            page = await context.new_page()
 
             # Navigate to different websites
             websites = [

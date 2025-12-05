@@ -49,7 +49,15 @@ Browser screen options.
 class BrowserFingerprint()
 ```
 
-Browser fingerprint options.
+Browser random fingerprint options.
+
+## FingerprintFormat
+
+```python
+class FingerprintFormat()
+```
+
+Complete fingerprint format including fingerprint data and headers.
 
 ## BrowserOption
 
@@ -84,6 +92,61 @@ async def initialize_async(option: "BrowserOption") -> bool
 
 Initialize the browser instance with the given options asynchronously.
 Returns True if successful, False otherwise.
+
+
+## BrowserFingerprintGenerator
+
+```python
+class BrowserFingerprintGenerator()
+```
+
+Browser fingerprint generator class for extracting comprehensive browser fingerprint data.
+This class uses Playwright to launch a local browser and collect fingerprint information
+including screen properties, navigator data, codecs, plugins, WebGL info, and HTTP headers.
+
+### \_\_init\_\_
+
+```python
+def __init__(headless: bool = False, use_chrome_channel: bool = True)
+```
+
+Initialize the fingerprint generator.
+
+**Arguments**:
+
+- `headless` _bool_ - Whether to run browser in headless mode. Default is False.
+- `use_chrome_channel` _bool_ - Whether to use Chrome channel. Default is True.
+
+### generate\_fingerprint
+
+```python
+async def generate_fingerprint() -> Optional[FingerprintFormat]
+```
+
+Extract comprehensive browser fingerprint using Playwright.
+
+**Returns**:
+
+    Optional[FingerprintFormat]: FingerprintFormat object containing fingerprint and headers,
+    or None if generation failed.
+
+### generate\_fingerprint\_to\_file
+
+```python
+async def generate_fingerprint_to_file(output_filename: str = "fingerprint_output.json") -> bool
+```
+
+Extract comprehensive browser fingerprint and save to file.
+
+**Arguments**:
+
+- `output_filename` _str_ - Name of the file to save fingerprint data. Default is "fingerprint_output.json".
+
+
+**Returns**:
+
+    bool: True if fingerprint generation and saving succeeded, False otherwise.
+
 
 ## ActOptions
 

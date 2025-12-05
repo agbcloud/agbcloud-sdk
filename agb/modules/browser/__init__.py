@@ -4,11 +4,16 @@ Browser automation operations for the AGB SDK.
 
 from .browser import (
     Browser,
+    BrowserFingerprintContext,
     BrowserFingerprint,
     BrowserOption,
     BrowserProxy,
     BrowserScreen,
     BrowserViewport,
+)
+from .fingerprint import (
+    FingerprintFormat,
+    BrowserFingerprintGenerator,
 )
 from .browser_agent import (
     ActOptions,
@@ -21,11 +26,14 @@ from .browser_agent import (
 
 __all__ = [
     "Browser",
+    "BrowserFingerprintContext",
     "BrowserOption",
     "BrowserViewport",
     "BrowserScreen",
     "BrowserFingerprint",
     "BrowserProxy",
+    "FingerprintFormat",
+    "BrowserFingerprintGenerator",
     "BrowserAgent",
     "ActOptions",
     "ActResult",

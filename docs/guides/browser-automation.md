@@ -123,23 +123,6 @@ desktop_option = BrowserOption(
 )
 ```
 
-### Fingerprint Customization
-
-Customize browser fingerprints to avoid detection:
-
-```python
-fingerprint = BrowserFingerprint(
-    devices=["desktop"],
-    operating_systems=["windows", "macos"],
-    locales=["en-US", "zh-CN"]
-)
-
-option = BrowserOption(
-    fingerprint=fingerprint,
-    use_stealth=True
-)
-```
-
 ### Proxy Configuration
 
 #### Custom Proxy
@@ -266,9 +249,10 @@ success, data = await session.browser.agent.extract_async(ExtractOptions(
 
 ## Advanced Features
 
-### Stealth Mode
+### Fingerprint
 
-Enable stealth mode to avoid bot detection:
+Enable Fingerprint feature to avoid bot detection, the following is a basic fingerprint feature's config. For more advanced fingerprint feature descriptions, please refer to the [Browser Fingerprint](./browser-fingerprint.md)
+**Note:** `use_stealth` needs to be set to true to enable the fingerprint feature
 
 ```python
 stealth_option = BrowserOption(

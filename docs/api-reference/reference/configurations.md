@@ -70,17 +70,29 @@ Key Features:
     # extension_context_syncs will be None
     ```
 
-### get\_all\_context\_syncs
+### get\_extension\_context\_syncs
 
 ```python
-def get_all_context_syncs() -> List[ContextSync]
+def get_extension_context_syncs() -> List[ContextSync]
 ```
 
-Get all context syncs including extension syncs.
+Get context syncs for extensions.
 
 **Returns**:
 
-    List[ContextSync]: All context sync configurations. Returns empty list if no extensions configured.
+    List[ContextSync]: Context sync configurations for extensions. Returns empty list if no extensions configured.
+
+### get\_fingerprint\_context\_sync
+
+```python
+def get_fingerprint_context_sync() -> ContextSync
+```
+
+Get context sync for fingerprint.
+
+**Returns**:
+
+    ContextSync: Context sync configurations for fingerprint. Returns None if fingerprint configuration is invalid.
 
 ## CreateSessionParams
 

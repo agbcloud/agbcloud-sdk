@@ -10,6 +10,8 @@ logger = get_logger(__name__)
 
 # Browser configuration constants
 BROWSER_DATA_PATH = "/tmp/agb_browser_data"
+# Browser fingerprint persistent path constant
+BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/agb_browser_fingerprint"
 
 
 class Config:

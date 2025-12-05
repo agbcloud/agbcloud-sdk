@@ -9,6 +9,26 @@ Demonstrates how to start a browser, navigate to a URL, and take a screenshot.
 
 <<< ./basic_navigation.py
 
+### Browser Fingerprint Basic Usage (`browser_fingerprint_basic_usage.py`)
+Demonstrates how to use browser fingerprint to avoid detection by anti-bot services. It generates a random, realistic browser fingerprint (e.g., Windows desktop) and verifies the user agent and navigator properties.
+
+<<< ./browser_fingerprint_basic_usage.py
+
+### Browser Fingerprint Construct (`browser_fingerprint_construct.py`)
+Shows how to construct a custom `FingerprintFormat` from a JSON file and apply it to the remote browser. This allows you to fully control the browser fingerprint details.
+
+<<< ./browser_fingerprint_construct.py
+
+### Browser Fingerprint Local Sync (`browser_fingerprint_local_sync.py`)
+Demonstrates how to sync your local Chrome browser's fingerprint to the remote browser using `BrowserFingerprintGenerator`. This makes the remote browser behave exactly like your local browser.
+
+<<< ./browser_fingerprint_local_sync.py
+
+### Browser Fingerprint Persistence (`browser_fingerprint_persistence.py`)
+A more advanced example showing how to persist browser fingerprint across multiple sessions using `BrowserContext` and `BrowserFingerprintContext`. This is useful for maintaining a consistent browser identity over time.
+
+<<< ./browser_fingerprint_persistence.py
+
 ### Natural Language Actions (`natural_language_actions.py`)
 Demonstrates how to use natural language instructions (e.g., "Click the 'Sign Up' button") to interact with the page, which simplifies automation logic.
 

@@ -1,0 +1,236 @@
+{
+  "fingerprint": {
+    "screen": {
+      "availTop": 25,
+      "availLeft": 0,
+      "pageXOffset": 0,
+      "pageYOffset": 0,
+      "screenX": 0,
+      "hasHDR": false,
+      "width": 2560,
+      "height": 1440,
+      "availWidth": 2560,
+      "availHeight": 1345,
+      "clientWidth": 2560,
+      "clientHeight": 1258,
+      "innerWidth": 2560,
+      "innerHeight": 1258,
+      "outerWidth": 2560,
+      "outerHeight": 1345,
+      "colorDepth": 24,
+      "pixelDepth": 24,
+      "devicePixelRatio": 2
+    },
+    "navigator": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "userAgentData": null,
+      "language": "zh-CN",
+      "languages": [
+        "zh-CN"
+      ],
+      "platform": "MacIntel",
+      "deviceMemory": 8,
+      "hardwareConcurrency": 8,
+      "maxTouchPoints": 0,
+      "product": "Gecko",
+      "productSub": "20030107",
+      "vendor": "Google Inc.",
+      "vendorSub": "",
+      "doNotTrack": null,
+      "appCodeName": "Mozilla",
+      "appName": "Netscape",
+      "appVersion": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "oscpu": null,
+      "extraProperties": {
+        "vendorFlavors": [
+          "chrome"
+        ],
+        "globalPrivacyControl": null,
+        "pdfViewerEnabled": true,
+        "installedApps": []
+      },
+      "webdriver": false
+    },
+    "audioCodecs": {
+      "ogg": "probably",
+      "mp3": "probably",
+      "wav": "probably",
+      "m4a": "maybe",
+      "aac": "probably"
+    },
+    "videoCodecs": {
+      "ogg": "",
+      "h264": "probably",
+      "webm": "probably"
+    },
+    "pluginsData": {
+      "plugins": [
+        {
+          "name": "PDF Viewer",
+          "description": "Portable Document Format",
+          "filename": "internal-pdf-viewer",
+          "mimeTypes": [
+            {
+              "type": "application/pdf",
+              "suffixes": "pdf",
+              "description": "Portable Document Format",
+              "enabledPlugin": "PDF Viewer"
+            },
+            {
+              "type": "text/pdf",
+              "suffixes": "pdf",
+              "description": "Portable Document Format",
+              "enabledPlugin": "PDF Viewer"
+            }
+          ]
+        },
+        {
+          "name": "Chrome PDF Viewer",
+          "description": "Portable Document Format",
+          "filename": "internal-pdf-viewer",
+          "mimeTypes": [
+            {
+              "type": "application/pdf",
+              "suffixes": "pdf",
+              "description": "Portable Document Format",
+              "enabledPlugin": "Chrome PDF Viewer"
+            },
+            {
+              "type": "text/pdf",
+              "suffixes": "pdf",
+              "description": "Portable Document Format",
+              "enabledPlugin": "Chrome PDF Viewer"
+            }
+          ]
+        },
+        {
+          "name": "Chromium PDF Viewer",
+          "description": "Portable Document Format",
+          "filename": "internal-pdf-viewer",
+          "mimeTypes": [
+            {
+              "type": "application/pdf",
+              "suffixes": "pdf",
+              "description": "Portable Document Format",
+              "enabledPlugin": "Chromium PDF Viewer"
+            },
+            {
+              "type": "text/pdf",
+              "suffixes": "pdf",
+              "description": "Portable Document Format",
+              "enabledPlugin": "Chromium PDF Viewer"
+            }
+          ]
+        },
+        {
+          "name": "Microsoft Edge PDF Viewer",
+          "description": "Portable Document Format",
+          "filename": "internal-pdf-viewer",
+          "mimeTypes": [
+            {
+              "type": "application/pdf",
+              "suffixes": "pdf",
+              "description": "Portable Document Format",
+              "enabledPlugin": "Microsoft Edge PDF Viewer"
+            },
+            {
+              "type": "text/pdf",
+              "suffixes": "pdf",
+              "description": "Portable Document Format",
+              "enabledPlugin": "Microsoft Edge PDF Viewer"
+            }
+          ]
+        },
+        {
+          "name": "WebKit built-in PDF",
+          "description": "Portable Document Format",
+          "filename": "internal-pdf-viewer",
+          "mimeTypes": [
+            {
+              "type": "application/pdf",
+              "suffixes": "pdf",
+              "description": "Portable Document Format",
+              "enabledPlugin": "WebKit built-in PDF"
+            },
+            {
+              "type": "text/pdf",
+              "suffixes": "pdf",
+              "description": "Portable Document Format",
+              "enabledPlugin": "WebKit built-in PDF"
+            }
+          ]
+        }
+      ],
+      "mimeTypes": [
+        "Portable Document Format~~application/pdf~~pdf",
+        "Portable Document Format~~text/pdf~~pdf",
+        "Portable Document Format~~application/pdf~~pdf",
+        "Portable Document Format~~text/pdf~~pdf",
+        "Portable Document Format~~application/pdf~~pdf",
+        "Portable Document Format~~text/pdf~~pdf",
+        "Portable Document Format~~application/pdf~~pdf",
+        "Portable Document Format~~text/pdf~~pdf",
+        "Portable Document Format~~application/pdf~~pdf",
+        "Portable Document Format~~text/pdf~~pdf"
+      ]
+    },
+    "battery": {
+      "charging": true,
+      "chargingTime": 0,
+      "dischargingTime": null,
+      "level": 1
+    },
+    "videoCard": {
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
+      "vendor": "Google Inc. (Apple)"
+    },
+    "multimediaDevices": {
+      "speakers": [
+        {
+          "deviceId": "",
+          "kind": "audiooutput",
+          "label": "",
+          "groupId": ""
+        }
+      ],
+      "micros": [
+        {
+          "deviceId": "",
+          "kind": "audioinput",
+          "label": "",
+          "groupId": ""
+        }
+      ],
+      "webcams": []
+    },
+    "fonts": [
+      "Arial",
+      "Helvetica",
+      "Times New Roman",
+      "Courier New",
+      "Verdana",
+      "Georgia",
+      "Palatino",
+      "Comic Sans MS",
+      "Trebuchet MS",
+      "Arial Black",
+      "Impact"
+    ],
+    "mockWebRTC": false,
+    "slim": false
+  },
+  "headers": {
+    "sec-ch-ua": "\"Chromium\";v=\"142\", \"Google Chrome\";v=\"142\", \"Not_A Brand\";v=\"99\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"macOS\"",
+    "upgrade-insecure-requests": "1",
+    "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+    "sec-fetch-site": "none",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-user": "?1",
+    "sec-fetch-dest": "document",
+    "accept-encoding": "gzip, deflate, br, zstd",
+    "accept-language": "zh-CN,zh;q=0.9"
+  }
+}

@@ -50,8 +50,8 @@ class TestBrowserContext(unittest.TestCase):
         self.assertIsNotNone(browser_ctx.extension_context_syncs)
         self.assertEqual(len(browser_ctx.extension_context_syncs), 1)
 
-    def test_browser_context_get_all_context_syncs_with_extensions(self):
-        """Test get_all_context_syncs with extensions."""
+    def test_browser_context_get_extension_context_syncs_with_extensions(self):
+        """Test get_extension_context_syncs with extensions."""
         ext_option = ExtensionOption(
             context_id="ext-ctx-1",
             extension_ids=["ext-1"],
@@ -63,19 +63,19 @@ class TestBrowserContext(unittest.TestCase):
             extension_option=ext_option,
         )
 
-        syncs = browser_ctx.get_all_context_syncs()
+        syncs = browser_ctx.get_extension_context_syncs()
         self.assertEqual(len(syncs), 1)
         self.assertEqual(syncs[0].context_id, "ext-ctx-1")
         self.assertEqual(syncs[0].path, "/tmp/extensions/")
 
-    def test_browser_context_get_all_context_syncs_without_extensions(self):
-        """Test get_all_context_syncs without extensions."""
+    def test_browser_context_get_extension_context_syncs_without_extensions(self):
+        """Test get_extension_context_syncs without extensions."""
         browser_ctx = BrowserContext(
             context_id="browser-ctx-4",
             auto_upload=False,
         )
 
-        syncs = browser_ctx.get_all_context_syncs()
+        syncs = browser_ctx.get_extension_context_syncs()
         self.assertEqual(len(syncs), 0)
 
     def test_browser_context_auto_upload_false(self):

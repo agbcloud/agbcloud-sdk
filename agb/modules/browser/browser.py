@@ -1,10 +1,12 @@
 import asyncio
 import time
+import os
+import base64
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional
 
 from agb.api.base_service import BaseService
 from agb.api.models import InitBrowserRequest
-from agb.config import BROWSER_DATA_PATH
+from agb.config import BROWSER_DATA_PATH, BROWSER_FINGERPRINT_PERSIST_PATH
 from agb.exceptions import BrowserError
 from agb.modules.browser.browser_agent import BrowserAgent
 from agb.logger import get_logger
@@ -13,6 +15,27 @@ logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from agb.session import Session
+    from agb.modules.browser.fingerprint import FingerprintFormat
+
+
+class BrowserFingerprintContext:
+    """
+    Browser fingerprint context configuration.
+    """
+    def __init__(self, fingerprint_context_id: str):
+        """
+        Initialize FingerprintContext with context id.
+        
+        Args:
+            fingerprint_context_id (str): ID of the fingerprint context for browser fingerprint.
+        
+        Raises:
+            ValueError: If fingerprint_context_id is empty.
+        """
+        if not fingerprint_context_id or not fingerprint_context_id.strip():
+            raise ValueError("fingerprint_context_id cannot be empty")
+
+        self.fingerprint_context_id = fingerprint_context_id
 
 
 class BrowserProxy:
@@ -271,6 +294,8 @@ class BrowserOption:
         viewport: Optional[BrowserViewport] = None,
         screen: Optional[BrowserScreen] = None,
         fingerprint: Optional[BrowserFingerprint] = None,
+        fingerprint_format: Optional["FingerprintFormat"] = None,
+        fingerprint_persistent: bool = False,
         solve_captchas: bool = False,
         proxies: Optional[List[BrowserProxy]] = None,
         extension_path: Optional[str] = "/tmp/extensions/",
@@ -280,9 +305,17 @@ class BrowserOption:
         self.viewport = viewport
         self.screen = screen
         self.fingerprint = fingerprint
+        self.fingerprint_format = fingerprint_format
         self.solve_captchas = solve_captchas
         self.proxies = proxies
         self.extension_path = extension_path
+
+        # Check fingerprint persistent if provided
+        if fingerprint_persistent:
+            # Currently only support persistent fingerprint in docker env
+            self.fingerprint_persist_path = os.path.join(BROWSER_FINGERPRINT_PERSIST_PATH, "fingerprint.json")
+        else:
+            self.fingerprint_persist_path = None
 
         # Validate proxies list items
         if proxies is not None:
@@ -309,6 +342,12 @@ class BrowserOption:
             option_map["screen"] = self.screen.to_map()
         if self.fingerprint is not None:
             option_map["fingerprint"] = self.fingerprint.to_map()
+        if self.fingerprint_format is not None:
+            # Encode fingerprint format to base64 string
+            json_str = self.fingerprint_format._to_json()
+            option_map['fingerprintRawData'] = base64.b64encode(json_str.encode('utf-8')).decode('utf-8')
+        if self.fingerprint_persist_path is not None:
+            option_map['fingerprintPersistPath'] = self.fingerprint_persist_path
         if self.solve_captchas is not None:
             option_map['solveCaptchas'] = self.solve_captchas
         if self.proxies is not None:
@@ -343,6 +382,20 @@ class BrowserOption:
             fingerprint_data = m.get("fingerprint")
             if isinstance(fingerprint_data, dict):
                 instance.fingerprint = BrowserFingerprint.from_map(fingerprint_data)
+        if m.get('fingerprintRawData') is not None:
+            import base64
+            from agb.modules.browser.fingerprint import FingerprintFormat
+            fingerprint_raw = m.get('fingerprintRawData')
+            if isinstance(fingerprint_raw, str):
+                # Decode base64 encoded fingerprint data
+                fingerprint_json = base64.b64decode(fingerprint_raw.encode('utf-8')).decode('utf-8')
+                instance.fingerprint_format = FingerprintFormat._from_json(fingerprint_json)
+            else:
+                instance.fingerprint_format = fingerprint_raw
+        if m.get('fingerprintPersistPath') is not None:
+            fingerprint_persist_path = m.get('fingerprintPersistPath')
+            if isinstance(fingerprint_persist_path, str):
+                instance.fingerprint_persist_path = fingerprint_persist_path
         if m.get('solveCaptchas') is not None:
             instance.solve_captchas = m.get('solveCaptchas')
         else:

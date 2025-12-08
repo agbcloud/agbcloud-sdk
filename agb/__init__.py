@@ -7,7 +7,7 @@ from .context import Context, ContextService, ContextResult, ContextListResult
 from .context_manager import ContextManager, ContextStatusData, ContextInfoResult, ContextSyncResult
 from .context_sync import ContextSync, SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, UploadStrategy, DownloadStrategy, UploadMode, MappingPolicy
 from .extension import ExtensionsService, ExtensionOption, Extension
-from .modules.computer import Computer
+from .modules.computer import Computer, MouseButton, ScrollDirection
 
 __all__ = [
     "AGB", "Session", "CreateSessionParams", "HTTPClient", "Client",
@@ -17,5 +17,5 @@ __all__ = [
     "ContextSync", "SyncPolicy", "UploadPolicy", "DownloadPolicy", "DeletePolicy", "ExtractPolicy",
     "UploadStrategy", "DownloadStrategy", "UploadMode", "MappingPolicy", "ExtensionsService","ExtensionOption","Extension",
     # Computer related exports
-    "Computer"
+    "Computer", "MouseButton", "ScrollDirection"
 ]

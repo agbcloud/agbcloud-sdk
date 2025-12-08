@@ -31,3 +31,69 @@ class FunctionalTestResult:
     def __str__(self):
         status = "✅ PASS" if self.success else "❌ FAIL"
         return f"{status} {self.test_name}: {self.message} (Duration: {self.duration:.2f}s)"
+    
+def validate_cursor_position(cursor_result, expected_x: int, expected_y: int, tolerance: int = 5) -> bool:
+    """
+    Validate cursor position is within tolerance of expected position.
+
+    Args:
+        cursor_result: Result from get_cursor_position()
+        expected_x: Expected X coordinate
+        expected_y: Expected Y coordinate
+        tolerance: Allowed pixel difference (default: 5)
+
+    Returns:
+        bool: True if position is within tolerance
+    """
+    if not cursor_result.success or not cursor_result.data:
+        return False
+
+    try:
+        import json
+        cursor_data = cursor_result.data
+        if isinstance(cursor_data, str):
+            cursor_data = json.loads(cursor_data)
+        
+        actual_x = cursor_data.get('x', 0)
+        actual_y = cursor_data.get('y', 0)
+        
+        x_diff = abs(actual_x - expected_x)
+        y_diff = abs(actual_y - expected_y)
+        
+        return x_diff <= tolerance and y_diff <= tolerance
+    except Exception:
+        return False
+
+def get_screen_center(session):
+    """
+    Get the center coordinates of the screen.
+    
+    Args:
+        session: The AGB session object
+        
+    Returns:
+        tuple: (center_x, center_y) coordinates, or (400, 300) as fallback
+    """
+    try:
+        screen_result = session.computer.get_screen_size()
+        if not screen_result.success or not screen_result.data:
+            print("⚠️ Failed to get screen size, using fallback center (400, 300)")
+            return 400, 300
+        
+        import json
+        screen_data = screen_result.data
+        if isinstance(screen_data, str):
+            screen_data = json.loads(screen_data)
+        
+        width = screen_data.get('width', 800)
+        height = screen_data.get('height', 600)
+        
+        center_x = width // 2
+        center_y = height // 2
+        
+        print(f"📐 Screen size: {width}x{height}, center: ({center_x}, {center_y})")
+        return center_x, center_y
+        
+    except Exception as e:
+        print(f"⚠️ Error getting screen center: {e}, using fallback center (400, 300)")
+        return 400, 300

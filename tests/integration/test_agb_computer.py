@@ -7,9 +7,9 @@ import os
 import time
 import unittest
 import json
-from agb import agb
+from agb import agb,MouseButton,ScrollDirection
 from agb.session_params import CreateSessionParams
-from .functional_helpers import  FunctionalTestResult
+from .functional_helpers import  FunctionalTestResult,validate_cursor_position,get_screen_center
 
 def get_cursor_coordinates(cursor_result):
     """Extract x, y coordinates from cursor result."""
@@ -59,6 +59,123 @@ class TestComputerFunctionalValidation(unittest.TestCase):
                 time.sleep(2)
             except Exception as e:
                 print(f"Error deleting session: {e}")
+    
+    def test_mouse_operation_validation(self):
+        """Test comprehensive mouse operations including click, move, and drag functionality."""
+        result = FunctionalTestResult("MouseOperationValidation")
+        start_time = time.time()
+        
+        try:
+            # Get screen center coordinates for all operations
+            center_x, center_y = get_screen_center(self.session)
+            
+            # Test 1: Mouse Click Validation
+            print("Testing mouse click functionality...")
+            target_x, target_y = center_x, center_y
+            
+            # Step 1: Click at screen center
+            click_result = self.session.computer.click_mouse(target_x, target_y, MouseButton.LEFT)
+            if not click_result.success:
+                result.set_failure(f"Mouse click operation failed: {click_result.error_message}")
+                return
+            
+            # Wait for click to complete
+            time.sleep(1)
+            
+            # Step 2: Verify cursor position after click
+            new_cursor = self.session.computer.get_cursor_position()
+            if not new_cursor.success:
+                result.set_failure(f"Failed to get cursor position after click: {new_cursor.error_message}")
+                return
+            
+            new_x, new_y = get_cursor_coordinates(new_cursor)
+            result.add_detail("click_new_cursor", {"x": new_x, "y": new_y})
+            result.add_detail("click_target_position", {"x": target_x, "y": target_y})
+            
+            # Validate cursor moved to click position
+            if not validate_cursor_position(new_cursor, target_x, target_y, self.cursor_tolerance):
+                result.set_failure("Cursor position validation failed after click")
+                print(f"❌ Mouse click failed: expected ({target_x},{target_y}), got ({new_x},{new_y})")
+                return
+            
+            print(f"✅ Mouse clicked to ({new_x},{new_y}), target was ({target_x},{target_y})")
+            
+            # Test 2: Mouse Movement Validation
+            print("Testing mouse movement functionality...")
+            target_x, target_y = center_x - 100, center_y + 100
+            
+            print("target_position", {"x": target_x, "y": target_y})
+            
+            # Step 1: Move mouse to screen center
+            move_result = self.session.computer.move_mouse(target_x, target_y)
+            if not move_result.success:
+                result.set_failure(f"Mouse move operation failed: {move_result.error_message}")
+                return
+            
+            # Wait for movement to complete
+            time.sleep(1)
+            
+            # Step 2: Verify cursor position changed
+            new_cursor = self.session.computer.get_cursor_position()
+            if not new_cursor.success:
+                result.set_failure(f"Failed to get new cursor position: {new_cursor.error_message}")
+                return
+            
+            new_x, new_y = get_cursor_coordinates(new_cursor)
+            result.add_detail("move_new_cursor", {"x": new_x, "y": new_y})
+            print("new_cursor", {"x": new_x, "y": new_y})
+            result.add_detail("move_target_position", {"x": target_x, "y": target_y})
+            
+            # Validate cursor movement
+            if not validate_cursor_position(new_cursor, target_x, target_y, self.cursor_tolerance):
+                result.set_failure("Cursor position validation failed after move")
+                print(f"❌ Mouse movement failed: expected ({target_x},{target_y}), got ({new_x},{new_y})")
+                return
+            
+            print(f"✅ Mouse moved to ({new_x},{new_y}), target was ({target_x},{target_y})")
+            
+            # Test 3: Mouse Drag Validation
+            print("Testing mouse drag functionality...")
+            # Define drag positions around center
+            from_x, from_y = center_x - 50, center_y - 50
+            to_x, to_y = center_x + 50, center_y + 50
+            
+            # Step 1: Perform drag operation using screen-based positions
+            drag_result = self.session.computer.drag_mouse(from_x, from_y, to_x, to_y, MouseButton.LEFT)
+            if not drag_result.success:
+                result.set_failure(f"Mouse drag operation failed: {drag_result.error_message}")
+                return
+            
+            # Wait for drag to complete
+            time.sleep(1)
+            
+            # Step 2: Verify cursor position after drag
+            new_cursor = self.session.computer.get_cursor_position()
+            if not new_cursor.success:
+                result.set_failure(f"Failed to get cursor position after drag: {new_cursor.error_message}")
+                return
+            
+            new_x, new_y = get_cursor_coordinates(new_cursor)
+            result.add_detail("drag_new_cursor", {"x": new_x, "y": new_y})
+            result.add_detail("drag_from", {"x": from_x, "y": from_y})
+            result.add_detail("drag_to", {"x": to_x, "y": to_y})
+            
+            # Validate cursor ended at drag destination
+            if not validate_cursor_position(new_cursor, to_x, to_y, self.cursor_tolerance):
+                result.set_failure("Cursor position validation failed after drag")
+                print(f"❌ Mouse drag failed: expected end at ({to_x},{to_y}), got ({new_x},{new_y})")
+                return
+            
+            print(f"✅ Mouse dragged from ({from_x},{from_y}) to ({to_x},{to_y}), final position ({new_x},{new_y})")
+            # All tests passed
+            result.set_success("All mouse operations validation successful")
+            print("✅ All mouse operations (click, move, drag) validated successfully")
+                
+        finally:
+            result.duration = time.time() - start_time
+            print(f"Test Result: {result}")
+            self.assertTrue(result.success, result.message)
+    
     def test_application_operation_validation(self):
         """Test complete app lifecycle: install list -> start -> verify -> list processes -> stop -> verify."""
         result = FunctionalTestResult("ApplicationOperationValidation")

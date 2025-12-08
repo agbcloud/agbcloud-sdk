@@ -10,6 +10,20 @@ from agb.logger import get_logger
 logger = get_logger(__name__)
 
 
+class MouseButton(str, Enum):
+    """Mouse button types for click and drag operations."""
+    LEFT = "left"
+    RIGHT = "right"
+    MIDDLE = "middle"
+    DOUBLE_LEFT = "double_left"
+
+
+class ScrollDirection(str, Enum):
+    """Scroll direction for scroll operations."""
+    UP = "up"
+    DOWN = "down"
+    LEFT = "left"
+    RIGHT = "right"
 
 class Window:
     """Represents a window in the system."""
@@ -97,6 +111,294 @@ class Computer(BaseService):
     """
     Handles computer UI automation operations in the AGB cloud environment.
     """
+    # Mouse Operations
+    def click_mouse(self, x: int, y: int, button: Union[MouseButton, str] = MouseButton.LEFT) -> BoolResult:
+        """
+        Clicks the mouse at the specified screen coordinates.
+
+        Args:
+            x (int): X coordinate in pixels (0 is left edge of screen).
+            y (int): Y coordinate in pixels (0 is top edge of screen).
+            button (Union[MouseButton, str], optional): Mouse button to click. Options:
+                - MouseButton.LEFT or "left": Single left click
+                - MouseButton.RIGHT or "right": Right click (context menu)
+                - MouseButton.MIDDLE or "middle": Middle click (scroll wheel)
+                - MouseButton.DOUBLE_LEFT or "double_left": Double left click
+                Defaults to MouseButton.LEFT.
+
+        Returns:
+            BoolResult: Object containing success status and error message if any.
+
+        Raises:
+            ValueError: If button is not one of the valid options.
+        """
+        button_str = button.value if isinstance(button, MouseButton) else button
+        valid_buttons = [b.value for b in MouseButton]
+        if button_str not in valid_buttons:
+            raise ValueError(f"Invalid button '{button_str}'. Must be one of {valid_buttons}")
+
+        try:
+            args = {"x": x, "y": y, "button": button_str}
+            result = self._call_mcp_tool("click_mouse", args)
+            logger.debug(f"Click mouse response: {result}")
+
+            if result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=True,
+                )
+            else:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to click mouse",
+                )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to click mouse: {e}",
+            )
+
+    def move_mouse(self, x: int, y: int) -> BoolResult:
+        """
+        Moves the mouse to the specified coordinates.
+
+        Args:
+            x (int): X coordinate.
+            y (int): Y coordinate.
+
+        Returns:
+            BoolResult: Result object containing success status and error message if any.
+        """
+        try:
+            args = {"x": x, "y": y}
+            result = self._call_mcp_tool("move_mouse", args)
+            logger.debug(f"Move mouse response: {result}")
+
+            if result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=True,
+                )
+            else:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to move mouse",
+                )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to move mouse: {e}",
+            )
+
+    def drag_mouse(
+        self, from_x: int, from_y: int, to_x: int, to_y: int, button: Union[MouseButton, str] = MouseButton.LEFT
+    ) -> BoolResult:
+        """
+        Drags the mouse from one point to another.
+
+        Args:
+            from_x (int): Starting X coordinate.
+            from_y (int): Starting Y coordinate.
+            to_x (int): Ending X coordinate.
+            to_y (int): Ending Y coordinate.
+            button (Union[MouseButton, str], optional): Button type. Can be MouseButton enum or string.
+                Valid values: MouseButton.LEFT, MouseButton.RIGHT, MouseButton.MIDDLE
+                or their string equivalents. Defaults to MouseButton.LEFT.
+                Note: DOUBLE_LEFT is not supported for drag operations.
+
+        Returns:
+            BoolResult: Result object containing success status and error message if any.
+
+        Raises:
+            ValueError: If button is not a valid option.
+        Note:
+            - Performs a click-and-drag operation from start to end coordinates
+            - Useful for selecting text, moving windows, or drawing
+            - DOUBLE_LEFT button is not supported for drag operations
+            - Use LEFT, RIGHT, or MIDDLE button only
+
+        See Also:
+            click_mouse, move_mouse
+        """
+        button_str = button.value if isinstance(button, MouseButton) else button
+        valid_buttons = ["left", "right", "middle"]
+        if button_str not in valid_buttons:
+            raise ValueError(f"Invalid button '{button_str}'. Must be one of {valid_buttons}")
+
+        try:
+            args = {
+                "from_x": from_x,
+                "from_y": from_y,
+                "to_x": to_x,
+                "to_y": to_y,
+                "button": button_str,
+            }
+            result = self._call_mcp_tool("drag_mouse", args)
+            logger.debug(f"Drag mouse response: {result}")
+
+            if result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=True,
+                )
+            else:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to drag mouse",
+                )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to drag mouse: {e}",
+            )
+
+    def scroll(
+        self, x: int, y: int, direction: Union[ScrollDirection, str] = ScrollDirection.UP, amount: int = 1
+    ) -> BoolResult:
+        """
+        Scrolls the mouse wheel at the specified coordinates.
+
+        Args:
+            x (int): X coordinate.
+            y (int): Y coordinate.
+            direction (Union[ScrollDirection, str], optional): Scroll direction. Can be ScrollDirection enum or string.
+                Valid values: ScrollDirection.UP, ScrollDirection.DOWN, ScrollDirection.LEFT, ScrollDirection.RIGHT
+                or their string equivalents. Defaults to ScrollDirection.UP.
+            amount (int, optional): Scroll amount. Defaults to 1.
+
+        Returns:
+            BoolResult: Result object containing success status and error message if any.
+
+        Raises:
+            ValueError: If direction is not a valid option.
+        Note:
+            - Scroll operations are performed at the specified coordinates
+            - The amount parameter controls how many scroll units to move
+            - Larger amounts result in faster scrolling
+            - Useful for navigating long documents or web pages
+
+        See Also:
+            click_mouse, move_mouse
+        """
+        direction_str = direction.value if isinstance(direction, ScrollDirection) else direction
+        valid_directions = [d.value for d in ScrollDirection]
+        if direction_str not in valid_directions:
+            raise ValueError(f"Invalid direction '{direction_str}'. Must be one of {valid_directions}")
+
+        try:
+            args = {"x": x, "y": y, "direction": direction_str, "amount": amount}
+            result = self._call_mcp_tool("scroll", args)
+            logger.debug(f"Scroll response: {result}")
+
+            if result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=True,
+                )
+            else:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to scroll",
+                )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to scroll: {e}",
+            )
+
+    def get_cursor_position(self) -> OperationResult:
+        """
+        Gets the current cursor position.
+
+        Returns:
+            OperationResult: Result object containing cursor position data
+                with keys 'x' and 'y', and error message if any.
+        Note:
+            - Returns the absolute screen coordinates
+            - Useful for verifying mouse movements
+            - Position is in pixels from top-left corner (0, 0)
+
+        See Also:
+            move_mouse, click_mouse, get_screen_size
+        """
+        try:
+            args = {}
+            result = self._call_mcp_tool("get_cursor_position", args)
+            logger.debug(f"Get cursor position response: {result}")
+
+            if result.success:
+                return OperationResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=result.data,
+                )
+            else:
+                return OperationResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to get cursor position",
+                )
+        except Exception as e:
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to get cursor position: {e}",
+            )
+
+    # Screen Operations
+    def get_screen_size(self) -> OperationResult:
+        """
+        Gets the screen size and DPI scaling factor.
+
+        Returns:
+            OperationResult: Result object containing screen size data
+                with keys 'width', 'height', and 'dpiScalingFactor',
+                and error message if any.
+
+        Note:
+            - Returns the full screen dimensions in pixels
+            - DPI scaling factor affects coordinate calculations on high-DPI displays
+            - Use this to determine valid coordinate ranges for mouse operations
+
+        See Also:
+            click_mouse, move_mouse, screenshot
+        """
+        try:
+            args = {}
+            result = self._call_mcp_tool("get_screen_size", args)
+            logger.debug(f"Get screen size response: {result}")
+
+            if result.success:
+                return OperationResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=result.data,
+                )
+            else:
+                return OperationResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to get screen size",
+                )
+        except Exception as e:
+            return OperationResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to get screen size: {e}",
+            )
+
     # Window Management Operations
     def get_active_window(self) -> WindowInfoResult:
         """

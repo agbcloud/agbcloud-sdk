@@ -114,28 +114,28 @@ class FingerprintFormat:
     """Complete fingerprint format including fingerprint data and headers."""
     fingerprint: Fingerprint
     headers: Dict[str, str]
-    
+
     @classmethod
     def load(cls, data: Union[dict, str]) -> 'FingerprintFormat':
         """
         Load fingerprint from dictionary or JSON string.
-        
+
         This is the recommended public API for loading fingerprint data.
-        
+
         Args:
             data: Either a dictionary or JSON string containing fingerprint data
-            
+
         Returns:
             FingerprintFormat: Loaded fingerprint format object
-            
+
         Raises:
             ValueError: If data is invalid or cannot be parsed
-            
+
         Example:
             ```python
             # From dictionary
             fingerprint = FingerprintFormat.load({"fingerprint": {...}, "headers": {...}})
-            
+
             # From JSON string
             fingerprint = FingerprintFormat.load('{"fingerprint": {...}, "headers": {...}}')
             ```
@@ -146,35 +146,35 @@ class FingerprintFormat:
             return cls._from_dict(data)
         else:
             raise ValueError(f"Invalid data type: expected dict or str, got {type(data)}")
-    
+
     def _to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary format."""
         return asdict(self)
-    
+
     def _to_json(self, indent: int = 2, ensure_ascii: bool = False) -> str:
         """Convert to JSON string format."""
         return json.dumps(self._to_dict(), indent=indent, ensure_ascii=ensure_ascii)
-    
+
     @classmethod
     def _from_dict(cls, data: Dict[str, Any]) -> 'FingerprintFormat':
         """Create FingerprintFormat from dictionary data."""
         if not data or not isinstance(data, dict):
             raise ValueError("Invalid data: expected a dictionary")
-            
+
         fingerprint_dict = data.get('fingerprint') or {}
         headers_dict = data.get('headers') or {}
-        
+
         # Convert nested dictionaries to dataclass instances
         screen_dict = fingerprint_dict.get('screen') or {}
         try:
             screen = ScreenFingerprint(**screen_dict)
         except (TypeError, ValueError) as e:
             raise ValueError(f"Failed to create ScreenFingerprint: {e}")
-        
+
         # Handle UserAgentData - safely get navigator data
         nav_dict = fingerprint_dict.get('navigator') or {}
         user_agent_data_dict = nav_dict.get('userAgentData') or {}
-        
+
         # Handle brands and fullVersionList safely
         brands_data = user_agent_data_dict.get('brands', [])
         brands = []
@@ -185,7 +185,7 @@ class FingerprintFormat:
                         brand=brand_data.get('brand', ''),
                         version=brand_data.get('version', '')
                     ))
-        
+
         full_version_list_data = user_agent_data_dict.get('fullVersionList', [])
         full_version_list = []
         if isinstance(full_version_list_data, list):
@@ -195,7 +195,7 @@ class FingerprintFormat:
                         brand=brand_data.get('brand', ''),
                         version=brand_data.get('version', '')
                     ))
-        
+
         user_agent_data = UserAgentData(
             brands=brands,
             mobile=user_agent_data_dict.get('mobile', False),
@@ -207,7 +207,7 @@ class FingerprintFormat:
             platformVersion=user_agent_data_dict.get('platformVersion', ''),
             uaFullVersion=user_agent_data_dict.get('uaFullVersion', '')
         )
-        
+
         # Handle ExtraProperties
         extra_props_dict = nav_dict.get('extraProperties') or {}
         extra_props = ExtraProperties(
@@ -217,7 +217,7 @@ class FingerprintFormat:
             pdfViewerEnabled=extra_props_dict.get('pdfViewerEnabled', True),
             installedApps=extra_props_dict.get('installedApps', [])
         )
-        
+
         # Create NavigatorFingerprint
         navigator = NavigatorFingerprint(
             userAgent=nav_dict.get('userAgent', ''),
@@ -240,7 +240,7 @@ class FingerprintFormat:
             maxTouchPoints=nav_dict.get('maxTouchPoints'),
             extraProperties=extra_props
         )
-        
+
         # Create VideoCard
         video_card_dict = fingerprint_dict.get('videoCard') or {}
         try:
@@ -248,7 +248,7 @@ class FingerprintFormat:
         except (TypeError, ValueError) as e:
             logger.warning(f"Failed to create VideoCard: {e}, using defaults")
             video_card = VideoCard(renderer="Unknown", vendor="Unknown")
-        
+
         # Create main Fingerprint
         fingerprint = Fingerprint(
             screen=screen,
@@ -263,15 +263,15 @@ class FingerprintFormat:
             mockWebRTC=fingerprint_dict.get('mockWebRTC', False),
             slim=fingerprint_dict.get('slim')
         )
-        
+
         return cls(fingerprint=fingerprint, headers=headers_dict)
-    
+
     @classmethod
     def _from_json(cls, json_str: str) -> 'FingerprintFormat':
         """Create FingerprintFormat from JSON string."""
         data = json.loads(json_str)
         return cls._from_dict(data)
-    
+
     @classmethod
     def create(
         cls,
@@ -290,7 +290,7 @@ class FingerprintFormat:
     ) -> 'FingerprintFormat':
         """
         Create FingerprintFormat directly using component classes.
-        
+
         Args:
             screen: ScreenFingerprint object
             navigator: NavigatorFingerprint object
@@ -304,7 +304,7 @@ class FingerprintFormat:
             fonts: List of available fonts (optional)
             mock_webrtc: Whether WebRTC is mocked (default: False)
             slim: Slim mode flag (optional)
-            
+
         Returns:
             FingerprintFormat: Complete fingerprint format object
         """
@@ -321,110 +321,112 @@ class FingerprintFormat:
             mockWebRTC=mock_webrtc,
             slim=slim
         )
-        
+
         return cls(fingerprint=fingerprint, headers=headers)
 
 
 
 class BrowserFingerprintGenerator:
-    """Browser fingerprint generator class."""
-    
+    """Browser fingerprint generator class for extracting comprehensive browser fingerprint data.
+This class uses Playwright to launch a local browser and collect fingerprint information
+including screen properties, navigator data, codecs, plugins, WebGL info, and HTTP headers."""
+
     def __init__(self, headless: bool = False, use_chrome_channel: bool = True):
         """
         Initialize the fingerprint generator.
-        
+
         Args:
             headless: Whether to run browser in headless mode
             use_chrome_channel: Whether to use Chrome channel
         """
         self.headless = headless
         self.use_chrome_channel = use_chrome_channel
-    
+
     async def generate_fingerprint(self) -> Optional[FingerprintFormat]:
         """
         Extract comprehensive browser fingerprint using Playwright.
-            
+
         Returns:
             Optional[FingerprintFormat]: FingerprintFormat object containing fingerprint and headers, or None if generation failed
         """
         try:
             logger.info("Starting fingerprint generation")
-            
+
             async with async_playwright() as p:
                 # Launch Chrome browser with specific options
                 launch_options = {
                     'headless': self.headless,
                     'args': ['--start-maximized']
                 }
-                
+
                 if self.use_chrome_channel:
                     launch_options['channel'] = 'chrome'
-                
+
                 browser = await p.chromium.launch(**launch_options)
                 context = await browser.new_context(no_viewport=True)
                 page = await context.new_page()
-                
+
                 # Navigate to a test page to ensure proper loading
                 await page.goto('about:blank')
-                
+
                 logger.info("Extracting comprehensive browser fingerprint...")
-                
+
                 # Extract comprehensive fingerprint data
                 fingerprint_data = await self._extract_fingerprint_data(page)
-                
+
                 # Get request headers
                 headers_data = await self._extract_headers_data(page)
-                
+
                 await browser.close()
-                
+
                 # Combine fingerprint and headers using FingerprintFormat
                 fingerprint_format = FingerprintFormat._from_dict({
                     "fingerprint": fingerprint_data,
                     "headers": headers_data
                 })
-                
+
                 logger.info("Fingerprint generation completed successfully!")
                 return fingerprint_format
-                    
+
         except Exception as e:
             logger.error(f"Error generating fingerprint: {e}")
             return None
-    
+
     async def generate_fingerprint_to_file(self, output_filename: str = "fingerprint_output.json") -> bool:
         """
         Extract comprehensive browser fingerprint and save to file.
-        
+
         Args:
             output_filename: Name of the file to save fingerprint data
-            
+
         Returns:
             bool: True if fingerprint generation and saving succeeded, False otherwise
         """
         try:
             logger.info(f"Starting fingerprint generation, output file: {output_filename}")
-            
+
             # Generate fingerprint data (FingerprintFormat object)
             fingerprint_format = await self.generate_fingerprint()
-            
+
             if fingerprint_format is None:
                 logger.error("Failed to generate fingerprint data")
                 return False
-            
+
             # Convert to JSON string and save to file
             fingerprint_json = fingerprint_format._to_json(indent=2, ensure_ascii=False)
             success = await self._save_to_file(fingerprint_json, output_filename)
-            
+
             if success:
                 logger.info(f"Fingerprint generation completed successfully! Saved to {output_filename}")
                 return True
             else:
                 logger.error("Failed to save fingerprint data")
                 return False
-                
+
         except Exception as e:
             logger.error(f"Error generating fingerprint to file: {e}")
             return False
-    
+
     async def _extract_fingerprint_data(self, page):
         """Extract fingerprint data from the page."""
         return await page.evaluate("""
@@ -440,7 +442,7 @@ class BrowserFingerprintGenerator:
                     aac: audio.canPlayType('audio/aac') || ''
                 };
             }
-            
+
             // Helper function to get video codec support
             function getVideoCodecs() {
                 const video = document.createElement('video');
@@ -450,12 +452,12 @@ class BrowserFingerprintGenerator:
                     webm: video.canPlayType('video/webm; codecs="vp8, vorbis"') || ''
                 };
             }
-            
+
             // Helper function to get plugins data
             function getPluginsData() {
                 const plugins = [];
                 const mimeTypes = [];
-                
+
                 for (let i = 0; i < navigator.plugins.length; i++) {
                     const plugin = navigator.plugins[i];
                     const pluginData = {
@@ -464,7 +466,7 @@ class BrowserFingerprintGenerator:
                         filename: plugin.filename,
                         mimeTypes: []
                     };
-                    
+
                     for (let j = 0; j < plugin.length; j++) {
                         const mimeType = plugin[j];
                         pluginData.mimeTypes.push({
@@ -473,16 +475,16 @@ class BrowserFingerprintGenerator:
                             description: mimeType.description,
                             enabledPlugin: plugin.name
                         });
-                        
+
                         mimeTypes.push(`${mimeType.description}~~${mimeType.type}~~${mimeType.suffixes}`);
                     }
-                    
+
                     plugins.push(pluginData);
                 }
-                
+
                 return { plugins, mimeTypes };
             }
-            
+
             // Helper function to get battery info
             async function getBatteryInfo() {
                 try {
@@ -498,7 +500,7 @@ class BrowserFingerprintGenerator:
                 } catch (e) {
                     console.log('Battery API not supported');
                 }
-                
+
                 return {
                     charging: true,
                     chargingTime: 0,
@@ -506,13 +508,13 @@ class BrowserFingerprintGenerator:
                     level: 1
                 };
             }
-            
+
             // Helper function to get WebGL info
             function getWebGLInfo() {
                 try {
                     const canvas = document.createElement('canvas');
                     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                    
+
                     if (gl) {
                         const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
                         return {
@@ -523,13 +525,13 @@ class BrowserFingerprintGenerator:
                 } catch (e) {
                     console.log('WebGL not supported');
                 }
-                
+
                 return {
                     renderer: "Adreno (TM) 735",
                     vendor: "Qualcomm"
                 };
             }
-            
+
             // Helper function to get multimedia devices
             async function getMultimediaDevices() {
                 try {
@@ -538,7 +540,7 @@ class BrowserFingerprintGenerator:
                         const speakers = [];
                         const micros = [];
                         const webcams = [];
-                        
+
                         devices.forEach(device => {
                             const deviceInfo = {
                                 deviceId: device.deviceId || '',
@@ -546,7 +548,7 @@ class BrowserFingerprintGenerator:
                                 label: device.label || '',
                                 groupId: device.groupId || ''
                             };
-                            
+
                             if (device.kind === 'audiooutput') {
                                 speakers.push(deviceInfo);
                             } else if (device.kind === 'audioinput') {
@@ -555,20 +557,20 @@ class BrowserFingerprintGenerator:
                                 webcams.push(deviceInfo);
                             }
                         });
-                        
+
                         return { speakers, micros, webcams };
                     }
                 } catch (e) {
                     console.log('Media devices not accessible');
                 }
-                
+
                 return {
                     speakers: [{ deviceId: '', kind: 'audiooutput', label: '', groupId: '' }],
                     micros: [{ deviceId: '', kind: 'audioinput', label: '', groupId: '' }],
                     webcams: []
                 };
             }
-            
+
             // Helper function to get available fonts
             function getFonts() {
                 // This is a simplified version - in practice, font detection is more complex
@@ -577,17 +579,17 @@ class BrowserFingerprintGenerator:
                     'Georgia', 'Palatino', 'Garamond', 'Bookman', 'Comic Sans MS',
                     'Trebuchet MS', 'Arial Black', 'Impact'
                 ];
-                
+
                 const availableFonts = [];
                 const testString = 'mmmmmmmmmmlli';
                 const testSize = '72px';
                 const baseWidth = {};
                 const baseHeight = {};
-                
+
                 // Create a canvas for font testing
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
-                
+
                 // Test with default fonts first
                 const defaultFonts = ['monospace', 'sans-serif', 'serif'];
                 defaultFonts.forEach(font => {
@@ -596,7 +598,7 @@ class BrowserFingerprintGenerator:
                     baseWidth[font] = metrics.width;
                     baseHeight[font] = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
                 });
-                
+
                 // Test each font
                 testFonts.forEach(font => {
                     let detected = false;
@@ -605,26 +607,26 @@ class BrowserFingerprintGenerator:
                         const metrics = context.measureText(testString);
                         const width = metrics.width;
                         const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-                        
+
                         if (width !== baseWidth[baseFont] || height !== baseHeight[baseFont]) {
                             detected = true;
                         }
                     });
-                    
+
                     if (detected) {
                         availableFonts.push(font);
                     }
                 });
-                
+
                 return availableFonts;
             }
-            
+
             // Get battery info
             const batteryInfo = await getBatteryInfo();
-            
+
             // Get multimedia devices
             const multimediaDevices = await getMultimediaDevices();
-            
+
             // Build the complete fingerprint object
             const fingerprint = {
                 screen: {
@@ -688,17 +690,17 @@ class BrowserFingerprintGenerator:
                 mockWebRTC: false,
                 slim: false
             };
-            
+
             return fingerprint;
         }
         """)
-    
+
     async def _extract_headers_data(self, page):
         """Extract headers data from httpbin."""
         try:
             logger.info("Getting request headers...")
             await page.goto('https://httpbin.org/headers', wait_until='networkidle')
-            
+
             # Extract headers from the response
             all_headers = await page.evaluate("""
             () => {
@@ -714,11 +716,11 @@ class BrowserFingerprintGenerator:
                 return {};
             }
             """)
-            
+
             # Filter only the key headers from the example
             key_headers = [
                 'sec-ch-ua',
-                'sec-ch-ua-mobile', 
+                'sec-ch-ua-mobile',
                 'sec-ch-ua-platform',
                 'upgrade-insecure-requests',
                 'user-agent',
@@ -730,18 +732,18 @@ class BrowserFingerprintGenerator:
                 'accept-encoding',
                 'accept-language'
             ]
-            
+
             headers_data = {}
             # Convert all_headers keys to lowercase for case-insensitive matching
             all_headers_lower = {k.lower(): v for k, v in all_headers.items()}
-            
+
             for header in key_headers:
                 header_lower = header.lower()
                 if header_lower in all_headers_lower:
                     headers_data[header] = all_headers_lower[header_lower]
-            
+
             return headers_data
-            
+
         except Exception as e:
             logger.warning(f"Failed to extract headers: {e}")
             return {}

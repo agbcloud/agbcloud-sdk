@@ -17,14 +17,15 @@ Configuration parameters for creating and managing AGB sessions.
 class BrowserContext()
 ```
 
-Browser context configuration for session with optional extension support.
+Browser context configuration for session.
 
-This class provides browser context configuration for cloud sessions and supports
-automatic extension synchronization when ExtensionOption is provided.
+This class provides browser context configuration for cloud sessions, supports browser fingerprint
+context persistence, supports automatic extension synchronization when ExtensionOption is provided.
 
 Key Features:
 - Browser context binding for sessions
 - Automatic browser data upload on session end
+- Optional browser fingerprint integration with automatic context sync generation
 - Optional extension integration with automatic context sync generation
 - Clean API with ExtensionOption encapsulation
 
@@ -32,6 +33,8 @@ Key Features:
 
 - `context_id` _str_ - ID of the browser context to bind to the session
 - `auto_upload` _bool_ - Whether to automatically upload browser data when session ends
+- `fingerprint_context` _Optional[BrowserFingerprintContext]_ - Browser fingerprint context configuration object containing
+  fingerprint_context_id.
 - `extension_option` _Optional[ExtensionOption]_ - Extension configuration object containing
   context_id and extension_ids.
 - `extension_context_id` _Optional[str]_ - ID of the extension context for browser extensions.
@@ -80,7 +83,8 @@ Get context syncs for extensions.
 
 **Returns**:
 
-    List[ContextSync]: Context sync configurations for extensions. Returns empty list if no extensions configured.
+    List[ContextSync]: Context sync configurations for extensions.
+  Returns empty list if no extensions configured.
 
 ### get\_fingerprint\_context\_sync
 
@@ -92,7 +96,8 @@ Get context sync for fingerprint.
 
 **Returns**:
 
-    ContextSync: Context sync configurations for fingerprint. Returns None if fingerprint configuration is invalid.
+    ContextSync: Context sync configurations for fingerprint.
+  Returns None if fingerprint configuration is invalid.
 
 ## CreateSessionParams
 
@@ -115,6 +120,12 @@ Parameters for creating a new session in the AGB cloud environment.
 
 ```python
 BROWSER_DATA_PATH = "/tmp/agb_browser_data"
+```
+
+#### BROWSER\_FINGERPRINT\_PERSIST\_PATH
+
+```python
+BROWSER_FINGERPRINT_PERSIST_PATH = "/tmp/agb_browser_fingerprint"
 ```
 
 ## Config

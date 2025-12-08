@@ -47,7 +47,7 @@ DOC_MAPPINGS: Sequence[DocMapping] = (
     DocMapping("reference/logging.md", "Logging", ("agb.logger",)),
     DocMapping("reference/extensions.md", "Extension", ("agb.extension",)),
     DocMapping("capabilities/code_execution.md", "Code", ("agb.modules.code",)),
-    DocMapping("capabilities/browser.md", "Browser", ("agb.modules.browser.browser", "agb.modules.browser.browser_agent")),
+    DocMapping("capabilities/browser.md", "Browser", ("agb.modules.browser.browser", "agb.modules.browser.browser_agent", "agb.modules.browser.fingerprint")),
     DocMapping("reference/configurations.md", "Configurations", ("agb.session_params", "agb.config")),
     DocMapping("reference/exceptions.md", "Exceptions", ("agb.exceptions",)),
 )

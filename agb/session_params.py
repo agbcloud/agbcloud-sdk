@@ -26,8 +26,8 @@ class BrowserContext:
     Attributes:
         context_id (str): ID of the browser context to bind to the session
         auto_upload (bool): Whether to automatically upload browser data when session ends
-        fingerprint_context (Optional[BrowserFingerprintContext]):
-            Browser fingerprint context configuration object containing fingerprint_context_id.
+        fingerprint_context (Optional[BrowserFingerprintContext]): Browser fingerprint context configuration object containing
+                                                                    fingerprint_context_id.
         extension_option (Optional[ExtensionOption]): Extension configuration object containing
                                                      context_id and extension_ids.
         extension_context_id (Optional[str]): ID of the extension context for browser extensions.
@@ -192,10 +192,10 @@ class BrowserContext:
     def _create_fingerprint_context_sync(self) -> ContextSync:
         """
         Create ContextSync configurations for browser fingerprint.
-        
+
         This method is called only when fingerprint_context is provided and contains
         valid fingerprint configuration (fingerprint_context_id).
-        
+
         Returns:
             ContextSync: Context sync configurations for fingerprint.
                          Returns None if fingerprint configuration is invalid.

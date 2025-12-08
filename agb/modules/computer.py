@@ -399,6 +399,135 @@ class Computer(BaseService):
                 error_message=f"Failed to get screen size: {e}",
             )
 
+    # Keyboard Operations
+    def input_text(self, text: str) -> BoolResult:
+        """
+        Types text into the currently focused input field.
+
+        Args:
+            text (str): Text to input.
+
+        Returns:
+            BoolResult: Result object containing success status and error message if any.
+
+        Note:
+            - Text is typed at the current focus location
+            - Useful for filling forms or typing in text fields
+            - Make sure the target input field is focused before calling
+
+        See Also:
+            press_keys, release_keys
+        """
+        try:
+            args = {"text": text}
+            result = self._call_mcp_tool("input_text", args)
+            logger.debug(f"Input text response: {result}")
+
+            if result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=True,
+                )
+            else:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to input text",
+                )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to input text: {e}",
+            )
+
+    def press_keys(self, keys: list, hold: bool = False) -> BoolResult:
+        """
+        Presses the specified keys.
+
+        Args:
+            keys (List[str]): List of keys to press (e.g., ["Ctrl", "a"]).
+            hold (bool, optional): Whether to hold the keys. Defaults to False.
+
+        Returns:
+            BoolResult: Result object containing success status and error message if any.
+
+        Note:
+            - Key names are case-sensitive
+            - When hold=True, remember to call release_keys() afterwards
+            - Supports modifier keys like Ctrl, Alt, Shift
+            - Can press multiple keys simultaneously for shortcuts
+
+        See Also:
+            release_keys, input_text
+        """
+        try:
+            args = {"keys": keys, "hold": hold}
+            result = self._call_mcp_tool("press_keys", args)
+            logger.debug(f"Press keys response: {result}")
+
+            if result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=True,
+                )
+            else:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to press keys",
+                )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to press keys: {e}",
+            )
+
+    def release_keys(self, keys: list) -> BoolResult:
+        """
+        Releases the specified keys.
+
+        Args:
+            keys (List[str]): List of keys to release (e.g., ["Ctrl", "a"]).
+
+        Returns:
+            BoolResult: Result object containing success status and error message if any.
+
+        Note:
+            - Should be used after press_keys() with hold=True
+            - Key names are case-sensitive
+            - Releases all keys specified in the list
+
+        See Also:
+            press_keys, input_text
+        """
+        try:
+            args = {"keys": keys}
+            result = self._call_mcp_tool("release_keys", args)
+            logger.debug(f"Release keys response: {result}")
+
+            if result.success:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=True,
+                    data=True,
+                )
+            else:
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=result.error_message or "Failed to release keys",
+                )
+        except Exception as e:
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to release keys: {e}",
+            )
+
     # Window Management Operations
     def get_active_window(self) -> WindowInfoResult:
         """

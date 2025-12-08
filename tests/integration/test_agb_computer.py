@@ -176,6 +176,75 @@ class TestComputerFunctionalValidation(unittest.TestCase):
             print(f"Test Result: {result}")
             self.assertTrue(result.success, result.message)
     
+    def test_keyboard_input_validation(self):
+        """Test keyboard input functionality by verifying API returns success.
+        
+        Note: Visual validation of keyboard input requires an active text input field.
+        This test validates that keyboard operations execute successfully via the API.
+        """
+        result = FunctionalTestResult("KeyboardInputValidation")
+        start_time = time.time()
+        
+        try:
+            # Test keyboard input API operations
+            test_text = "AGB Test"
+            
+            # Test 1: input_text
+            input_result = self.session.computer.input_text(test_text)
+            if not input_result.success:
+                result.set_failure(f"Failed to input text: {input_result.error_message}")
+                return
+            else:
+                result.add_detail("input_text_success", True)
+            
+            time.sleep(0.5)
+            
+            # Test 2: press_keys (Ctrl+A) without hold
+            select_result = self.session.computer.press_keys(["Ctrl", "a"], False)
+            if not select_result.success:
+                result.set_failure(f"Failed to press Ctrl+A: {select_result.error_message}")
+                return
+            else:
+                result.add_detail("press_keys_success", True)
+            
+            time.sleep(0.5)
+            
+            # Test 3: press_keys (Delete) without hold
+            delete_result = self.session.computer.press_keys(["Delete"], False)
+            if not delete_result.success:
+                result.set_failure(f"Failed to press Delete: {delete_result.error_message}")
+                return
+            else:
+                result.add_detail("delete_keys_success", True)
+            
+            time.sleep(0.5)
+            
+            # Test 4: press_keys with hold=True (Shift key)
+            hold_result = self.session.computer.press_keys(["Shift"], True)
+            if not hold_result.success:
+                result.set_failure(f"Failed to press and hold Shift: {hold_result.error_message}")
+                return
+            else:
+                result.add_detail("press_keys_hold_success", True)
+            
+            time.sleep(0.5)
+            
+            # Test 5: release_keys (Release Shift key)
+            release_result = self.session.computer.release_keys(["Shift"])
+            if not release_result.success:
+                result.set_failure(f"Failed to release Shift: {release_result.error_message}")
+                return
+            else:
+                result.add_detail("release_keys_success", True)
+            
+            result.set_success("Keyboard API operations validated successfully")
+            print("✅ Keyboard operations: input_text, press_keys(Ctrl+A), press_keys(Delete), press_keys(Shift, hold=True), release_keys(Shift) all successful")
+                
+        finally:
+            result.duration = time.time() - start_time
+            print(f"Test Result: {result}")
+            self.assertTrue(result.success, result.message)
+    
     def test_application_operation_validation(self):
         """Test complete app lifecycle: install list -> start -> verify -> list processes -> stop -> verify."""
         result = FunctionalTestResult("ApplicationOperationValidation")

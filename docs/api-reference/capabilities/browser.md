@@ -101,6 +101,39 @@ def destroy()
 
 Destroy the browser instance.
 
+### screenshot
+
+```python
+async def screenshot(page, full_page: bool = False, **options) -> bytes
+```
+
+Takes a screenshot of the specified page with enhanced options and error handling.
+This is the async version of the screenshot method.
+
+**Arguments**:
+
+- `page` _Page_ - The Playwright Page object to take a screenshot of. This is a required parameter.
+- `full_page` _bool_ - Whether to capture the full scrollable page. Defaults to False.
+    **options: Additional screenshot options that will override defaults.
+  Common options include:
+  - type (str): Image type, either 'png' or 'jpeg' (default: 'png')
+  - quality (int): Quality of the image, between 0-100 (jpeg only)
+  - timeout (int): Maximum time in milliseconds (default: 60000)
+  - animations (str): How to handle animations (default: 'disabled')
+  - caret (str): How to handle the caret (default: 'hide')
+  - scale (str): Scale setting (default: 'css')
+
+
+**Returns**:
+
+    bytes: Screenshot data as bytes.
+
+
+**Raises**:
+
+    BrowserError: If browser is not initialized.
+    RuntimeError: If screenshot capture fails.
+
 ## ActOptions
 
 ```python

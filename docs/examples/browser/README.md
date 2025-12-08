@@ -5,7 +5,7 @@ This directory contains examples for controlling a headless browser within the A
 ## Examples
 
 ### Basic Navigation (`basic_navigation.py`)
-Demonstrates how to start a browser, navigate to a URL, and take a screenshot.
+Demonstrates how to start a browser, navigate to a URL, and retrieve page information.
 
 <<< ./basic_navigation.py
 
@@ -38,6 +38,16 @@ Demonstrates how to select between Chrome and Chromium browsers when using compu
 Shows how to launch the browser with custom command-line arguments and a default navigation URL. Useful for disabling specific Chrome features or starting the browser on a specific page.
 
 <<< ./browser_command_args.py
+### Screenshot Capture (`screenshot_capture.py`)
+Demonstrates comprehensive browser screenshot functionality including:
+- Viewport screenshots (visible area only)
+- Full-page screenshots (long screenshots for entire scrollable content)
+- JPEG format with quality settings
+- Custom timeout configuration
+- Multiple page screenshot workflow
+- Error handling best practices
+
+<<< ./screenshot_capture.py
 
 ### Natural Language Actions (`natural_language_actions.py`)
 Demonstrates how to use natural language instructions (e.g., "Click the 'Sign Up' button") to interact with the page, which simplifies automation logic.
@@ -57,4 +67,7 @@ A more advanced example showing how the agent can handle complex interactions li
 ## Notes
 
 - Browser sessions consume more memory than standard code execution sessions.
-- Screenshots are returned as base64 encoded strings.
+- Screenshots are returned as raw bytes from `session.browser.screenshot()`.
+- For full-page (long) screenshots, use `full_page=True` parameter.
+- JPEG format with quality setting produces smaller file sizes compared to PNG.
+- Always initialize browser before taking screenshots to avoid BrowserError.

@@ -547,6 +547,104 @@ class Browser(BaseService):
         """
         self._stop_browser()
 
+    
+    async def screenshot(self, page, full_page: bool = False, **options) -> bytes:
+        """
+        Takes a screenshot of the specified page with enhanced options and error handling.
+        This is the async version of the screenshot method.
+        
+        Args:
+            page (Page): The Playwright Page object to take a screenshot of. This is a required parameter.
+            full_page (bool): Whether to capture the full scrollable page. Defaults to False.
+            **options: Additional screenshot options that will override defaults.
+                      Common options include:
+                      - type (str): Image type, either 'png' or 'jpeg' (default: 'png')
+                      - quality (int): Quality of the image, between 0-100 (jpeg only)
+                      - timeout (int): Maximum time in milliseconds (default: 60000)
+                      - animations (str): How to handle animations (default: 'disabled')
+                      - caret (str): How to handle the caret (default: 'hide')
+                      - scale (str): Scale setting (default: 'css')
+            
+        Returns:
+            bytes: Screenshot data as bytes.
+            
+        Raises:
+            BrowserError: If browser is not initialized.
+            RuntimeError: If screenshot capture fails.
+        """
+        # Check if browser is initialized
+        if not self.is_initialized():
+            raise BrowserError("Browser must be initialized before calling screenshot.")
+        if page is None:
+            raise ValueError("Page cannot be None")  
+        # Set default enhanced options
+        enhanced_options = {
+            "animations": "disabled",
+            "caret": "hide",
+            "scale": "css",
+            "timeout": options.get("timeout", 60000),
+            "full_page": full_page,  # Use the function parameter, not options
+            "type": options.get("type", "png"),
+        }
+
+        # Update with user-provided options (but full_page is already set from function parameter)
+        enhanced_options.update(options)
+        
+        try:          
+            # Wait for page to load
+            # await page.wait_for_load_state("networkidle")
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            await page.wait_for_load_state("domcontentloaded", timeout=30000)
+            # Scroll to load all content (especially for lazy-loaded elements)
+            await self._scroll_to_load_all_content_async(page)
+            
+            # Ensure images with data-src attributes are loaded
+            await page.evaluate("""
+                () => {
+                    document.querySelectorAll('img[data-src]').forEach(img => {
+                        if (!img.src && img.dataset.src) {
+                            img.src = img.dataset.src;
+                        }
+                    });
+                    // Also handle background-image[data-bg]
+                    document.querySelectorAll('[data-bg]').forEach(el => {
+                        if (!el.style.backgroundImage) {
+                            el.style.backgroundImage = `url(${el.dataset.bg})`;
+                        }
+                    });
+                }
+            """)
+            
+            # Wait a bit for images to load
+            await page.wait_for_timeout(1500)
+            final_height = await page.evaluate("document.body.scrollHeight")
+            await page.set_viewport_size({"width": 1920, "height": min(final_height, 10000)})
+            
+            # Take the screenshot
+            screenshot_bytes = await page.screenshot(**enhanced_options)
+            logger.info("Screenshot captured successfully.")
+            return screenshot_bytes
+            
+        except Exception as e:
+            # Convert exception to string safely to avoid comparison issues
+            try:
+                error_str = str(e)
+            except:
+                error_str = "Unknown error occurred"
+            error_msg = f"Failed to capture screenshot: {error_str}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg) from e
+
+    async def _scroll_to_load_all_content_async(self, page, max_scrolls: int = 8, delay_ms: int = 1200):
+        """Async version of _scroll_to_load_all_content."""
+        last_height = 0
+        for _ in range(max_scrolls):
+            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+            await page.wait_for_timeout(delay_ms)
+            new_height = await page.evaluate("Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)")
+            if new_height == last_height:
+                break
+            last_height = new_height
     def _stop_browser(self):
         """
         Stop the browser instance, internal use only.

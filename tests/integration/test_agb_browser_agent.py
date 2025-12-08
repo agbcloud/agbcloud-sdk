@@ -19,10 +19,9 @@ import time
 from playwright.async_api import async_playwright
 
 from agb import AGB
-from agb.config import Config
-from agb.context_sync import ContextSync, SyncPolicy
+from agb.config import Config, BROWSER_DATA_PATH
 from agb.modules.browser.browser import BrowserOption, BrowserViewport
-from agb.session_params import CreateSessionParams
+from agb.session_params import CreateSessionParams, BrowserContext
 
 
 async def main():
@@ -59,17 +58,13 @@ async def main():
 
         # Step 2: Create first session with Browser Context
         print("Step 2: Creating first session with Browser Context...")
-        # Sync /tmp/agb_browser_data where browser profile is stored
-        sync_policy = SyncPolicy()
-        context_sync = ContextSync.new(
-            context_id=context.id,
-            path="/tmp/agb_browser_data",
-            policy=sync_policy
-        )
 
         params = CreateSessionParams(
             image_id="agb-browser-use-1",  # Browser image ID
-            context_syncs=[context_sync]
+            browser_context=BrowserContext(
+                context_id=context.id,
+                auto_upload=True,
+            )
         )
 
         session_result = agb.create(params)
@@ -168,11 +163,110 @@ async def main():
 
             # Wait for browser to save cookies to file
             print("Waiting for browser to save cookies to file...")
-            await asyncio.sleep(2)
+            await asyncio.sleep(5)
             print("Wait completed")
 
-        # Step 4: Delete first session with context synchronization
-        print("Step 4: Deleting first session with context synchronization...")
+        # Step 4: Manually sync context before deleting session
+        print("Step 4: Manually syncing context...")
+        sync_result = await session1.context.sync()
+        if not sync_result.success:
+            print(f"Failed to sync context: {sync_result.error_message}")
+            sys.exit(1)
+        print(f"Context sync completed successfully (RequestID: {sync_result.request_id})")
+
+        # Wait a bit for sync to complete
+        print("Waiting for sync to complete...")
+        await asyncio.sleep(2)
+
+        # Step 5: Check context files for cookie file
+        print("Step 5: Checking context files for cookie file...")
+
+        # List files in the browser data path
+        # First, try listing the root browser data path
+        list_result = agb.context.list_files(
+            context_id=context.id,
+            parent_folder_path=BROWSER_DATA_PATH,
+            page_number=1,
+            page_size=100
+        )
+
+        if not list_result.success:
+            print(f"Failed to list context files: {list_result.error_message}")
+            sys.exit(1)
+
+        print(f"Found {len(list_result.entries)} files/directories in context at {BROWSER_DATA_PATH}:")
+        cookie_file_found = False
+        cookie_journal_file_found = False
+        local_state_found = False
+
+        # Check for cookie files - they should be in Default/Cookies or Default/Cookies-journal
+        for file_entry in list_result.entries:
+            file_path = file_entry.file_path
+            file_name = getattr(file_entry, 'file_name', file_path.split('/')[-1])
+            file_size = getattr(file_entry, 'size', 0)
+            print(f"  - {file_path} (Size: {file_size} bytes, Name: {file_name})")
+
+            # Normalize path for comparison
+            normalized_path = file_path.lower().replace('\\', '/')
+
+            # Check for cookie file (should be in Default/Cookies)
+            if "/default/cookies" in normalized_path and "journal" not in normalized_path:
+                cookie_file_found = True
+                print(f"  ✓ Cookie file found: {file_path}")
+            # Check for cookie journal file
+            elif "/default/cookies-journal" in normalized_path or "/default/cookies_journal" in normalized_path:
+                cookie_journal_file_found = True
+                print(f"  ✓ Cookie journal file found: {file_path}")
+            # Check for Local State file
+            elif "/local state" in normalized_path or file_name.lower() == "local state":
+                local_state_found = True
+                print(f"  ✓ Local State file found: {file_path}")
+
+        # Also try listing the Default directory if it exists
+        default_path = f"{BROWSER_DATA_PATH}/Default"
+        print(f"\nChecking Default directory: {default_path}")
+        default_list_result = agb.context.list_files(
+            context_id=context.id,
+            parent_folder_path=default_path,
+            page_number=1,
+            page_size=100
+        )
+
+        if default_list_result.success and default_list_result.entries:
+            print(f"Found {len(default_list_result.entries)} files in Default directory:")
+            for file_entry in default_list_result.entries:
+                file_path = file_entry.file_path
+                file_name = getattr(file_entry, 'file_name', file_path.split('/')[-1])
+                file_size = getattr(file_entry, 'size', 0)
+                print(f"  - {file_path} (Size: {file_size} bytes, Name: {file_name})")
+
+                normalized_path = file_path.lower().replace('\\', '/')
+                if "/default/cookies" in normalized_path and "journal" not in normalized_path:
+                    cookie_file_found = True
+                    print(f"  ✓ Cookie file found: {file_path}")
+                elif "/default/cookies-journal" in normalized_path or "/default/cookies_journal" in normalized_path:
+                    cookie_journal_file_found = True
+                    print(f"  ✓ Cookie journal file found: {file_path}")
+
+        # Summary
+        print("\n=== Context File Check Summary ===")
+        if cookie_file_found:
+            print("✅ Cookie file found in context!")
+        else:
+            print("⚠️  Cookie file not found in context.")
+            print("    Expected path: /tmp/agb_browser_data/Default/Cookies")
+            print("    This may indicate a sync issue, but continuing with test...")
+
+        if cookie_journal_file_found:
+            print("✅ Cookie journal file found in context!")
+        else:
+            print("ℹ️  Cookie journal file not found (this is optional)")
+
+        if local_state_found:
+            print("✅ Local State file found in context!")
+
+        # Step 6: Delete first session with context synchronization
+        print("Step 6: Deleting first session with context synchronization...")
         delete_result = agb.delete(session1, sync_context=True)
 
         if not delete_result.success:
@@ -184,11 +278,11 @@ async def main():
         )
 
         # Wait for context sync to complete
-        print("Waiting for context synchronization to complete...")
-        time.sleep(3)
+        print("Waiting for session to be released...")
+        time.sleep(30)
 
-        # Step 5: Create second session with same Browser Context
-        print("Step 5: Creating second session with same Browser Context...")
+        # Step 7: Create second session with same Browser Context
+        print("Step 7: Creating second session with same Browser Context...")
         session_result2 = agb.create(params)
 
         if not session_result2.success or not session_result2.session:
@@ -198,8 +292,8 @@ async def main():
         session2 = session_result2.session
         print(f"Second session created with ID: {session2.session_id}")
 
-        # Step 6: Verify cookie persistence
-        print("Step 6: Verifying cookie persistence in second session...")
+        # Step 8: Verify cookie persistence
+        print("Step 8: Verifying cookie persistence in second session...")
 
         # Initialize browser in second session
         init_success2 = await session2.browser.initialize_async(browser_option)
@@ -275,9 +369,11 @@ async def main():
             await browser2.close()
             print("Second session browser operations completed")
 
-        # Step 7: Clean up second session
-        print("Step 7: Cleaning up second session...")
+        # Step 9: Clean up second session
+        print("Step 9: Cleaning up second session...")
         delete_result2 = agb.delete(session2)
+        print("Waiting for session to be released...")
+        time.sleep(30)
 
         if delete_result2.success:
             print(

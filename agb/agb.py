@@ -7,7 +7,7 @@ environment.
 import json
 import os
 from threading import Lock
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional
 
 from agb.api.client import Client as mcp_client
 from agb.api.models import (
@@ -17,7 +17,8 @@ from agb.api.models import (
     GetSessionRequest,
     ListSessionRequest,
 )
-from agb.config import Config, load_config
+from agb.config import Config, load_config, BROWSER_DATA_PATH
+from agb.context_sync import ContextSync, WhiteList, UploadPolicy, BWList, RecyclePolicy, SyncPolicy
 from agb.model.response import DeleteResult, SessionResult, GetSessionResult, GetSessionData, SessionListResult
 from agb.session import Session
 from agb.session_params import CreateSessionParams
@@ -67,6 +68,46 @@ class AGB:
 
         # Initialize context service
         self.context = ContextService(self)
+
+    def _normalize_context_syncs(self, params) -> list:
+        # define browser context whitelist
+        BROWSER_WHITELIST_PATHS = [
+            WhiteList(path="/Local State", exclude_paths=[]),
+            WhiteList(path="/Default/Cookies", exclude_paths=[]),
+            WhiteList(path="/Default/Cookies-journal", exclude_paths=[]),
+        ]
+
+        # create browser context sync policy
+        def create_browser_sync_policy(auto_upload: bool) -> SyncPolicy:
+            return SyncPolicy(
+                upload_policy=UploadPolicy(auto_upload=auto_upload),
+                bw_list=BWList(white_lists=BROWSER_WHITELIST_PATHS),
+                recycle_policy=RecyclePolicy(),
+            )
+
+        # combine context_syncs with browser_context
+        syncs = list(params.context_syncs or [])
+
+        if params.browser_context:
+            syncs.append(ContextSync(
+                context_id=params.browser_context.context_id,
+                path=BROWSER_DATA_PATH,
+                policy=create_browser_sync_policy(params.browser_context.auto_upload),
+            ))
+
+        return syncs
+
+    def _create_persistence_data_list(self, context_syncs:list) -> list:
+        persistence_data_list = []
+        for context_sync in context_syncs:
+            if context_sync.policy:
+                policy_json = json.dumps(context_sync.policy.to_dict(), ensure_ascii=False)
+                persistence_data_list.append(CreateMcpSessionRequestPersistenceDataList(
+                    context_id=context_sync.context_id,
+                    path=context_sync.path,
+                    policy=policy_json,
+                ))
+        return persistence_data_list
 
     def create(self, params: Optional[CreateSessionParams] = None) -> SessionResult:
         """
@@ -121,19 +162,11 @@ class AGB:
             # Flag to indicate if we need to wait for context synchronization
             needs_context_sync = False
 
-            if params.context_syncs:
-                persistence_data_list = []
-                for context_sync in params.context_syncs:
-                    if context_sync.policy:
-                        policy_json = json.dumps(context_sync.policy.to_dict(), ensure_ascii=False)
-                        persistence_data_list.append(CreateMcpSessionRequestPersistenceDataList(
-                            context_id=context_sync.context_id,
-                            path=context_sync.path,
-                            policy=policy_json,
-                        ))
-
+            # Controle browser_context and context_syncs together
+            persistence_data_list = self._create_persistence_data_list(self._normalize_context_syncs(params))
+            if persistence_data_list:
                 request.persistence_data_list = persistence_data_list
-                needs_context_sync = len(persistence_data_list) > 0
+                needs_context_sync = True
 
             response: CreateSessionResponse = self.client.create_mcp_session(request)
 

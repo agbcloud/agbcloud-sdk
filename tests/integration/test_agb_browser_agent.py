@@ -163,7 +163,7 @@ async def main():
 
             # Wait for browser to save cookies to file
             print("Waiting for browser to save cookies to file...")
-            await asyncio.sleep(5)
+            await asyncio.sleep(20)
             print("Wait completed")
 
         # Step 4: Manually sync context before deleting session

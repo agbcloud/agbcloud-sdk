@@ -402,6 +402,416 @@ class TestComputerFunctionalValidation(unittest.TestCase):
             print(f"Test Result: {result}")
             self.assertTrue(result.success, result.message)
     
-
+    def test_window_operation_validation(self):
+        """Test comprehensive window operations including list, activate, minimize, maximize, resize, fullscreen, and close functionality."""
+        result = FunctionalTestResult("WindowOperationValidation")
+        start_time = time.time()
+        
+        try:
+            # Step 1: Get installed apps and print data
+            print("Step 1: Testing get_installed_apps functionality...")
+            installed_apps_result = self.session.computer.get_installed_apps()
+            if not installed_apps_result.success:
+                result.set_failure(f"Failed to get installed apps: {installed_apps_result.error_message}")
+                return
+            
+            print(f"Installed apps data: {installed_apps_result.data}")
+            result.add_detail("installed_apps_data", installed_apps_result.data)
+            
+            if len(installed_apps_result.data) == 0:
+                result.set_failure("No installed apps found")
+                print("❌ No installed apps found")
+                return
+            
+            # Find Google Chrome app in the list
+            first_app = None
+            for app in installed_apps_result.data:
+                if hasattr(app, 'name') and app.name == "Google Chrome":
+                    first_app = app
+                    break
+            
+            # If Google Chrome not found, use the first app as fallback
+            if first_app is None:
+                print("Google Chrome not found in installed apps, using first app as fallback")
+                first_app = installed_apps_result.data[0]
+            else:
+                print(f"Found Google Chrome app: {first_app.name}")
+                result.add_detail("selected_app_name", "Google Chrome")
+            print(f"First app: {first_app}")
+            start_cmd = first_app.start_cmd
+            print(f"First app start_cmd: {start_cmd}")
+            result.add_detail("first_app_start_cmd", start_cmd)
+            
+            # Step 2: Start app and validate success
+            print("Step 2: Testing start_app functionality...")
+            start_app_result = self.session.computer.start_app(start_cmd)
+            if not start_app_result.success:
+                result.set_failure(f"Failed to start app: {start_app_result.error_message}")
+                return
+            
+            # Validate success is True
+            self.assertTrue(start_app_result.success, "start_app success should be True")
+            print(f"Start app result success: {start_app_result.success}")
+            
+            # Print data and check length > 0
+            print(f"Start app data: {start_app_result.data}")
+            result.add_detail("start_app_data", start_app_result.data)
+            
+            # Validate data length > 0
+            self.assertGreater(len(start_app_result.data), 0, "start_app data length should be greater than 0")
+            print(f"Start app data length: {len(start_app_result.data)}")
+            result.add_detail("start_app_data_length", len(start_app_result.data))
+            
+            # Get first process details for cleanup later
+            first_process = start_app_result.data[0]
+            app_pname = getattr(first_process, 'pname', None)
+            print(f"Started app process name: {app_pname}")
+            result.add_detail("started_app_pname", app_pname)
+            
+            print("✅ Application management operations completed successfully")
+            time.sleep(3)
+            # Step 3: List root windows and get the first window_id
+            print("Step 3: Testing list_root_windows functionality...")
+            windows_result = self.session.computer.list_root_windows()
+            if not windows_result.success:
+                result.set_failure(f"Failed to list root windows: {windows_result.error_message}")
+                return
+            
+            print(f"Windows found: {windows_result.windows}")
+            result.add_detail("windows_list", [{"window_id": w.window_id, "title": w.title} for w in windows_result.windows])
+            
+            if len(windows_result.windows) == 0:
+                result.set_failure("No windows found, skipping window operations test")
+                print("⚠️ No windows found, skipping remaining window operations")
+                return
+            
+            # Get the first window's ID
+            target_window = windows_result.windows[0]
+            window_id = target_window.window_id
+            print(f"Using window ID: {window_id}, Title: {target_window.title}")
+            result.add_detail("target_window_id", window_id)
+            result.add_detail("target_window_title", target_window.title)
+            
+            # Step 4: Activate window
+            print("Step 4: Testing activate_window functionality...")
+            activate_result = self.session.computer.activate_window(window_id)
+            if not activate_result.success or not activate_result.data:
+                result.set_failure(f"Failed to activate window: {activate_result.error_message}")
+                print(f"❌ Window activation failed: {activate_result.error_message}")
+                return
+            
+            print(f"✅ Window {window_id} activated successfully")
+            result.add_detail("activate_success", True)
+            
+            # Step 5: Verify window is active
+            print("Step 5: Testing get_active_window functionality...")
+            active_window_result = self.session.computer.get_active_window()
+            if not active_window_result.success:
+                result.set_failure(f"Failed to get active window: {active_window_result.error_message}")
+                return
+            
+            if active_window_result.window and active_window_result.window.window_id == window_id:
+                print(f"✅ Window {window_id} is correctly active")
+                result.add_detail("active_window_verification", True)
+            else:
+                active_id = str(active_window_result.window.window_id) if active_window_result.window else "None"
+                result.set_failure(f"Active window verification failed: expected {window_id}, got {active_id}")
+                print(f"❌ Active window mismatch: expected {window_id}, got {active_id}")
+                return
+            
+            # Step 6: Enable focus mode and get cursor position
+            print("Step 6: Testing focus_mode and get_cursor_position functionality...")
+            focus_result = self.session.computer.focus_mode(True)
+            if not focus_result.success or not focus_result.data:
+                result.set_failure(f"Failed to enable focus mode: {focus_result.error_message}")
+                return
+            
+            print("✅ Focus mode enabled successfully")
+            result.add_detail("focus_mode_success", True)
+            
+            cursor_result = self.session.computer.get_cursor_position()
+            if not cursor_result.success:
+                result.set_failure(f"Failed to get cursor position: {cursor_result.error_message}")
+                return
+            
+            cursor_x, cursor_y = get_cursor_coordinates(cursor_result)
+            print(f"Current cursor position: ({cursor_x}, {cursor_y})")
+            result.add_detail("cursor_position", {"x": cursor_x, "y": cursor_y})
+            
+            # Step 7: Minimize window
+            print("Step 7: Testing minimize_window functionality...")
+            minimize_result = self.session.computer.minimize_window(window_id)
+            if not minimize_result.success or not minimize_result.data:
+                result.set_failure(f"Failed to minimize window: {minimize_result.error_message}")
+                return
+            
+            print(f"✅ Window {window_id} minimized successfully")
+            result.add_detail("minimize_success", True)
+            time.sleep(3)
+           
+            # Step 8: Maximize window
+            print("Step 8: Testing maximize_window functionality...")
+            maximize_result = self.session.computer.maximize_window(window_id)
+            if not maximize_result.success or not maximize_result.data:
+                result.set_failure(f"Failed to maximize window: {maximize_result.error_message}")
+                return
+            
+            print(f"✅ Window {window_id} maximized successfully")
+            result.add_detail("maximize_success", True)
+            time.sleep(3)
+            # Step 9: Restore window
+            print("Step 9: Testing restore_window functionality...")
+            restore_result = self.session.computer.restore_window(window_id)
+            if not restore_result.success or not restore_result.data:
+                result.set_failure(f"Failed to restore window: {restore_result.error_message}")
+                return
+            
+            print(f"✅ Window {window_id} restored successfully")
+            result.add_detail("restore_success", True)
+            time.sleep(3)
+            
+            # Step 10: Resize window
+            print("Step 10: Testing resize_window functionality...")
+            resize_result = self.session.computer.resize_window(window_id, 300, 500)
+            if not resize_result.success or not resize_result.data:
+                result.set_failure(f"Failed to resize window: {resize_result.error_message}")
+                return
+            
+            print(f"✅ Window {window_id} resized to 300x500 successfully")
+            result.add_detail("resize_success", True)
+            time.sleep(3)
+            
+            # Step 11: Fullscreen window
+            print("Step 11: Testing fullscreen_window functionality...")
+            fullscreen_result = self.session.computer.fullscreen_window(window_id)
+            if not fullscreen_result.success or not fullscreen_result.data:
+                result.set_failure(f"Failed to fullscreen window: {fullscreen_result.error_message}")
+                return
+            
+            print(f"✅ Window {window_id} set to fullscreen successfully")
+            result.add_detail("fullscreen_success", True)
+            time.sleep(3)
+            
+            # Step 12: Close window and verify it's no longer active
+            print("Step 12: Testing close_window functionality...")
+            close_result = self.session.computer.close_window(window_id)
+            if not close_result.success or not close_result.data:
+                result.set_failure(f"Failed to close window: {close_result.error_message}")
+                return
+            
+            print(f"✅ Window {window_id} closed successfully")
+            result.add_detail("close_success", True)
+            time.sleep(3)
+            #Step 13: Verify window is no longer active
+            print("Step 13: Testing list_root_windows functionality...")
+            final_windows_result = self.session.computer.list_root_windows()
+            if final_windows_result.success:
+                window_still_exists = False
+                for window in final_windows_result.windows:
+                    if window.window_id == window_id:
+                        window_still_exists = True
+                        break
+                
+                if window_still_exists:
+                    result.set_failure(f"Window {window_id} still exists after closing")
+                    print(f"❌ Window {window_id} still exists after closing")
+                    return
+                else:
+                    print(f"✅ Window {window_id} has been successfully closed")
+                    result.add_detail("close_verification", True)
+            else:
+                print("❌ Failed to verify window closure")
+                result.add_detail("close_verification", False)
+            
+            
+            # All tests passed
+            result.set_success("All window operations validation successful")
+            print("✅ All window operations (list, activate, minimize, maximize, restore, resize, fullscreen, close) validated successfully")
+            
+            #Step 14: Cleanup: Stop the started application
+            print("Step 14: Cleanup: Stopping started application...")
+            if app_pname:
+                print(f"Cleanup: Stopping application with process name: {app_pname}")
+                stop_result = self.session.computer.stop_app_by_pname(app_pname)
+                if stop_result.success:
+                    print(f"✅ Application {app_pname} stopped successfully")
+                    result.add_detail("cleanup_stop_app_success", True)
+                else:
+                    print(f"⚠️ Failed to stop application {app_pname}: {stop_result.error_message}")
+                    result.add_detail("cleanup_stop_app_success", False)
+                    result.add_detail("cleanup_stop_app_error", stop_result.error_message)
+                
+                # Wait for app to fully stop
+                time.sleep(2)
+            else:
+                print("⚠️ No process name available for cleanup")
+                result.add_detail("cleanup_stop_app_success", False)
+                result.add_detail("cleanup_stop_app_error", "No process name available")
+                
+        finally:
+            result.duration = time.time() - start_time
+            print(f"Test Result: {result}")
+            self.assertTrue(result.success, result.message)
+    
+    def test_scroll_operation_validation(self):
+        """Test comprehensive scroll operations including app management, window operations, and scroll functionality."""
+        result = FunctionalTestResult("ScrollOperationValidation")
+        start_time = time.time()
+        
+        try:
+            # Step 1: Get installed apps and validate data
+            print("Step 1: Testing get_installed_apps functionality...")
+            installed_apps_result = self.session.computer.get_installed_apps()
+            if not installed_apps_result.success:
+                result.set_failure(f"Failed to get installed apps: {installed_apps_result.error_message}")
+                return
+            
+            # Validate data length > 0
+            self.assertGreater(len(installed_apps_result.data), 0, "Installed apps data length should be greater than 0")
+            print(f"Installed apps data: {installed_apps_result.data}")
+            result.add_detail("installed_apps_data", installed_apps_result.data)
+            
+            # Find Google Chrome app in the list
+            first_app = None
+            for app in installed_apps_result.data:
+                if hasattr(app, 'name') and app.name == "Google Chrome":
+                    first_app = app
+                    break
+            
+            # If Google Chrome not found, use the first app as fallback
+            if first_app is None:
+                print("Google Chrome not found in installed apps, using first app as fallback")
+                first_app = installed_apps_result.data[0]
+            else:
+                print(f"Found Google Chrome app: {first_app.name}")
+                result.add_detail("selected_app_name", "Google Chrome")
+            start_cmd = first_app.start_cmd
+            print(f"First app start_cmd: {start_cmd}")
+            result.add_detail("first_app_start_cmd", start_cmd)
+            
+            # Step 2: Start app and validate success
+            print("Step 2: Testing start_app functionality...")
+            start_app_result = self.session.computer.start_app(start_cmd)
+            if not start_app_result.success:
+                result.set_failure(f"Failed to start app: {start_app_result.error_message}")
+                return
+            
+            # Validate data length > 0
+            self.assertGreater(len(start_app_result.data), 0, "Start app data length should be greater than 0")
+            print(f"Start app data: {start_app_result.data}")
+            result.add_detail("start_app_data", start_app_result.data)
+            
+            # Get first item from start_app_result.data and print cmdline, pid, pname
+            first_process = start_app_result.data[0]
+            cmdline = getattr(first_process, 'cmdline', 'N/A')
+            pid = getattr(first_process, 'pid', 'N/A')
+            pname = getattr(first_process, 'pname', 'N/A')
+            print(f"First process details - cmdline: {cmdline}, pid: {pid}, pname: {pname}")
+            result.add_detail("first_process_details", {"cmdline": cmdline, "pid": pid, "pname": pname})
+            
+            # Wait for app to fully start
+            time.sleep(3)
+            
+            # Step 3: Get screen size and calculate center coordinates
+            print("Step 3: Testing get_screen_size functionality...")
+            # Use helper function to get screen center coordinates
+            center_x, center_y = get_screen_center(self.session)
+            result.add_detail("scroll_center_coordinates", {"x": center_x, "y": center_y})
+            
+            # Step 4: Get active window and window_id
+            print("Step 4: Testing get_active_window functionality...")
+            active_window_result = self.session.computer.get_active_window()
+            if not active_window_result.success or not active_window_result.window:
+                result.set_failure(f"Failed to get active window: {active_window_result.error_message}")
+                return
+            
+            window_id = active_window_result.window.window_id
+            print(f"Active window_id: {window_id}")
+            result.add_detail("active_window_id", window_id)
+            
+            # Step 5: Maximize window
+            print("Step 5: Testing maximize_window functionality...")
+            maximize_result = self.session.computer.maximize_window(window_id)
+            if not maximize_result.success or not maximize_result.data:
+                result.set_failure(f"Failed to maximize window: {maximize_result.error_message}")
+                return
+            
+            # Validate success and data are True
+            self.assertTrue(maximize_result.success, "maximize_window success should be True")
+            self.assertTrue(maximize_result.data, "maximize_window data should be True")
+            print(f"✅ Window {window_id} maximized successfully")
+            result.add_detail("maximize_success", True)
+            
+            # Wait for window to maximize
+            time.sleep(2)
+            
+            # Step 6: Enable focus mode
+            print("Step 6: Testing focus_mode functionality...")
+            focus_result = self.session.computer.focus_mode(True)
+            if not focus_result.success or not focus_result.data:
+                result.set_failure(f"Failed to enable focus mode: {focus_result.error_message}")
+                return
+            
+            # Validate success and data are True
+            self.assertTrue(focus_result.success, "focus_mode success should be True")
+            self.assertTrue(focus_result.data, "focus_mode data should be True")
+            print("✅ Focus mode enabled successfully")
+            result.add_detail("focus_mode_success", True)
+            
+            # Step 7: Perform scroll operation
+            print("Step 7: Testing scroll functionality...")
+            scroll_result = self.session.computer.scroll(center_x, center_y, ScrollDirection.DOWN, 3)
+            if not scroll_result.success or not scroll_result.data:
+                result.set_failure(f"Failed to perform scroll: {scroll_result.error_message}")
+                return
+            
+            # Validate success and data are True
+            self.assertTrue(scroll_result.success, "scroll success should be True")
+            self.assertTrue(scroll_result.data, "scroll data should be True")
+            print(f"✅ Scroll operation at ({center_x}, {center_y}) completed successfully")
+            result.add_detail("scroll_success", True)
+            
+            # Wait for scroll to complete
+            time.sleep(2)
+            
+            # Step 8: Stop app and validate termination
+            print("Step 8: Testing stop_app_by_pname functionality...")
+            stop_result = self.session.computer.stop_app_by_pname(pname)
+            if not stop_result.success:
+                result.set_failure(f"Failed to stop app: {stop_result.error_message}")
+                return
+            
+            # Validate success is True
+            self.assertTrue(stop_result.success, "stop_app_by_pid success should be True")
+            print(f"✅ App stopped successfully using pname: {pname}")
+            result.add_detail("stop_app_success", True)
+            
+            # Wait for app to fully stop
+            time.sleep(3)
+            
+            # Verify app termination by checking if no visible apps remain
+            print("Step 9 Verification: Checking if no visible apps remain after stopping...")
+            final_visible_apps_result = self.session.computer.list_visible_apps()
+            
+            if final_visible_apps_result.success:
+                visible_apps_count = len(final_visible_apps_result.data)
+                if visible_apps_count == 0:
+                    print("✅ No visible apps found after stopping app - termination successful")
+                    result.add_detail("app_stop_verification", "no_visible_apps")
+                else:
+                    print(f"⚠️ {visible_apps_count} visible apps still found after stop command")
+                    result.add_detail("app_stop_verification", f"{visible_apps_count}_apps_still_visible")
+            else:
+                print("❌ Failed to verify app termination due to list_visible_apps failure")
+                result.add_detail("app_stop_verification", "verification_failed")
+            
+            # All tests passed
+            result.set_success("All scroll operation validation successful")
+            print("✅ All scroll operations (app management, window operations, scroll) validated successfully")
+                
+        finally:
+            result.duration = time.time() - start_time
+            print(f"Test Result: {result}")
+            self.assertTrue(result.success, result.message)
 if __name__ == '__main__':
     unittest.main()

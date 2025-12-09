@@ -364,6 +364,38 @@ modules:
     emoji: 💻
     category: capabilities
 
+  # Computer module
+  computer:
+    python: agb.modules.computer
+
+    tutorial:
+      url: ../../docs/guides/computer-automation.md
+      text: Computer Automation Guide
+      description: Complete guide to computer UI automation and control
+
+    overview: |
+      The Computer module provides comprehensive computer UI automation capabilities including mouse operations,keyboard input, screen capture, window management, and application control. 
+
+    requirements:
+      - "Requires appropriate system permissions for UI automation"
+      - "May require specific desktop environment configuration"
+
+    best_practices:
+      - "Use appropriate timeouts for window operations"
+      - "Take screenshots for debugging and verification"
+      - "Handle coordinate calculations properly for different screen resolutions"
+      - "Verify window existence before attempting window operations"
+      - "Use proper key combinations and timing for keyboard operations"
+      - "Clean up application processes after automation tasks"
+      - "Handle application startup and shutdown gracefully"
+
+    related_resources:
+      - name: Session API Reference
+        module: session
+
+    emoji: 🖥️
+    category: capabilities
+
   # Browser module
   browser:
     python: agb.modules.browser.browser

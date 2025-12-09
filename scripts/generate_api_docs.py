@@ -50,6 +50,7 @@ DOC_MAPPINGS: Sequence[DocMapping] = (
     DocMapping("capabilities/browser.md", "Browser", ("agb.modules.browser.browser", "agb.modules.browser.browser_agent", "agb.modules.browser.fingerprint")),
     DocMapping("reference/configurations.md", "Configurations", ("agb.session_params", "agb.config")),
     DocMapping("reference/exceptions.md", "Exceptions", ("agb.exceptions",)),
+    DocMapping("capabilities/computer.md", "Computer", ("agb.modules.computer",)),
 )
 
 
@@ -261,7 +262,7 @@ def get_module_name_from_path(module_path: str) -> str:
 def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:
     """Generate tutorial section markdown."""
     module_config = metadata.get('modules', {}).get(module_name, {})
-
+    
     # Check for new tutorials array format first
     tutorials = module_config.get('tutorials')
     if tutorials and isinstance(tutorials, list):
@@ -272,10 +273,10 @@ def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:
             description = tutorial.get('description', '')
             if url and text:
                 tutorial_links.append(f"- **[{text}]({url})** - {description}")
-
+        
         if tutorial_links:
             return f"## Related Tutorials\n\n" + "\n".join(tutorial_links) + "\n\n"
-
+    
     # Fallback to single tutorial format for backward compatibility
     tutorial = module_config.get('tutorial')
     if not tutorial:
@@ -323,7 +324,7 @@ def get_module_name_from_path(module_path: str) -> str:
 def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:
     """Generate tutorial section markdown."""
     module_config = metadata.get('modules', {}).get(module_name, {})
-
+    
     tutorials = module_config.get('tutorials')
     if tutorials and isinstance(tutorials, list):
         tutorial_links = []
@@ -333,7 +334,7 @@ def get_tutorial_section(module_name: str, metadata: dict[str, Any]) -> str:
             description = tutorial.get('description', '')
             if url and text:
                 tutorial_links.append(f"- **[{text}]({url})** - {description}")
-
+        
         if tutorial_links:
             return f"## Related Tutorials\n\n" + "\n".join(tutorial_links) + "\n\n"
     tutorial = module_config.get('tutorial')
@@ -497,6 +498,7 @@ def calculate_resource_path(resource: dict[str, Any], module_config: dict[str, A
         'browser': 'browser.md',
         'session-params': 'configurations.md',
         'exceptions': 'exceptions.md',
+        'computer': 'computer.md',
     }
 
     filename = module_filename_map.get(module, f"{module}.md")
@@ -553,9 +555,8 @@ def remove_logger_definitions(content: str) -> str:
     import re
 
     # Pattern to match logger code block at the beginning
-    # Matches: ```python\nlogger = get_logger(...)\n```
-    # Updated to match both string literals and variables like __name__
-    pattern = r'^```python\nlogger = get_logger\(.*?\)\n```\n\n'
+    # Matches: ```python\nlogger = get_logger("...")\n```
+    pattern = r'^```python\nlogger = get_logger\(["\'].*?["\']\)\n```\n\n'
 
     content = re.sub(pattern, '', content, flags=re.MULTILINE)
     return content

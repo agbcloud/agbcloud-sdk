@@ -289,3 +289,16 @@ class InstalledAppListResult(ApiResponse):
         self.data = data if data is not None else []
         self.error_message = error_message
 
+class WindowListResult(ApiResponse):
+    """Result of window listing operations."""
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        windows: Optional[List[Any]] = None,
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.success = success
+        self.windows = windows or []
+        self.error_message = error_message

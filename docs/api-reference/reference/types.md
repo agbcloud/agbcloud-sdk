@@ -68,6 +68,9 @@ Result of general operations
 - `agb.context.update()`
 - `agb.context.delete()`
 - `agb.context.delete_file()`
+- `session.computer.get_cursor_position()`
+- `session.computer.get_screen_size()`
+- `session.computer.screenshot()`
 
 ### Properties
 
@@ -97,6 +100,21 @@ Result of operations returning a boolean value
 - `session.file_system.edit_file()`
 - `session.file_system.move_file()`
 - `session.file_system.write_file()`
+- `session.computer.click_mouse()`
+- `session.computer.move_mouse()`
+- `session.computer.drag_mouse()`
+- `session.computer.scroll()`
+- `session.computer.input_text()`
+- `session.computer.press_keys()`
+- `session.computer.release_keys()`
+- `session.computer.activate_window()`
+- `session.computer.close_window()`
+- `session.computer.maximize_window()`
+- `session.computer.minimize_window()`
+- `session.computer.restore_window()`
+- `session.computer.resize_window()`
+- `session.computer.fullscreen_window()`
+- `session.computer.focus_mode()`
 
 ### Properties
 

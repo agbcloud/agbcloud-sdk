@@ -13,6 +13,7 @@ This directory is generated. Run `python scripts/generate_api_docs.py` to refres
 - `capabilities/file_system.md` – File System
 - `capabilities/code_execution.md` – Code
 - `capabilities/browser.md` – Browser
+- `capabilities/computer.md` – Computer
 
 ## Data Context
 

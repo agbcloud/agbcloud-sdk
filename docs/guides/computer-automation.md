@@ -176,7 +176,7 @@ result = session.computer.scroll(x=500, y=500, direction=ScrollDirection.RIGHT, 
 #### Text Input
 
 ```python
-result = session.computer.input_text("Hello AgentBay!")
+result = session.computer.input_text("Hello AGB!")
 if result.success:
     print("Text input successful")
 ```

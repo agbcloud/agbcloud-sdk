@@ -5,9 +5,10 @@ from collections import defaultdict
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from agb.api.base_service import BaseService
-from agb.model.response import ApiResponse, BoolResult
+from agb.model.response import ApiResponse, BoolResult, UploadResult, DownloadResult
 from agb.logger import get_logger
-
+from agb.modules.file_transfer import FileTransfer
+from agb.exceptions import FileError
 logger = get_logger(__name__)
 
 
@@ -264,6 +265,182 @@ class FileSystem(BaseService):
     """
     FileSystem provides file system operations for the session.
     """
+
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize FileSystem with FileTransfer capability.
+
+        Args:
+            *args: Arguments to pass to BaseService
+            **kwargs: Keyword arguments to pass to BaseService
+        """
+        super().__init__(*args, **kwargs)
+        # Initialize _file_transfer as None - will be lazily initialized when needed
+        self._file_transfer: Optional[FileTransfer] = None
+
+    def _ensure_file_transfer(self) -> FileTransfer:
+        """
+        Ensure FileTransfer is initialized with the current session.
+        This is a lazy initialization - FileTransfer is only created when actually needed.
+
+        Returns:
+            FileTransfer: The FileTransfer instance
+
+        Raises:
+            FileError: If FileTransfer cannot be initialized (e.g., missing AGB context)
+        """
+        if self._file_transfer is None:
+            # Get the agb instance from the session
+            agb = getattr(self.session, "agb", None)
+            if agb is None:
+                raise FileError("FileTransfer requires an AGB instance")
+
+            # Get the session from the service
+            session = self.session
+            if session is None:
+                raise FileError("FileTransfer requires a session")
+
+            self._file_transfer = FileTransfer(agb, self.session)
+
+        # Type assertion: _file_transfer is guaranteed to be non-None here
+        assert self._file_transfer is not None, "FileTransfer should be initialized"
+        return self._file_transfer
+
+
+    def get_file_transfer_context_path(self) -> Optional[str]:
+        """
+        Get the context path for file transfer operations.
+
+        This method ensures the context ID is loaded and returns the associated
+        context path that was retrieved from GetAndLoadInternalContext API.
+
+        Returns:
+            Optional[str]: The context path if available, None otherwise.
+        """
+        # Ensure FileTransfer is initialized
+        file_transfer = self._ensure_file_transfer()
+        # Ensure context_id is loaded (this will also load context_path)
+        if file_transfer.context_id is None:
+            file_transfer.ensure_context_id()
+        return file_transfer.context_path
+
+    def upload_file(
+        self,
+        local_path: str,
+        remote_path: str,
+        *,
+        content_type: Optional[str] = None,
+        wait: bool = True,
+        wait_timeout: float = 30.0,
+        poll_interval: float = 1.5,
+        progress_cb: Optional[Callable[[int], None]] = None,
+    ) -> UploadResult:
+        """
+        Upload a file from local to remote path using pre-signed URLs.
+
+        Args:
+            local_path: Local file path to upload
+            remote_path: Remote file path to upload to
+            content_type: Optional content type for the file
+            wait: Whether to wait for the sync operation to complete
+            wait_timeout: Timeout for waiting for sync completion
+            poll_interval: Interval between polling for sync completion
+            progress_cb: Callback for upload progress updates
+
+        Returns:
+            UploadResult: Result of the upload operation
+
+        Example:
+            ```python
+            remote_path = session.file_system.get_file_transfer_context_path() + "/file.txt"
+            upload_result = session.file_system.upload_file("/local/file.txt", remote_path)
+            ```
+        """
+        try:
+            # Ensure FileTransfer is initialized
+            file_transfer = self._ensure_file_transfer()
+            result = file_transfer.upload(
+                local_path=local_path,
+                remote_path=remote_path,
+                content_type=content_type,
+                wait=wait,
+                wait_timeout=wait_timeout,
+                poll_interval=poll_interval,
+                progress_cb=progress_cb,
+            )
+            # Upload completed successfully
+            return result
+        except Exception as e:
+            return UploadResult(
+                success=False,
+                request_id_upload_url=None,
+                request_id_sync=None,
+                http_status=None,
+                etag=None,
+                bytes_sent=0,
+                path=remote_path,
+                error=f"Upload failed: {str(e)}",
+            )
+
+    def download_file(
+        self,
+        remote_path: str,
+        local_path: str,
+        *,
+        overwrite: bool = True,
+        wait: bool = True,
+        wait_timeout: float = 30.0,
+        poll_interval: float = 1.5,
+        progress_cb: Optional[Callable[[int], None]] = None,
+    ) -> DownloadResult:
+        """
+        Download a file from remote path to local path using pre-signed URLs.
+
+        Args:
+            remote_path: Remote file path to download from
+            local_path: Local file path to download to
+            overwrite: Whether to overwrite existing local file
+            wait: Whether to wait for the sync operation to complete
+            wait_timeout: Timeout for waiting for sync completion
+            poll_interval: Interval between polling for sync completion
+            progress_cb: Callback for download progress updates
+
+        Returns:
+            DownloadResult: Result of the download operation
+
+        Example:
+            ```python
+            remote_path = session.file_system.get_file_transfer_context_path() + "/file.txt"
+            download_result = session.file_system.download_file(remote_path, "/local/file.txt")
+            ```
+        """
+        try:
+            # Ensure FileTransfer is initialized
+            file_transfer = self._ensure_file_transfer()
+            result = file_transfer.download(
+                remote_path=remote_path,
+                local_path=local_path,
+                overwrite=overwrite,
+                wait=wait,
+                wait_timeout=wait_timeout,
+                poll_interval=poll_interval,
+                progress_cb=progress_cb,
+            )
+            # Download completed successfully
+            return result
+        except Exception as e:
+            return DownloadResult(
+                success=False,
+                request_id_download_url=None,
+                request_id_sync=None,
+                http_status=None,
+                bytes_received=0,
+                path=remote_path,
+                local_path=local_path,
+                error=f"Download exception: {str(e)}",
+            )
+
 
     # Default chunk size is 50KB
     DEFAULT_CHUNK_SIZE = 50 * 1024

@@ -48,6 +48,8 @@ from .delete_context_file_request import DeleteContextFileRequest
 from .delete_context_file_response import DeleteContextFileResponse
 from .describe_context_files_request import DescribeContextFilesRequest
 from .describe_context_files_response import DescribeContextFilesResponse
+from .get_and_load_internal_context_request import GetAndLoadInternalContextRequest
+from .get_and_load_internal_context_response import GetAndLoadInternalContextResponse
 
 __all__ = [
     "CreateSessionRequest",
@@ -96,4 +98,6 @@ __all__ = [
     "DeleteContextFileResponse",
     "DescribeContextFilesRequest",
     "DescribeContextFilesResponse",
+    "GetAndLoadInternalContextRequest",
+    "GetAndLoadInternalContextResponse",
 ]

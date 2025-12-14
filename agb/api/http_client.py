@@ -59,6 +59,8 @@ from .models.delete_context_file_request import DeleteContextFileRequest
 from .models.delete_context_file_response import DeleteContextFileResponse
 from .models.describe_context_files_request import DescribeContextFilesRequest
 from .models.describe_context_files_response import DescribeContextFilesResponse
+from .models.get_and_load_internal_context_request import GetAndLoadInternalContextRequest
+from .models.get_and_load_internal_context_response import GetAndLoadInternalContextResponse
 
 
 class HTTPClient:
@@ -1168,3 +1170,34 @@ class HTTPClient:
 
         # Return structured response object
         return GetLabelResponse.from_http_response(response_dict)
+
+    def get_and_load_internal_context(self, request: GetAndLoadInternalContextRequest) -> GetAndLoadInternalContextResponse:
+        """
+        HTTP request interface for getting and loading internal context
+
+        Args:
+            request (GetAndLoadInternalContextRequest): Request object for getting and loading internal context
+
+        Returns:
+            GetAndLoadInternalContextResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/sdk/GetAndLoadInternalContext",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return GetAndLoadInternalContextResponse.from_http_response(response_dict)

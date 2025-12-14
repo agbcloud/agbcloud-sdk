@@ -302,3 +302,77 @@ class WindowListResult(ApiResponse):
         self.success = success
         self.windows = windows or []
         self.error_message = error_message
+
+
+class UploadResult:
+    """Result of file upload operations."""
+
+    def __init__(
+        self,
+        success: bool = False,
+        request_id_upload_url: Optional[str] = None,
+        request_id_sync: Optional[str] = None,
+        http_status: Optional[int] = None,
+        etag: Optional[str] = None,
+        bytes_sent: int = 0,
+        path: str = "",
+        error: Optional[str] = None,
+    ):
+        """
+        Initialize an UploadResult.
+
+        Args:
+            success (bool): Whether the upload was successful.
+            request_id_upload_url (Optional[str]): Request ID for upload URL request.
+            request_id_sync (Optional[str]): Request ID for sync request.
+            http_status (Optional[int]): HTTP status code from upload.
+            etag (Optional[str]): ETag from upload response.
+            bytes_sent (int): Number of bytes sent.
+            path (str): Remote path where file was uploaded.
+            error (Optional[str]): Error message if upload failed.
+        """
+        self.success = success
+        self.request_id_upload_url = request_id_upload_url
+        self.request_id_sync = request_id_sync
+        self.http_status = http_status
+        self.etag = etag
+        self.bytes_sent = bytes_sent
+        self.path = path
+        self.error = error
+
+
+class DownloadResult:
+    """Result of file download operations."""
+
+    def __init__(
+        self,
+        success: bool = False,
+        request_id_download_url: Optional[str] = None,
+        request_id_sync: Optional[str] = None,
+        http_status: Optional[int] = None,
+        bytes_received: int = 0,
+        path: str = "",
+        local_path: str = "",
+        error: Optional[str] = None,
+    ):
+        """
+        Initialize a DownloadResult.
+
+        Args:
+            success (bool): Whether the download was successful.
+            request_id_download_url (Optional[str]): Request ID for download URL request.
+            request_id_sync (Optional[str]): Request ID for sync request.
+            http_status (Optional[int]): HTTP status code from download.
+            bytes_received (int): Number of bytes received.
+            path (str): Remote path where file was downloaded from.
+            local_path (str): Local path where file was saved.
+            error (Optional[str]): Error message if download failed.
+        """
+        self.success = success
+        self.request_id_download_url = request_id_download_url
+        self.request_id_sync = request_id_sync
+        self.http_status = http_status
+        self.bytes_received = bytes_received
+        self.path = path
+        self.local_path = local_path
+        self.error = error

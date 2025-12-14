@@ -53,6 +53,8 @@ from agb.api.models import (
     DeleteContextFileResponse,
     DescribeContextFilesRequest,
     DescribeContextFilesResponse,
+    GetAndLoadInternalContextRequest,
+    GetAndLoadInternalContextResponse,
 )
 
 from .http_client import HTTPClient
@@ -557,6 +559,23 @@ class Client:
 
         try:
             response = http_client.get_label(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def get_and_load_internal_context(self, request: GetAndLoadInternalContextRequest) -> GetAndLoadInternalContextResponse:
+        """
+        Get and load internal context using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.get_and_load_internal_context(request)
             return response
         finally:
             # Always close the HTTP client to release resources

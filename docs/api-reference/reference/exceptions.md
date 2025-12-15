@@ -79,6 +79,14 @@ class ClearanceTimeoutError(AGBError)
 
 Raised when the clearance task times out.
 
+## FileError
+
+```python
+class FileError(AGBError)
+```
+
+Raised for errors related to file operations.
+
 ---
 
 *Documentation generated automatically from source code using pydoc-markdown.*

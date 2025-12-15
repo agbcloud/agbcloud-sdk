@@ -108,6 +108,99 @@ class FileSystem(BaseService)
 
 FileSystem provides file system operations for the session.
 
+### get\_file\_transfer\_context\_path
+
+```python
+def get_file_transfer_context_path() -> Optional[str]
+```
+
+Get the context path for file transfer operations.
+
+This method ensures the context ID is loaded and returns the associated
+context path that was retrieved from GetAndLoadInternalContext API.
+
+**Returns**:
+
+    Optional[str]: The context path if available, None otherwise.
+
+### upload\_file
+
+```python
+def upload_file(
+        local_path: str,
+        remote_path: str,
+        *,
+        content_type: Optional[str] = None,
+        wait: bool = True,
+        wait_timeout: float = 30.0,
+        poll_interval: float = 1.5,
+        progress_cb: Optional[Callable[[int], None]] = None) -> UploadResult
+```
+
+Upload a file from local to remote path using pre-signed URLs.
+
+**Arguments**:
+
+    local_path: Local file path to upload
+    remote_path: Remote file path to upload to
+    content_type: Optional content type for the file
+    wait: Whether to wait for the sync operation to complete
+    wait_timeout: Timeout for waiting for sync completion
+    poll_interval: Interval between polling for sync completion
+    progress_cb: Callback for upload progress updates
+
+
+**Returns**:
+
+    UploadResult: Result of the upload operation
+
+
+**Example**:
+
+```python
+remote_path = session.file_system.get_file_transfer_context_path() + "/file.txt"
+upload_result = session.file_system.upload_file("/local/file.txt", remote_path)
+```
+
+### download\_file
+
+```python
+def download_file(
+        remote_path: str,
+        local_path: str,
+        *,
+        overwrite: bool = True,
+        wait: bool = True,
+        wait_timeout: float = 30.0,
+        poll_interval: float = 1.5,
+        progress_cb: Optional[Callable[[int], None]] = None) -> DownloadResult
+```
+
+Download a file from remote path to local path using pre-signed URLs.
+
+**Arguments**:
+
+    remote_path: Remote file path to download from
+    local_path: Local file path to download to
+    overwrite: Whether to overwrite existing local file
+    wait: Whether to wait for the sync operation to complete
+    wait_timeout: Timeout for waiting for sync completion
+    poll_interval: Interval between polling for sync completion
+    progress_cb: Callback for download progress updates
+
+
+**Returns**:
+
+    DownloadResult: Result of the download operation
+
+
+**Example**:
+
+```python
+remote_path = session.file_system.get_file_transfer_context_path() + "/file.txt"
+download_result = session.file_system.download_file(remote_path, "/local/file.txt")
+```
+
 #### DEFAULT\_CHUNK\_SIZE
 
 ```python

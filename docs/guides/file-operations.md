@@ -520,6 +520,7 @@ session.file_system.write_file(filepath, "content")
 
 ## Related Documentation
 
+- **[File Transfer Guide](file-transfer.md)** - Uploading and downloading files between local and cloud
 - **[Code Execution Guide](code-execution.md)** - Using files in code execution
 - **[Session Management](session-management.md)** - Managing file system sessions
 - **[API Reference](../api-reference/capabilities/file_system.md)** - Complete FileSystem API documentation

@@ -22,6 +22,10 @@ session.code.run_code("print('Hello')", "python")
 session.command.execute_command("ls /tmp")
 session.file_system.read_file("/path/to/file")
 
+# Pause and resume (optional)
+agb.pause(session)   # Pause to save costs
+agb.resume(session)  # Resume when needed
+
 # Clean up
 agb.delete(session)
 ```
@@ -255,6 +259,158 @@ if delete_result.success:
 else:
     print(f"Failed to delete session: {delete_result.error_message}")
 ```
+
+## Session Pause and Resume
+
+Sessions can be paused to temporarily halt execution and save costs, then resumed later to continue work. This is particularly useful for long-running workflows, cost optimization during idle periods, or when you need to free up resources temporarily.
+
+### Benefits
+
+- **💰 Cost Savings**: Reduce costs during pause periods
+- **🔄 Resource Management**: Free up resources for other tasks while preserving session state
+- **🕐 Long-running Workflows**: Pause sessions overnight or during weekends, resume when needed
+- **🛠️ Maintenance Windows**: Safely pause sessions before scheduled maintenance
+- **📦 State Preservation**: All session state and data are maintained across pause/resume cycles
+
+### Pausing Sessions
+
+Pause a session to put it in a dormant state:
+
+```python
+from agb import AGB
+
+agb = AGB()
+# Assume you have an active session
+
+# Basic pause
+pause_result = agb.pause(session)
+if pause_result.success:
+    print(f"Session paused successfully")
+    print(f"Request ID: {pause_result.request_id}")
+else:
+    print(f"Failed to pause: {pause_result.error_message}")
+```
+
+### Resuming Sessions
+
+Resume a paused session to restore it to active state:
+
+```python
+# Basic resume
+resume_result = agb.resume(session)
+if resume_result.success:
+    print(f"Session resumed successfully")
+    print(f"Status: {resume_result.status}")
+else:
+    print(f"Failed to resume: {resume_result.error_message}")
+```
+
+### Custom Timeout and Polling
+
+You can customize the timeout and polling interval for pause/resume operations:
+
+```python
+# Pause with custom parameters
+pause_result = agb.pause(
+    session,
+    timeout=300,        # Maximum wait time in seconds
+    poll_interval=5.0   # Check status every 5 seconds
+)
+
+# Resume with custom parameters
+resume_result = agb.resume(
+    session,
+    timeout=300,        # Maximum wait time in seconds
+    poll_interval=5.0   # Check status every 5 seconds
+)
+```
+
+### Async Pause and Resume
+
+For async applications, use the async versions:
+
+```python
+import asyncio
+from agb import AGB
+
+async def pause_resume_async():
+    agb = AGB()
+    # Assume you have an active session
+
+    # Async pause
+    pause_result = await agb.pause_async(session)
+    if pause_result.success:
+        print("Session paused")
+
+    # Async resume
+    resume_result = await agb.resume_async(session)
+    if resume_result.success:
+        print("Session resumed")
+
+# Run async function
+asyncio.run(pause_resume_async())
+```
+
+### Checking Session Status
+
+After pause or resume operations, verify the session status:
+
+```python
+# Get session status
+get_result = agb.get_session(session.session_id)
+if get_result.success and hasattr(get_result.data, 'status'):
+    print(f"Current status: {get_result.data.status}")
+    # Possible statuses: RUNNING, PAUSED, PAUSING, RESUMING
+```
+
+### Complete Workflow Example
+
+```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+
+agb = AGB()
+
+# 1. Create session
+params = CreateSessionParams(
+    image_id="agb-linux-test-5",
+    labels={"project": "batch-job", "cost-optimization": "enabled"}
+)
+result = agb.create(params)
+session = result.session
+
+try:
+    # 2. Do some work
+    session.command.execute_command("echo 'Processing data...'")
+
+    # 3. Pause during idle period
+    print("Pausing session to save costs...")
+    pause_result = agb.pause(session)
+    if pause_result.success:
+        print("Session paused successfully")
+
+    # 4. Resume when needed
+    print("Resuming session...")
+    resume_result = agb.resume(session, timeout=120)
+    if resume_result.success:
+        print("Session resumed, continuing work...")
+
+    # 5. Continue work
+    session.command.execute_command("echo 'Continuing processing...'")
+
+finally:
+    # Clean up
+    agb.delete(session)
+```
+
+### Important Notes
+
+- **State Preservation**: All session state, files, and environment variables are preserved during pause
+- **Paused Sessions and Timeouts**: Paused sessions still count toward your session limits but incur reduced costs
+- **Cannot Delete Paused Sessions**: Currently, paused sessions cannot be deleted directly. Resume the session first, then delete it
+- **Pause/Resume Cycles**: You can pause and resume the same session multiple times
+- **Network Interruption**: If pause/resume is interrupted, the operation can be retried safely
+For complete examples, see [Session Pause/Resume Examples](../examples/session_management/pause_resume_session.py).
 
 ## Session Release
 
@@ -525,6 +681,49 @@ with monitor_session_usage(session, "data_processing") as monitored_session:
 agb.delete(session)
 ```
 
+### 5. Use Pause/Resume for Cost Optimization
+
+```python
+from agb import AGB
+from agb.session_params import CreateSessionParams
+import time
+
+# ✅ Good: Pause sessions during idle periods
+agb = AGB()
+params = CreateSessionParams(
+    image_id="agb-linux-test-5",
+    labels={"cost-optimization": "enabled"}
+)
+result = agb.create(params)
+session = result.session
+
+try:
+    # Do work during business hours
+    session.command.execute_command("python batch_process.py")
+
+    # Pause at end of day to save costs
+    print("End of business day - pausing session")
+    agb.pause(session)
+
+    # Simulate overnight period
+    # In production, this would be actual time passing
+    time.sleep(5)
+
+    # Resume next morning
+    print("Start of business day - resuming session")
+    agb.resume(session, timeout=120)
+
+    # Continue work
+    session.command.execute_command("python continue_processing.py")
+finally:
+    # Always resume before deleting
+    get_result = agb.get_session(session.session_id)
+    if get_result.success and hasattr(get_result.data, 'status'):
+        if get_result.data.status == "PAUSED":
+            agb.resume(session)
+    agb.delete(session)
+```
+
 ## Troubleshooting
 
 ### Common Issues
@@ -580,6 +779,41 @@ for task in tasks:
     # Execute task
     session.code.run_code(task["code"], "python")
     operation_count += 1
+```
+
+**Pause/Resume Issues**
+```python
+from agb import AGB
+
+# Issue: Cannot delete paused session
+# Solution: Resume first, then delete
+get_result = agb.get_session(session.session_id)
+if get_result.success and hasattr(get_result.data, 'status'):
+    if get_result.data.status == "PAUSED":
+        print("Session is paused, resuming before delete...")
+        agb.resume(session)
+
+delete_result = agb.delete(session)
+
+# Issue: Pause/resume timeout
+# Solution: Increase timeout and adjust poll interval
+pause_result = agb.pause(session, timeout=600, poll_interval=5)
+if not pause_result.success:
+    print(f"Pause failed: {pause_result.error_message}")
+    # Retry or handle error
+
+# Issue: Session stuck in transitional state (PAUSING/RESUMING)
+# Solution: Wait and check status, or contact support
+import time
+get_result = agb.get_session(session.session_id)
+if get_result.success and hasattr(get_result.data, 'status'):
+    status = get_result.data.status
+    if status in ["PAUSING", "RESUMING"]:
+        print(f"Session in transitional state: {status}")
+        print("Waiting for state to stabilize...")
+        time.sleep(10)
+        # Check status again
+        get_result = agb.get_session(session.session_id)
 ```
 
 ## Related Documentation

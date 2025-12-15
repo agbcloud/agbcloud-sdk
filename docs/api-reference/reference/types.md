@@ -96,10 +96,6 @@ Result of operations returning a boolean value
 
 ### API Methods Using This Response Type
 
-- `session.file_system.create_directory()`
-- `session.file_system.edit_file()`
-- `session.file_system.move_file()`
-- `session.file_system.write_file()`
 - `session.computer.click_mouse()`
 - `session.computer.move_mouse()`
 - `session.computer.drag_mouse()`
@@ -115,6 +111,10 @@ Result of operations returning a boolean value
 - `session.computer.resize_window()`
 - `session.computer.fullscreen_window()`
 - `session.computer.focus_mode()`
+- `session.file_system.create_directory()`
+- `session.file_system.edit_file()`
+- `session.file_system.move_file()`
+- `session.file_system.write_file()`
 
 ### Properties
 

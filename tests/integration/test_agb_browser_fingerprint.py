@@ -126,16 +126,14 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
             print(f"Browser endpoint URL: {endpoint_url}")
 
             # Connect with playwright and test user agent
-            print("Opening https://httpbin.org/user-agent and test user agent...")
+            print("Getting user agent via navigator.userAgent...")
             async with async_playwright() as p:
                 browser = await p.chromium.connect_over_cdp(endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 context = browser.contexts[0] if browser.contexts else await browser.new_context()
 
                 page = await context.new_page()
-                await page.goto("https://httpbin.org/user-agent", timeout=120000)
-                response = await page.evaluate("() => JSON.parse(document.body.textContent)")
-                user_agent = response["user-agent"]
+                user_agent = await page.evaluate("() => navigator.userAgent")
                 print("user_agent =", user_agent)
                 self.assertTrue(user_agent is not None)
                 is_windows = is_windows_user_agent(user_agent)
@@ -197,16 +195,14 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
             print(f"Browser endpoint URL: {endpoint_url}")
 
             # Step 4: Connect with playwright, test first session fingerprint
-            print("Step 3: Opening https://httpbin.org/user-agent and test user agent...")
+            print("Step 3: Getting user agent via navigator.userAgent...")
             async with async_playwright() as p:
                 browser = await p.chromium.connect_over_cdp(endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 context = browser.contexts[0] if browser.contexts else await browser.new_context()
 
                 page = await context.new_page()
-                await page.goto("https://httpbin.org/user-agent", timeout=120000)
-                response = await page.evaluate("() => JSON.parse(document.body.textContent)")
-                user_agent = response["user-agent"]
+                user_agent = await page.evaluate("() => navigator.userAgent")
                 print("user_agent =", user_agent)
                 self.assertTrue(user_agent is not None)
                 is_windows = is_windows_user_agent(user_agent)
@@ -267,9 +263,7 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
 
                 context = browser.contexts[0] if browser.contexts else await browser.new_context()
                 page = await context.new_page()
-                await page.goto("https://httpbin.org/user-agent", timeout=120000)
-                response = await page.evaluate("() => JSON.parse(document.body.textContent)")
-                user_agent = response["user-agent"]
+                user_agent = await page.evaluate("() => navigator.userAgent")
                 print("user_agent =", user_agent)
                 self.assertTrue(user_agent is not None)
                 is_windows = is_windows_user_agent(user_agent)
@@ -291,6 +285,7 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
         print("Browser fingerprint persistence test completed successfully!")
 
 
+    @unittest.skip("Only for local testing")
     def test_browser_fingerprint_local_sync(self):
         """Test browser fingerprint local sync functionality."""
         print("===== Test browser fingerprint local sync =====")
@@ -330,16 +325,14 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
             print(f"Browser endpoint URL: {endpoint_url}")
 
             # Connect with playwright and verify fingerprint sync
-            print("Testing fingerprint sync by checking user agent...")
+            print("Testing fingerprint sync by checking user agent via navigator...")
             async with async_playwright() as p:
                 browser = await p.chromium.connect_over_cdp(endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 context = browser.contexts[0] if browser.contexts else await browser.new_context()
 
                 page = await context.new_page()
-                await page.goto("https://httpbin.org/user-agent", timeout=120000)
-                response = await page.evaluate("() => JSON.parse(document.body.textContent)")
-                user_agent = response["user-agent"]
+                user_agent = await page.evaluate("() => navigator.userAgent")
                 print(f"Remote user agent: {user_agent}")
                 print(f"Local user agent: {fingerprint_format.fingerprint.navigator.userAgent}")
                 
@@ -408,16 +401,14 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
             print(f"Browser endpoint URL: {endpoint_url}")
 
             # Connect with playwright and verify constructed fingerprint
-            print("Testing constructed fingerprint by checking user agent...")
+            print("Testing constructed fingerprint by checking user agent via navigator...")
             async with async_playwright() as p:
                 browser = await p.chromium.connect_over_cdp(endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 context = browser.contexts[0] if browser.contexts else await browser.new_context()
 
                 page = await context.new_page()
-                await page.goto("https://httpbin.org/user-agent", timeout=120000)
-                response = await page.evaluate("() => JSON.parse(document.body.textContent)")
-                user_agent = response["user-agent"]
+                user_agent = await page.evaluate("() => navigator.userAgent")
                 print(f"Remote user agent: {user_agent}")
                 print(f"Expected user agent: {fingerprint_format.fingerprint.navigator.userAgent}")
                 

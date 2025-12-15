@@ -308,10 +308,17 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue(dir_result.success, "Error creating directory")
 
                 # Create a 1GB file using dd command
+                # Note: Creating 1GB file may take time, so we use a longer timeout
                 print(f"Creating 1GB file at {test_file_path}")
-                create_file_cmd = f"dd if=/dev/zero of={test_file_path} bs=1M count=1024"
-                cmd_result = session1.command.execute_command(create_file_cmd)
-                self.assertTrue(cmd_result.success, "Error creating 1GB file")
+                create_file_cmd = f"dd if=/dev/zero of={test_file_path} bs=1M count=1024 2>&1"
+                # Use a longer timeout for large file creation (5 minutes = 300000ms)
+                cmd_result = session1.command.execute_command(create_file_cmd, timeout_ms=300000)
+                if not cmd_result.success:
+                    error_msg = f"Error creating 1GB file: {cmd_result.error_message or 'Unknown error'}"
+                    if cmd_result.output:
+                        error_msg += f"\nCommand output: {cmd_result.output}"
+                    print(f"❌ {error_msg}")
+                    self.fail(error_msg)
                 print(f"Created 1GB file: {cmd_result.output}")
 
                 # 5. Sync to trigger file upload

@@ -41,6 +41,8 @@ class TestGetAndLoadInternalContextRequest(unittest.TestCase):
 
     def test_request_get_params(self):
         """Test get_params method."""
+        import json
+
         request = GetAndLoadInternalContextRequest(
             session_id="session-456",
             context_types=["file_transfer"],
@@ -49,7 +51,11 @@ class TestGetAndLoadInternalContextRequest(unittest.TestCase):
         params = request.get_params()
 
         self.assertEqual(params["sessionId"], "session-456")
-        self.assertEqual(params["contextTypes"], ["file_transfer"])
+        # contextTypes is serialized as JSON string for query parameters
+        self.assertEqual(params["contextTypes"], '["file_transfer"]')
+        # Verify it can be parsed back to original list
+        parsed = json.loads(params["contextTypes"])
+        self.assertEqual(parsed, ["file_transfer"])
 
     def test_request_get_params_empty(self):
         """Test get_params with empty values."""

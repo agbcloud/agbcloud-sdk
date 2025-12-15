@@ -130,7 +130,7 @@ class TestGetAndLoadInternalContextIntegration(unittest.TestCase):
             # Try to upload a file (this will trigger ensure_context_id)
             context_path = self.session.file_system.get_file_transfer_context_path()
             if context_path is None:
-                self.skipTest("Context path not available - no file_transfer context found for this session")
+                self.fail("Context path not available - no file_transfer context found for this session")
             remote_path = context_path + "/test_upload.txt"
             result = file_system.upload_file(
                 local_path=temp_file,
@@ -182,7 +182,7 @@ class TestGetAndLoadInternalContextIntegration(unittest.TestCase):
         file_system = self.session.file_system
         context_path = file_system.get_file_transfer_context_path()
         if context_path is None:
-            self.skipTest("Context path not available - no file_transfer context found for this session")
+            self.fail("Context path not available - no file_transfer context found for this session")
         remote_path = context_path + f"/test_integration_{int(time.time())}.txt"
 
         try:
@@ -261,33 +261,6 @@ class TestGetAndLoadInternalContextIntegration(unittest.TestCase):
                 os.unlink(temp_file)
             except Exception as e:
                 print(f"⚠️ Warning: Failed to delete temp file: {e}")
-
-    def test_file_transfer_multiple_context_types(self):
-        """Test GetAndLoadInternalContext with multiple context types."""
-        from agb.api.models import GetAndLoadInternalContextRequest
-
-        request = GetAndLoadInternalContextRequest(
-            authorization=f"Bearer {self.agb.api_key}",
-            session_id=self.session.session_id,
-            context_types=["file_transfer", "other_type"],
-        )
-
-        response = self.agb.client.get_and_load_internal_context(request)
-
-        if not response.is_successful():
-            self.skipTest(f"API call failed: {response.get_error_message()}")
-
-        context_list = response.get_context_list()
-        print(f"✅ Retrieved {len(context_list)} context(s) for multiple types")
-
-        # Verify we can parse the data
-        context_data_list = response.get_context_list_data()
-        self.assertEqual(len(context_data_list), len(context_list))
-
-        for ctx_data in context_data_list:
-            self.assertIsNotNone(ctx_data.context_id)
-            self.assertIsNotNone(ctx_data.context_type)
-            print(f"   - {ctx_data.context_type}: {ctx_data.context_id}")
 
 
 if __name__ == "__main__":

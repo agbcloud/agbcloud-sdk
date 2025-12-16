@@ -139,11 +139,7 @@ to check the session status until it becomes PAUSED or until timeout.
     SessionPauseResult: Result containing the request ID, success status, and final session status.
   - success (bool): True if the session was successfully paused
   - request_id (str): Unique identifier for this API request
-  - status (str): Final session status (should be "PAUSED" if successful)
   - error_message (str): Error description (if success is False)
-  - code (str): API response code (if available)
-  - message (str): API response message (if available)
-  - http_status_code (int): HTTP status code (if available)
 
 ### pause\_async
 
@@ -170,11 +166,7 @@ asynchronously to check the session status until it becomes PAUSED or until time
     SessionPauseResult: Result containing the request ID, success status, and final session status.
   - success (bool): True if the session was successfully paused
   - request_id (str): Unique identifier for this API request
-  - status (str): Final session status (should be "PAUSED" if successful)
   - error_message (str): Error description (if success is False)
-  - code (str): API response code (if available)
-  - message (str): API response message (if available)
-  - http_status_code (int): HTTP status code (if available)
 
 ### resume
 
@@ -201,11 +193,7 @@ to check the session status until it becomes RUNNING or until timeout.
     SessionResumeResult: Result containing the request ID, success status, and final session status.
   - success (bool): True if the session was successfully resumed
   - request_id (str): Unique identifier for this API request
-  - status (str): Final session status (should be "RUNNING" if successful)
   - error_message (str): Error description (if success is False)
-  - code (str): API response code (if available)
-  - message (str): API response message (if available)
-  - http_status_code (int): HTTP status code (if available)
 
 ### resume\_async
 
@@ -232,11 +220,7 @@ asynchronously to check the session status until it becomes RUNNING or until tim
     SessionResumeResult: Result containing the request ID, success status, and final session status.
   - success (bool): True if the session was successfully resumed
   - request_id (str): Unique identifier for this API request
-  - status (str): Final session status (should be "RUNNING" if successful)
   - error_message (str): Error description (if success is False)
-  - code (str): API response code (if available)
-  - message (str): API response message (if available)
-  - http_status_code (int): HTTP status code (if available)
 
 ## Related Resources
 

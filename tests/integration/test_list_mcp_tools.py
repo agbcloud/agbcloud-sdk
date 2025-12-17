@@ -34,11 +34,6 @@ def test_list_mcp_tools():
         api_key = get_api_key()
         print(f"Using API Key: {api_key[:10]}...{api_key[-4:]}")
 
-        print("Initializing AGB client...")
-
-        # Create AGB instance
-        agb = AGB(api_key=api_key)
-        print(f"✅ AGB client initialized successfully")
 
         print("\n" + "=" * 60)
         print("Testing list_mcp_tools interface...")
@@ -46,10 +41,10 @@ def test_list_mcp_tools():
 
         # Import the client directly to test the interface
         from agb.api.client import Client
-        from agb.config import Config
+        from agb.config import load_config
 
         # Create config
-        cfg = Config(endpoint="sdk-api.agb.cloud", timeout_ms=60000)
+        cfg = load_config()
 
         # Create client
         client = Client(cfg)

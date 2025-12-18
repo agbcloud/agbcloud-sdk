@@ -103,16 +103,20 @@ Get a link associated with the current session.
 def delete(sync_context: bool = False) -> DeleteResult
 ```
 
-Delete a session by session object.
+Delete this session and release all associated resources.
 
 **Arguments**:
 
-- `sync_context` _bool_ - Whether to sync context before deletion. Defaults to False.
+- `sync_context` _bool, optional_ - Whether to sync context data (trigger file uploads)
+  before deleting the session. Defaults to False.
 
 
 **Returns**:
 
-    DeleteResult: Result indicating success or failure and request ID.
+    DeleteResult: Result indicating success or failure with request ID.
+  - success (bool): True if deletion succeeded
+  - error_message (str): Error details if deletion failed
+  - request_id (str): Unique identifier for this API request
 
 ### pause
 

@@ -2,6 +2,7 @@
 File transfer module for uploading and downloading files between local and OSS.
 """
 
+import asyncio
 import json
 import os
 import time
@@ -65,7 +66,7 @@ class FileTransfer:
     def ensure_context_id(self) -> Tuple[bool, Optional[str]]:
         """
         Lazy-load the file_transfer context ID for this session.
-        This calls GetAndLoadInternalContext with SessionId and ContextTypes=["file_transfer"].
+        This calls GetAndLoadInternalContext with sessionId and contextTypes=["file_transfer"].
         """
         if self.context_id:
             return True, ""
@@ -76,7 +77,7 @@ class FileTransfer:
                 session_id=self._session.get_session_id(),
                 context_types=["file_transfer"],
             )
-            log_api_call("GetAndLoadInternalContext", f"SessionId={self._session.get_session_id()}, ContextTypes=file_transfer")
+            log_api_call("GetAndLoadInternalContext", f"sessionId={self._session.get_session_id()}, contextTypes=file_transfer")
 
             client = self._agb.client
             if hasattr(client, "get_and_load_internal_context_async") and callable(
@@ -88,7 +89,7 @@ class FileTransfer:
 
             # Extract context_id from response data
             # Response has structure: response.data is a list of context items
-            # Each item has ContextId, ContextType, and ContextPath
+            # Each item has contextId, contextType, and contextPath
             try:
                 response_body = json.dumps(response.json_data, ensure_ascii=False, indent=2)
             except Exception:
@@ -106,8 +107,8 @@ class FileTransfer:
             if isinstance(data, list) and len(data) > 0:
                 for item in data:
                     if isinstance(item, dict):
-                        context_id = item.get("ContextId", "")
-                        context_path = item.get("ContextPath", "")
+                        context_id = item.get("contextId", "")
+                        context_path = item.get("contextPath", "")
                         if context_id and context_path:
                             self.context_id = context_id
                             self.context_path = context_path
@@ -452,9 +453,8 @@ class FileTransfer:
         self, mode: str, remote_path: str = "", context_id: str = ""
     ) -> Optional[str]:
         """
-        Compatibility wrapper for session.context.sync_context which may be sync or async:
-        - Try async call first
-        - Fall back to sync call using asyncio.to_thread
+        Compatibility wrapper for session.context.sync which is an async coroutine.
+        Uses asyncio to execute the coroutine in a synchronous context.
         Returns request_id if available
         """
         mode = mode.lower().strip()
@@ -463,36 +463,48 @@ class FileTransfer:
         print(
             f"session.context.sync(mode={mode}, path={remote_path}, context_id={context_id})"
         )
-        # Try as coroutine with mode, path, and context_id parameters
-        try:
-            result = sync_fn(
-                mode=mode,
-                path=remote_path if remote_path else None,
-                context_id=context_id if context_id else None,
-            )
-            out = sync_fn(mode=mode,
+
+        async def _call_sync():
+            """Helper function to call sync with different parameter combinations"""
+            # Try as coroutine with mode, path, and context_id parameters
+            try:
+                return await sync_fn(
+                    mode=mode,
                     path=remote_path if remote_path else None,
                     context_id=context_id if context_id else None,
                 )
-        except TypeError:
-            # Backend may not support all parameters, try with mode and path only
-            try:
-                result = sync_fn(mode=mode, path=remote_path if remote_path else None)
-                out = sync_fn(mode=mode, path=remote_path if remote_path else None
-                    )
             except TypeError:
-                # Backend may not support mode or path parameter
+                # Backend may not support all parameters, try with mode and path only
                 try:
-                    result = sync_fn(mode=mode)
-                    out = sync_fn(mode=mode)
+                    return await sync_fn(
+                        mode=mode,
+                        path=remote_path if remote_path else None
+                    )
                 except TypeError:
-                    # Backend may not support mode parameter
-                    result = sync_fn()
-                    out = sync_fn
+                    # Backend may not support mode or path parameter
+                    try:
+                        return await sync_fn(mode=mode)
+                    except TypeError:
+                        # Backend may not support mode parameter
+                        return await sync_fn()
+
+        # Run the async coroutine
+        try:
+            # Check if there's a running event loop
+            asyncio.get_running_loop()
+            # If we get here, there's a running loop, so we need to use a thread
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, _call_sync())
+                result = future.result()
+        except RuntimeError:
+            # No event loop is running, we can use asyncio.run()
+            result = asyncio.run(_call_sync())
+
         # Return request_id if available
-        success = getattr(out, "success", False)
+        success = getattr(result, "success", False)
         print(f"   Result: {success}")
-        return getattr(out, "request_id", None)
+        return getattr(result, "request_id", None)
 
     def _wait_for_task(
         self,

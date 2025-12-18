@@ -32,15 +32,15 @@ class GetAndLoadInternalContextResponseBodyData:
         Create GetAndLoadInternalContextResponseBodyData from dictionary
 
         Args:
-            data: Dictionary containing ContextId, ContextType, and ContextPath
+            data: Dictionary containing contextId, contextType, and contextPath
 
         Returns:
             GetAndLoadInternalContextResponseBodyData: Parsed data object
         """
         return cls(
-            context_id=data.get("ContextId", ""),
-            context_type=data.get("ContextType", ""),
-            context_path=data.get("ContextPath", ""),
+            context_id=data.get("contextId", ""),
+            context_type=data.get("contextType", ""),
+            context_path=data.get("contextPath", ""),
         )
 
 
@@ -120,7 +120,7 @@ class GetAndLoadInternalContextResponse:
     def get_context_list(self) -> List[Dict[str, str]]:
         """
         Get list of context items from response as dictionaries.
-        Each item contains ContextId, ContextType, and ContextPath.
+        Each item contains contextId, contextType, and contextPath.
 
         Returns:
             List[Dict[str, str]]: List of context items as dictionaries

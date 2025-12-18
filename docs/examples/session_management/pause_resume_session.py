@@ -289,14 +289,6 @@ def multiple_pause_resume_cycles() -> None:
             print(f"✗ Failed to delete session: {delete_result.error_message}")
 
 
-        # Clean up
-        print("\nCleaning up...")
-        delete_result = agb.delete(session)
-        if delete_result.success:
-            print(f"✓ Session deleted successfully")
-        else:
-            print(f"✗ Failed to delete session: {delete_result.error_message}")
-
 
 def main() -> None:
     """Run all examples."""

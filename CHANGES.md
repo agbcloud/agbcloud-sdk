@@ -1,5 +1,48 @@
 # Changelog
 
+## [0.7.0] - 2025-12-18
+
+### New Features
+- **Browser Fingerprint Enhancement**: Comprehensive browser fingerprint management with persistence, local sync, and advanced configuration options
+- **Computer Automation Module**: Full desktop automation capabilities including:
+  - Screenshot capture support for AGB sessions
+  - Keyboard input functionality with comprehensive key support
+  - Mouse operations with button and scroll direction enums
+  - Window listing and management functionality
+  - Application operations support
+- **File Transfer Function**: Complete file transfer functionality for moving files between local and remote environments
+- **Session Pause and Resume**: Added pause and resume functionality for sessions to optimize resource usage and costs
+- **Async Session Deletion**: Migrated session deletion API from `release_mcp_session` to `delete_session_async` with polling support
+- **Browser Type Configuration**: Support for browser type and command arguments settings for enhanced browser control
+- **MCP Access Documentation**: Comprehensive guide for MCP (Model Context Protocol) access and configuration
+
+### Enhancements
+- **Context Manager**: Improved error handling by returning error results instead of raising exceptions in context sync validation
+- **Browser Agent**: Enhanced browser agent with improved integration tests and better error handling
+- **API Documentation**: Added fingerprint module to API documentation generation
+- **Code Examples**: Optimized and improved code examples throughout documentation
+
+### Documentation
+- Added MCP access guide with comprehensive configuration instructions
+- Added examples for application and window operations
+- Updated text input examples in documentation
+- Corrected documentation regarding command execution instructions
+- Standardized guides structure to match template
+- Fixed ContextManager docstring to use AGB instead of AgentBay
+- Removed example code from ContextManager docstring
+- Added file transfer guide markdown
+
+### Refactoring
+- Removed unused `http_port` and `token` fields from session response models
+- Improved context sync validation to return error results instead of exceptions
+- Cleaned up unrelated files and code
+
+### Testing & CI/CD
+- Added comprehensive unit and integration tests for pause and resume functionality
+- Optimized CI/CD pipeline summary with switch state for better visibility
+- Enhanced test coverage for computer module, file transfer, and browser fingerprint features
+- Fixed context manager sync tests to match new validation logic
+
 ## [0.6.0] - 2025-12-04
 
 ### New Features
@@ -26,7 +69,6 @@
 - Improved test stability with proper wait times and resource cleanup
 - Added CI bot guard to prevent infinite loops and enhanced error detection
 - Fixed AONE documentation pipeline configuration and optimized documentation workflow
-
 
 ## [0.5.0] - 2025-11-20
 

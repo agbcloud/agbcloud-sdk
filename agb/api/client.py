@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import aiohttp
 
-from agb.api.models import (
+from .models import (
     CallMcpToolRequest,
     CallMcpToolResponse,
     CreateSessionRequest,
@@ -30,6 +30,14 @@ from agb.api.models import (
     SetLabelResponse,
     GetLabelRequest,
     GetLabelResponse,
+    # Pause and Resume imports
+    PauseSessionRequest,
+    PauseSessionResponse,
+    ResumeSessionRequest,
+    ResumeSessionResponse,
+    # Delete session async imports
+    DeleteSessionAsyncRequest,
+    DeleteSessionAsyncResponse,
     # Context related imports
     ListContextsRequest,
     ListContextsResponse,
@@ -580,3 +588,105 @@ class Client:
         finally:
             # Always close the HTTP client to release resources
             http_client.close()
+
+    def pause_session(self, request: PauseSessionRequest) -> PauseSessionResponse:
+        """
+        Pause session using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        if not request.session_id:
+            raise ValueError("session_id is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.pause_session(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    async def pause_session_async(self, request: PauseSessionRequest) -> PauseSessionResponse:
+        """
+        Pause session asynchronously using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        if not request.session_id:
+            raise ValueError("session_id is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = await http_client.pause_session_async(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+
+    def resume_session(self, request: ResumeSessionRequest) -> ResumeSessionResponse:
+        """
+        Resume session using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        if not request.session_id:
+            raise ValueError("session_id is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.resume_session(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    async def resume_session_async(self, request: ResumeSessionRequest) -> ResumeSessionResponse:
+        """
+        Resume session asynchronously using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        if not request.session_id:
+            raise ValueError("session_id is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = await http_client.resume_session_async(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+
+    def delete_session_async(self, request: "DeleteSessionAsyncRequest") -> "DeleteSessionAsyncResponse":
+        """
+        Delete session asynchronously using HTTP client
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        if not request.session_id:
+            raise ValueError("session_id is required")
+
+        # Get HTTP client and make request directly with the input request
+        http_client = self._get_http_client(request.authorization)
+
+        try:
+            response = http_client.delete_session_async(request)
+            return response
+        finally:
+            # Always close the HTTP client to release resources
+            http_client.close()
+

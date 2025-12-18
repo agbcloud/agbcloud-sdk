@@ -36,7 +36,7 @@ async def test_browser_type(browser_type: str | None, description: str):
 
     # Create session with computer use image
     print("\n1. Creating session with computer use image...")
-    params = CreateSessionParams(image_id="agb-linux-test-5")
+    params = CreateSessionParams(image_id="agb-computer-use-ubuntu-2204")
     result = agb.create(params)
 
     if not result.success:
@@ -155,31 +155,35 @@ async def quick_example():
     agb = AGB(api_key=api_key)
 
     # Create session
-    params = CreateSessionParams(image_id="agb-linux-test-5")
+    params = CreateSessionParams(image_id="agb-computer-use-ubuntu-2204")
     result = agb.create(params)
-    session = result.session
 
-    try:
-        # Simply specify browser_type in BrowserOption
-        option = BrowserOption(browser_type="chrome")
-        success = await session.browser.initialize_async(option)
+    if result.success:
+        session = result.session
 
-        if success:
-            print("✓ Chrome browser initialized successfully")
+        try:
+            # Simply specify browser_type in BrowserOption
+            option = BrowserOption(browser_type="chrome")
+            success = await session.browser.initialize_async(option)
 
-            # Get endpoint and use with Playwright
-            endpoint_url = session.browser.get_endpoint_url()
-            async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
-                page = await browser.contexts[0].new_page()
+            if success:
+                print("✓ Chrome browser initialized successfully")
 
-                await page.goto("https://example.com")
-                title = await page.title()
-                print(f"✓ Page title: {title}")
+                # Get endpoint and use with Playwright
+                endpoint_url = session.browser.get_endpoint_url()
+                async with async_playwright() as p:
+                    browser = await p.chromium.connect_over_cdp(endpoint_url)
+                    page = await browser.contexts[0].new_page()
 
-                await browser.close()
-    finally:
-        session.delete()
+                    await page.goto("https://example.com")
+                    title = await page.title()
+                    print(f"✓ Page title: {title}")
+
+                    await browser.close()
+        finally:
+            session.delete()
+    else:
+        print(f"Failed to create session: {result.error_message}")
 
 
 if __name__ == "__main__":

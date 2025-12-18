@@ -38,7 +38,7 @@ class TestBrowserTypeIntegration(unittest.TestCase):
         """Create a session with computer use image (required for browser type selection)."""
         # Create session parameters with computer use image
         session_param = CreateSessionParams()
-        session_param.image_id = "agb-linux-test-5"  # Required for browser type selection
+        session_param.image_id = "agb-computer-use-ubuntu-2204"  # Required for browser type selection
 
         print("Creating session with computer use image...")
         result = self.agb.create(session_param)
@@ -63,24 +63,24 @@ class TestBrowserTypeIntegration(unittest.TestCase):
     def test_browser_type_default_none(self):
         """Test that None is the default browser type."""
         print("\n=== Testing default browser type (None) ===")
-        
+
         # Create browser option with default settings
         browser_option = BrowserOption()
-        
+
         # Verify default browser type is None
         self.assertIsNone(browser_option.browser_type)
         print(f"Default browser type: {browser_option.browser_type}")
-        
+
         # Initialize browser
         print("Initializing browser with default options...")
         success = self.session.browser.initialize(browser_option)
         self.assertTrue(success, "Failed to initialize browser")
         print("Browser initialized successfully")
-        
+
         # Verify browser is initialized
         self.assertTrue(self.session.browser.is_initialized())
         print("Browser is initialized")
-        
+
         # Get endpoint URL
         endpoint_url = self.session.browser.get_endpoint_url()
         self.assertIsNotNone(endpoint_url)
@@ -89,24 +89,24 @@ class TestBrowserTypeIntegration(unittest.TestCase):
     def test_browser_type_chrome(self):
         """Test Chrome browser type selection."""
         print("\n=== Testing Chrome browser type ===")
-        
+
         # Create browser option with Chrome type
         browser_option = BrowserOption(browser_type="chrome")
-        
+
         # Verify browser type is set correctly
         self.assertEqual(browser_option.browser_type, "chrome")
         print(f"Browser type set to: {browser_option.browser_type}")
-        
+
         # Initialize browser
         print("Initializing browser with Chrome type...")
         success = self.session.browser.initialize(browser_option)
         self.assertTrue(success, "Failed to initialize browser with Chrome type")
         print("Browser initialized successfully with Chrome")
-        
+
         # Verify browser is initialized
         self.assertTrue(self.session.browser.is_initialized())
         print("Browser is initialized")
-        
+
         # Get endpoint URL
         endpoint_url = self.session.browser.get_endpoint_url()
         self.assertIsNotNone(endpoint_url)
@@ -115,24 +115,24 @@ class TestBrowserTypeIntegration(unittest.TestCase):
     def test_browser_type_chromium_explicit(self):
         """Test explicit Chromium browser type selection."""
         print("\n=== Testing explicit Chromium browser type ===")
-        
+
         # Create browser option with explicit Chromium type
         browser_option = BrowserOption(browser_type="chromium")
-        
+
         # Verify browser type is set correctly
         self.assertEqual(browser_option.browser_type, "chromium")
         print(f"Browser type set to: {browser_option.browser_type}")
-        
+
         # Initialize browser
         print("Initializing browser with explicit Chromium type...")
         success = self.session.browser.initialize(browser_option)
         self.assertTrue(success, "Failed to initialize browser with Chromium type")
         print("Browser initialized successfully with Chromium")
-        
+
         # Verify browser is initialized
         self.assertTrue(self.session.browser.is_initialized())
         print("Browser is initialized")
-        
+
         # Get endpoint URL
         endpoint_url = self.session.browser.get_endpoint_url()
         self.assertIsNotNone(endpoint_url)
@@ -141,34 +141,34 @@ class TestBrowserTypeIntegration(unittest.TestCase):
     def test_browser_type_invalid(self):
         """Test that invalid browser types raise ValueError."""
         print("\n=== Testing invalid browser type validation ===")
-        
+
         # Test invalid browser type
         with self.assertRaises(ValueError) as context:
             BrowserOption(browser_type="firefox")
-        
+
         self.assertIn("browser_type must be 'chrome' or 'chromium'", str(context.exception))
         print("Invalid browser type correctly rejected")
-        
+
         # Test another invalid browser type
         with self.assertRaises(ValueError) as context:
             BrowserOption(browser_type="edge")
-        
+
         self.assertIn("browser_type must be 'chrome' or 'chromium'", str(context.exception))
         print("Another invalid browser type correctly rejected")
 
     def test_browser_type_standard_image_fallback(self):
         """Test that browser type works with standard browser images (should fallback to default behavior)."""
         print("\n=== Testing browser type with standard browser image ===")
-        
+
         # Create a new session with standard browser image
         session_param = CreateSessionParams()
         session_param.image_id = "agb-browser-use-1"  # Standard browser image
-        
+
         print("Creating session with standard browser image...")
         result = self.agb.create(session_param)
         self.assertTrue(result.success, f"Failed to create session: {result.error_message}")
         session = result.session
-        
+
         try:
             # Test Chrome browser type with standard image (should still work)
             browser_option = BrowserOption(browser_type="chrome")
@@ -176,11 +176,11 @@ class TestBrowserTypeIntegration(unittest.TestCase):
             success = session.browser.initialize(browser_option)
             self.assertTrue(success, "Failed to initialize browser with Chrome type on standard image")
             print("Browser initialized successfully with Chrome on standard image")
-            
+
             # Verify browser is initialized
             self.assertTrue(session.browser.is_initialized())
             print("Browser is initialized")
-            
+
         finally:
             # Clean up the additional session
             try:

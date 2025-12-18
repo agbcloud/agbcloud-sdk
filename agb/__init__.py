@@ -8,6 +8,7 @@ from .context_manager import ContextManager, ContextStatusData, ContextInfoResul
 from .context_sync import ContextSync, SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy, UploadStrategy, DownloadStrategy, UploadMode, MappingPolicy
 from .extension import ExtensionsService, ExtensionOption, Extension
 from .modules.computer import Computer, MouseButton, ScrollDirection
+from .model.response import SessionPauseResult, SessionResumeResult
 
 __all__ = [
     "AGB", "Session", "CreateSessionParams", "HTTPClient", "Client",
@@ -17,5 +18,7 @@ __all__ = [
     "ContextSync", "SyncPolicy", "UploadPolicy", "DownloadPolicy", "DeletePolicy", "ExtractPolicy",
     "UploadStrategy", "DownloadStrategy", "UploadMode", "MappingPolicy", "ExtensionsService","ExtensionOption","Extension",
     # Computer related exports
-    "Computer", "MouseButton", "ScrollDirection"
+    "Computer", "MouseButton", "ScrollDirection",
+    # Pause and resume related exports
+    "SessionPauseResult", "SessionResumeResult",
 ]

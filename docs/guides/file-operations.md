@@ -12,19 +12,24 @@ from agb.session_params import CreateSessionParams
 
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
-session = agb.create(params).session
+result = agb.create(params)
 
-# Basic file operations
-session.file_system.write_file("/tmp/hello.txt", "Hello World!")
-content = session.file_system.read_file("/tmp/hello.txt").content
-print(content)  # "Hello World!"
+if result.success:
+    session = result.session
 
-# Directory operations
-session.file_system.create_directory("/tmp/trash/")
-files = session.file_system.list_directory("/tmp").entries
-session.file_system.move_file("/tmp/hello.txt", "/tmp/trash/hello.txt")
+    # Basic file operations
+    session.file_system.write_file("/tmp/hello.txt", "Hello World!")
+    content = session.file_system.read_file("/tmp/hello.txt").content
+    print(content)  # "Hello World!"
 
-agb.delete(session)
+    # Directory operations
+    session.file_system.create_directory("/tmp/trash/")
+    files = session.file_system.list_directory("/tmp").entries
+    session.file_system.move_file("/tmp/hello.txt", "/tmp/trash/hello.txt")
+
+    agb.delete(session)
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ## Basic Usage (5-10 minutes)
@@ -37,26 +42,31 @@ from agb.session_params import CreateSessionParams
 
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
-session = agb.create(params).session
+result = agb.create(params)
 
-# Write a text file
-write_result = session.file_system.write_file(
-    path="/tmp/example.txt",
-    content="This is example content\nWith multiple lines"
-)
+if result.success:
+    session = result.session
 
-if write_result.success:
-    print("File written successfully")
+    # Write a text file
+    write_result = session.file_system.write_file(
+        path="/tmp/example.txt",
+        content="This is example content\nWith multiple lines"
+    )
 
-    # Read the file back
-    read_result = session.file_system.read_file("/tmp/example.txt")
-    if read_result.success:
-        print("File content:")
-        print(read_result.content)
-    else:
-        print(f"Failed to read file: {read_result.error_message}")
+    if write_result.success:
+        print("File written successfully")
+
+        # Read the file back
+        read_result = session.file_system.read_file("/tmp/example.txt")
+        if read_result.success:
+            print("File content:")
+            print(read_result.content)
+        else:
+            print(f"Failed to read file: {read_result.error_message}")
+        else:
+            print(f"Failed to write file: {write_result.error_message}")
 else:
-    print(f"Failed to write file: {write_result.error_message}")
+    print(f"Failed to create session: {result.error_message}")
 
 agb.delete(session)
 ```
@@ -129,20 +139,25 @@ from agb.session_params import CreateSessionParams
 
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
-session = agb.create(params).session
+result = agb.create(params)
 
-files_to_create = {
-    "/tmp/file1.txt": "Content of file 1",
-    "/tmp/file2.txt": "Content of file 2",
-    "/tmp/file3.txt": "Content of file 3"
-}
+if result.success:
+    session = result.session
 
-results = process_multiple_files(session, files_to_create)
-for result in results:
-    status = "✅" if result["success"] else "❌"
-    print(f"{status} {result['filename']}")
+    files_to_create = {
+        "/tmp/file1.txt": "Content of file 1",
+        "/tmp/file2.txt": "Content of file 2",
+        "/tmp/file3.txt": "Content of file 3"
+    }
 
-agb.delete(session)
+    results = process_multiple_files(session, files_to_create)
+    for result in results:
+            status = "✅" if result["success"] else "❌"
+            print(f"{status} {result['filename']}")
+
+        agb.delete(session)
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ### File Processing Pipeline
@@ -182,26 +197,31 @@ from agb.session_params import CreateSessionParams
 
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
-session = agb.create(params).session
+result = agb.create(params)
 
-# Create input file
-session.file_system.write_file("/tmp/input.txt", "hello world\nthis is a test")
+if result.success:
+    session = result.session
 
-# Process file
-success, result = file_processing_pipeline(
-    session,
-    "/tmp/input.txt",
-    "/tmp/output.txt"
-)
+    # Create input file
+    session.file_system.write_file("/tmp/input.txt", "hello world\nthis is a test")
 
-if success:
-    print("Pipeline completed successfully:")
-    print(f"Input size: {result['input_size']} bytes")
-    print(f"Output size: {result['output_size']} bytes")
+    # Process file
+    success, result = file_processing_pipeline(
+        session,
+        "/tmp/input.txt",
+        "/tmp/output.txt"
+    )
+
+    if success:
+        print("Pipeline completed successfully:")
+        print(f"Input size: {result['input_size']} bytes")
+        print(f"Output size: {result['output_size']} bytes")
+    else:
+        print(f"Pipeline failed: {result}")
+
+    agb.delete(session)
 else:
-    print(f"Pipeline failed: {result}")
-
-agb.delete(session)
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ### Working with Different File Types
@@ -254,24 +274,29 @@ from agb.session_params import CreateSessionParams
 
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
-session = agb.create(params).session
+result = agb.create(params)
 
-# JSON example
-json_data = {"name": "John", "age": 30, "city": "New York"}
-success, result = handle_json_file(session, "/tmp/data.json", json_data)
-if success:
-    print("JSON data:", result)
+if result.success:
+    session = result.session
 
-# CSV example
-csv_data = [
-    {"name": "Alice", "age": 25, "city": "Boston"},
-    {"name": "Bob", "age": 30, "city": "Chicago"}
-]
-success, result = handle_csv_file(session, "/tmp/data.csv", csv_data)
-if success:
-    print("CSV data:", result)
+    # JSON example
+    json_data = {"name": "John", "age": 30, "city": "New York"}
+    success, result = handle_json_file(session, "/tmp/data.json", json_data)
+    if success:
+        print("JSON data:", result)
 
-agb.delete(session)
+    # CSV example
+    csv_data = [
+        {"name": "Alice", "age": 25, "city": "Boston"},
+        {"name": "Bob", "age": 30, "city": "Chicago"}
+    ]
+    success, result = handle_csv_file(session, "/tmp/data.csv", csv_data)
+    if success:
+        print("CSV data:", result)
+
+    agb.delete(session)
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ### Directory Monitoring
@@ -289,47 +314,51 @@ def simple_directory_monitoring():
 
     agb = AGB()
     session_params = CreateSessionParams(image_id="agb-code-space-1")
-    session = agb.create(session_params).session
+    result = agb.create(session_params)
 
-    # Create directory to monitor
-    session.file_system.create_directory("/tmp/watch_demo")
+    if result.success:
+        session = result.session
 
-    # Define callback function
-    def on_file_change(events):
-        """Handle file change events"""
-        print(f"Detected {len(events)} changes:")
-        for event in events:
-            print(f"  {event.event_type}: {event.path} ({event.path_type})")
+        # Create directory to monitor
+        session.file_system.create_directory("/tmp/watch_demo")
 
-    try:
-        # Start monitoring
-        monitor_thread = session.file_system.watch_directory(
-            path="/tmp/watch_demo",
-            callback=on_file_change,
-            interval=1.0  # Check every 1 second
-        )
-        monitor_thread.start()
-        print("Directory monitoring started...")
+        # Define callback function
+        def on_file_change(events):
+            """Handle file change events"""
+            print(f"Detected {len(events)} changes:")
+            for event in events:
+                print(f"  {event.event_type}: {event.path} ({event.path_type})")
 
-        # Simulate file operations
-        print("Creating files...")
-        session.file_system.write_file("/tmp/watch_demo/file1.txt", "Content 1")
-        time.sleep(2)
+        try:
+            # Start monitoring
+            monitor_thread = session.file_system.watch_directory(
+                path="/tmp/watch_demo",
+                callback=on_file_change,
+                interval=1.0  # Check every 1 second
+            )
+            monitor_thread.start()
+            print("Directory monitoring started...")
 
-        session.file_system.write_file("/tmp/watch_demo/file2.txt", "Content 2")
-        time.sleep(2)
+            # Simulate file operations
+            print("Creating files...")
+            session.file_system.write_file("/tmp/watch_demo/file1.txt", "Content 1")
+            time.sleep(2)
 
-        print("Modifying file...")
-        session.file_system.write_file("/tmp/watch_demo/file1.txt", "Modified content")
-        time.sleep(2)
+            session.file_system.write_file("/tmp/watch_demo/file2.txt", "Content 2")
+            time.sleep(2)
 
-        # Stop monitoring
-        print("Stopping monitoring...")
-        monitor_thread.stop_event.set()
-        monitor_thread.join()
+            print("Modifying file...")
+            session.file_system.write_file("/tmp/watch_demo/file1.txt", "Modified content")
+            time.sleep(2)
 
-    finally:
-        agb.delete(session)
+            # Stop monitoring
+            print("Stopping monitoring...")
+            monitor_thread.stop_event.set()
+            monitor_thread.join()
+        finally:
+            agb.delete(session)
+    else:
+        print(f"Failed to create session: {result.error_message}")
 
 simple_directory_monitoring()
 ```
@@ -343,8 +372,12 @@ def advanced_directory_monitoring():
 
     agb = AGB()
     session_params = CreateSessionParams(image_id="agb-code-space-1")
-    session = agb.create(session_params).session
+    result = agb.create(session_params)
 
+    if not result.success:
+        print(f"Create session failed: {result.error_message}")
+
+    session = result.session
     # Create monitoring directory
     session.file_system.create_directory("/tmp/project_watch")
 

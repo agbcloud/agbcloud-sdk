@@ -45,7 +45,13 @@ params = CreateSessionParams(
     context_syncs=[sync]
 )
 
-session = agb.create(params).session
+result = agb.create(params)
+
+if result.success:
+    session = result.session
+    # Use session...
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ## Basic Usage (5-10 minutes)

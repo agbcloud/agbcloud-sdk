@@ -111,9 +111,9 @@ class TestGetAndLoadInternalContextResponseBodyData(unittest.TestCase):
     def test_body_data_from_dict(self):
         """Test from_dict class method."""
         dict_data = {
-            "ContextId": "ctx-456",
-            "ContextType": "file_transfer",
-            "ContextPath": "/tmp/test",
+            "contextId": "ctx-456",
+            "contextType": "file_transfer",
+            "contextPath": "/tmp/test",
         }
 
         data = GetAndLoadInternalContextResponseBodyData.from_dict(dict_data)
@@ -125,8 +125,8 @@ class TestGetAndLoadInternalContextResponseBodyData(unittest.TestCase):
     def test_body_data_from_dict_partial(self):
         """Test from_dict with partial data."""
         dict_data = {
-            "ContextId": "ctx-789",
-            # Missing ContextType and ContextPath
+            "contextId": "ctx-789",
+            # Missing contextType and contextPath
         }
 
         data = GetAndLoadInternalContextResponseBodyData.from_dict(dict_data)
@@ -156,9 +156,9 @@ class TestGetAndLoadInternalContextResponse(unittest.TestCase):
             "message": "Success",
             "data": [
                 {
-                    "ContextId": "ctx-123",
-                    "ContextType": "file_transfer",
-                    "ContextPath": "/tmp/file_transfer",
+                    "contextId": "ctx-123",
+                    "contextType": "file_transfer",
+                    "contextPath": "/tmp/file_transfer",
                 }
             ],
             "requestId": "req-1",
@@ -217,9 +217,9 @@ class TestGetAndLoadInternalContextResponse(unittest.TestCase):
                 "message": "Success",
                 "data": [
                     {
-                        "ContextId": "ctx-123",
-                        "ContextType": "file_transfer",
-                        "ContextPath": "/tmp/file_transfer",
+                        "contextId": "ctx-123",
+                        "contextType": "file_transfer",
+                        "contextPath": "/tmp/file_transfer",
                     }
                 ],
                 "requestId": "req-3",
@@ -321,14 +321,14 @@ class TestGetAndLoadInternalContextResponse(unittest.TestCase):
             "message": "Success",
             "data": [
                 {
-                    "ContextId": "ctx-1",
-                    "ContextType": "file_transfer",
-                    "ContextPath": "/tmp/file_transfer",
+                    "contextId": "ctx-1",
+                    "contextType": "file_transfer",
+                    "contextPath": "/tmp/file_transfer",
                 },
                 {
-                    "ContextId": "ctx-2",
-                    "ContextType": "other",
-                    "ContextPath": "/tmp/other",
+                    "contextId": "ctx-2",
+                    "contextType": "other",
+                    "contextPath": "/tmp/other",
                 },
             ],
         }
@@ -340,8 +340,8 @@ class TestGetAndLoadInternalContextResponse(unittest.TestCase):
         context_list = response.get_context_list()
 
         self.assertEqual(len(context_list), 2)
-        self.assertEqual(context_list[0]["ContextId"], "ctx-1")
-        self.assertEqual(context_list[1]["ContextId"], "ctx-2")
+        self.assertEqual(context_list[0]["contextId"], "ctx-1")
+        self.assertEqual(context_list[1]["contextId"], "ctx-2")
 
     def test_response_get_context_list_empty(self):
         """Test get_context_list with empty data."""
@@ -382,14 +382,14 @@ class TestGetAndLoadInternalContextResponse(unittest.TestCase):
             "message": "Success",
             "data": [
                 {
-                    "ContextId": "ctx-1",
-                    "ContextType": "file_transfer",
-                    "ContextPath": "/tmp/file_transfer",
+                    "contextId": "ctx-1",
+                    "contextType": "file_transfer",
+                    "contextPath": "/tmp/file_transfer",
                 },
                 {
-                    "ContextId": "ctx-2",
-                    "ContextType": "other",
-                    "ContextPath": "/tmp/other",
+                    "contextId": "ctx-2",
+                    "contextType": "other",
+                    "contextPath": "/tmp/other",
                 },
             ],
         }
@@ -448,9 +448,9 @@ class TestGetAndLoadInternalContextResponse(unittest.TestCase):
             "message": "Success",
             "data": [
                 {
-                    "ContextId": "ctx-1",
-                    "ContextType": "file_transfer",
-                    "ContextPath": "/tmp/file_transfer",
+                    "contextId": "ctx-1",
+                    "contextType": "file_transfer",
+                    "contextPath": "/tmp/file_transfer",
                 }
             ],
         }

@@ -15,12 +15,9 @@ agb = AGB()
 # Create session
 params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
-session = result.session
 
-# Use session modules
-session.code.run_code("print('Hello')", "python")
-session.command.execute_command("ls /tmp")
-session.file_system.read_file("/path/to/file")
+if result.success:
+    session = result.session
 
 # Pause and resume (optional)
 agb.pause(session)   # Pause to save costs
@@ -28,6 +25,15 @@ agb.resume(session)  # Resume when needed
 
 # Clean up
 agb.delete(session)
+    # Use session modules
+    session.code.run_code("print('Hello')", "python")
+    session.command.execute_command("ls /tmp")
+    session.file_system.read_file("/path/to/file")
+
+    # Clean up
+    agb.delete(session)
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ## Basic Usage (5 minutes)
@@ -62,7 +68,12 @@ params = CreateSessionParams(
 )
 
 result = agb.create(params)
-session = result.session
+
+if result.success:
+    session = result.session
+    # Use session...
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ### Session Labels Management
@@ -377,9 +388,9 @@ params = CreateSessionParams(
     labels={"project": "batch-job", "cost-optimization": "enabled"}
 )
 result = agb.create(params)
-session = result.session
 
-try:
+if result.success:
+    session = result.session
     # 2. Do some work
     session.command.execute_command("echo 'Processing data...'")
 
@@ -397,6 +408,9 @@ try:
 
     # 5. Continue work
     session.command.execute_command("echo 'Continuing processing...'")
+else:
+    print(f"Failed to create session: {result.error_message}")
+    exit(1)
 
 finally:
     # Clean up
@@ -410,7 +424,6 @@ finally:
 - **Cannot Delete Paused Sessions**: Currently, paused sessions cannot be deleted directly. Resume the session first, then delete it
 - **Pause/Resume Cycles**: You can pause and resume the same session multiple times
 - **Network Interruption**: If pause/resume is interrupted, the operation can be retried safely
-For complete examples, see [Session Pause/Resume Examples](../examples/session_management/pause_resume_session.py).
 
 ## Session Release
 
@@ -519,13 +532,17 @@ from agb.session_params import CreateSessionParams
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
-session = result.session
 
-try:
+if result.success:
+    session = result.session
+
+    try:
     # Your code here
-    session.code.run_code("print('Hello')", "python")
-finally:
-    agb.delete(session)
+        session.code.run_code("print('Hello')", "python")
+    finally:
+        agb.delete(session)
+else:
+    print(f"Failed to create session: {result.error_message}")
 
 # ✅ Better: Use context manager pattern
 class SessionContext:
@@ -605,35 +622,39 @@ params = CreateSessionParams(
 )
 
 result = agb.create(params)
-session = result.session
 
-# ✅ Better: Use consistent labeling strategy
-class LabelManager:
-    @staticmethod
-    def create_project_labels(project_name: str, environment: str, **kwargs):
-        """Create standardized labels for project sessions"""
-        labels = {
-            "project": project_name,
-            "environment": environment,
-            "created_by": "agb-sdk",
-            "timestamp": str(int(time.time()))
-        }
-        labels.update(kwargs)
-        return labels
+if result.success:
+    session = result.session
 
-# Usage
-labels = LabelManager.create_project_labels(
-    "ml-training",
-    "staging",
-    model_version="v1.3.2",
-    gpu_enabled="true"
-)
+    # ✅ Better: Use consistent labeling strategy
+    class LabelManager:
+        @staticmethod
+        def create_project_labels(project_name: str, environment: str, **kwargs):
+            """Create standardized labels for project sessions"""
+            labels = {
+                "project": project_name,
+                "environment": environment,
+                "created_by": "agb-sdk",
+                "timestamp": str(int(time.time()))
+            }
+            labels.update(kwargs)
+            return labels
 
-params = CreateSessionParams(image_id="agb-code-space-1", labels=labels)
-result = agb.create(params)
-session = result.session
+    # Usage
+    labels = LabelManager.create_project_labels(
+        "ml-training",
+        "staging",
+        model_version="v1.3.2",
+        gpu_enabled="true"
+    )
 
-# Update labels during session lifecycle
+    params = CreateSessionParams(image_id="agb-code-space-1", labels=labels)
+    result = agb.create(params)
+
+    if result.success:
+        session = result.session
+
+        # Update labels during session lifecycle
 session.set_labels({
     **labels,
     "status": "training_complete",
@@ -673,12 +694,16 @@ from agb.session_params import CreateSessionParams
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
-session = result.session
 
-with monitor_session_usage(session, "data_processing") as monitored_session:
-    monitored_session.code.run_code("import pandas as pd; print('Processing data...')", "python")
+if result.success:
+    session = result.session
 
-agb.delete(session)
+    with monitor_session_usage(session, "data_processing") as monitored_session:
+        monitored_session.code.run_code("import pandas as pd; print('Processing data...')", "python")
+
+    agb.delete(session)
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ### 5. Use Pause/Resume for Cost Optimization
@@ -695,33 +720,37 @@ params = CreateSessionParams(
     labels={"cost-optimization": "enabled"}
 )
 result = agb.create(params)
-session = result.session
 
-try:
-    # Do work during business hours
-    session.command.execute_command("python batch_process.py")
+if result.success:
+    session = result.session
 
-    # Pause at end of day to save costs
-    print("End of business day - pausing session")
-    agb.pause(session)
+    try:
+        # Do work during business hours
+        session.command.execute_command("python batch_process.py")
 
-    # Simulate overnight period
-    # In production, this would be actual time passing
-    time.sleep(5)
+        # Pause at end of day to save costs
+        print("End of business day - pausing session")
+        agb.pause(session)
 
-    # Resume next morning
-    print("Start of business day - resuming session")
-    agb.resume(session, timeout=120)
+        # Simulate overnight period
+        # In production, this would be actual time passing
+        time.sleep(5)
 
-    # Continue work
-    session.command.execute_command("python continue_processing.py")
-finally:
-    # Always resume before deleting
-    get_result = agb.get_session(session.session_id)
-    if get_result.success and hasattr(get_result.data, 'status'):
-        if get_result.data.status == "PAUSED":
-            agb.resume(session)
-    agb.delete(session)
+        # Resume next morning
+        print("Start of business day - resuming session")
+        agb.resume(session, timeout=120)
+
+        # Continue work
+        session.command.execute_command("python continue_processing.py")
+    finally:
+        # Always resume before deleting
+        get_result = agb.get_session(session.session_id)
+        if get_result.success and hasattr(get_result.data, 'status'):
+            if get_result.data.status == "PAUSED":
+                agb.resume(session)
+        agb.delete(session)
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ## Troubleshooting
@@ -773,8 +802,13 @@ for task in tasks:
         agb.delete(session)
         params = CreateSessionParams(image_id="agb-code-space-1")
         result = agb.create(params)
-        session = result.session
-        operation_count = 0
+
+        if result.success:
+            session = result.session
+            operation_count = 0
+        else:
+            print(f"Failed to recreate session: {result.error_message}")
+            break
 
     # Execute task
     session.code.run_code(task["code"], "python")

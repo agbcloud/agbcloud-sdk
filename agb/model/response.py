@@ -149,6 +149,7 @@ class GetSessionData:
         session_id: str = "",
         success: bool = False,
         resource_url: str = "",
+        status: str = "",
     ):
         """
         Initialize GetSessionData.
@@ -159,12 +160,14 @@ class GetSessionData:
             session_id (str): Session ID.
             success (bool): Success status.
             resource_url (str): Resource URL for accessing the session.
+            status (str): Status of the session.
         """
         self.app_instance_id = app_instance_id
         self.resource_id = resource_id
         self.session_id = session_id
         self.success = success
         self.resource_url = resource_url
+        self.status = status
 
 class GetSessionResult(ApiResponse):
     """Result of GetSession operations."""
@@ -376,3 +379,52 @@ class DownloadResult:
         self.path = path
         self.local_path = local_path
         self.error = error
+class SessionPauseResult(ApiResponse):
+    """Result of session pause operations."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        error_message: str = "",
+    ):
+        """
+        Initialize a SessionPauseResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request.
+                Defaults to "".
+            success (bool, optional): Whether the pause operation was successful.
+                Defaults to False.
+            error_message (str, optional): Error message if the operation failed.
+                Defaults to "".
+           
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.error_message = error_message
+
+
+class SessionResumeResult(ApiResponse):
+    """Result of session resume operations."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        error_message: str = ""
+    ):
+        """
+        Initialize a SessionResumeResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request.
+                Defaults to "".
+            success (bool, optional): Whether the resume operation was successful.
+                Defaults to False.
+            error_message (str, optional): Error message if the operation failed.
+                Defaults to "".
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.error_message = error_message

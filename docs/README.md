@@ -33,12 +33,17 @@ agb = AGB()
 
 # Example: Create a Code Execution Session
 code_params = CreateSessionParams(image_id="agb-code-space-1")
-code_session = agb.create(code_params).session
+result = agb.create(code_params)
 
-# ... perform operations ...
+if result.success:
+    code_session = result.session
 
-# Clean up
-agb.delete(code_session)
+    # ... perform operations ...
+
+    # Clean up
+    agb.delete(code_session)
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ### Key Capabilities

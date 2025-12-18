@@ -13,6 +13,15 @@ class DummyAGB:
     def get_client(self):
         return self.client
 
+    def get_session(self, session_id):
+        # Default implementation - can be overridden in tests
+        result = MagicMock()
+        result.success = False
+        result.code = "InvalidMcpSession.NotFound"
+        result.error_message = "Session not found"
+        result.http_status_code = 400
+        return result
+
 class TestSession(unittest.TestCase):
     def setUp(self):
         self.agb = DummyAGB()
@@ -90,41 +99,63 @@ class TestSession(unittest.TestCase):
     def test_get_session_id(self):
         self.assertEqual(self.session.get_session_id(), "test_session_id")
 
-    @patch("agb.session.ReleaseSessionRequest")
-    def test_delete_success(self, MockReleaseSessionRequest):
+    @patch("agb.session.DeleteSessionAsyncRequest")
+    def test_delete_success(self, MockDeleteSessionAsyncRequest):
         mock_request = MagicMock()
         mock_response = MagicMock()
-        MockReleaseSessionRequest.return_value = mock_request
-        self.agb.client.release_mcp_session.return_value = mock_response
+        mock_response_body = MagicMock()
+        MockDeleteSessionAsyncRequest.return_value = mock_request
+        self.agb.client.delete_session_async.return_value = mock_response
 
         # Mock the response methods
         mock_response.is_successful.return_value = True
+        mock_response.body = mock_response_body
+        mock_response_body.request_id = "request-123"
         mock_response.request_id = "request-123"
+
+        # Mock get_session to return NotFound error (session deleted)
+        mock_get_session_result = MagicMock()
+        mock_get_session_result.success = False
+        mock_get_session_result.code = "InvalidMcpSession.NotFound"
+        mock_get_session_result.error_message = "Session not found"
+        mock_get_session_result.http_status_code = 400
+        self.agb.get_session = MagicMock(return_value=mock_get_session_result)
 
         result = self.session.delete()
         self.assertIsInstance(result, DeleteResult)
         self.assertEqual(result.request_id, "request-123")
         self.assertTrue(result.success)
 
-        MockReleaseSessionRequest.assert_called_once_with(
+        MockDeleteSessionAsyncRequest.assert_called_once_with(
             authorization="Bearer test_api_key", session_id="test_session_id"
         )
-        self.agb.client.release_mcp_session.assert_called_once_with(mock_request)
+        self.agb.client.delete_session_async.assert_called_once_with(mock_request)
 
-    @patch("agb.session.ReleaseSessionRequest")
-    def test_delete_without_params(self, MockReleaseSessionRequest):
+    @patch("agb.session.DeleteSessionAsyncRequest")
+    def test_delete_without_params(self, MockDeleteSessionAsyncRequest):
         # Test default behavior when no parameters are provided
         mock_request = MagicMock()
         mock_response = MagicMock()
-        MockReleaseSessionRequest.return_value = mock_request
-        self.agb.client.release_mcp_session.return_value = mock_response
+        mock_response_body = MagicMock()
+        MockDeleteSessionAsyncRequest.return_value = mock_request
+        self.agb.client.delete_session_async.return_value = mock_response
 
         # Mock the response methods
         mock_response.is_successful.return_value = True
+        mock_response.body = mock_response_body
+        mock_response_body.request_id = "request-123"
         mock_response.request_id = "request-123"
 
         # Set up context mock object
         self.session.context = MagicMock()
+
+        # Mock get_session to return NotFound error (session deleted)
+        mock_get_session_result = MagicMock()
+        mock_get_session_result.success = False
+        mock_get_session_result.code = "InvalidMcpSession.NotFound"
+        mock_get_session_result.error_message = "Session not found"
+        mock_get_session_result.http_status_code = 400
+        self.agb.get_session = MagicMock(return_value=mock_get_session_result)
 
         # Call delete method without parameters
         result = self.session.delete()
@@ -135,21 +166,24 @@ class TestSession(unittest.TestCase):
         self.session.context.sync.assert_not_called()
 
         # Verify API call is correct
-        MockReleaseSessionRequest.assert_called_once_with(
+        MockDeleteSessionAsyncRequest.assert_called_once_with(
             authorization="Bearer test_api_key", session_id="test_session_id"
         )
-        self.agb.client.release_mcp_session.assert_called_once_with(mock_request)
+        self.agb.client.delete_session_async.assert_called_once_with(mock_request)
 
-    @patch("agb.session.ReleaseSessionRequest")
-    def test_delete_with_sync_context(self, MockReleaseSessionRequest):
+    @patch("agb.session.DeleteSessionAsyncRequest")
+    def test_delete_with_sync_context(self, MockDeleteSessionAsyncRequest):
         # Test behavior when sync_context=True
         mock_request = MagicMock()
         mock_response = MagicMock()
-        MockReleaseSessionRequest.return_value = mock_request
-        self.agb.client.release_mcp_session.return_value = mock_response
+        mock_response_body = MagicMock()
+        MockDeleteSessionAsyncRequest.return_value = mock_request
+        self.agb.client.delete_session_async.return_value = mock_response
 
         # Mock the response methods
         mock_response.is_successful.return_value = True
+        mock_response.body = mock_response_body
+        mock_response_body.request_id = "request-123"
         mock_response.request_id = "request-123"
 
         # Set up context mock object
@@ -164,6 +198,14 @@ class TestSession(unittest.TestCase):
             return sync_result
         self.session.context.sync.return_value = mock_sync()
 
+        # Mock get_session to return NotFound error (session deleted)
+        mock_get_session_result = MagicMock()
+        mock_get_session_result.success = False
+        mock_get_session_result.code = "InvalidMcpSession.NotFound"
+        mock_get_session_result.error_message = "Session not found"
+        mock_get_session_result.http_status_code = 400
+        self.agb.get_session = MagicMock(return_value=mock_get_session_result)
+
         # Call delete method with sync_context=True
         result = self.session.delete(sync_context=True)
         self.assertIsInstance(result, DeleteResult)
@@ -173,16 +215,16 @@ class TestSession(unittest.TestCase):
         self.session.context.sync.assert_called_once()
 
         # Verify API call is correct
-        MockReleaseSessionRequest.assert_called_once_with(
+        MockDeleteSessionAsyncRequest.assert_called_once_with(
             authorization="Bearer test_api_key", session_id="test_session_id"
         )
-        self.agb.client.release_mcp_session.assert_called_once_with(mock_request)
+        self.agb.client.delete_session_async.assert_called_once_with(mock_request)
 
-    @patch("agb.session.ReleaseSessionRequest")
-    def test_delete_failure(self, MockReleaseSessionRequest):
+    @patch("agb.session.DeleteSessionAsyncRequest")
+    def test_delete_failure(self, MockDeleteSessionAsyncRequest):
         mock_request = MagicMock()
-        MockReleaseSessionRequest.return_value = mock_request
-        self.agb.client.release_mcp_session.side_effect = Exception("Test error")
+        MockDeleteSessionAsyncRequest.return_value = mock_request
+        self.agb.client.delete_session_async.side_effect = Exception("Test error")
 
         result = self.session.delete()
         self.assertIsInstance(result, DeleteResult)
@@ -192,33 +234,43 @@ class TestSession(unittest.TestCase):
             f"Failed to delete session {self.session_id}: Test error",
         )
 
-        MockReleaseSessionRequest.assert_called_once_with(
+        MockDeleteSessionAsyncRequest.assert_called_once_with(
             authorization="Bearer test_api_key", session_id="test_session_id"
         )
-        self.agb.client.release_mcp_session.assert_called_once_with(mock_request)
+        self.agb.client.delete_session_async.assert_called_once_with(mock_request)
 
-    @patch("agb.session.ReleaseSessionRequest")
-    def test_delete_api_failure_response(self, MockReleaseSessionRequest):
+    @patch("agb.session.DeleteSessionAsyncRequest")
+    def test_delete_api_failure_response(self, MockDeleteSessionAsyncRequest):
         mock_request = MagicMock()
         mock_response = MagicMock()
-        MockReleaseSessionRequest.return_value = mock_request
-        self.agb.client.release_mcp_session.return_value = mock_response
+        mock_response_body = MagicMock()
+        MockDeleteSessionAsyncRequest.return_value = mock_request
+        self.agb.client.delete_session_async.return_value = mock_response
 
         # Mock the response methods to return a failure response
         mock_response.is_successful.return_value = False
-        mock_response.get_error_message.return_value = "API Error"
+        mock_response.body = mock_response_body
+        mock_response_body.code = "ErrorCode"
+        mock_response_body.message = "API Error"
+        mock_response_body.request_id = "request-123"
         mock_response.request_id = "request-123"
+
+        # Mock to_map to return proper structure
+        mock_response.to_map.return_value = {
+            "json": {},
+            "request_id": "request-123"
+        }
 
         result = self.session.delete()
         self.assertIsInstance(result, DeleteResult)
         self.assertEqual(result.request_id, "request-123")
         self.assertFalse(result.success)
-        self.assertEqual(result.error_message, "API Error")
+        self.assertEqual(result.error_message, "[ErrorCode] API Error")
 
-        MockReleaseSessionRequest.assert_called_once_with(
+        MockDeleteSessionAsyncRequest.assert_called_once_with(
             authorization="Bearer test_api_key", session_id="test_session_id"
         )
-        self.agb.client.release_mcp_session.assert_called_once_with(mock_request)
+        self.agb.client.delete_session_async.assert_called_once_with(mock_request)
 
     @patch("agb.session.SetLabelRequest")
     def test_set_labels_success(self, MockSetLabelRequest):

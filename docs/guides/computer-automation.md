@@ -12,35 +12,40 @@ from agb.session_params import CreateSessionParams
 from agb import MouseButton, ScrollDirection
 
 agb = AGB()
-params = CreateSessionParams(image_id="agb-linux-test-5")
-session = agb.create(params).session
+params = CreateSessionParams(image_id="agb-computer-use-ubuntu-2204")
+result = agb.create(params)
 
-# Mouse operations
-result = session.computer.click_mouse(500, 300, MouseButton.LEFT)
-session.computer.move_mouse(600, 400)
-session.computer.scroll(500, 500, ScrollDirection.DOWN, 3)
+if result.success:
+    session = result.session
 
-# Keyboard operations
-session.computer.input_text("Hello, World!")
-session.computer.press_keys(["Ctrl", "a"])
+    # Mouse operations
+    result = session.computer.click_mouse(500, 300, MouseButton.LEFT)
+    session.computer.move_mouse(600, 400)
+    session.computer.scroll(500, 500, ScrollDirection.DOWN, 3)
 
-# Screen operations
-screenshot_result = session.computer.screenshot()
-screen_size = session.computer.get_screen_size()
+    # Keyboard operations
+    session.computer.input_text("Hello, World!")
+    session.computer.press_keys(["Ctrl", "a"])
 
-# Application management
-apps_result = session.computer.get_installed_apps()
-start_result = session.computer.start_app(start_cmd)
-session.computer.stop_app_by_pname(pname)
+    # Screen operations
+    screenshot_result = session.computer.screenshot()
+    screen_size = session.computer.get_screen_size()
 
-# Window management
-windows_result = session.computer.list_root_windows()
-if windows_result.success and windows_result.windows:
-    window_id = windows_result.windows[0].window_id
-    session.computer.activate_window(window_id)
-    session.computer.maximize_window(window_id)
+    # Application management
+    apps_result = session.computer.get_installed_apps()
+    start_result = session.computer.start_app(start_cmd)
+    session.computer.stop_app_by_pname(pname)
 
-agb.delete(session)
+    # Window management
+    windows_result = session.computer.list_root_windows()
+    if windows_result.success and windows_result.windows:
+        window_id = windows_result.windows[0].window_id
+        session.computer.activate_window(window_id)
+        session.computer.maximize_window(window_id)
+
+    agb.delete(session)
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ## Basic Usage (5 minutes)
@@ -52,11 +57,11 @@ from agb import AGB
 from agb.session_params import CreateSessionParams
 
 agb = AGB()
-params = CreateSessionParams(image_id="agb-linux-test-5")
+params = CreateSessionParams(image_id="agb-computer-use-ubuntu-2204")
 result = agb.create(params)
-session = result.session
 
 if result.success:
+    session = result.session
     print(f"Session created: {session.session_id}")
 else:
     print(f"Failed to create session: {result.error_message}")
@@ -64,7 +69,7 @@ else:
 ```
 
 **Supported System Images:**
-- `agb-linux-test-5` - Linux desktop environment with GUI for computer automation
+- `agb-computer-use-ubuntu-2204` - Linux desktop environment with GUI for computer automation
 
 ## UI Operations (15 minutes)
 
@@ -124,10 +129,10 @@ from agb import MouseButton
 
 # Drag with left button
 result = session.computer.drag_mouse(
-    from_x=100, 
-    from_y=100, 
-    to_x=200, 
-    to_y=200, 
+    from_x=100,
+    from_y=100,
+    to_x=200,
+    to_y=200,
     button=MouseButton.LEFT
 )
 if result.success:
@@ -135,10 +140,10 @@ if result.success:
 
 # Drag with right button
 result = session.computer.drag_mouse(
-    from_x=300, 
-    from_y=300, 
-    to_x=400, 
-    to_y=400, 
+    from_x=300,
+    from_y=300,
+    to_x=400,
+    to_y=400,
     button=MouseButton.RIGHT
 )
 ```
@@ -247,7 +252,7 @@ result = session.computer.get_installed_apps(
 if result.success:
     apps = result.data
     print(f"Found {len(apps)} installed applications")
-    
+
     for app in apps[:5]:  # Show first 5 apps
         print(f"Name: {app.name}")
         print(f"Start Command: {app.start_cmd}")
@@ -271,7 +276,7 @@ result = session.computer.start_app(start_cmd)
 if result.success:
     processes = result.data
     print(f"Application started with {len(processes)} processes")
-    
+
     for process in processes:
         print(f"Process: {process.pname} (PID: {process.pid})")
 ```
@@ -303,11 +308,11 @@ if apps_result.success:
         if "Google Chrome" in app.name.lower():
             target_app = app
             break
-    
+
     if target_app:
         print(f"Starting {target_app.name}...")
         start_result = session.computer.start_app(target_app.start_cmd)
-        
+
         if start_result.success:
             print("Application started successfully!")
 ```
@@ -320,7 +325,7 @@ result = session.computer.list_visible_apps()
 if result.success:
     visible_apps = result.data
     print(f"Found {len(visible_apps)} visible applications")
-    
+
     for app in visible_apps:
         print(f"App: {app.pname} (PID: {app.pid})")
         if app.cmdline:
@@ -349,7 +354,7 @@ start_result = session.computer.start_app(start_cmd)
 
 if start_result.success:
     target_pid = start_result.data[0].pid  # Get first process PID
-    
+
     stop_result = session.computer.stop_app_by_pid(target_pid)
     if stop_result.success:
         print(f"Successfully stopped process {target_pid}")
@@ -393,7 +398,7 @@ result = session.computer.list_root_windows(timeout_ms=5000)
 if result.success:
     windows = result.windows
     print(f"Found {len(windows)} windows")
-    
+
     for window in windows:
         print(f"Title: {window.title}")
         print(f"Window ID: {window.window_id}")
@@ -426,7 +431,7 @@ windows_result = session.computer.list_root_windows()
 
 if windows_result.success and windows_result.windows:
     window_id = windows_result.windows[0].window_id
-    
+
     result = session.computer.activate_window(window_id)
     if result.success:
         print("Window activated successfully")
@@ -439,7 +444,7 @@ windows_result = session.computer.list_root_windows()
 
 if windows_result.success and windows_result.windows:
     window_id = windows_result.windows[0].window_id
-    
+
     result = session.computer.maximize_window(window_id)
     if result.success:
         print("Window maximized successfully")
@@ -452,7 +457,7 @@ windows_result = session.computer.list_root_windows()
 
 if windows_result.success and windows_result.windows:
     window_id = windows_result.windows[0].window_id
-    
+
     result = session.computer.minimize_window(window_id)
     if result.success:
         print("Window minimized successfully")
@@ -465,7 +470,7 @@ windows_result = session.computer.list_root_windows()
 
 if windows_result.success and windows_result.windows:
     window_id = windows_result.windows[0].window_id
-    
+
     result = session.computer.restore_window(window_id)
     if result.success:
         print("Window restored successfully")
@@ -478,7 +483,7 @@ windows_result = session.computer.list_root_windows()
 
 if windows_result.success and windows_result.windows:
     window_id = windows_result.windows[0].window_id
-    
+
     result = session.computer.resize_window(window_id, 800, 600)
     if result.success:
         print("Window resized to 800x600")
@@ -491,7 +496,7 @@ windows_result = session.computer.list_root_windows()
 
 if windows_result.success and windows_result.windows:
     window_id = windows_result.windows[0].window_id
-    
+
     result = session.computer.fullscreen_window(window_id)
     if result.success:
         print("Window set to fullscreen")
@@ -505,7 +510,7 @@ windows_result = session.computer.list_root_windows()
 
 if windows_result.success and windows_result.windows:
     window_id = windows_result.windows[0].window_id
-    
+
     result = session.computer.close_window(window_id)
     if result.success:
         print("Window closed successfully")
@@ -532,57 +537,57 @@ import time
 
 def manage_application_window(session, app_name: str):
     """Complete workflow for managing an application window"""
-    
+
     # Step 1: Start the application
     print(f"Starting {app_name}...")
     start_result = session.computer.start_app(app_name)
     if not start_result.success:
         print(f"Failed to start {app_name}")
         return False
-    
+
     # Step 2: Wait for application to load
     time.sleep(3)
-    
+
     # Step 3: Find the application window
     windows_result = session.computer.list_root_windows()
     if not windows_result.success:
         print("Failed to list windows")
         return False
-    
+
     target_window = None
     for window in windows_result.windows:
         if app_name.lower().replace('.exe', '') in window.title.lower():
             target_window = window
             break
-    
+
     if not target_window:
         print(f"Window for {app_name} not found")
         return False
-    
+
     print(f"Found window: {target_window.title}")
-    
+
     # Step 4: Perform window operations
     window_id = target_window.window_id
-    
+
     # Activate the window
     session.computer.activate_window(window_id)
     print("Window activated")
     time.sleep(1)
-    
+
     # Maximize the window
     session.computer.maximize_window(window_id)
     print("Window maximized")
     time.sleep(1)
-    
+
     # Resize the window
     session.computer.resize_window(window_id, 1024, 768)
     print("Window resized")
     time.sleep(1)
-    
+
     # Restore the window
     session.computer.restore_window(window_id)
     print("Window restored")
-    
+
     return True
 
 # Usage example - Get app from installed apps list
@@ -594,7 +599,7 @@ if apps_result.success and apps_result.data:
         if "Google Chrome" in app.name.lower() :
             target_app = app
             break
-    
+
     if target_app:
         success = manage_application_window(session, target_app.start_cmd)
         if success:
@@ -612,41 +617,41 @@ else:
 ```python
 def automated_text_editing_workflow(session):
     """Automated workflow for text editing"""
-    
+
     # Get installed apps and find a text editor
     apps_result = session.computer.get_installed_apps()
     if not apps_result.success:
         print("Failed to get installed applications")
         return False
-    
+
     # Find a suitable text editor
     first_app = None
     for app in apps_result.data:
         if "Google Chrome" in app.name.lower():
             first_app = app
             break
-    
+
     if not first_app:
         print("No suitable text editor found in installed apps")
         return False
-    
+
     # Start text editor using the proper start command
     start_result = session.computer.start_app(first_app.start_cmd)
     if not start_result.success:
         print(f"Failed to start {first_app.name}")
         return False
-    
+
     time.sleep(2)
-    
+
     # Find and activate the window
     windows_result = session.computer.list_root_windows()
     first_app_window = None
-    
+
     for window in windows_result.windows:
         if "Google Chrome" in window.title.lower():
             first_app_window = window
             break
-    
+
     if first_app_window:
         # Check if window has valid window_id before performing operations
         if hasattr(first_app_window, 'window_id') and first_app_window.window_id:
@@ -654,7 +659,7 @@ def automated_text_editing_workflow(session):
             session.computer.maximize_window(first_app_window.window_id)
         else:
             print(f"Warning: Found window '{first_app_window.title}' but it has no valid window_id")
-    
+
     # Type some text
     text_content = """Hello from AGB Computer Automation!
 
@@ -666,25 +671,25 @@ Features demonstrated:
 3. Text input
 4. Keyboard shortcuts
 """
-    
+
     session.computer.input_text(text_content)
     time.sleep(1)
-    
+
     # Select all text
     session.computer.press_keys(["Ctrl", "a"])
     time.sleep(0.5)
-    
+
     # Copy text
     session.computer.press_keys(["Ctrl", "c"])
     time.sleep(0.5)
-    
+
     # Move to end and paste
     session.computer.press_keys(["Ctrl", "End"])
     session.computer.press_keys(["Enter", "Enter"])
     session.computer.input_text("Copied content:")
     session.computer.press_keys(["Enter"])
     session.computer.press_keys(["Ctrl", "v"])
-    
+
     print("Automated text editing workflow completed")
     return True
 
@@ -699,20 +704,20 @@ automated_text_editing_workflow(session)
 # ✅ Good: Always clean up sessions
 def safe_automation_task():
     agb = AGB()
-    params = CreateSessionParams(image_id="agb-linux-test-5")
+    params = CreateSessionParams(image_id="agb-computer-use-ubuntu-2204")
     result = agb.create(params)
-    
+
     if not result.success:
         print(f"Failed to create session: {result.error_message}")
         return False
-    
+
     session = result.session
-    
+
     try:
         # Perform automation tasks
         result = session.computer.click_mouse(100, 100)
         return result.success
-    
+
     finally:
         # Always delete session
         agb.delete(session)
@@ -727,7 +732,7 @@ success = safe_automation_task()
 ```python
 def robust_operation(session, operation_func, max_retries=3):
     """Perform operation with retry logic"""
-    
+
     for attempt in range(max_retries):
         try:
             result = operation_func()
@@ -741,7 +746,7 @@ def robust_operation(session, operation_func, max_retries=3):
             print(f"Attempt {attempt + 1} exception: {e}")
             if attempt < max_retries - 1:
                 time.sleep(2)
-    
+
     return None
 
 # Usage example
@@ -760,23 +765,23 @@ else:
 ```python
 def safe_click(session, x, y, button=MouseButton.LEFT):
     """Safely click with coordinate validation"""
-    
+
     # Get screen size first
     screen_result = session.computer.get_screen_size()
     if not screen_result.success:
         print("Failed to get screen size")
         return False
-    
+
     import json
     screen_data = json.loads(screen_result.data)
     max_x = screen_data['width']
     max_y = screen_data['height']
-    
+
     # Validate coordinates
     if x < 0 or x >= max_x or y < 0 or y >= max_y:
         print(f"Invalid coordinates: ({x}, {y}). Screen size: {max_x}x{max_y}")
         return False
-    
+
     # Perform click
     result = session.computer.click_mouse(x, y, button)
     return result.success
@@ -790,15 +795,15 @@ success = safe_click(session, 500, 300)
 ```python
 def ensure_application_ready(session, app_name, window_title_contains, timeout=30):
     """Ensure application is started and ready"""
-    
+
     import time
     start_time = time.time()
-    
+
     # Start application
     start_result = session.computer.start_app(app_name)
     if not start_result.success:
         return None
-    
+
     # Wait for window to appear
     while time.time() - start_time < timeout:
         windows_result = session.computer.list_root_windows()
@@ -810,9 +815,9 @@ def ensure_application_ready(session, app_name, window_title_contains, timeout=3
                 else:
                     print(f"Warning: Found matching window '{window.title}' but it has no valid window_id")
                     continue
-        
+
         time.sleep(1)
-    
+
     print(f"Timeout waiting for {app_name} window")
     return None
 
@@ -844,7 +849,7 @@ apps_result = session.computer.get_installed_apps()
 if apps_result.success:
     app_names = [app.name for app in apps_result.data]
     print("Available applications:", app_names)
-    
+
     # Check if target app exists
     target_app = "notepad.exe"
     matching_apps = [app for app in apps_result.data if target_app.lower() in app.name.lower()]
@@ -912,4 +917,4 @@ if not check_session_health(session):
 ## Related Documentation
 
 - **[Session Management Guide](session-management.md)** - Managing automation sessions
-- **[API Reference](../api-reference/02_session.md)** - Complete computer automation API
+- **[API Reference](../api-reference/session.md)** - Complete computer automation API

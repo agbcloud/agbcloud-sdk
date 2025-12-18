@@ -33,7 +33,7 @@ class TestComputerFunctionalValidation(unittest.TestCase):
 
         # Create AGB client and session
         self.agb_client = agb.AGB(api_key=api_key)
-        session_params = CreateSessionParams(image_id="agb-linux-test-5")
+        session_params = CreateSessionParams(image_id="agb-computer-use-ubuntu-2204")
 
         session_result = self.agb_client.create(session_params)
         if not session_result.success or session_result.session is None:

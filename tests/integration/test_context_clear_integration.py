@@ -34,7 +34,7 @@ class TestContextClearIntegration(unittest.TestCase):
 
         # Initialize AGB client
         if endpoint:
-            config = Config(endpoint=endpoint, timeout_ms=60000)
+            config = Config(endpoint=get_test_endpoint(), timeout_ms=60000)
             cls.agb = AGB(api_key=api_key, cfg=config)
             print(f"Using endpoint: {endpoint}")
         else:

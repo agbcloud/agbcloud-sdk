@@ -9,15 +9,13 @@ class SessionData:
         app_instance_id: Optional[str] = None,
         resource_id: Optional[str] = None,
         resource_url: Optional[str] = None,
-        http_port: Optional[str] = None,
-        token: Optional[str] = None,
+        status: Optional[str] = None,
     ):
         self.session_id = session_id
         self.app_instance_id = app_instance_id
         self.resource_id = resource_id
         self.resource_url = resource_url
-        self.http_port = http_port
-        self.token = token
+        self.status = status
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SessionData":
@@ -27,8 +25,7 @@ class SessionData:
             app_instance_id=data.get("appInstanceId"),
             resource_id=data.get("resourceId"),
             resource_url=data.get("resourceUrl"),
-            http_port=data.get("httpPort"),
-            token=data.get("token"),
+            status=data.get("status"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -38,8 +35,7 @@ class SessionData:
             "appInstanceId": self.app_instance_id,
             "resourceId": self.resource_id,
             "resourceUrl": self.resource_url,
-            "httpPort": self.http_port,
-            "token": self.token,
+            "status": self.status,
         }
 
 class GetSessionResponse:

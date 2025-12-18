@@ -12,16 +12,21 @@ from agb.session_params import CreateSessionParams
 
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-1")
-session = agb.create(params).session
+result = agb.create(params)
 
-# Execute Python code
-result = session.code.run_code("print('Hello, World!')", "python")
-print(result.result)
+if result.success:
+    session = result.session
 
-# Execute JavaScript
-print(session.code.run_code("console.log('Hello World')", "javascript").result)
+    # Execute Python code
+    result = session.code.run_code("print('Hello, World!')", "python")
+    print(result.result)
 
-agb.delete(session)
+    # Execute JavaScript
+    print(session.code.run_code("console.log('Hello World')", "javascript").result)
+
+    agb.delete(session)
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ## Core Concepts

@@ -19,7 +19,7 @@ from agb.api.models import (
 )
 from agb.config import Config, load_config, BROWSER_DATA_PATH
 from agb.context_sync import ContextSync, WhiteList, UploadPolicy, BWList, RecyclePolicy, SyncPolicy
-from agb.model.response import DeleteResult, SessionResult, GetSessionResult, GetSessionData, SessionListResult
+from agb.model.response import DeleteResult, SessionResult, GetSessionResult, GetSessionData, SessionListResult, SessionPauseResult, SessionResumeResult
 from agb.session import Session
 from agb.session_params import CreateSessionParams
 from agb.context import ContextService
@@ -171,10 +171,10 @@ class AGB:
             response: CreateSessionResponse = self.client.create_mcp_session(request)
 
             try:
-                logger.debug("Response body:")
-                logger.debug(response.to_dict())
+                logger.info("Response body:")
+                logger.info(response.to_dict())
             except Exception:
-                logger.debug(f"Response: {response}")
+                logger.info(f"Response: {response}")
 
             # Extract request ID
             request_id_attr = getattr(response, "request_id", "")
@@ -509,6 +509,7 @@ class AGB:
                     session_id=response.data.session_id or session_id,
                     success=True,
                     resource_url=response.data.resource_url or "",
+                    status=response.data.status or "",
                 )
 
             # Log API response with key details
@@ -588,3 +589,67 @@ class AGB:
             success=True,
             session=session,
         )
+
+    def pause(self, session: Session, timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult:
+        """
+        Pause a session, putting it into a dormant state.
+
+        Args:
+            session (Session): The session to pause.
+            timeout (int, optional): Timeout in seconds to wait for the session to pause.
+                Defaults to 600 seconds.
+            poll_interval (float, optional): Interval in seconds between status polls.
+                Defaults to 2.0 seconds.
+
+        Returns:
+            SessionPauseResult: Result containing the request ID, success status, and final session status.
+        """
+        return session.pause(timeout, poll_interval)
+
+    async def pause_async(self, session: Session, timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult:
+        """
+        Pause a session asynchronously.
+
+        Args:
+            session (Session): The session to pause.
+            timeout (int, optional): Timeout in seconds to wait for the session to pause.
+                Defaults to 600 seconds.
+            poll_interval (float, optional): Interval in seconds between status polls.
+                Defaults to 2.0 seconds.
+
+        Returns:
+            SessionPauseResult: Result containing the request ID, success status, and final session status.
+        """
+        return await session.pause_async(timeout, poll_interval)
+
+    def resume(self, session: Session, timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult:
+        """
+        Resume a session from a paused state.
+
+        Args:
+            session (Session): The session to resume.
+            timeout (int, optional): Timeout in seconds to wait for the session to resume.
+                Defaults to 600 seconds.
+            poll_interval (float, optional): Interval in seconds between status polls.
+                Defaults to 2.0 seconds.
+
+        Returns:
+            SessionResumeResult: Result containing the request ID, success status, and final session status.
+        """
+        return session.resume(timeout, poll_interval)
+
+    async def resume_async(self, session: Session, timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult:
+        """
+        Resume a session asynchronously.
+
+        Args:
+            session (Session): The session to resume.
+            timeout (int, optional): Timeout in seconds to wait for the session to resume.
+                Defaults to 600 seconds.
+            poll_interval (float, optional): Interval in seconds between status polls.
+                Defaults to 2.0 seconds.
+
+        Returns:
+            SessionResumeResult: Result containing the request ID, success status, and final session status.
+        """
+        return await session.resume_async(timeout, poll_interval)

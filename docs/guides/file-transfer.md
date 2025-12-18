@@ -18,24 +18,29 @@ from agb.session_params import CreateSessionParams
 
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-2")
-session = agb.create(params).session
+result = agb.create(params)
 
-# Get the file transfer context path (context is auto-created on first use)
-context_path = session.file_system.get_file_transfer_context_path()
+if result.success:
+    session = result.session
 
-# Upload a file
-upload_result = session.file_system.upload_file(
-    local_path="/local/file.txt",
-    remote_path=context_path + "/remote_file.txt"
-)
+    # Get the file transfer context path (context is auto-created on first use)
+    context_path = session.file_system.get_file_transfer_context_path()
 
-# Download a file
-download_result = session.file_system.download_file(
-    remote_path=context_path + "/remote_file.txt",
-    local_path="/local/downloaded_file.txt"
-)
+    # Upload a file
+    upload_result = session.file_system.upload_file(
+        local_path="/local/file.txt",
+        remote_path=context_path + "/remote_file.txt"
+    )
 
-agb.delete(session)  # Context is automatically deleted when session ends
+    # Download a file
+    download_result = session.file_system.download_file(
+        remote_path=context_path + "/remote_file.txt",
+        local_path="/local/downloaded_file.txt"
+    )
+
+    agb.delete(session)  # Context is automatically deleted when session ends
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ## Getting the Context Path
@@ -48,20 +53,25 @@ from agb.session_params import CreateSessionParams
 
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-2")
-session = agb.create(params).session
+result = agb.create(params)
 
-# Get the file transfer context path
-# The context is automatically created by the server if it doesn't exist
-context_path = session.file_system.get_file_transfer_context_path()
+if result.success:
+    session = result.session
 
-if context_path is None:
-    # This should rarely happen - only if there's a server issue
-    print("File transfer context not available")
+    # Get the file transfer context path
+    # The context is automatically created by the server if it doesn't exist
+    context_path = session.file_system.get_file_transfer_context_path()
+
+    if context_path is None:
+        # This should rarely happen - only if there's a server issue
+        print("File transfer context not available")
+    else:
+        print(f"Context path: {context_path}")
+        # Use this path as the base for remote file paths
+
+    agb.delete(session)
 else:
-    print(f"Context path: {context_path}")
-    # Use this path as the base for remote file paths
-
-agb.delete(session)
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ## Uploading Files
@@ -74,34 +84,39 @@ from agb.session_params import CreateSessionParams
 
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-2")
-session = agb.create(params).session
+result = agb.create(params)
 
-# Get context path (automatically created if needed)
-context_path = session.file_system.get_file_transfer_context_path()
-if context_path is None:
-    print("File transfer not available")
+if result.success:
+    session = result.session
+
+    # Get context path (automatically created if needed)
+    context_path = session.file_system.get_file_transfer_context_path()
+    if context_path is None:
+        print("File transfer not available")
+        agb.delete(session)
+        exit(1)
+
+    # Upload a local file
+    local_file = "/path/to/local/file.txt"
+    remote_path = context_path + "/uploaded_file.txt"
+
+    upload_result = session.file_system.upload_file(
+        local_path=local_file,
+        remote_path=remote_path,
+        wait=True,  # Wait for sync to complete
+        wait_timeout=60.0  # Timeout in seconds
+    )
+
+    if upload_result.success:
+        print(f"✅ Upload successful!")
+        print(f"   Bytes sent: {upload_result.bytes_sent}")
+        print(f"   Request ID: {upload_result.request_id_upload_url}")
+    else:
+        print(f"❌ Upload failed: {upload_result.error}")
+
     agb.delete(session)
-    exit(1)
-
-# Upload a local file
-local_file = "/path/to/local/file.txt"
-remote_path = context_path + "/uploaded_file.txt"
-
-upload_result = session.file_system.upload_file(
-    local_path=local_file,
-    remote_path=remote_path,
-    wait=True,  # Wait for sync to complete
-    wait_timeout=60.0  # Timeout in seconds
-)
-
-if upload_result.success:
-    print(f"✅ Upload successful!")
-    print(f"   Bytes sent: {upload_result.bytes_sent}")
-    print(f"   Request ID: {upload_result.request_id_upload_url}")
 else:
-    print(f"❌ Upload failed: {upload_result.error}")
-
-agb.delete(session)
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ## Downloading Files
@@ -114,35 +129,40 @@ from agb.session_params import CreateSessionParams
 
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-2")
-session = agb.create(params).session
+result = agb.create(params)
 
-# Get context path (automatically created if needed)
-context_path = session.file_system.get_file_transfer_context_path()
-if context_path is None:
-    print("File transfer not available")
+if result.success:
+    session = result.session
+
+    # Get context path (automatically created if needed)
+    context_path = session.file_system.get_file_transfer_context_path()
+    if context_path is None:
+        print("File transfer not available")
+        agb.delete(session)
+        exit(1)
+
+    # Download a remote file
+    remote_path = context_path + "/file_to_download.txt"
+    local_file = "/path/to/local/downloaded_file.txt"
+
+    download_result = session.file_system.download_file(
+        remote_path=remote_path,
+        local_path=local_file,
+        overwrite=True,  # Overwrite if file exists
+        wait=True,  # Wait for sync to complete
+        wait_timeout=300.0  # Timeout in seconds
+    )
+
+    if download_result.success:
+        print(f"✅ Download successful!")
+        print(f"   Bytes received: {download_result.bytes_received}")
+        print(f"   Request ID: {download_result.request_id_download_url}")
+    else:
+        print(f"❌ Download failed: {download_result.error}")
+
     agb.delete(session)
-    exit(1)
-
-# Download a remote file
-remote_path = context_path + "/file_to_download.txt"
-local_file = "/path/to/local/downloaded_file.txt"
-
-download_result = session.file_system.download_file(
-    remote_path=remote_path,
-    local_path=local_file,
-    overwrite=True,  # Overwrite if file exists
-    wait=True,  # Wait for sync to complete
-    wait_timeout=300.0  # Timeout in seconds
-)
-
-if download_result.success:
-    print(f"✅ Download successful!")
-    print(f"   Bytes received: {download_result.bytes_received}")
-    print(f"   Request ID: {download_result.request_id_download_url}")
 else:
-    print(f"❌ Download failed: {download_result.error}")
-
-agb.delete(session)
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ## Complete Upload/Download Workflow
@@ -158,73 +178,78 @@ from agb.session_params import CreateSessionParams
 
 agb = AGB()
 params = CreateSessionParams(image_id="agb-code-space-2")
-session = agb.create(params).session
+result = agb.create(params)
 
-# Get context path (automatically created if needed)
-context_path = session.file_system.get_file_transfer_context_path()
-if context_path is None:
-    print("File transfer not available")
-    agb.delete(session)
-    exit(1)
+if result.success:
+    session = result.session
 
-# Create a temporary local file
-with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
-    f.write("Test content for file transfer\n")
-    local_upload_file = f.name
-
-try:
-    # Step 1: Upload file
-    remote_path = context_path + f"/test_file_{int(time.time())}.txt"
-    print(f"📤 Uploading: {local_upload_file} -> {remote_path}")
-
-    upload_result = session.file_system.upload_file(
-        local_path=local_upload_file,
-        remote_path=remote_path,
-        wait=True,
-        wait_timeout=60.0
-    )
-
-    if not upload_result.success:
-        print(f"Upload failed: {upload_result.error}")
+    # Get context path (automatically created if needed)
+    context_path = session.file_system.get_file_transfer_context_path()
+    if context_path is None:
+        print("File transfer not available")
+        agb.delete(session)
         exit(1)
 
-    print(f"✅ Upload successful ({upload_result.bytes_sent} bytes)")
-
-    # Step 2: Process file in cloud (example: read and modify)
-    read_result = session.file_system.read_file(remote_path)
-    if read_result.success:
-        modified_content = read_result.content.upper()
-        session.file_system.write_file(remote_path, modified_content)
-        print("✅ File processed in cloud")
-
-    # Step 3: Download processed file
+    # Create a temporary local file
     with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
-        local_download_file = f.name
+        f.write("Test content for file transfer\n")
+        local_upload_file = f.name
 
-    print(f"📥 Downloading: {remote_path} -> {local_download_file}")
+    try:
+        # Step 1: Upload file
+        remote_path = context_path + f"/test_file_{int(time.time())}.txt"
+        print(f"📤 Uploading: {local_upload_file} -> {remote_path}")
 
-    download_result = session.file_system.download_file(
-        remote_path=remote_path,
-        local_path=local_download_file,
-        wait=True,
-        wait_timeout=300.0
-    )
+        upload_result = session.file_system.upload_file(
+            local_path=local_upload_file,
+            remote_path=remote_path,
+            wait=True,
+            wait_timeout=60.0
+        )
 
-    if download_result.success:
-        print(f"✅ Download successful ({download_result.bytes_received} bytes)")
+        if not upload_result.success:
+            print(f"Upload failed: {upload_result.error}")
+            exit(1)
 
-        # Verify downloaded content
-        with open(local_download_file, "r") as f:
-            downloaded_content = f.read()
-        print(f"Downloaded content: {downloaded_content}")
+        print(f"✅ Upload successful ({upload_result.bytes_sent} bytes)")
 
-    # Clean up
-    os.unlink(local_download_file)
+        # Step 2: Process file in cloud (example: read and modify)
+        read_result = session.file_system.read_file(remote_path)
+        if read_result.success:
+            modified_content = read_result.content.upper()
+            session.file_system.write_file(remote_path, modified_content)
+            print("✅ File processed in cloud")
 
-finally:
-    # Clean up uploaded file
-    os.unlink(local_upload_file)
-    agb.delete(session)  # Context is automatically deleted when session ends
+        # Step 3: Download processed file
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
+            local_download_file = f.name
+
+        print(f"📥 Downloading: {remote_path} -> {local_download_file}")
+
+        download_result = session.file_system.download_file(
+            remote_path=remote_path,
+            local_path=local_download_file,
+            wait=True,
+            wait_timeout=300.0
+        )
+
+        if download_result.success:
+            print(f"✅ Download successful ({download_result.bytes_received} bytes)")
+
+            # Verify downloaded content
+            with open(local_download_file, "r") as f:
+                downloaded_content = f.read()
+            print(f"Downloaded content: {downloaded_content}")
+
+        # Clean up
+        os.unlink(local_download_file)
+
+    finally:
+        # Clean up uploaded file
+        os.unlink(local_upload_file)
+        agb.delete(session)  # Context is automatically deleted when session ends
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ## Advanced Options

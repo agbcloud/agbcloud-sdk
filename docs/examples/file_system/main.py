@@ -35,6 +35,11 @@ def main():
     print("Creating a new session...")
     params = CreateSessionParams(image_id="agb-code-space-1")
     session_result = agb.create(params)
+
+    if not session_result.success:
+        print(f"Failed to create session: {session_result.error_message}")
+        return
+
     session = session_result.session
     print(f"Session created with ID: {session.get_session_id()}")
     print(f"Request ID: {session_result.request_id}")

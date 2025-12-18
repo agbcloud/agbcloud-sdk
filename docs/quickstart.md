@@ -24,14 +24,17 @@ agb = AGB()
 
 # Create code execution session
 params = CreateSessionParams(image_id="agb-code-space-1")
-session = agb.create(params).session
+result = agb.create(params)
 
-# Execute code
-result = session.code.run_code("print('Hello AGB!')", "python")
-print(result.result)
+if result.success:
+    session = result.session
 
-# Cleanup
-agb.delete(session)
+    # Execute code
+    result = session.code.run_code("print('Hello AGB!')", "python")
+    print(result.result)
+
+    # Cleanup
+    agb.delete(session)
 ```
 
 
@@ -47,25 +50,30 @@ agb = AGB()
 params = CreateSessionParams(
     image_id="agb-code-space-1"
 )
-session = agb.create(params).session
+result = agb.create(params)
 
-# Use different modules
-# Code execution
-code_result = session.code.run_code("import os; print(os.getcwd())", "python")
+if result.success:
+    session = result.session
 
-# Command execution
-cmd_result = session.command.execute_command("ls -la")
+    # Use different modules
+    # Code execution
+    code_result = session.code.run_code("import os; print(os.getcwd())", "python")
 
-# File operations
-session.file_system.write_file("/tmp/test.txt", "Hello World!")
-file_result = session.file_system.read_file("/tmp/test.txt")
+    # Command execution
+    cmd_result = session.command.execute_command("ls -la")
+
+    # File operations
+    session.file_system.write_file("/tmp/test.txt", "Hello World!")
+    file_result = session.file_system.read_file("/tmp/test.txt")
 
 
-print("Code output:", code_result.result)
-print("Command output:", cmd_result.output)
-print("File content:", file_result.content)
+    print("Code output:", code_result.result)
+    print("Command output:", cmd_result.output)
+    print("File content:", file_result.content)
 
-agb.delete(session)
+    agb.delete(session)
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ### 4. Next Steps
@@ -89,12 +97,17 @@ agb = AGB()
 
 # Type-safe session creation
 params = CreateSessionParams(image_id="agb-code-space-1")
-session = agb.create(params).session
+result = agb.create(params)
 
-# Modules included in all sessions
-session.code.run_code(code, "python")           # Code execution
-session.command.execute_command("ls -la")       # Shell commands
-session.file_system.read_file("/path/file")     # File operations
+if result.success:
+    session = result.session
+
+    # Modules included in all sessions
+    session.code.run_code(code, "python")           # Code execution
+    session.command.execute_command("ls -la")       # Shell commands
+    session.file_system.read_file("/path/file")     # File operations
+else:
+    print(f"Failed to create session: {result.error_message}")
 ```
 
 ### Key Differences

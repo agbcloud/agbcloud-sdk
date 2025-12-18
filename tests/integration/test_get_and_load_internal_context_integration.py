@@ -86,9 +86,9 @@ class TestGetAndLoadInternalContextIntegration(unittest.TestCase):
                 print(f"   Found {len(context_list)} context(s)")
                 for idx, ctx in enumerate(context_list):
                     print(f"   Context {idx + 1}:")
-                    print(f"     ContextId: {ctx.get('ContextId', 'N/A')}")
-                    print(f"     ContextType: {ctx.get('ContextType', 'N/A')}")
-                    print(f"     ContextPath: {ctx.get('ContextPath', 'N/A')}")
+                    print(f"     contextId: {ctx.get('contextId', 'N/A')}")
+                    print(f"     contextType: {ctx.get('contextType', 'N/A')}")
+                    print(f"     contextPath: {ctx.get('contextPath', 'N/A')}")
 
                 # Test parsed data objects
                 context_data_list = response.get_context_list_data()

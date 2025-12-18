@@ -33,13 +33,8 @@ async def main():
         print("Error: AGB_API_KEY environment variable not set")
         sys.exit(1)
 
-    # Initialize AGB client
-    config = Config(
-        endpoint=os.getenv("AGB_ENDPOINT", "sdk-api.agb.cloud"), timeout_ms=60000
-    )
-
     # Create AGB instance
-    agb = AGB(api_key=api_key, cfg=config)
+    agb = AGB(api_key=api_key)
     print("AGB client initialized")
 
     # Create a unique context name for this demo

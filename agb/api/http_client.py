@@ -61,6 +61,12 @@ from .models.describe_context_files_request import DescribeContextFilesRequest
 from .models.describe_context_files_response import DescribeContextFilesResponse
 from .models.get_and_load_internal_context_request import GetAndLoadInternalContextRequest
 from .models.get_and_load_internal_context_response import GetAndLoadInternalContextResponse
+from .models.pause_session_request import PauseSessionRequest
+from .models.pause_session_response import PauseSessionResponse
+from .models.resume_session_request import ResumeSessionRequest
+from .models.resume_session_response import ResumeSessionResponse
+from .models.delete_session_async_request import DeleteSessionAsyncRequest
+from .models.delete_session_async_response import DeleteSessionAsyncResponse
 
 
 class HTTPClient:
@@ -1201,3 +1207,160 @@ class HTTPClient:
 
         # Return structured response object
         return GetAndLoadInternalContextResponse.from_http_response(response_dict)
+
+    def pause_session(self, request: PauseSessionRequest) -> PauseSessionResponse:
+        """
+        HTTP request interface for pausing session
+
+        Args:
+            request (PauseSessionRequest): Request object for pausing session
+
+        Returns:
+            PauseSessionResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/mcp/pauseSessionAsync",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return PauseSessionResponse.from_http_response(response_dict)
+
+    async def pause_session_async(self, request: PauseSessionRequest) -> PauseSessionResponse:
+        """
+        HTTP request interface for asynchronously pausing session
+
+        Args:
+            request (PauseSessionRequest): Request object for pausing session asynchronously
+
+        Returns:
+            PauseSessionResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = await self._make_request_async(
+            method="POST",
+            endpoint="/mcp/pauseSessionAsync",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return PauseSessionResponse.from_http_response(response_dict)
+
+
+    def resume_session(self, request: ResumeSessionRequest) -> ResumeSessionResponse:
+        """
+        HTTP request interface for resuming session
+
+        Args:
+            request (ResumeSessionRequest): Request object for resuming session
+
+        Returns:
+            ResumeSessionResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/mcp/resumeSessionAsync",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return ResumeSessionResponse.from_http_response(response_dict)
+
+    async def resume_session_async(self, request: ResumeSessionRequest) -> ResumeSessionResponse:
+        """
+        HTTP request interface for asynchronously resuming session
+
+        Args:
+            request (ResumeSessionRequest): Request object for resuming session asynchronously
+
+        Returns:
+            ResumeSessionResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = await self._make_request_async(
+            method="POST",
+            endpoint="/mcp/resumeSessionAsync",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return ResumeSessionResponse.from_http_response(response_dict)
+
+    def delete_session_async(self, request: DeleteSessionAsyncRequest) -> DeleteSessionAsyncResponse:
+        """
+        HTTP request interface for asynchronously deleting session
+
+        Args:
+            request (DeleteSessionAsyncRequest): Request object for deleting session asynchronously
+
+        Returns:
+            DeleteSessionAsyncResponse: Structured response object
+        """
+        # Build request headers
+        headers: Dict[str, str] = {}
+
+        # Build query parameters
+        params = request.get_params()
+
+        # Build request body
+        body = request.get_body()
+
+        # Call _make_request
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/mcp/releaseSessionAsync",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        # Return structured response object
+        return DeleteSessionAsyncResponse.from_http_response(response_dict)
+

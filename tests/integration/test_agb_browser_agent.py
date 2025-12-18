@@ -15,6 +15,7 @@ import asyncio
 import os
 import sys
 import time
+from urllib.parse import urlparse
 
 from playwright.async_api import async_playwright
 
@@ -126,9 +127,54 @@ async def main():
 
         print(f"Browser endpoint URL: {endpoint_url}")
 
-        # Connect with Playwright and set cookies
+        # Parse endpoint URL to check connectivity
+        parsed_url = urlparse(endpoint_url)
+        if parsed_url.hostname:
+            print(f"Endpoint hostname: {parsed_url.hostname}, port: {parsed_url.port or 443}")
+
+        # Wait a bit for browser to be fully ready
+        print("Waiting for browser to be fully ready...")
+        await asyncio.sleep(5)  # Increased wait time
+
+        # Connect with Playwright and set cookies with retry mechanism
+        max_retries = 5  # Increased retries
+        retry_delay = 5
+        browser = None
+
         async with async_playwright() as p:
-            browser = await p.chromium.connect_over_cdp(endpoint_url)
+            for attempt in range(max_retries):
+                try:
+                    print(f"Attempting to connect to browser (attempt {attempt + 1}/{max_retries})...")
+                    print(f"  Endpoint: {endpoint_url[:100]}...")  # Print first 100 chars
+
+                    # Try connecting with increased timeout
+                    browser = await p.chromium.connect_over_cdp(
+                        endpoint_url,
+                        timeout=90000  # Increase timeout to 90 seconds
+                    )
+                    print("Successfully connected to browser")
+                    break
+                except Exception as e:
+                    error_msg = str(e)
+                    print(f"Connection attempt {attempt + 1} failed: {error_msg}")
+                    print(f"  Error type: {type(e).__name__}")
+
+                    # If it's an SSL or network error, wait longer before retry
+                    if "EBADF" in error_msg or "SSL" in error_msg or "certificate" in error_msg.lower():
+                        print("  Detected SSL/network error, will wait longer before retry")
+                        retry_delay = 10
+
+                    if attempt < max_retries - 1:
+                        print(f"Retrying in {retry_delay} seconds...")
+                        await asyncio.sleep(retry_delay)
+                        # Increase wait time for subsequent retries
+                        retry_delay = min(retry_delay + 5, 20)
+                    else:
+                        print(f"All connection attempts failed. Last error: {error_msg}")
+                        raise
+
+            if browser is None:
+                raise RuntimeError("Failed to connect to browser after all retries")
             context_p = browser.contexts[0] if browser.contexts else await browser.new_context()
             page = await context_p.new_page()
 
@@ -311,9 +357,54 @@ async def main():
 
         print(f"Second session browser endpoint URL: {endpoint_url2}")
 
-        # Check cookies in second session
+        # Parse endpoint URL to check connectivity
+        parsed_url2 = urlparse(endpoint_url2)
+        if parsed_url2.hostname:
+            print(f"Second session endpoint hostname: {parsed_url2.hostname}, port: {parsed_url2.port or 443}")
+
+        # Wait a bit for browser to be fully ready
+        print("Waiting for second session browser to be fully ready...")
+        await asyncio.sleep(5)  # Increased wait time
+
+        # Check cookies in second session with retry mechanism
+        max_retries = 5  # Increased retries
+        retry_delay = 5
+        browser2 = None
+
         async with async_playwright() as p2:
-            browser2 = await p2.chromium.connect_over_cdp(endpoint_url2)
+            for attempt in range(max_retries):
+                try:
+                    print(f"Attempting to connect to second session browser (attempt {attempt + 1}/{max_retries})...")
+                    print(f"  Endpoint: {endpoint_url2[:100]}...")  # Print first 100 chars
+
+                    # Try connecting with increased timeout
+                    browser2 = await p2.chromium.connect_over_cdp(
+                        endpoint_url2,
+                        timeout=90000  # Increase timeout to 90 seconds
+                    )
+                    print("Successfully connected to second session browser")
+                    break
+                except Exception as e:
+                    error_msg = str(e)
+                    print(f"Connection attempt {attempt + 1} failed: {error_msg}")
+                    print(f"  Error type: {type(e).__name__}")
+
+                    # If it's an SSL or network error, wait longer before retry
+                    if "EBADF" in error_msg or "SSL" in error_msg or "certificate" in error_msg.lower():
+                        print("  Detected SSL/network error, will wait longer before retry")
+                        retry_delay = 10
+
+                    if attempt < max_retries - 1:
+                        print(f"Retrying in {retry_delay} seconds...")
+                        await asyncio.sleep(retry_delay)
+                        # Increase wait time for subsequent retries
+                        retry_delay = min(retry_delay + 5, 20)
+                    else:
+                        print(f"All connection attempts failed. Last error: {error_msg}")
+                        raise
+
+            if browser2 is None:
+                raise RuntimeError("Failed to connect to second session browser after all retries")
             context2 = (
                 browser2.contexts[0]
                 if browser2.contexts

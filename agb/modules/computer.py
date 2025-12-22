@@ -5,7 +5,7 @@ from typing import Union,List, Optional, Any, Dict
 
 from agb.api.base_service import BaseService
 from agb.model.response import BoolResult, OperationResult,WindowInfoResult,AppOperationResult, ProcessListResult, InstalledAppListResult, WindowListResult
-from agb.logger import get_logger
+from agb.logger import get_logger, log_operation_start, log_operation_success, log_operation_error
 
 logger = get_logger(__name__)
 
@@ -27,7 +27,7 @@ class ScrollDirection(str, Enum):
 
 class Window:
     """Represents a window in the system."""
-    
+
     def __init__(
         self,
         window_id: int,
@@ -135,26 +135,34 @@ class Computer(BaseService):
         button_str = button.value if isinstance(button, MouseButton) else button
         valid_buttons = [b.value for b in MouseButton]
         if button_str not in valid_buttons:
-            raise ValueError(f"Invalid button '{button_str}'. Must be one of {valid_buttons}")
+            error_msg = f"Invalid button '{button_str}'. Must be one of {valid_buttons}"
+            log_operation_error("Computer.click_mouse", error_msg)
+            raise ValueError(error_msg)
 
+        log_operation_start("Computer.click_mouse", f"X={x}, Y={y}, Button={button_str}")
         try:
             args = {"x": x, "y": y, "button": button_str}
             result = self._call_mcp_tool("click_mouse", args)
             logger.debug(f"Click mouse response: {result}")
 
             if result.success:
+                result_msg = f"X={x}, Y={y}, Button={button_str}, RequestId={result.request_id}"
+                log_operation_success("Computer.click_mouse", result_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=True,
                     data=True,
                 )
             else:
+                error_msg = result.error_message or "Failed to click mouse"
+                log_operation_error("Computer.click_mouse", error_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=False,
-                    error_message=result.error_message or "Failed to click mouse",
+                    error_message=error_msg,
                 )
         except Exception as e:
+            log_operation_error("Computer.click_mouse", str(e), exc_info=True)
             return BoolResult(
                 request_id="",
                 success=False,
@@ -172,24 +180,30 @@ class Computer(BaseService):
         Returns:
             BoolResult: Result object containing success status and error message if any.
         """
+        log_operation_start("Computer.move_mouse", f"X={x}, Y={y}")
         try:
             args = {"x": x, "y": y}
             result = self._call_mcp_tool("move_mouse", args)
             logger.debug(f"Move mouse response: {result}")
 
             if result.success:
+                result_msg = f"X={x}, Y={y}, RequestId={result.request_id}"
+                log_operation_success("Computer.move_mouse", result_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=True,
                     data=True,
                 )
             else:
+                error_msg = result.error_message or "Failed to move mouse"
+                log_operation_error("Computer.move_mouse", error_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=False,
-                    error_message=result.error_message or "Failed to move mouse",
+                    error_message=error_msg,
                 )
         except Exception as e:
+            log_operation_error("Computer.move_mouse", str(e), exc_info=True)
             return BoolResult(
                 request_id="",
                 success=False,
@@ -229,8 +243,11 @@ class Computer(BaseService):
         button_str = button.value if isinstance(button, MouseButton) else button
         valid_buttons = ["left", "right", "middle"]
         if button_str not in valid_buttons:
-            raise ValueError(f"Invalid button '{button_str}'. Must be one of {valid_buttons}")
+            error_msg = f"Invalid button '{button_str}'. Must be one of {valid_buttons}"
+            log_operation_error("Computer.drag_mouse", error_msg)
+            raise ValueError(error_msg)
 
+        log_operation_start("Computer.drag_mouse", f"FromX={from_x}, FromY={from_y}, ToX={to_x}, ToY={to_y}, Button={button_str}")
         try:
             args = {
                 "from_x": from_x,
@@ -243,18 +260,23 @@ class Computer(BaseService):
             logger.debug(f"Drag mouse response: {result}")
 
             if result.success:
+                result_msg = f"FromX={from_x}, FromY={from_y}, ToX={to_x}, ToY={to_y}, RequestId={result.request_id}"
+                log_operation_success("Computer.drag_mouse", result_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=True,
                     data=True,
                 )
             else:
+                error_msg = result.error_message or "Failed to drag mouse"
+                log_operation_error("Computer.drag_mouse", error_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=False,
-                    error_message=result.error_message or "Failed to drag mouse",
+                    error_message=error_msg,
                 )
         except Exception as e:
+            log_operation_error("Computer.drag_mouse", str(e), exc_info=True)
             return BoolResult(
                 request_id="",
                 success=False,
@@ -292,24 +314,31 @@ class Computer(BaseService):
         direction_str = direction.value if isinstance(direction, ScrollDirection) else direction
         valid_directions = [d.value for d in ScrollDirection]
         if direction_str not in valid_directions:
-            raise ValueError(f"Invalid direction '{direction_str}'. Must be one of {valid_directions}")
+            error_msg = f"Invalid direction '{direction_str}'. Must be one of {valid_directions}"
+            log_operation_error("Computer.scroll", error_msg)
+            raise ValueError(error_msg)
 
+        log_operation_start("Computer.scroll", f"X={x}, Y={y}, Direction={direction_str}, Amount={amount}")
         try:
             args = {"x": x, "y": y, "direction": direction_str, "amount": amount}
             result = self._call_mcp_tool("scroll", args)
             logger.debug(f"Scroll response: {result}")
 
             if result.success:
+                result_msg = f"X={x}, Y={y}, Direction={direction_str}, Amount={amount}, RequestId={result.request_id}"
+                log_operation_success("Computer.scroll", result_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=True,
                     data=True,
                 )
             else:
+                error_msg = result.error_message or "Failed to scroll"
+                log_operation_error("Computer.scroll", error_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=False,
-                    error_message=result.error_message or "Failed to scroll",
+                    error_message=error_msg,
                 )
         except Exception as e:
             return BoolResult(
@@ -375,30 +404,37 @@ class Computer(BaseService):
         See Also:
             click_mouse, move_mouse, screenshot
         """
+        log_operation_start("Computer.get_screen_size", "")
         try:
             args = {}
             result = self._call_mcp_tool("get_screen_size", args)
             logger.debug(f"Get screen size response: {result}")
 
             if result.success:
+                screen_data = result.data if isinstance(result.data, dict) else {}
+                result_msg = f"Width={screen_data.get('width', 'N/A')}, Height={screen_data.get('height', 'N/A')}, RequestId={result.request_id}"
+                log_operation_success("Computer.get_screen_size", result_msg)
                 return OperationResult(
                     request_id=result.request_id,
                     success=True,
                     data=result.data,
                 )
             else:
+                error_msg = result.error_message or "Failed to get screen size"
+                log_operation_error("Computer.get_screen_size", error_msg)
                 return OperationResult(
                     request_id=result.request_id,
                     success=False,
-                    error_message=result.error_message or "Failed to get screen size",
+                    error_message=error_msg,
                 )
         except Exception as e:
+            log_operation_error("Computer.get_screen_size", str(e), exc_info=True)
             return OperationResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to get screen size: {e}",
             )
-    
+
     def screenshot(self) -> OperationResult:
         """
         Takes a screenshot of the current screen.
@@ -416,30 +452,36 @@ class Computer(BaseService):
         See Also:
             get_screen_size
         """
+        log_operation_start("Computer.screenshot", "")
         try:
             args = {}
             result = self._call_mcp_tool("system_screenshot", args)
             logger.debug(f"Screenshot response: {result}")
 
             if result.success:
+                result_msg = f"RequestId={result.request_id}, ImageUrl={result.data if result.data else 'None'}"
+                log_operation_success("Computer.screenshot", result_msg)
                 return OperationResult(
                     request_id=result.request_id,
                     success=True,
                     data=result.data,
                 )
             else:
+                error_msg = result.error_message or "Failed to take screenshot"
+                log_operation_error("Computer.screenshot", error_msg)
                 return OperationResult(
                     request_id=result.request_id,
                     success=False,
-                    error_message=result.error_message or "Failed to take screenshot",
+                    error_message=error_msg,
                 )
         except Exception as e:
+            log_operation_error("Computer.screenshot", str(e), exc_info=True)
             return OperationResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to take screenshot: {e}",
             )
-   
+
     # Keyboard Operations
     def input_text(self, text: str) -> BoolResult:
         """
@@ -459,24 +501,30 @@ class Computer(BaseService):
         See Also:
             press_keys, release_keys
         """
+        log_operation_start("Computer.input_text", f"Text={text}")
         try:
             args = {"text": text}
             result = self._call_mcp_tool("input_text", args)
             logger.debug(f"Input text response: {result}")
 
             if result.success:
+                result_msg = f"TextLength={len(text)}, RequestId={result.request_id}"
+                log_operation_success("Computer.input_text", result_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=True,
                     data=True,
                 )
             else:
+                error_msg = result.error_message or "Failed to input text"
+                log_operation_error("Computer.input_text", error_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=False,
-                    error_message=result.error_message or "Failed to input text",
+                    error_message=error_msg,
                 )
         except Exception as e:
+            log_operation_error("Computer.input_text", str(e), exc_info=True)
             return BoolResult(
                 request_id="",
                 success=False,
@@ -503,24 +551,30 @@ class Computer(BaseService):
         See Also:
             release_keys, input_text
         """
+        log_operation_start("Computer.press_keys", f"Keys={keys}, Hold={hold}")
         try:
             args = {"keys": keys, "hold": hold}
             result = self._call_mcp_tool("press_keys", args)
             logger.debug(f"Press keys response: {result}")
 
             if result.success:
+                result_msg = f"Keys={keys}, Hold={hold}, RequestId={result.request_id}"
+                log_operation_success("Computer.press_keys", result_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=True,
                     data=True,
                 )
             else:
+                error_msg = result.error_message or "Failed to press keys"
+                log_operation_error("Computer.press_keys", error_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=False,
-                    error_message=result.error_message or "Failed to press keys",
+                    error_message=error_msg,
                 )
         except Exception as e:
+            log_operation_error("Computer.press_keys", str(e), exc_info=True)
             return BoolResult(
                 request_id="",
                 success=False,
@@ -595,7 +649,7 @@ class Computer(BaseService):
 
             if result.success:
                 windows = []
-                
+
                 if result.data:
                     try:
                         windows_data = json.loads(result.data)
@@ -628,7 +682,7 @@ class Computer(BaseService):
                 windows=[],
                 error_message=f"Failed to list root windows: {e}",
             )
-    
+
     def get_active_window(self) -> WindowInfoResult:
         """
         Gets the currently active window.
@@ -654,7 +708,7 @@ class Computer(BaseService):
 
             if result.success:
                 window = None
-                
+
                 if result.data:
                     try:
                         window_data = json.loads(result.data)
@@ -686,7 +740,7 @@ class Computer(BaseService):
                 window=None,
                 error_message=f"Failed to get active window: {e}",
             )
-    
+
     def activate_window(self, window_id: int) -> BoolResult:
         """
         Activates the specified window.
@@ -705,12 +759,15 @@ class Computer(BaseService):
         See Also:
             list_root_windows, get_active_window, close_window
         """
+        log_operation_start("Computer.activate_window", f"WindowId={window_id}")
         try:
             args = {"window_id": window_id}
             result = self._call_mcp_tool("activate_window", args)
             logger.debug(f"Activate window response: {result}")
 
             if result.success:
+                result_msg = f"WindowId={window_id}, RequestId={result.request_id}"
+                log_operation_success("Computer.activate_window", result_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=True,
@@ -1041,7 +1098,7 @@ class Computer(BaseService):
                 data=None,
                 error_message=f"Failed to toggle focus mode: {e}",
             )
-    
+
     # Application Management Operations
     def get_installed_apps(
         self,
@@ -1107,7 +1164,7 @@ class Computer(BaseService):
                 )
         except Exception as e:
             return InstalledAppListResult(
-                success=False, 
+                success=False,
                 error_message=f"Failed to get installed apps: {e}"
             )
 
@@ -1134,6 +1191,12 @@ class Computer(BaseService):
         See Also:
             get_installed_apps, stop_app_by_pname, list_visible_apps
         """
+        op_details = f"StartCmd={start_cmd}"
+        if work_directory:
+            op_details += f", WorkDirectory={work_directory}"
+        if activity:
+            op_details += f", Activity={activity}"
+        log_operation_start("Computer.start_app", op_details)
         try:
             args = {"start_cmd": start_cmd}
             if work_directory:
@@ -1145,10 +1208,12 @@ class Computer(BaseService):
             logger.debug(f"Start app response: {result}")
 
             if not result.success:
+                error_msg = result.error_message or "Failed to start app"
+                log_operation_error("Computer.start_app", error_msg)
                 return ProcessListResult(
                     request_id=result.request_id,
                     success=False,
-                    error_message=result.error_message or "Failed to start app",
+                    error_message=error_msg,
                 )
 
             try:
@@ -1159,20 +1224,24 @@ class Computer(BaseService):
                     process = Process._from_dict(process_data)
                     processes.append(process)
 
+                result_msg = f"StartCmd={start_cmd}, ProcessesCount={len(processes)}, RequestId={result.request_id}"
+                log_operation_success("Computer.start_app", result_msg)
                 return ProcessListResult(
-                    request_id=result.request_id, 
-                    success=True, 
+                    request_id=result.request_id,
+                    success=True,
                     data=processes
                 )
             except json.JSONDecodeError as e:
+                log_operation_error("Computer.start_app", f"Failed to parse processes JSON: {str(e)}", exc_info=True)
                 return ProcessListResult(
                     request_id=result.request_id,
                     success=False,
                     error_message=f"Failed to parse processes JSON: {e}",
                 )
         except Exception as e:
+            log_operation_error("Computer.start_app", str(e), exc_info=True)
             return ProcessListResult(
-                success=False, 
+                success=False,
                 error_message=f"Failed to start app: {e}"
             )
 
@@ -1217,8 +1286,8 @@ class Computer(BaseService):
                     processes.append(process)
 
                 return ProcessListResult(
-                    request_id=result.request_id, 
-                    success=True, 
+                    request_id=result.request_id,
+                    success=True,
                     data=processes
                 )
             except json.JSONDecodeError as e:
@@ -1229,7 +1298,7 @@ class Computer(BaseService):
                 )
         except Exception as e:
             return ProcessListResult(
-                success=False, 
+                success=False,
                 error_message=f"Failed to list visible apps: {e}"
             )
 
@@ -1252,10 +1321,18 @@ class Computer(BaseService):
         See Also:
             start_app, stop_app_by_pid, stop_app_by_cmd, list_visible_apps
         """
+        log_operation_start("Computer.stop_app_by_pname", f"PName={pname}")
         try:
             args = {"pname": pname}
             result = self._call_mcp_tool("stop_app_by_pname", args)
             logger.debug(f"Stop app by pname response: {result}")
+
+            if result.success:
+                result_msg = f"PName={pname}, RequestId={result.request_id}"
+                log_operation_success("Computer.stop_app_by_pname", result_msg)
+            else:
+                error_msg = result.error_message or "Failed to stop app by pname"
+                log_operation_error("Computer.stop_app_by_pname", error_msg)
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -1263,8 +1340,9 @@ class Computer(BaseService):
                 error_message=result.error_message or ("Failed to stop app by pname" if not result.success else ""),
             )
         except Exception as e:
+            log_operation_error("Computer.stop_app_by_pname", str(e), exc_info=True)
             return AppOperationResult(
-                success=False, 
+                success=False,
                 error_message=f"Failed to stop app by pname: {e}"
             )
 
@@ -1287,10 +1365,18 @@ class Computer(BaseService):
         See Also:
             start_app, stop_app_by_pname, stop_app_by_cmd, list_visible_apps
         """
+        log_operation_start("Computer.stop_app_by_pid", f"PID={pid}")
         try:
             args = {"pid": pid}
             result = self._call_mcp_tool("stop_app_by_pid", args)
             logger.debug(f"Stop app by pid response: {result}")
+
+            if result.success:
+                result_msg = f"PID={pid}, RequestId={result.request_id}"
+                log_operation_success("Computer.stop_app_by_pid", result_msg)
+            else:
+                error_msg = result.error_message or "Failed to stop app by pid"
+                log_operation_error("Computer.stop_app_by_pid", error_msg)
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -1298,8 +1384,9 @@ class Computer(BaseService):
                 error_message=result.error_message or ("Failed to stop app by pid" if not result.success else ""),
             )
         except Exception as e:
+            log_operation_error("Computer.stop_app_by_pid", str(e), exc_info=True)
             return AppOperationResult(
-                success=False, 
+                success=False,
                 error_message=f"Failed to stop app by pid: {e}"
             )
 
@@ -1322,10 +1409,18 @@ class Computer(BaseService):
         See Also:
             get_installed_apps, start_app, stop_app_by_pname, stop_app_by_pid
         """
+        log_operation_start("Computer.stop_app_by_cmd", f"StopCmd={stop_cmd}")
         try:
             args = {"stop_cmd": stop_cmd}
             result = self._call_mcp_tool("stop_app_by_cmd", args)
             logger.debug(f"Stop app by cmd response: {result}")
+
+            if result.success:
+                result_msg = f"StopCmd={stop_cmd}, RequestId={result.request_id}"
+                log_operation_success("Computer.stop_app_by_cmd", result_msg)
+            else:
+                error_msg = result.error_message or "Failed to stop app by cmd"
+                log_operation_error("Computer.stop_app_by_cmd", error_msg)
 
             return AppOperationResult(
                 request_id=result.request_id,
@@ -1333,7 +1428,8 @@ class Computer(BaseService):
                 error_message=result.error_message or ("Failed to stop app by cmd" if not result.success else ""),
             )
         except Exception as e:
+            log_operation_error("Computer.stop_app_by_cmd", str(e), exc_info=True)
             return AppOperationResult(
-                success=False, 
+                success=False,
                 error_message=f"Failed to stop app by cmd: {e}"
             )

@@ -19,11 +19,11 @@ from agb.api.models import (
 )
 from agb.config import Config, load_config, BROWSER_DATA_PATH
 from agb.context_sync import ContextSync, WhiteList, UploadPolicy, BWList, RecyclePolicy, SyncPolicy
-from agb.model.response import DeleteResult, SessionResult, GetSessionResult, GetSessionData, SessionListResult, SessionPauseResult, SessionResumeResult
+from agb.model.response import DeleteResult, SessionResult, GetSessionResult, GetSessionData, SessionListResult
 from agb.session import Session
 from agb.session_params import CreateSessionParams
 from agb.context import ContextService
-from agb.logger import get_logger, log_operation_start, log_operation_success, log_warning
+from agb.logger import get_logger, log_operation_start, log_operation_success, log_operation_error, log_warning
 from agb.version_utils import get_sdk_version, is_release_version
 
 logger = get_logger(__name__)
@@ -123,7 +123,7 @@ class AGB:
         try:
             if params is None:
                 error_msg = "params is required and cannot be None"
-                logger.error(error_msg)
+                log_operation_error("AGB.create", error_msg)
                 return SessionResult(
                     request_id="",
                     success=False,
@@ -133,12 +133,21 @@ class AGB:
             # Validate image_id is required
             if not params.image_id or (isinstance(params.image_id, str) and not params.image_id.strip()):
                 error_msg = "image_id is required and cannot be empty or None"
-                logger.error(error_msg)
+                log_operation_error("AGB.create", error_msg)
                 return SessionResult(
                     request_id="",
                     success=False,
                     error_message=error_msg,
                 )
+
+            op_details = f"ImageId={params.image_id}"
+            if params.labels:
+                op_details += f", LabelsCount={len(params.labels)}"
+            if params.context_syncs:
+                op_details += f", ContextSyncsCount={len(params.context_syncs)}"
+            if params.browser_context:
+                op_details += f", BrowserContext={params.browser_context.context_id}"
+            log_operation_start("AGB.create", op_details)
 
             request = CreateSessionRequest(authorization=f"Bearer {self.api_key}")
             request.image_id = params.image_id
@@ -185,6 +194,7 @@ class AGB:
                 error_msg = response.data.err_msg
                 if error_msg is None:
                     error_msg = "Unknown error"
+                log_operation_error("AGB.create", error_msg)
                 return SessionResult(
                     request_id=request_id,
                     success=False,
@@ -193,10 +203,12 @@ class AGB:
 
             session_id = response.get_session_id()
             if not session_id:
+                error_msg = response.get_error_message() or "Session ID not found in response"
+                log_operation_error("AGB.create", error_msg)
                 return SessionResult(
                     request_id=request_id,
                     success=False,
-                    error_message=response.get_error_message(),
+                    error_message=error_msg,
                 )
 
             # ResourceUrl is optional in CreateMcpSession response
@@ -259,10 +271,14 @@ class AGB:
                     time.sleep(retry_interval)
 
             # Return SessionResult with request ID
+            result_msg = f"SessionId={session_id}, RequestId={request_id}"
+            if resource_url:
+                result_msg += f", ResourceUrl={resource_url}"
+            log_operation_success("AGB.create", result_msg)
             return SessionResult(request_id=request_id, success=True, session=session)
 
         except Exception as e:
-            logger.error(f"Error calling create_mcp_session: {e}")
+            log_operation_error("AGB.create", str(e), exc_info=True)
             return SessionResult(
                 request_id="",
                 success=False,
@@ -297,12 +313,17 @@ class AGB:
             if limit is None:
                 limit = 10
 
+            op_details = f"LabelsCount={len(labels)}, Page={page or 1}, Limit={limit}"
+            log_operation_start("AGB.list", op_details)
+
             # Validate page number
             if page is not None and page < 1:
+                error_msg = f"Cannot reach page {page}: Page number must be >= 1"
+                log_operation_error("AGB.list", error_msg)
                 return SessionListResult(
                     request_id="",
                     success=False,
-                    error_message=f"Cannot reach page {page}: Page number must be >= 1",
+                    error_message=error_msg,
                     session_ids=[],
                     next_token="",
                     max_results=limit,
@@ -332,10 +353,12 @@ class AGB:
 
                     if not response.is_successful():
                         error_message = response.get_error_message() or "Unknown error"
+                        error_msg = f"Cannot reach page {page}: {error_message}"
+                        log_operation_error("AGB.list", error_msg)
                         return SessionListResult(
                             request_id=request_id,
                             success=False,
-                            error_message=f"Cannot reach page {page}: {error_message}",
+                            error_message=error_msg,
                             session_ids=[],
                             next_token="",
                             max_results=limit,
@@ -345,10 +368,12 @@ class AGB:
                     next_token = response.get_next_token() or ""
                     if not next_token:
                         # No more pages available
+                        error_msg = f"Cannot reach page {page}: No more pages available"
+                        log_operation_error("AGB.list", error_msg)
                         return SessionListResult(
                             request_id=request_id,
                             success=False,
-                            error_message=f"Cannot reach page {page}: No more pages available",
+                            error_message=error_msg,
                             session_ids=[],
                             next_token="",
                             max_results=limit,
@@ -378,10 +403,12 @@ class AGB:
             # Check for errors in the response
             if not response.is_successful():
                 error_message = response.get_error_message() or "Unknown error"
+                error_msg = f"Failed to list sessions: {error_message}"
+                log_operation_error("AGB.list", error_msg)
                 return SessionListResult(
                     request_id=request_id,
                     success=False,
-                    error_message=f"Failed to list sessions: {error_message}",
+                    error_message=error_msg,
                     session_ids=[],
                     next_token="",
                     max_results=limit,
@@ -402,9 +429,8 @@ class AGB:
                     session_ids.append(session_data.session_id)
 
             # Log API response with key details
-            logger.info(f"ListSessions API response - RequestID: {request_id}, Success: True")
-            logger.info(f"Total count: {total_count}, Returned count: {len(session_ids)}")
-            logger.info(f"Has more: {'yes' if next_token else 'no'}")
+            result_msg = f"RequestId={request_id}, TotalCount={total_count}, ReturnedCount={len(session_ids)}, HasMore={'yes' if next_token else 'no'}"
+            log_operation_success("AGB.list", result_msg)
 
             # Return SessionListResult with request ID and pagination info
             return SessionListResult(
@@ -417,7 +443,7 @@ class AGB:
             )
 
         except Exception as e:
-            logger.error(f"Error calling list_sessions: {e}")
+            log_operation_error("AGB.list", str(e), exc_info=True)
             return SessionListResult(
                 request_id="",
                 success=False,
@@ -436,6 +462,7 @@ class AGB:
         Returns:
             DeleteResult: Result indicating success or failure and request ID.
         """
+        log_operation_start("AGB.delete", f"SessionId={session.session_id}, SyncContext={sync_context}")
         try:
             # Delete the session and get the result
             delete_result = session.delete(sync_context=sync_context)
@@ -443,10 +470,17 @@ class AGB:
             with self._lock:
                 self._sessions.pop(session.session_id, None)
 
+            if delete_result.success:
+                result_msg = f"SessionId={session.session_id}, RequestId={delete_result.request_id}"
+                log_operation_success("AGB.delete", result_msg)
+            else:
+                error_msg = delete_result.error_message or "Unknown error"
+                log_operation_error("AGB.delete", error_msg)
+
             return delete_result
 
         except Exception as e:
-            logger.error(f"Error calling delete_mcp_session: {e}")
+            log_operation_error("AGB.delete", str(e), exc_info=True)
             return DeleteResult(
                 request_id="",
                 success=False,
@@ -463,9 +497,8 @@ class AGB:
         Returns:
             GetSessionResult: Result containing session information.
         """
+        log_operation_start("AGB.get_session", f"SessionId={session_id}")
         try:
-            logger.info(f"Getting session information for session_id: {session_id}")
-
             request = GetSessionRequest(
                 authorization=f"Bearer {self.api_key}",
                 session_id=session_id
@@ -491,13 +524,15 @@ class AGB:
 
                 # Check for API-level errors
             if not success:
+                error_msg = message or "Unknown error"
+                log_warning(f"AGB.get_session: {error_msg}")
                 return GetSessionResult(
                     request_id=request_id,
                     http_status_code=http_status_code,
                     code=code,
                     success=False,
                     data=None,
-                    error_message=message or "Unknown error",
+                    error_message=error_msg,
                 )
 
             # Create GetSessionData from the API response using your architecture
@@ -513,14 +548,10 @@ class AGB:
                 )
 
             # Log API response with key details
-            key_fields = {}
+            result_msg = f"SessionId={session_id}, RequestId={request_id}"
             if data:
-                key_fields["session_id"] = data.session_id
-
-            logger.info(f"GetSession API response - RequestID: {request_id}, Success: {success}")
-            if key_fields:
-                logger.debug(f"Key fields: {key_fields}")
-            logger.debug(f"Full response: {response_body}")
+                result_msg += f", ResourceUrl={data.resource_url}, Status={data.status}"
+            log_operation_success("AGB.get_session", result_msg)
 
             return GetSessionResult(
                 request_id=request_id,
@@ -532,7 +563,7 @@ class AGB:
             )
 
         except Exception as e:
-            logger.error(f"Error calling GetSession: {e}")
+            log_operation_error("AGB.get_session", str(e), exc_info=True)
             return GetSessionResult(
                 request_id="",
                 success=False,
@@ -552,12 +583,15 @@ class AGB:
         Returns:
             SessionResult: Result containing the Session instance, request ID, and success status.
         """
+        log_operation_start("AGB.get", f"SessionId={session_id}")
         # Validate input
         if not session_id or (isinstance(session_id, str) and not session_id.strip()):
+            error_msg = "session_id is required"
+            log_operation_error("AGB.get", error_msg)
             return SessionResult(
                 request_id="",
                 success=False,
-                error_message="session_id is required",
+                error_message=error_msg,
             )
 
         # Call GetSession API
@@ -566,6 +600,7 @@ class AGB:
         # Check if the API call was successful
         if not get_result.success:
             error_msg = get_result.error_message or "Unknown error"
+            log_operation_error("AGB.get", f"Failed to get session: {error_msg}")
             return SessionResult(
                 request_id=get_result.request_id,
                 success=False,
@@ -582,74 +617,11 @@ class AGB:
             session.app_instance_id = get_result.data.app_instance_id or ""
             session.resource_id = get_result.data.resource_id or ""
 
-        logger.info(f"Successfully retrieved session: {session_id}")
+        result_msg = f"SessionId={session_id}, RequestId={get_result.request_id}"
+        log_operation_success("AGB.get", result_msg)
 
         return SessionResult(
             request_id=get_result.request_id or "",
             success=True,
             session=session,
         )
-
-    def pause(self, session: Session, timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult:
-        """
-        Pause a session, putting it into a dormant state.
-
-        Args:
-            session (Session): The session to pause.
-            timeout (int, optional): Timeout in seconds to wait for the session to pause.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionPauseResult: Result containing the request ID, success status, and final session status.
-        """
-        return session.pause(timeout, poll_interval)
-
-    async def pause_async(self, session: Session, timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult:
-        """
-        Pause a session asynchronously.
-
-        Args:
-            session (Session): The session to pause.
-            timeout (int, optional): Timeout in seconds to wait for the session to pause.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionPauseResult: Result containing the request ID, success status, and final session status.
-        """
-        return await session.pause_async(timeout, poll_interval)
-
-    def resume(self, session: Session, timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult:
-        """
-        Resume a session from a paused state.
-
-        Args:
-            session (Session): The session to resume.
-            timeout (int, optional): Timeout in seconds to wait for the session to resume.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionResumeResult: Result containing the request ID, success status, and final session status.
-        """
-        return session.resume(timeout, poll_interval)
-
-    async def resume_async(self, session: Session, timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult:
-        """
-        Resume a session asynchronously.
-
-        Args:
-            session (Session): The session to resume.
-            timeout (int, optional): Timeout in seconds to wait for the session to resume.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionResumeResult: Result containing the request ID, success status, and final session status.
-        """
-        return await session.resume_async(timeout, poll_interval)

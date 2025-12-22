@@ -1,6 +1,6 @@
 from agb.api.base_service import BaseService
 from agb.model.response import ApiResponse
-from agb.logger import get_logger
+from agb.logger import get_logger, log_operation_start, log_operation_success, log_operation_error
 
 logger = get_logger(__name__)
 
@@ -62,30 +62,37 @@ class Code(BaseService):
             # Validate language
             supported_languages = ["python", "javascript", "java", "r"]
             if language not in supported_languages:
+                error_msg = f"Unsupported language: {language}. Supported languages are: {', '.join(supported_languages)}"
+                log_operation_error("Code.run_code", error_msg)
                 return CodeExecutionResult(
                     request_id="",
                     success=False,
-                    error_message=f"Unsupported language: {language}. Supported "
-                    f"languages are: {', '.join(supported_languages)}",
+                    error_message=error_msg,
                 )
 
+            log_operation_start("Code.run_code", f"Language={language}, TimeoutS={timeout_s}, Code={code}")
             args = {"code": code, "language": language, "timeout_s": timeout_s}
             result = self._call_mcp_tool("run_code", args)
             logger.debug(f"Run code response: {result}")
 
             if result.success:
+                result_msg = f"RequestId={result.request_id}, ResultLength={len(result.data) if result.data else 0}"
+                log_operation_success("Code.run_code", result_msg)
                 return CodeExecutionResult(
                     request_id=result.request_id,
                     success=True,
                     result=result.data,
                 )
             else:
+                error_msg = result.error_message or "Failed to run code"
+                log_operation_error("Code.run_code", error_msg)
                 return CodeExecutionResult(
                     request_id=result.request_id,
                     success=False,
-                    error_message=result.error_message or "Failed to run code",
+                    error_message=error_msg,
                 )
         except Exception as e:
+            log_operation_error("Code.run_code", str(e), exc_info=True)
             return CodeExecutionResult(
                 request_id="",
                 success=False,

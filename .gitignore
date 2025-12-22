@@ -133,3 +133,5 @@ dmypy.json
 .cursorrules
 CLAUDE.md
 .DS_Store
+
+.history/

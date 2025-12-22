@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.1] - 2025-12-22
+
+### Enhancements
+- **Default Parameters**: Adjusted default parameter values for improved usability and performance
+- **API Documentation**: Updated API documentation to reflect current functionality
+
+### Refactoring
+- **Code Cleanup**: Removed deprecated session management methods and simplified API surface
+- **Documentation Updates**: Cleaned up documentation references to align with current API
+
+### Testing & CI/CD
+- **Test Adjustments**: Updated test cases to match current API behavior and improve test reliability
+
 ## [0.7.0] - 2025-12-18
 
 ### New Features
@@ -11,7 +24,6 @@
   - Window listing and management functionality
   - Application operations support
 - **File Transfer Function**: Complete file transfer functionality for moving files between local and remote environments
-- **Session Pause and Resume**: Added pause and resume functionality for sessions to optimize resource usage and costs
 - **Async Session Deletion**: Migrated session deletion API from `release_mcp_session` to `delete_session_async` with polling support
 - **Browser Type Configuration**: Support for browser type and command arguments settings for enhanced browser control
 - **MCP Access Documentation**: Comprehensive guide for MCP (Model Context Protocol) access and configuration
@@ -28,7 +40,6 @@
 - Updated text input examples in documentation
 - Corrected documentation regarding command execution instructions
 - Standardized guides structure to match template
-- Fixed ContextManager docstring to use AGB instead of AgentBay
 - Removed example code from ContextManager docstring
 - Added file transfer guide markdown
 
@@ -38,7 +49,6 @@
 - Cleaned up unrelated files and code
 
 ### Testing & CI/CD
-- Added comprehensive unit and integration tests for pause and resume functionality
 - Optimized CI/CD pipeline summary with switch state for better visibility
 - Enhanced test coverage for computer module, file transfer, and browser fingerprint features
 - Fixed context manager sync tests to match new validation logic

@@ -24,10 +24,6 @@ from .set_label_request import SetLabelRequest
 from .set_label_response import SetLabelResponse
 from .get_label_request import GetLabelRequest
 from .get_label_response import GetLabelResponse
-from .pause_session_request import PauseSessionRequest
-from .pause_session_response import PauseSessionResponse
-from .resume_session_request import ResumeSessionRequest
-from .resume_session_response import ResumeSessionResponse
 from .delete_session_async_request import DeleteSessionAsyncRequest
 from .delete_session_async_response import DeleteSessionAsyncResponse, DeleteSessionAsyncResponseBody
 
@@ -81,10 +77,6 @@ __all__ = [
     "SetLabelResponse",
     "GetLabelRequest",
     "GetLabelResponse",
-    "PauseSessionRequest",
-    "PauseSessionResponse",
-    "ResumeSessionRequest",
-    "ResumeSessionResponse",
     "DeleteSessionAsyncRequest",
     "DeleteSessionAsyncResponse",
     "DeleteSessionAsyncResponseBody",

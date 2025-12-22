@@ -5,12 +5,10 @@ from agb.api.models import (
     GetMcpResourceRequest,
     SetLabelRequest,
     GetLabelRequest,
-    PauseSessionRequest,
-    ResumeSessionRequest,
     DeleteSessionAsyncRequest,
 )
 from agb.exceptions import SessionError
-from agb.model.response import OperationResult, DeleteResult, SessionPauseResult, SessionResumeResult
+from agb.model.response import OperationResult, DeleteResult
 from agb.modules.browser import Browser
 from agb.modules.code import Code
 from agb.modules.command import Command
@@ -159,8 +157,11 @@ class Session:
             # Validate labels using the extracted validation function
             validation_result = self._validate_labels(labels)
             if validation_result is not None:
+                error_msg = validation_result.error_message or "Validation failed"
+                log_operation_error("Session.set_labels", error_msg)
                 return validation_result
 
+            log_operation_start("Session.set_labels", f"SessionId={self.session_id}, LabelsCount={len(labels)}")
             # Convert labels to JSON string
             labels_json = json.dumps(labels)
 
@@ -174,6 +175,8 @@ class Session:
 
             # Check if response is successful
             if response.is_successful():
+                result_msg = f"SessionId={self.session_id}, RequestId={response.request_id}"
+                log_operation_success("Session.set_labels", result_msg)
                 return OperationResult(
                     request_id=response.request_id or "",
                     success=True
@@ -181,6 +184,7 @@ class Session:
             else:
                 # Get error message from response
                 error_message = response.get_error_message() or "Failed to set labels"
+                log_operation_error("Session.set_labels", error_message)
                 return OperationResult(
                     request_id=response.request_id or "",
                     success=False,
@@ -188,7 +192,7 @@ class Session:
                 )
 
         except Exception as e:
-            logger.error(f"Error calling set_label: {e}")
+            log_operation_error("Session.set_labels", str(e), exc_info=True)
             raise SessionError(
                 f"Failed to set labels for session {self.session_id}: {e}"
             )
@@ -203,6 +207,7 @@ class Session:
         Raises:
             SessionError: If the operation fails.
         """
+        log_operation_start("Session.get_labels", f"SessionId={self.session_id}")
         try:
             request = GetLabelRequest(
                 authorization=f"Bearer {self.get_api_key()}",
@@ -221,6 +226,8 @@ class Session:
                     # Parse JSON string to dictionary
                     labels = json.loads(labels_data.labels)
 
+                result_msg = f"SessionId={self.session_id}, LabelsCount={len(labels)}, RequestId={response.request_id}"
+                log_operation_success("Session.get_labels", result_msg)
                 return OperationResult(
                     request_id=response.request_id or "",
                     success=True,
@@ -229,6 +236,7 @@ class Session:
             else:
                 # Get error message from response
                 error_message = response.get_error_message() or "Failed to get labels"
+                log_operation_error("Session.get_labels", error_message)
                 return OperationResult(
                     request_id=response.request_id or "",
                     success=False,
@@ -236,7 +244,7 @@ class Session:
                 )
 
         except Exception as e:
-            logger.error(f"Error calling get_label: {e}")
+            log_operation_error("Session.get_labels", str(e), exc_info=True)
             raise SessionError(
                 f"Failed to get labels for session {self.session_id}: {e}"
             )
@@ -249,6 +257,7 @@ class Session:
             OperationResult: Result containing the session information as data and
                 request ID.
         """
+        log_operation_start("Session.info", f"SessionId={self.get_session_id()}")
         try:
             # Create request to get MCP resource
             request = GetMcpResourceRequest(
@@ -261,10 +270,12 @@ class Session:
 
             # Check if response is empty
             if response is None:
+                error_msg = "OpenAPI client returned None response"
+                log_operation_error("Session.info", error_msg)
                 return OperationResult(
                     request_id="",
                     success=False,
-                    error_message="OpenAPI client returned None response",
+                    error_message=error_msg,
                 )
 
             # Check response type, if it's GetMcpResourceResponse, use new parsing method
@@ -297,17 +308,22 @@ class Session:
                                     }
                                 )
 
+                            result_msg = f"SessionId={self.get_session_id()}, RequestId={request_id}, ResourceUrl={result_data.get('resource_url', 'None')}"
+                            log_operation_success("Session.info", result_msg)
                             return OperationResult(
                                 request_id=request_id, success=True, data=result_data
                             )
                         else:
+                            error_msg = "No resource data found in response"
+                            log_operation_error("Session.info", error_msg)
                             return OperationResult(
                                 request_id=request_id,
                                 success=False,
-                                error_message="No resource data found in response",
+                                error_message=error_msg,
                             )
 
                     except Exception as e:
+                        log_operation_error("Session.info", f"Error parsing resource data: {str(e)}", exc_info=True)
                         return OperationResult(
                             request_id=request_id,
                             success=False,
@@ -317,17 +333,21 @@ class Session:
                     error_msg = (
                         response.get_error_message() or "Failed to get MCP resource"
                     )
+                    log_operation_error("Session.info", error_msg)
                     return OperationResult(
                         request_id=request_id, success=False, error_message=error_msg
                     )
             else:
                 # Handle case where response doesn't have is_successful method
+                error_msg = "Unsupported response type"
+                log_operation_error("Session.info", error_msg)
                 return OperationResult(
                     request_id="",
                     success=False,
-                    error_message="Unsupported response type",
+                    error_message=error_msg,
                 )
         except Exception as e:
+            log_operation_error("Session.info", str(e), exc_info=True)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -351,6 +371,12 @@ class Session:
         Raises:
             SessionError: If the request fails or the response is invalid.
         """
+        op_details = f"SessionId={self.get_session_id()}"
+        if protocol_type:
+            op_details += f", ProtocolType={protocol_type}"
+        if port:
+            op_details += f", Port={port}"
+        log_operation_start("Session.get_link", op_details)
         try:
             from agb.api.models import GetLinkRequest
 
@@ -371,18 +397,23 @@ class Session:
                 request_id = response.request_id
 
                 if url:
+                    result_msg = f"SessionId={self.get_session_id()}, URL={url}, RequestId={request_id}"
+                    log_operation_success("Session.get_link", result_msg)
                     return OperationResult(
                         request_id=request_id or "", success=True, data=url
                     )
                 else:
+                    error_msg = "No URL found in response"
+                    log_operation_error("Session.get_link", error_msg)
                     return OperationResult(
                         request_id=request_id or "",
                         success=False,
-                        error_message="No URL found in response",
+                        error_message=error_msg,
                     )
             else:
                 # Get error message from response
                 error_message = response.get_error_message() or "Failed to get link"
+                log_operation_error("Session.get_link", error_message)
                 return OperationResult(
                     request_id=response.request_id or "",
                     success=False,
@@ -390,6 +421,7 @@ class Session:
                 )
 
         except Exception as e:
+            log_operation_error("Session.get_link", str(e), exc_info=True)
             raise SessionError(f"Failed to get link: {e}")
 
     def delete(self, sync_context: bool = False) -> DeleteResult:
@@ -407,6 +439,7 @@ class Session:
                 - request_id (str): Unique identifier for this API request
 
         """
+        log_operation_start("Session.delete", f"SessionId={self.session_id}, SyncContext={sync_context}")
         try:
             import time
             import asyncio
@@ -477,7 +510,7 @@ class Session:
                 # Format error message according to reference code
                 body = response.body
                 error_message = f"[{body.code or 'Unknown'}] {body.message or 'Failed to delete session'}"
-                logger.error(f"Failed to delete session {self.session_id}: {error_message}")
+                log_operation_error("Session.delete", error_message)
                 logger.debug(f"Full response: {json.dumps(response.to_map(), ensure_ascii=False, indent=2)}")
                 return DeleteResult(
                     request_id=request_id,
@@ -496,7 +529,7 @@ class Session:
                 elapsed_time = time.time() - poll_start_time
                 if elapsed_time >= poll_timeout:
                     error_message = f"Timeout waiting for session deletion after {poll_timeout}s"
-                    logger.warning(f"⏱️  {error_message}")
+                    log_operation_error("Session.delete", error_message)
                     return DeleteResult(
                         request_id=request_id,
                         success=False,
@@ -545,379 +578,17 @@ class Session:
                 time.sleep(poll_interval)
 
             # Log successful deletion
-            logger.info(f"DeleteSession API response - RequestID: {request_id}, Success: True")
-            logger.debug(f"Key fields: {{'session_id': '{self.session_id}'}}")
+            result_msg = f"SessionId={self.session_id}, RequestId={request_id}"
+            log_operation_success("Session.delete", result_msg)
 
             # Return success result with request ID
             return DeleteResult(request_id=request_id, success=True)
 
         except Exception as e:
-            log_operation_error("delete_session", str(e))
+            log_operation_error("Session.delete", str(e), exc_info=True)
             # In case of error, return failure result with error message
             return DeleteResult(
                 success=False,
                 error_message=f"Failed to delete session {self.session_id}: {e}",
             )
 
-    def pause(self, timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult:
-        """
-        Synchronously pause this session, putting it into a dormant state.
-
-        This method internally calls the pause_session_async API and then polls the get_session API
-        to check the session status until it becomes PAUSED or until timeout.
-
-        Args:
-            timeout (int, optional): Timeout in seconds to wait for the session to pause.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionPauseResult: Result containing the request ID, success status, and final session status.
-                - success (bool): True if the session was successfully paused
-                - request_id (str): Unique identifier for this API request
-                - error_message (str): Error description (if success is False)
-        """
-        try:
-            # Use asyncio.run to call the async pause API and poll for status
-            # This allows us to reuse the async implementation in a synchronous context
-            import asyncio
-            import threading
-
-            # Create a new event loop if there isn't one already
-            try:
-                loop = asyncio.get_running_loop()
-                # If we're already in an event loop, run in a new thread with a new event loop
-                # This prevents deadlock when calling synchronous pause() from async context
-                result_container = []
-                exception_container = []
-
-                def run_in_thread():
-                    try:
-                        # Create a new event loop for this thread
-                        new_loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(new_loop)
-                        try:
-                            result = new_loop.run_until_complete(self.pause_async(timeout, poll_interval))
-                            result_container.append(result)
-                        finally:
-                            new_loop.close()
-                    except Exception as e:
-                        exception_container.append(e)
-
-                thread = threading.Thread(target=run_in_thread)
-                thread.start()
-                thread.join()
-
-                if exception_container:
-                    raise exception_container[0]
-                if result_container:
-                    return result_container[0]
-
-            except RuntimeError:
-                # No event loop running, we can use asyncio.run
-                result = asyncio.run(self.pause_async(timeout, poll_interval))
-                return result
-        except Exception as e:
-            logger.error(f"Error pausing session {self.session_id}: {e}")
-            return SessionPauseResult(
-                request_id="",
-                success=False,
-                error_message=f"Unexpected error pausing session: {e}",
-            )
-
-    async def pause_async(self, timeout: int = 600, poll_interval: float = 2.0) -> SessionPauseResult:
-        """
-        Asynchronously pause this session, putting it into a dormant state.
-
-        This method directly calls the pause_session_async API and then polls the get_session API
-        asynchronously to check the session status until it becomes PAUSED or until timeout.
-
-        Args:
-            timeout (int, optional): Timeout in seconds to wait for the session to pause.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionPauseResult: Result containing the request ID, success status, and final session status.
-                - success (bool): True if the session was successfully paused
-                - request_id (str): Unique identifier for this API request
-                - error_message (str): Error description (if success is False)
-        """
-        try:
-            import asyncio
-
-            request = PauseSessionRequest(
-                authorization=f"Bearer {self.get_api_key()}",
-                session_id=self.session_id,
-            )
-
-            logger.info(f"Pausing session {self.session_id}")
-            response = await self.agb.client.pause_session_async(request)
-
-            # Extract request ID
-            request_id = response.request_id or ""
-
-            # Check for API-level errors
-            if not response.is_successful():
-                error_message = response.get_error_message() or "Unknown error"
-                logger.error(f"Failed to pause session {self.session_id}: {error_message}")
-                return SessionPauseResult(
-                    request_id=request_id,
-                    success=False,
-                    error_message=error_message
-                )
-
-            logger.info(f"Session pause initiated successfully for session {self.session_id}, request ID: {request_id}")
-
-
-            # Poll for session status until PAUSED or timeout
-            import time
-            start_time = time.time()
-            max_attempts = int(timeout / poll_interval)
-            attempt = 0
-
-            while attempt < max_attempts:
-                # Get session status
-                get_result = self.agb.get_session(self.session_id)
-                if not get_result.success:
-                    error_msg = f"Failed to get session status: {get_result.error_message}"
-                    logger.error(error_msg)
-                    return SessionPauseResult(
-                        request_id=get_result.request_id,
-                        success=False,
-                        error_message=error_msg,
-                    )
-
-                # Check session status
-                if get_result.data:
-                    status = getattr(get_result.data, 'status', None) or "UNKNOWN"
-                    logger.info(f"Session status: {status} (attempt {attempt + 1}/{max_attempts})")
-
-                    # Check if session is paused
-                    if status == "PAUSED":
-                        elapsed = time.time() - start_time
-                        logger.info(f"Session paused successfully in {elapsed:.2f} seconds")
-                        return SessionPauseResult(
-                            request_id=get_result.request_id,
-                            success=True
-                        )
-                    elif status == "PAUSING":
-                        # Normal transitioning state, continue polling
-                        pass
-                    else:
-                        # Any other status is unexpected - pause API succeeded but session is not pausing/paused
-                        elapsed = time.time() - start_time
-                        error_msg = f"Session pause failed: unexpected state '{status}' after {elapsed:.2f} seconds"
-                        logger.error(error_msg)
-                        return SessionPauseResult(
-                            request_id=get_result.request_id,
-                            success=False,
-                            error_message=error_msg,
-                        )
-
-                # Wait before next query (using asyncio.sleep to avoid blocking)
-                # Only wait if we're not at the last attempt
-                attempt += 1
-                if attempt < max_attempts:
-                    await asyncio.sleep(poll_interval)
-
-            # Timeout
-            elapsed = time.time() - start_time
-            error_msg = f"Session pause timed out after {elapsed:.2f} seconds"
-            logger.error(error_msg)
-            return SessionPauseResult(
-                request_id="",
-                success=False,
-                error_message=error_msg,
-            )
-
-        except Exception as e:
-            logger.error(f"Error pausing session {self.session_id}: {e}")
-            return SessionPauseResult(
-                request_id="",
-                success=False,
-                error_message=f"Unexpected error pausing session: {e}",
-            )
-
-    def resume(self, timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult:
-        """
-        Synchronously resume this session from a paused state.
-
-        This method internally calls the resume_session_async API and then polls the get_session API
-        to check the session status until it becomes RUNNING or until timeout.
-
-        Args:
-            timeout (int, optional): Timeout in seconds to wait for the session to resume.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionResumeResult: Result containing the request ID, success status, and final session status.
-                - success (bool): True if the session was successfully resumed
-                - request_id (str): Unique identifier for this API request
-                - error_message (str): Error description (if success is False)
-        """
-        try:
-            # Use asyncio.run to call the async resume API and poll for status
-            # This allows us to reuse the async implementation in a synchronous context
-            import asyncio
-            import threading
-
-            # Create a new event loop if there isn't one already
-            try:
-                loop = asyncio.get_running_loop()
-                # If we're already in an event loop, run in a new thread with a new event loop
-                # This prevents deadlock when calling synchronous resume() from async context
-                result_container = []
-                exception_container = []
-
-                def run_in_thread():
-                    try:
-                        # Create a new event loop for this thread
-                        new_loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(new_loop)
-                        try:
-                            result = new_loop.run_until_complete(self.resume_async(timeout, poll_interval))
-                            result_container.append(result)
-                        finally:
-                            new_loop.close()
-                    except Exception as e:
-                        exception_container.append(e)
-
-                thread = threading.Thread(target=run_in_thread)
-                thread.start()
-                thread.join()
-
-                if exception_container:
-                    raise exception_container[0]
-                if result_container:
-                    return result_container[0]
-
-            except RuntimeError:
-                # No event loop running, we can use asyncio.run
-                result = asyncio.run(self.resume_async(timeout, poll_interval))
-                return result
-        except Exception as e:
-            logger.error(f"Error resuming session {self.session_id}: {e}")
-            return SessionResumeResult(
-                request_id="",
-                success=False,
-                error_message=f"Unexpected error resuming session: {e}",
-            )
-
-    async def resume_async(self, timeout: int = 600, poll_interval: float = 2.0) -> SessionResumeResult:
-        """
-        Asynchronously resume this session from a paused state.
-
-        This method directly calls the resume_session_async API and then polls the get_session API
-        asynchronously to check the session status until it becomes RUNNING or until timeout.
-
-        Args:
-            timeout (int, optional): Timeout in seconds to wait for the session to resume.
-                Defaults to 600 seconds.
-            poll_interval (float, optional): Interval in seconds between status polls.
-                Defaults to 2.0 seconds.
-
-        Returns:
-            SessionResumeResult: Result containing the request ID, success status, and final session status.
-                - success (bool): True if the session was successfully resumed
-                - request_id (str): Unique identifier for this API request
-                - error_message (str): Error description (if success is False)
-        """
-        try:
-            import asyncio
-
-            request = ResumeSessionRequest(
-                authorization=f"Bearer {self.get_api_key()}",
-                session_id=self.session_id,
-            )
-
-            logger.info(f"Resuming session {self.session_id}")
-            response = await self.agb.client.resume_session_async(request)
-
-            # Extract request ID
-            request_id = response.request_id or ""
-
-            # Check for API-level errors
-            if not response.is_successful():
-                error_message = response.get_error_message() or "Unknown error"
-                logger.error(f"Failed to resume session {self.session_id}: {error_message}")
-                return SessionResumeResult(
-                    request_id=request_id,
-                    success=False,
-                    error_message=error_message
-                )
-
-            logger.info(f"Session resume initiated successfully for session {self.session_id},request ID: {request_id}")
-
-            # Poll for session status until RUNNING or timeout
-            import time
-            start_time = time.time()
-            max_attempts = int(timeout / poll_interval)
-            attempt = 0
-
-            while attempt < max_attempts:
-                # Get session status
-                get_result = self.agb.get_session(self.session_id)
-                if not get_result.success:
-                    error_msg = f"Failed to get session status: {get_result.error_message}"
-                    logger.error(error_msg)
-                    return SessionResumeResult(
-                        request_id=get_result.request_id,
-                        success=False,
-                        error_message=error_msg,
-                    )
-
-                # Check session status
-                if get_result.data:
-                    status = getattr(get_result.data, 'status', None) or "UNKNOWN"
-                    logger.info(f"Session status: {status} (attempt {attempt + 1}/{max_attempts})")
-
-                    # Check if session is running
-                    if status == "RUNNING":
-                        elapsed = time.time() - start_time
-                        logger.info(f"Session resumed successfully in {elapsed:.2f} seconds")
-                        return SessionResumeResult(
-                            request_id=get_result.request_id,
-                            success=True
-                        )
-                    elif status == "RESUMING":
-                        # Normal transitioning state, continue polling
-                        pass
-                    else:
-                        # Any other status is unexpected - resume API succeeded but session is not resuming/running
-                        elapsed = time.time() - start_time
-                        error_msg = f"Session resume failed: unexpected state '{status}' after {elapsed:.2f} seconds"
-                        logger.error(error_msg)
-                        return SessionResumeResult(
-                            request_id=get_result.request_id,
-                            success=False,
-                            error_message=error_msg,
-                        )
-
-                # Wait before next query (using asyncio.sleep to avoid blocking)
-                # Only wait if we're not at the last attempt
-                attempt += 1
-                if attempt < max_attempts:
-                    await asyncio.sleep(poll_interval)
-
-            # Timeout
-            elapsed = time.time() - start_time
-            error_msg = f"Session resume timed out after {elapsed:.2f} seconds"
-            logger.error(error_msg)
-            return SessionResumeResult(
-                request_id="",
-                success=False,
-                error_message=error_msg,
-            )
-
-        except Exception as e:
-            logger.error(f"Error resuming session {self.session_id}: {e}")
-            return SessionResumeResult(
-                request_id="",
-                success=False,
-                error_message=f"Unexpected error resuming session: {e}",
-            )

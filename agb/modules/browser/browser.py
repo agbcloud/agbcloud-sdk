@@ -9,7 +9,7 @@ from agb.api.models import InitBrowserRequest
 from agb.config import BROWSER_DATA_PATH, BROWSER_FINGERPRINT_PERSIST_PATH
 from agb.exceptions import BrowserError
 from agb.modules.browser.browser_agent import BrowserAgent
-from agb.logger import get_logger
+from agb.logger import get_logger, log_operation_start, log_operation_success, log_operation_error
 
 logger = get_logger(__name__)
 
@@ -25,10 +25,10 @@ class BrowserFingerprintContext:
     def __init__(self, fingerprint_context_id: str):
         """
         Initialize FingerprintContext with context id.
-        
+
         Args:
             fingerprint_context_id (str): ID of the fingerprint context for browser fingerprint.
-        
+
         Raises:
             ValueError: If fingerprint_context_id is empty.
         """
@@ -465,7 +465,13 @@ class Browser(BaseService):
         Returns True if successful, False otherwise.
         """
         if self.is_initialized():
+            logger.info(
+                f"Browser.initialize: Browser already initialized, skipping. "
+                f"SessionId={self.session.get_session_id()}, "
+                f"Port={self.endpoint_router_port}"
+            )
             return True
+        log_operation_start("Browser.initialize", f"SessionId={self.session.get_session_id()}")
         try:
             request = InitBrowserRequest(
                 authorization=f"Bearer {self.session.get_api_key()}",
@@ -485,17 +491,20 @@ class Browser(BaseService):
                     self._initialized = True
                     self.endpoint_router_port = port
                     self._option = option
-                    logger.info("Browser instance was successfully initialized.")
+                    result_msg = f"Port={port}, RequestId={response.request_id}"
+                    log_operation_success("Browser.initialize", result_msg)
                     return True
                 else:
-                    logger.error("Browser initialization failed: No port in response")
+                    error_msg = "Browser initialization failed: No port in response"
+                    log_operation_error("Browser.initialize", error_msg)
                     return False
             else:
-                logger.error(f"Browser initialization failed: {response.get_error_message()}")
+                error_msg = f"Browser initialization failed: {response.get_error_message()}"
+                log_operation_error("Browser.initialize", error_msg)
                 return False
 
         except Exception as e:
-            logger.error(f"Failed to initialize browser instance: {e}")
+            log_operation_error("Browser.initialize", str(e), exc_info=True)
             self._initialized = False
             self._endpoint_url = None
             self._option = None
@@ -507,7 +516,13 @@ class Browser(BaseService):
         Returns True if successful, False otherwise.
         """
         if self.is_initialized():
+            logger.info(
+                f"Browser.initialize_async: Browser already initialized, skipping. "
+                f"SessionId={self.session.get_session_id()}, "
+                f"Port={self.endpoint_router_port}"
+            )
             return True
+        log_operation_start("Browser.initialize_async", f"SessionId={self.session.get_session_id()}")
         try:
             request = InitBrowserRequest(
                 authorization=f"Bearer {self.session.get_api_key()}",
@@ -525,17 +540,20 @@ class Browser(BaseService):
                     self.endpoint_router_port = port
                     self._initialized = True
                     self._option = option
-                    logger.info("Browser instance successfully initialized")
+                    result_msg = f"Port={port}, RequestId={response.request_id}"
+                    log_operation_success("Browser.initialize_async", result_msg)
                     return True
                 else:
-                    logger.error("Browser initialization failed: No port in response")
+                    error_msg = "Browser initialization failed: No port in response"
+                    log_operation_error("Browser.initialize_async", error_msg)
                     return False
             else:
-                logger.error(f"Browser initialization failed: {response.get_error_message()}")
+                error_msg = f"Browser initialization failed: {response.get_error_message()}"
+                log_operation_error("Browser.initialize_async", error_msg)
                 return False
 
         except Exception as e:
-            logger.error(f"Failed to initialize browser instance: {e}")
+            log_operation_error("Browser.initialize_async", str(e), exc_info=True)
             self._initialized = False
             self._endpoint_url = None
             self._option = None
@@ -547,12 +565,12 @@ class Browser(BaseService):
         """
         self._stop_browser()
 
-    
+
     async def screenshot(self, page, full_page: bool = False, **options) -> bytes:
         """
         Takes a screenshot of the specified page with enhanced options and error handling.
         This is the async version of the screenshot method.
-        
+
         Args:
             page (Page): The Playwright Page object to take a screenshot of. This is a required parameter.
             full_page (bool): Whether to capture the full scrollable page. Defaults to False.
@@ -564,10 +582,10 @@ class Browser(BaseService):
                       - animations (str): How to handle animations (default: 'disabled')
                       - caret (str): How to handle the caret (default: 'hide')
                       - scale (str): Scale setting (default: 'css')
-            
+
         Returns:
             bytes: Screenshot data as bytes.
-            
+
         Raises:
             BrowserError: If browser is not initialized.
             RuntimeError: If screenshot capture fails.
@@ -576,7 +594,7 @@ class Browser(BaseService):
         if not self.is_initialized():
             raise BrowserError("Browser must be initialized before calling screenshot.")
         if page is None:
-            raise ValueError("Page cannot be None")  
+            raise ValueError("Page cannot be None")
         # Set default enhanced options
         enhanced_options = {
             "animations": "disabled",
@@ -589,15 +607,15 @@ class Browser(BaseService):
 
         # Update with user-provided options (but full_page is already set from function parameter)
         enhanced_options.update(options)
-        
-        try:          
+
+        try:
             # Wait for page to load
             # await page.wait_for_load_state("networkidle")
             await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
             await page.wait_for_load_state("domcontentloaded", timeout=30000)
             # Scroll to load all content (especially for lazy-loaded elements)
             await self._scroll_to_load_all_content_async(page)
-            
+
             # Ensure images with data-src attributes are loaded
             await page.evaluate("""
                 () => {
@@ -614,17 +632,17 @@ class Browser(BaseService):
                     });
                 }
             """)
-            
+
             # Wait a bit for images to load
             await page.wait_for_timeout(1500)
             final_height = await page.evaluate("document.body.scrollHeight")
             await page.set_viewport_size({"width": 1920, "height": min(final_height, 10000)})
-            
+
             # Take the screenshot
             screenshot_bytes = await page.screenshot(**enhanced_options)
             logger.info("Screenshot captured successfully.")
             return screenshot_bytes
-            
+
         except Exception as e:
             # Convert exception to string safely to avoid comparison issues
             try:

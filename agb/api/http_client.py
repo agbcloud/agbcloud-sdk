@@ -5,11 +5,17 @@ Provides HTTP communication functionality with AGB API
 """
 
 import asyncio
+import json
 from typing import Any, Dict, Optional
 
 import aiohttp
 import requests
-from agb.logger import get_logger
+from agb.logger import (
+    get_logger,
+    log_api_call,
+    log_api_response_with_details,
+    mask_sensitive_data,
+)
 
 logger = get_logger(__name__)
 
@@ -61,13 +67,8 @@ from .models.describe_context_files_request import DescribeContextFilesRequest
 from .models.describe_context_files_response import DescribeContextFilesResponse
 from .models.get_and_load_internal_context_request import GetAndLoadInternalContextRequest
 from .models.get_and_load_internal_context_response import GetAndLoadInternalContextResponse
-from .models.pause_session_request import PauseSessionRequest
-from .models.pause_session_response import PauseSessionResponse
-from .models.resume_session_request import ResumeSessionRequest
-from .models.resume_session_response import ResumeSessionResponse
 from .models.delete_session_async_request import DeleteSessionAsyncRequest
 from .models.delete_session_async_response import DeleteSessionAsyncResponse
-
 
 class HTTPClient:
     """HTTP client class for communicating with AGB API"""
@@ -501,6 +502,11 @@ class HTTPClient:
         """
         url = f"{self.base_url}{endpoint}"
 
+        # Extract API name from endpoint (e.g., "/mcp/createSession" -> "createSession")
+        api_name = endpoint.split("/")[-1] if endpoint else endpoint
+        if not api_name:
+            api_name = endpoint
+
         # Merge request headers and ensure all values are strings
         request_headers: Dict[str, str] = {}
         for key, value in self.session.headers.items():
@@ -522,24 +528,22 @@ class HTTPClient:
             timeout = self.timeout
             timeout_display = f"{self.timeout} seconds"
 
-        # Log request information
-        logger.debug("\n=== HTTP Request Information ===")
-        logger.debug(f"URL: {url}")
-        logger.debug(f"Timeout: {timeout_display}")
-
+        # Prepare request data for logging (mask sensitive information)
+        request_data_parts = []
         if params:
-            logger.debug(f"Query Parameters: {params}")
-        else:
-            logger.debug("Query Parameters: None")
-
+            masked_params = mask_sensitive_data(params)
+            request_data_parts.append(f"Params: {json.dumps(masked_params, ensure_ascii=False)}")
         if json_data:
-            logger.debug(f"JSON Data: {json_data}")
+            masked_json = mask_sensitive_data(json_data)
+            request_data_parts.append(f"Body: {json.dumps(masked_json, ensure_ascii=False)}")
         elif data:
-            logger.debug(f"Form Data: {data}")
-        else:
-            logger.debug("Request Body: None")
+            masked_data = mask_sensitive_data(data)
+            request_data_parts.append(f"Data: {json.dumps(masked_data, ensure_ascii=False)}")
 
-        logger.debug("=" * 50)
+        request_data_str = " | ".join(request_data_parts) if request_data_parts else ""
+
+        # Log API call using new logger function (without HTTP method)
+        log_api_call(api_name, request_data_str)
 
         try:
             # Execute request
@@ -602,23 +606,52 @@ class HTTPClient:
             if "request_id" not in result:
                 result["request_id"] = response.headers.get("x-request-id", "")
 
-            # Log response information
-            logger.debug("\n=== HTTP Response Information ===")
-            logger.debug(
-                f"Response Body: {result.get('json', result.get('text', 'No content'))}"
+            # Prepare response data for logging
+            response_success = result["success"]
+            request_id = result.get("request_id", "")
+
+            # Extract key fields from response for logging
+            key_fields = {}
+            if result.get("json"):
+                json_data = result["json"]
+                # Extract common key fields
+                if isinstance(json_data, dict):
+                    # Add status code
+                    key_fields["status_code"] = result["status_code"]
+                    # Extract other common fields if available
+                    for key in ["code", "message", "data", "result"]:
+                        if key in json_data:
+                            key_fields[key] = json_data[key]
+
+            # Prepare full response for debug logging
+            full_response = ""
+            if result.get("json"):
+                masked_response = mask_sensitive_data(result["json"])
+                full_response = json.dumps(masked_response, ensure_ascii=False)
+            elif result.get("text"):
+                full_response = result["text"]
+
+            # Log API response using new logger function
+            log_api_response_with_details(
+                api_name=api_name,
+                request_id=request_id,
+                success=response_success,
+                key_fields=key_fields if key_fields else None,
+                full_response=full_response,
             )
-            logger.info(f"Request ID in result: {result.get('request_id', 'NOT_FOUND')}")
-            logger.debug("=" * 50)
 
             return result
 
         except requests.exceptions.RequestException as e:
-            # Log error information
-            logger.error("\n=== HTTP Request Error ===")
-            logger.error(f"Error Type: {type(e).__name__}")
-            logger.error(f"Error Message: {str(e)}")
-            logger.error(f"Request URL: {url}")
-            logger.error("=" * 50)
+            # Log error response using new logger function
+            error_msg = f"{type(e).__name__}: {str(e)}"
+            log_api_response_with_details(
+                api_name=api_name,
+                request_id="",
+                success=False,
+                key_fields={"error": error_msg, "url": url},
+                full_response=error_msg,
+            )
 
             return {"success": False, "error": str(e), "status_code": None, "url": url}
 
@@ -647,6 +680,11 @@ class HTTPClient:
         """
         url = f"{self.base_url}{endpoint}"
 
+        # Extract API name from endpoint (e.g., "/mcp/createSession" -> "createSession")
+        api_name = endpoint.split("/")[-1] if endpoint else endpoint
+        if not api_name:
+            api_name = endpoint
+
         # Merge request headers and ensure all values are strings
         request_headers: Dict[str, str] = {}
         for key, value in self.session.headers.items():
@@ -655,24 +693,22 @@ class HTTPClient:
         if headers:
             request_headers.update(headers)
 
-        # Log request information
-        logger.debug("\n=== Async HTTP Request Information ===")
-        logger.debug(f"URL: {url}")
-        logger.debug(f"Timeout: {self.timeout} seconds")
-
+        # Prepare request data for logging (mask sensitive information)
+        request_data_parts = []
         if params:
-            logger.debug(f"Query Parameters: {params}")
-        else:
-            logger.debug("Query Parameters: None")
-
+            masked_params = mask_sensitive_data(params)
+            request_data_parts.append(f"Params: {json.dumps(masked_params, ensure_ascii=False)}")
         if json_data:
-            logger.debug(f"JSON Data: {json_data}")
+            masked_json = mask_sensitive_data(json_data)
+            request_data_parts.append(f"Body: {json.dumps(masked_json, ensure_ascii=False)}")
         elif data:
-            logger.debug(f"Form Data: {data}")
-        else:
-            logger.debug("Request Body: None")
+            masked_data = mask_sensitive_data(data)
+            request_data_parts.append(f"Data: {json.dumps(masked_data, ensure_ascii=False)}")
 
-        logger.debug("=" * 50)
+        request_data_str = " | ".join(request_data_parts) if request_data_parts else ""
+
+        # Log API call using new logger function (without HTTP method)
+        log_api_call(f"{api_name} (async)", request_data_str)
 
         try:
             # Create aiohttp session and execute request
@@ -705,12 +741,36 @@ class HTTPClient:
                         if "request_id" not in response_dict:
                             response_dict["request_id"] = response.headers.get("x-request-id", "")
 
-                        # Log response information (like sync version)
-                        logger.debug("\n=== Async HTTP Response Information ===")
-                        logger.debug(
-                            f"Response Body: {response_dict.get('json', response_dict.get('text', 'No content'))}"
+                        # Prepare response data for logging
+                        response_success = response_dict["success"]
+                        request_id = response_dict.get("request_id", "")
+
+                        # Extract key fields from response for logging
+                        key_fields = {}
+                        if response_dict.get("json"):
+                            json_data = response_dict["json"]
+                            if isinstance(json_data, dict):
+                                key_fields["status_code"] = response_dict["status_code"]
+                                for key in ["code", "message", "data", "result"]:
+                                    if key in json_data:
+                                        key_fields[key] = json_data[key]
+
+                        # Prepare full response for debug logging
+                        full_response = ""
+                        if response_dict.get("json"):
+                            masked_response = mask_sensitive_data(response_dict["json"])
+                            full_response = json.dumps(masked_response, ensure_ascii=False)
+                        elif response_dict.get("text"):
+                            full_response = response_dict["text"]
+
+                        # Log API response using new logger function
+                        log_api_response_with_details(
+                            api_name=api_name,
+                            request_id=request_id,
+                            success=response_success,
+                            key_fields=key_fields if key_fields else None,
+                            full_response=full_response,
                         )
-                        logger.debug("=" * 50)
 
                         return response_dict
 
@@ -731,15 +791,46 @@ class HTTPClient:
                             # Try to parse JSON response
                             try:
                                 response_dict["json"] = await response.json()
+                                # Extract request_id from JSON response if available
+                                if response_dict["json"] and "requestId" in response_dict["json"]:
+                                    response_dict["request_id"] = response_dict["json"]["requestId"]
                             except:
                                 response_dict["json"] = None
 
-                            # Log response information (like sync version)
-                            logger.debug("\n=== Async HTTP Response Information ===")
-                            logger.debug(
-                                f"Response Body: {response_dict.get('json', response_dict.get('text', 'No content'))}"
+                            # Extract request_id from response headers if not found in JSON
+                            if "request_id" not in response_dict:
+                                response_dict["request_id"] = response.headers.get("x-request-id", "")
+
+                            # Prepare response data for logging
+                            response_success = response_dict["success"]
+                            request_id = response_dict.get("request_id", "")
+
+                            # Extract key fields from response for logging
+                            key_fields = {}
+                            if response_dict.get("json"):
+                                json_data = response_dict["json"]
+                                if isinstance(json_data, dict):
+                                    key_fields["status_code"] = response_dict["status_code"]
+                                    for key in ["code", "message", "data", "result"]:
+                                        if key in json_data:
+                                            key_fields[key] = json_data[key]
+
+                            # Prepare full response for debug logging
+                            full_response = ""
+                            if response_dict.get("json"):
+                                masked_response = mask_sensitive_data(response_dict["json"])
+                                full_response = json.dumps(masked_response, ensure_ascii=False)
+                            elif response_dict.get("text"):
+                                full_response = response_dict["text"]
+
+                            # Log API response using new logger function
+                            log_api_response_with_details(
+                                api_name=api_name,
+                                request_id=request_id,
+                                success=response_success,
+                                key_fields=key_fields if key_fields else None,
+                                full_response=full_response,
                             )
-                            logger.debug("=" * 50)
 
                             return response_dict
                     else:
@@ -758,26 +849,61 @@ class HTTPClient:
                             # Try to parse JSON response
                             try:
                                 response_dict["json"] = await response.json()
+                                # Extract request_id from JSON response if available
+                                if response_dict["json"] and "requestId" in response_dict["json"]:
+                                    response_dict["request_id"] = response_dict["json"]["requestId"]
                             except:
                                 response_dict["json"] = None
 
-                            # Log response information (like sync version)
-                            logger.debug("\n=== Async HTTP Response Information ===")
-                            logger.debug(
-                                f"Response Body: {response_dict.get('json', response_dict.get('text', 'No content'))}"
+                            # Extract request_id from response headers if not found in JSON
+                            if "request_id" not in response_dict:
+                                response_dict["request_id"] = response.headers.get("x-request-id", "")
+
+                            # Prepare response data for logging
+                            response_success = response_dict["success"]
+                            request_id = response_dict.get("request_id", "")
+
+                            # Extract key fields from response for logging
+                            key_fields = {}
+                            if response_dict.get("json"):
+                                json_data = response_dict["json"]
+                                if isinstance(json_data, dict):
+                                    key_fields["status_code"] = response_dict["status_code"]
+                                    for key in ["code", "message", "data", "result"]:
+                                        if key in json_data:
+                                            key_fields[key] = json_data[key]
+
+                            # Prepare full response for debug logging
+                            full_response = ""
+                            if response_dict.get("json"):
+                                masked_response = mask_sensitive_data(response_dict["json"])
+                                full_response = json.dumps(masked_response, ensure_ascii=False)
+                            elif response_dict.get("text"):
+                                full_response = response_dict["text"]
+
+                            # Log API response using new logger function
+                            log_api_response_with_details(
+                                api_name=api_name,
+                                request_id=request_id,
+                                success=response_success,
+                                key_fields=key_fields if key_fields else None,
+                                full_response=full_response,
                             )
-                            logger.debug("=" * 50)
 
                             return response_dict
                 else:
                     raise ValueError(f"Unsupported HTTP method: {method}")
 
         except asyncio.TimeoutError:
-            # Log error information
-            logger.error("\n=== Async HTTP Request Timeout ===")
-            logger.error(f"Request URL: {url}")
-            logger.error(f"Timeout: {self.timeout} seconds")
-            logger.error("=" * 50)
+            # Log error response using new logger function
+            error_msg = f"Request timeout after {self.timeout} seconds"
+            log_api_response_with_details(
+                api_name=api_name,
+                request_id="",
+                success=False,
+                key_fields={"error": error_msg, "url": url},
+                full_response=error_msg,
+            )
 
             return {
                 "success": False,
@@ -787,12 +913,15 @@ class HTTPClient:
             }
 
         except Exception as e:
-            # Log error information
-            logger.error("\n=== Async HTTP Request Error ===")
-            logger.error(f"Error Type: {type(e).__name__}")
-            logger.error(f"Error Message: {str(e)}")
-            logger.error(f"Request URL: {url}")
-            logger.error("=" * 50)
+            # Log error response using new logger function
+            error_msg = f"{type(e).__name__}: {str(e)}"
+            log_api_response_with_details(
+                api_name=api_name,
+                request_id="",
+                success=False,
+                key_fields={"error": error_msg, "url": url},
+                full_response=error_msg,
+            )
 
             return {"success": False, "error": str(e), "status_code": None, "url": url}
 
@@ -1207,131 +1336,6 @@ class HTTPClient:
 
         # Return structured response object
         return GetAndLoadInternalContextResponse.from_http_response(response_dict)
-
-    def pause_session(self, request: PauseSessionRequest) -> PauseSessionResponse:
-        """
-        HTTP request interface for pausing session
-
-        Args:
-            request (PauseSessionRequest): Request object for pausing session
-
-        Returns:
-            PauseSessionResponse: Structured response object
-        """
-        # Build request headers
-        headers: Dict[str, str] = {}
-
-        # Build query parameters
-        params = request.get_params()
-
-        # Build request body
-        body = request.get_body()
-
-        # Call _make_request
-        response_dict = self._make_request(
-            method="POST",
-            endpoint="/mcp/pauseSessionAsync",
-            headers=headers,
-            params=params,
-            json_data=body,
-        )
-
-        # Return structured response object
-        return PauseSessionResponse.from_http_response(response_dict)
-
-    async def pause_session_async(self, request: PauseSessionRequest) -> PauseSessionResponse:
-        """
-        HTTP request interface for asynchronously pausing session
-
-        Args:
-            request (PauseSessionRequest): Request object for pausing session asynchronously
-
-        Returns:
-            PauseSessionResponse: Structured response object
-        """
-        # Build request headers
-        headers: Dict[str, str] = {}
-
-        # Build query parameters
-        params = request.get_params()
-
-        # Build request body
-        body = request.get_body()
-
-        # Call _make_request
-        response_dict = await self._make_request_async(
-            method="POST",
-            endpoint="/mcp/pauseSessionAsync",
-            headers=headers,
-            params=params,
-            json_data=body,
-        )
-
-        # Return structured response object
-        return PauseSessionResponse.from_http_response(response_dict)
-
-
-    def resume_session(self, request: ResumeSessionRequest) -> ResumeSessionResponse:
-        """
-        HTTP request interface for resuming session
-
-        Args:
-            request (ResumeSessionRequest): Request object for resuming session
-
-        Returns:
-            ResumeSessionResponse: Structured response object
-        """
-        # Build request headers
-        headers: Dict[str, str] = {}
-
-        # Build query parameters
-        params = request.get_params()
-
-        # Build request body
-        body = request.get_body()
-
-        # Call _make_request
-        response_dict = self._make_request(
-            method="POST",
-            endpoint="/mcp/resumeSessionAsync",
-            headers=headers,
-            params=params,
-            json_data=body,
-        )
-
-        # Return structured response object
-        return ResumeSessionResponse.from_http_response(response_dict)
-
-    async def resume_session_async(self, request: ResumeSessionRequest) -> ResumeSessionResponse:
-        """
-        HTTP request interface for asynchronously resuming session
-
-        Args:
-            request (ResumeSessionRequest): Request object for resuming session asynchronously
-
-        Returns:
-            ResumeSessionResponse: Structured response object
-        """
-        # Build request headers
-        headers: Dict[str, str] = {}
-
-        # Build query parameters
-        params = request.get_params()
-
-        # Build request body
-        body = request.get_body()
-
-        # Call _make_request
-        response_dict = await self._make_request_async(
-            method="POST",
-            endpoint="/mcp/resumeSessionAsync",
-            headers=headers,
-            params=params,
-            json_data=body,
-        )
-
-        # Return structured response object
-        return ResumeSessionResponse.from_http_response(response_dict)
 
     def delete_session_async(self, request: DeleteSessionAsyncRequest) -> DeleteSessionAsyncResponse:
         """

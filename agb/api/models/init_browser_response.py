@@ -20,6 +20,7 @@ class InitBrowserResponse:
         text: Optional[str] = None,
         success: bool = True,
         error: Optional[str] = None,
+        request_id: Optional[str] = None,
     ):
         """
         Initialize InitBrowserResponse
@@ -32,6 +33,7 @@ class InitBrowserResponse:
             text: Response text
             success: Whether the request was successful
             error: Error message if any
+            request_id: Request ID from the API response
         """
         self.status_code = status_code
         self.url = url
@@ -40,6 +42,7 @@ class InitBrowserResponse:
         self.text = text
         self.success = success
         self.error = error
+        self.request_id = request_id or ""
 
         if json_data:
             self.api_success = json_data.get("success")
@@ -77,6 +80,12 @@ class InitBrowserResponse:
             text=response_dict.get("text"),
             success=response_dict.get("success", False),
             error=response_dict.get("error"),
+            request_id=response_dict.get("request_id")
+            or (
+                response_dict.get("json", {}).get("requestId")
+                if response_dict.get("json")
+                else None
+            ),
         )
 
     def is_successful(self) -> bool:

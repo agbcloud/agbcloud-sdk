@@ -285,7 +285,7 @@ class PageAgent:
                 logger.error(data_url_or_error)
                 return data_url_or_error
             if not data_url_or_error.startswith("data:image/png;base64,"):
-                error_msg = f"screenshot failed: Unexpected format from SDK: {data_url_or_error[:100]}"
+                error_msg = f"screenshot failed: Unexpected format from SDK: {data_url_or_error}"
                 logger.error(error_msg)
                 return error_msg
 

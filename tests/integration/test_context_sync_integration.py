@@ -385,7 +385,11 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
                     print("Checking file download status with retry...")
 
                     found_download = False
-                    for i in range(20):  # Retry up to 20 times
+                    download_completed = False
+                    context_info = None
+                    download_status = None
+
+                    for i in range(40):  # Retry up to 40 times (increased from 20)
                         context_info = session2.context.info()
 
                         # Check if we have download status for our context
@@ -396,17 +400,27 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
                                     and data.task_type == "download"
                                 ):
                                     found_download = True
+                                    download_status = data.status
                                     print(
-                                        f"Found download task for context at attempt {i+1}"
+                                        f"Found download task for context at attempt {i+1}, status: {data.status}"
                                     )
-                                    break
+                                    # Check if download is completed
+                                    if data.status and data.status.lower() in ["completed", "success", "done"]:
+                                        download_completed = True
+                                        print(f"Download task completed at attempt {i+1}")
+                                        break
 
-                        if found_download:
+                        if download_completed:
                             break
 
-                        print(
-                            f"No download status found yet (attempt {i+1}), retrying in 1 second..."
-                        )
+                        if found_download and not download_completed:
+                            print(
+                                f"Download task found but not completed yet (status: {download_status or 'unknown'}), retrying in 1 second..."
+                            )
+                        else:
+                            print(
+                                f"No download status found yet (attempt {i+1}), retrying in 1 second..."
+                            )
                         time.sleep(1)
 
                     if found_download:
@@ -420,21 +434,82 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
                             "Warning: Could not find download status after all retries"
                         )
 
+                    if not download_completed:
+                        print("Warning: Download task found but may not be completed yet")
+
+                    # Wait additional time for file system to sync
+                    print("Waiting for file system to sync after download...")
+                    time.sleep(5)
+
                     # 10. Verify the 1GB file exists in the second session
                     print("Verifying 1GB file exists in second session...")
 
-                    # Check file size using ls command
-                    check_file_cmd = f"ls -la {test_file_path}"
-                    file_info_result = session2.command.execute_command(check_file_cmd)
-                    self.assertTrue(file_info_result.success, "Error checking file info")
-                    print(f"File info: {file_info_result.output}")
+                    # Retry checking file existence with better error handling
+                    file_verified = False
+                    for i in range(10):  # Retry up to 10 times
+                        # Check file size using ls command
+                        check_file_cmd = f"ls -la {test_file_path}"
+                        file_info_result = session2.command.execute_command(check_file_cmd, timeout_ms=10000)
 
-                    # Verify file exists and has expected size (approximately 1GB)
-                    file_exists_cmd = f"test -f {test_file_path} && echo 'File exists'"
-                    exists_result = session2.command.execute_command(file_exists_cmd)
-                    self.assertTrue(exists_result.success, "Error checking if file exists")
-                    self.assertIn("File exists", exists_result.output, "1GB file should exist in second session")
-                    print("1GB file persistence verified successfully")
+                        if file_info_result.success:
+                            print(f"File info (attempt {i+1}): {file_info_result.output}")
+
+                            # Verify file exists and has expected size (approximately 1GB)
+                            file_exists_cmd = f"test -f {test_file_path} && echo 'File exists'"
+                            exists_result = session2.command.execute_command(file_exists_cmd, timeout_ms=10000)
+
+                            if exists_result.success and "File exists" in exists_result.output:
+                                file_verified = True
+                                print("1GB file persistence verified successfully")
+                                break
+                            else:
+                                error_msg = exists_result.error_message or "Unknown error"
+                                print(f"File existence check failed (attempt {i+1}): {error_msg}")
+                                if exists_result.output:
+                                    print(f"Output: {exists_result.output}")
+                        else:
+                            error_msg = file_info_result.error_message or "Unknown error"
+                            print(f"File info check failed (attempt {i+1}): {error_msg}")
+                            if file_info_result.output:
+                                print(f"Output: {file_info_result.output}")
+
+                        if i < 9:  # Don't sleep on last attempt
+                            print(f"Retrying file check in 2 seconds...")
+                            time.sleep(2)
+
+                    if not file_verified:
+                        # Print detailed diagnostic information
+                        print("\n=== Diagnostic Information ===")
+                        print(f"Test file path: {test_file_path}")
+                        print(f"Sync path: {sync_path}")
+
+                        # Check if directory exists
+                        dir_check_cmd = f"ls -la {sync_path}"
+                        dir_result = session2.command.execute_command(dir_check_cmd, timeout_ms=10000)
+                        print(f"Directory listing result: success={dir_result.success}")
+                        if dir_result.success:
+                            print(f"Directory contents: {dir_result.output}")
+                        else:
+                            print(f"Directory check error: {dir_result.error_message}")
+
+                        # Check parent directory
+                        parent_dir = os.path.dirname(test_file_path)
+                        parent_check_cmd = f"ls -la {parent_dir}"
+                        parent_result = session2.command.execute_command(parent_check_cmd, timeout_ms=10000)
+                        print(f"Parent directory listing: success={parent_result.success}")
+                        if parent_result.success:
+                            print(f"Parent directory contents: {parent_result.output}")
+
+                        # Print context status data again
+                        if context_info:
+                            print("\nFinal context status data:")
+                            self._print_context_status_data(context_info.context_status_data)
+
+                        self.fail(
+                            f"Failed to verify 1GB file exists after all retries. "
+                            f"File path: {test_file_path}, "
+                            f"Last error: {file_info_result.error_message if 'file_info_result' in locals() else 'N/A'}"
+                        )
 
                 finally:
                     # Clean up second session

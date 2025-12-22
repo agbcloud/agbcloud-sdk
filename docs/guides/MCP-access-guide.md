@@ -109,7 +109,7 @@ Add the MCP address code block in MCP-supported tools (such as Cline, Cursor, et
   "mcpServers": {
     "wuying_mcp_server": {
       "command": "npx",
-      "args": ["-y", "wuying-agentbay-mcp-server"],
+      "args": ["-y", "wuying-agb-mcp-server"],
       "env": {
         "APIKEY": "ako—*****",
         "IMAGEID": "<YOUR_IMAGEID>"

@@ -21,6 +21,7 @@ import traceback
 
 from agb.agb import AGB
 from agb.config import Config
+from agb.logger import get_logger
 from agb.modules.browser.browser import (
     BrowserFingerprint,
     BrowserOption,
@@ -28,6 +29,8 @@ from agb.modules.browser.browser import (
     BrowserScreen,
     BrowserViewport,
 )
+
+logger = get_logger(__name__)
 from agb.session_params import CreateSessionParams
 
 
@@ -448,6 +451,19 @@ async def test_browser_async_initialization(session):
         # Initialize browser asynchronously
         print("\n2. Initializing browser asynchronously...")
         browser = session.browser
+
+        # If browser is already initialized, destroy it first to test full initialization
+        if browser.is_initialized():
+            logger.info("Browser is already initialized, destroying it first to test full async initialization...")
+            try:
+                browser.destroy()
+                # Reset initialization state manually since destroy() doesn't reset it
+                browser._initialized = False
+                browser._option = None
+                browser.endpoint_router_port = None
+                logger.info("Browser destroyed, ready for async initialization")
+            except Exception as e:
+                logger.warning(f"Failed to destroy browser: {e}")
 
         # Record browser initialization start time
         init_start_time = time.time()

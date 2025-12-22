@@ -422,50 +422,37 @@ def main():
         print("\n" + "=" * 60)
         print("Testing session deletion...")
         try:
-            # Check if running in interactive mode (has stdin)
-            import sys
-            if sys.stdin.isatty():
-                print("Do you want to delete the created session? (y/n): ", end="")
-                choice = input().strip().lower()
-                should_delete = choice in ["y", "yes"]
+
+            print("Deleting session...")
+
+            # Record session deletion start time
+            delete_start_time = time.time()
+
+            delete_result = agb.delete(result.session)
+
+            # Record session deletion end time
+            delete_end_time = time.time()
+            delete_duration = delete_end_time - delete_start_time
+
+            print(f"⏱️  Session deletion took: {delete_duration:.3f} seconds")
+
+            print("delete_result =", delete_result)
+            if delete_result.success:
+                print("✅ Session deleted successfully!")
             else:
-                # In non-interactive mode (CI/automated tests), automatically delete session
-                print("Running in non-interactive mode, automatically deleting session...")
-                should_delete = True
+                print(f"❌ Session deletion failed: {delete_result.error_message}")
+                exit_code = 1
 
-            if should_delete:
-                print("Deleting session...")
-
-                # Record session deletion start time
-                delete_start_time = time.time()
-
-                delete_result = agb.delete(result.session)
-
-                # Record session deletion end time
-                delete_end_time = time.time()
-                delete_duration = delete_end_time - delete_start_time
-
-                print(f"⏱️  Session deletion took: {delete_duration:.3f} seconds")
-
-                print("delete_result =", delete_result)
-                if delete_result.success:
-                    print("✅ Session deleted successfully!")
-                else:
-                    print(f"❌ Session deletion failed: {delete_result.error_message}")
-                    exit_code = 1
-
-                # Print total time statistics
-                print("\n" + "=" * 60)
-                print("📊 PERFORMANCE SUMMARY")
-                print("=" * 60)
-                print(f"Session Creation: {create_duration:.3f} seconds")
-                print(f"Session Deletion: {delete_duration:.3f} seconds")
-                print(
-                    f"Total API Time:  {create_duration + delete_duration:.3f} seconds"
-                )
-                print("=" * 60)
-            else:
-                print("Session deletion skipped by user choice.")
+            # Print total time statistics
+            print("\n" + "=" * 60)
+            print("📊 PERFORMANCE SUMMARY")
+            print("=" * 60)
+            print(f"Session Creation: {create_duration:.3f} seconds")
+            print(f"Session Deletion: {delete_duration:.3f} seconds")
+            print(
+                f"Total API Time:  {create_duration + delete_duration:.3f} seconds"
+            )
+            print("=" * 60)
 
         except (KeyboardInterrupt, EOFError):
             print("\nUser cancelled deletion operation or no input available")

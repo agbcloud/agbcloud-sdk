@@ -1,7 +1,7 @@
 from typing import Optional, List, Dict, Any, Callable, TYPE_CHECKING
 from agb.api.models import GetContextInfoRequest, SyncContextRequest
 from agb.model.response import ApiResponse
-from .logger import get_logger, log_api_call, log_api_response
+from .logger import get_logger, log_operation_start, log_operation_success, log_operation_error
 import json
 import time
 import threading
@@ -92,6 +92,15 @@ class ContextManager:
         Returns:
             ContextInfoResult: Result object containing status information.
         """
+        op_details = f"SessionId={self.session.get_session_id()}"
+        if context_id:
+            op_details += f", ContextId={context_id}"
+        if path:
+            op_details += f", Path={path}"
+        if task_type:
+            op_details += f", TaskType={task_type}"
+        log_operation_start("ContextManager.info", op_details)
+
         request = GetContextInfoRequest(
             authorization=f"Bearer {self.session.get_api_key()}",
             session_id=self.session.get_session_id(),
@@ -102,27 +111,18 @@ class ContextManager:
             request.path = path
         if task_type:
             request.task_type = task_type
-        log_api_call(
-            "GetContextInfo",
-            f"SessionId={self.session.get_session_id()}, ContextId={context_id}, Path={path}, TaskType={task_type}"
-        )
         response = self.session.get_client().get_context_info(request)
-        try:
-            response_body = json.dumps(
-                response.json_data, ensure_ascii=False, indent=2
-            )
-            log_api_response(response_body)
-        except Exception:
-            logger.debug(f"📥 Response: {response}")
 
         request_id = response.request_id
 
         if not response.is_successful():
+            error_msg = response.get_error_message()
+            log_operation_error("ContextManager.info", error_msg or "Unknown error")
             return ContextInfoResult(
                 request_id=request_id or "",
                 success=False,
                 context_status_data=[],
-                error_message=response.get_error_message()
+                error_message=error_msg
             )
 
         try:
@@ -160,13 +160,15 @@ class ContextManager:
                         error_message=f"Unexpected error parsing context status: {e}"
                     )
 
+            result_msg = f"Found {len(context_status_data)} status entries, RequestId={request_id}"
+            log_operation_success("ContextManager.info", result_msg)
             return ContextInfoResult(
                 request_id=request_id or "",
                 success=True,
                 context_status_data=context_status_data
             )
         except Exception as e:
-            logger.error(f"Error parsing GetContextInfo response: {e}")
+            log_operation_error("ContextManager.info", f"Error parsing response: {str(e)}", exc_info=True)
             return ContextInfoResult(
                 request_id=request_id or "",
                 success=False,
@@ -221,6 +223,15 @@ class ContextManager:
                 error_message=error_message
             )
 
+        op_details = f"SessionId={self.session.get_session_id()}"
+        if context_id:
+            op_details += f", ContextId={context_id}"
+        if path:
+            op_details += f", Path={path}"
+        if mode:
+            op_details += f", Mode={mode}"
+        log_operation_start("ContextManager.sync", op_details)
+
         request = SyncContextRequest(
             authorization=f"Bearer {self.session.get_api_key()}",
             session_id=self.session.get_session_id(),
@@ -231,21 +242,19 @@ class ContextManager:
             request.path = path
         if mode:
             request.mode = mode
-        log_api_call(
-            "SyncContext",
-            f"SessionId={self.session.get_session_id()}, ContextId={context_id}, Path={path}, Mode={mode}"
-        )
         response = self.session.get_client().sync_context(request)
-        try:
-            response_body = json.dumps(
-                response.json_data, ensure_ascii=False, indent=2
-            )
-            log_api_response(response_body)
-        except Exception:
-            logger.debug(f"📥 Response: {response}")
 
         request_id = response.request_id
         success = response.is_successful()
+
+        if not success:
+            error_msg = response.get_error_message()
+            log_operation_error("ContextManager.sync", error_msg or "Unknown error")
+        else:
+            result_msg = f"RequestId={request_id}"
+            if callback:
+                result_msg += ", Callback provided (async polling)"
+            log_operation_success("ContextManager.sync", result_msg)
 
         # If a callback is provided, polling will be performed in a background thread,
         # and the method will return immediately after starting the thread.

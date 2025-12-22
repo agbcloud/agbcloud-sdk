@@ -13,7 +13,7 @@ from agb.api.models import (
 )
 from agb.model.response import ApiResponse, OperationResult
 from agb.exceptions import ClearanceTimeoutError, AGBError
-from .logger import get_logger, log_api_call, log_api_response, log_operation_error
+from .logger import get_logger, log_operation_start, log_operation_success, log_operation_error
 import json
 import time
 
@@ -258,29 +258,24 @@ class ContextService:
             request_details = f"MaxResults={max_results}"
             if params.next_token:
                 request_details += f", NextToken={params.next_token}"
-            log_api_call("ListContexts", request_details)
+            log_operation_start("ContextService.list", request_details)
             request = ListContextsRequest(
                 authorization=f"Bearer {self.agb.api_key}",
                 max_results=max_results,
                 next_token=params.next_token,
             )
             response = self.agb.client.list_contexts(request)
-            try:
-                response_body = json.dumps(
-                    response.json_data, ensure_ascii=False, indent=2
-                )
-                log_api_response(response_body)
-            except Exception:
-                logger.debug(f"📥 Response: {response}")
 
             request_id = response.request_id
 
             if not response.is_successful():
+                error_msg = response.get_error_message()
+                log_operation_error("ContextService.list", error_msg or "Unknown error")
                 return ContextListResult(
                     request_id=request_id or "",
                     success=False,
                     contexts=[],
-                    error_message=response.get_error_message()
+                    error_message=error_msg
                 )
 
             try:
@@ -301,6 +296,8 @@ class ContextService:
                 max_results_actual = response.get_max_results() or max_results
                 total_count = response.get_total_count()
 
+                result_msg = f"Found {len(contexts)} contexts, TotalCount={total_count}"
+                log_operation_success("ContextService.list", result_msg)
                 return ContextListResult(
                     request_id=request_id or "",
                     success=True,
@@ -364,7 +361,7 @@ class ContextService:
             # Validation: ID and Name must be provided (at least one)
             if not context_id and not name:
                 error_msg = "Either context_id or name must be provided (cannot both be empty)"
-                logger.error(error_msg)
+                log_operation_error("ContextService.get", error_msg)
                 return ContextResult(
                     success=False,
                     error_message=error_msg,
@@ -374,18 +371,20 @@ class ContextService:
             # Validation: If AllowCreate is True, ID cannot be provided
             if create and context_id:
                 error_msg = "context_id cannot be provided when create=True (only name is allowed when creating)"
-                logger.error(error_msg)
+                log_operation_error("ContextService.get", error_msg)
                 return ContextResult(
                     success=False,
                     error_message=error_msg,
                     request_id=""
                 )
 
+            # Prepare operation details for logging
+            op_details = f"Name={name or 'None'}, ContextId={context_id or 'None'}, Create={create}"
+            if login_region_id:
+                op_details += f", LoginRegionId={login_region_id}"
+            log_operation_start("ContextService.get", op_details)
+
             # Note: If login_region_id is None or empty, the server will default to Hangzhou region (cn-hangzhou)
-            log_api_call(
-                "GetContext",
-                f"Id={context_id or 'None'}, Name={name or 'None'}, AllowCreate={create}, LoginRegionId={login_region_id}"
-            )
             request = GetContextRequest(
                 id=context_id,
                 name=name,
@@ -394,23 +393,18 @@ class ContextService:
                 authorization=f"Bearer {self.agb.api_key}",
             )
             response = self.agb.client.get_context(request)
-            try:
-                response_body = json.dumps(
-                    response.json_data, ensure_ascii=False, indent=2
-                )
-                log_api_response(response_body)
-            except Exception:
-                logger.debug(f"📥 Response: {response}")
 
             request_id = response.request_id
 
             if not response.is_successful():
+                error_msg = response.get_error_message()
+                log_operation_error("ContextService.get", error_msg or "Unknown error")
                 return ContextResult(
                     request_id=request_id or "",
                     success=False,
                     context_id="",
                     context=None,
-                    error_message=response.get_error_message()
+                    error_message=error_msg
                 )
 
             try:
@@ -422,6 +416,8 @@ class ContextService:
                     created_at=data.create_time,
                     last_used_at=data.last_used_time,
                 )
+                result_msg = f"ContextId={result_context_id}, Name={context.name}"
+                log_operation_success("ContextService.get", result_msg)
                 return ContextResult(
                     request_id=request_id or "",
                     success=True,
@@ -480,6 +476,7 @@ class ContextService:
             OperationResult: Result object containing success status and request ID.
         """
         if context is None:
+            log_operation_error("ContextService.update", "context cannot be None")
             return OperationResult(
                 request_id="",
                 success=False,
@@ -488,7 +485,7 @@ class ContextService:
         # Validate context.id
         if not context.id or (isinstance(context.id, str) and not context.id.strip()):
             error_msg = "context.id cannot be empty or None"
-            logger.error(error_msg)
+            log_operation_error("ContextService.update", error_msg)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -498,7 +495,7 @@ class ContextService:
         # Validate context.name
         if not context.name or (isinstance(context.name, str) and not context.name.strip()):
             error_msg = "context.name cannot be empty or None"
-            logger.error(error_msg)
+            log_operation_error("ContextService.update", error_msg)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -508,38 +505,35 @@ class ContextService:
         try:
             context_id = context.id.strip() if isinstance(context.id, str) else context.id
             context_name = context.name.strip() if isinstance(context.name, str) else context.name
-            log_api_call("ModifyContext", f"Id={context_id}, Name={context_name}")
+            log_operation_start("ContextService.update", f"ContextId={context_id}, Name={context_name}")
             request = ModifyContextRequest(
                 id=context_id,
                 name=context_name,
                 authorization=f"Bearer {self.agb.api_key}",
             )
             response = self.agb.client.modify_context(request)
-            try:
-                response_body = json.dumps(
-                    response.json_data, ensure_ascii=False, indent=2
-                )
-                log_api_response(response_body)
-            except Exception:
-                logger.debug(f"📥 Response: {response}")
 
             request_id = response.request_id
 
             if not response.is_successful():
+                error_msg = response.get_error_message()
+                log_operation_error("ContextService.update", error_msg or "Unknown error")
                 return OperationResult(
                     request_id=request_id or "",
                     success=False,
-                    error_message=response.get_error_message()
+                    error_message=error_msg
                 )
 
             # Update was successful
+            result_msg = f"ContextId={context_id}, RequestId={request_id}"
+            log_operation_success("ContextService.update", result_msg)
             return OperationResult(
                 request_id=request_id or "",
                 success=True,
                 data={"context_id": context_id}
             )
         except Exception as e:
-            logger.error(f"Error calling ModifyContext: {e}")
+            log_operation_error("ContextService.update", str(e), exc_info=True)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -557,6 +551,7 @@ class ContextService:
             OperationResult: Result object containing success status and request ID.
         """
         if context is None:
+            log_operation_error("ContextService.delete", "context cannot be None")
             return OperationResult(
                 success=False,
                 error_message="context cannot be None",
@@ -565,7 +560,7 @@ class ContextService:
         # Validate context.id
         if not context.id or (isinstance(context.id, str) and not context.id.strip()):
             error_msg = "context.id cannot be empty or None"
-            logger.error(error_msg)
+            log_operation_error("ContextService.delete", error_msg)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -574,29 +569,26 @@ class ContextService:
 
         try:
             context_id = context.id.strip() if isinstance(context.id, str) else context.id
-            log_api_call("DeleteContext", f"Id={context_id}")
+            log_operation_start("ContextService.delete", f"ContextId={context_id}")
             request = DeleteContextRequest(
                 id=context_id, authorization=f"Bearer {self.agb.api_key}"
             )
             response = self.agb.client.delete_context(request)
-            try:
-                response_body = json.dumps(
-                    response.json_data, ensure_ascii=False, indent=2
-                )
-                log_api_response(response_body)
-            except Exception:
-                logger.debug(f"📥 Response: {response}")
 
             request_id = response.request_id
 
             if not response.is_successful():
+                error_msg = response.get_error_message()
+                log_operation_error("ContextService.delete", error_msg or "Unknown error")
                 return OperationResult(
                     request_id=request_id or "",
                     success=False,
-                    error_message=response.get_error_message()
+                    error_message=error_msg
                 )
 
             # Delete was successful
+            result_msg = f"ContextId={context_id}, RequestId={request_id}"
+            log_operation_success("ContextService.delete", result_msg)
             return OperationResult(
                 request_id=request_id or "",
                 success=True,
@@ -604,7 +596,7 @@ class ContextService:
             )
 
         except Exception as e:
-            logger.error(f"Error calling DeleteContext: {e}")
+            log_operation_error("ContextService.delete", str(e), exc_info=True)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -625,7 +617,7 @@ class ContextService:
         # Validate required parameters
         if not context_id or (isinstance(context_id, str) and not context_id.strip()):
             error_msg = "context_id cannot be empty or None"
-            logger.error(error_msg)
+            log_operation_error("ContextService.get_file_download_url", error_msg)
             return FileUrlResult(
                 request_id="",
                 success=False,
@@ -635,7 +627,7 @@ class ContextService:
 
         if not file_path or (isinstance(file_path, str) and not file_path.strip()):
             error_msg = "file_path cannot be empty or None"
-            logger.error(error_msg)
+            log_operation_error("ContextService.get_file_download_url", error_msg)
             return FileUrlResult(
                 request_id="",
                 success=False,
@@ -645,23 +637,23 @@ class ContextService:
 
         validated_context_id = context_id.strip() if isinstance(context_id, str) else context_id
         validated_file_path = file_path.strip() if isinstance(file_path, str) else file_path
-        log_api_call("GetContextFileDownloadUrl", f"ContextId={validated_context_id}, FilePath={validated_file_path}")
+        log_operation_start("ContextService.get_file_download_url", f"ContextId={validated_context_id}, FilePath={validated_file_path}")
         req = GetContextFileDownloadUrlRequest(
             authorization=f"Bearer {self.agb.api_key}",
             context_id=validated_context_id,
             file_path=validated_file_path,
         )
         resp = self.agb.client.get_context_file_download_url(req)
-        try:
-            response_body = json.dumps(
-                resp.json_data, ensure_ascii=False, indent=2
-            )
-            log_api_response(response_body)
-        except Exception:
-            logger.debug(f"Response: {resp}")
 
         request_id = resp.request_id
         download_url = resp.get_download_url()
+
+        if resp.is_successful():
+            result_msg = f"ContextId={validated_context_id}, FilePath={validated_file_path}, RequestId={request_id}"
+            log_operation_success("ContextService.get_file_download_url", result_msg)
+        else:
+            error_msg = resp.get_error_message()
+            log_operation_error("ContextService.get_file_download_url", error_msg or "Unknown error")
 
         return FileUrlResult(
             request_id=request_id or "",
@@ -685,7 +677,7 @@ class ContextService:
         # Validate required parameters
         if not context_id or (isinstance(context_id, str) and not context_id.strip()):
             error_msg = "context_id cannot be empty or None"
-            logger.error(error_msg)
+            log_operation_error("ContextService.get_file_upload_url", error_msg)
             return FileUrlResult(
                 request_id="",
                 success=False,
@@ -695,7 +687,7 @@ class ContextService:
 
         if not file_path or (isinstance(file_path, str) and not file_path.strip()):
             error_msg = "file_path cannot be empty or None"
-            logger.error(error_msg)
+            log_operation_error("ContextService.get_file_upload_url", error_msg)
             return FileUrlResult(
                 request_id="",
                 success=False,
@@ -705,23 +697,23 @@ class ContextService:
 
         validated_context_id = context_id.strip() if isinstance(context_id, str) else context_id
         validated_file_path = file_path.strip() if isinstance(file_path, str) else file_path
-        log_api_call("GetContextFileUploadUrl", f"ContextId={validated_context_id}, FilePath={validated_file_path}")
+        log_operation_start("ContextService.get_file_upload_url", f"ContextId={validated_context_id}, FilePath={validated_file_path}")
         req = GetContextFileUploadUrlRequest(
             authorization=f"Bearer {self.agb.api_key}",
             context_id=validated_context_id,
             file_path=validated_file_path,
         )
         resp = self.agb.client.get_context_file_upload_url(req)
-        try:
-            response_body = json.dumps(
-                resp.json_data, ensure_ascii=False, indent=2
-            )
-            log_api_response(response_body)
-        except Exception:
-            logger.debug(f"Response: {resp}")
 
         request_id = resp.request_id
         upload_url = resp.get_upload_url()
+
+        if resp.is_successful():
+            result_msg = f"ContextId={validated_context_id}, FilePath={validated_file_path}, RequestId={request_id}"
+            log_operation_success("ContextService.get_file_upload_url", result_msg)
+        else:
+            error_msg = resp.get_error_message()
+            log_operation_error("ContextService.get_file_upload_url", error_msg or "Unknown error")
 
         return FileUrlResult(
             request_id=request_id or "",
@@ -745,7 +737,7 @@ class ContextService:
         # Validate required parameters
         if not context_id or (isinstance(context_id, str) and not context_id.strip()):
             error_msg = "context_id cannot be empty or None"
-            logger.error(error_msg)
+            log_operation_error("ContextService.delete_file", error_msg)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -754,7 +746,7 @@ class ContextService:
 
         if not file_path or (isinstance(file_path, str) and not file_path.strip()):
             error_msg = "file_path cannot be empty or None"
-            logger.error(error_msg)
+            log_operation_error("ContextService.delete_file", error_msg)
             return OperationResult(
                 request_id="",
                 success=False,
@@ -763,22 +755,22 @@ class ContextService:
 
         validated_context_id = context_id.strip() if isinstance(context_id, str) else context_id
         validated_file_path = file_path.strip() if isinstance(file_path, str) else file_path
-        log_api_call("DeleteContextFile", f"ContextId={validated_context_id}, FilePath={validated_file_path}")
+        log_operation_start("ContextService.delete_file", f"ContextId={validated_context_id}, FilePath={validated_file_path}")
         req = DeleteContextFileRequest(
             authorization=f"Bearer {self.agb.api_key}",
             context_id=validated_context_id,
             file_path=validated_file_path,
         )
         resp = self.agb.client.delete_context_file(req)
-        try:
-            response_body = json.dumps(
-                resp.json_data, ensure_ascii=False, indent=2
-            )
-            log_api_response(response_body)
-        except Exception:
-            logger.debug(f"Response: {resp}")
 
         request_id = resp.request_id
+
+        if resp.is_successful():
+            result_msg = f"ContextId={validated_context_id}, FilePath={validated_file_path}, RequestId={request_id}"
+            log_operation_success("ContextService.delete_file", result_msg)
+        else:
+            error_msg = resp.get_error_message()
+            log_operation_error("ContextService.delete_file", error_msg or "Unknown error")
 
         return OperationResult(
             request_id=request_id or "",
@@ -809,7 +801,7 @@ class ContextService:
         # Validate required parameters
         if not context_id or (isinstance(context_id, str) and not context_id.strip()):
             error_msg = "context_id cannot be empty or None"
-            logger.error(error_msg)
+            log_operation_error("ContextService.list_files", error_msg)
             return ContextFileListResult(
                 request_id="",
                 success=False,
@@ -820,9 +812,8 @@ class ContextService:
         # parent_folder_path is optional and can be empty
         validated_context_id = context_id.strip() if isinstance(context_id, str) else context_id
         validated_parent_folder_path = parent_folder_path.strip() if parent_folder_path and isinstance(parent_folder_path, str) else (parent_folder_path or "")
-        log_api_call("DescribeContextFiles",
-            f"ContextId={validated_context_id}, ParentFolderPath={validated_parent_folder_path}, "
-            f"PageNumber={page_number}, PageSize={page_size}")
+        op_details = f"ContextId={validated_context_id}, ParentFolderPath={validated_parent_folder_path}, PageNumber={page_number}, PageSize={page_size}"
+        log_operation_start("ContextService.list_files", op_details)
         req = DescribeContextFilesRequest(
             authorization=f"Bearer {self.agb.api_key}",
             page_number=page_number,
@@ -831,22 +822,17 @@ class ContextService:
             context_id=validated_context_id,
         )
         resp = self.agb.client.describe_context_files(req)
-        try:
-            response_body = json.dumps(
-                resp.json_data, ensure_ascii=False, indent=2
-            )
-            log_api_response(response_body)
-        except Exception:
-            logger.debug(f"Response: {resp}")
 
         request_id = resp.request_id
 
         if not resp.is_successful():
+            error_msg = resp.get_error_message()
+            log_operation_error("ContextService.list_files", error_msg or "Unknown error")
             return ContextFileListResult(
                 request_id=request_id or "",
                 success=False,
                 entries=[],
-                error_message=resp.get_error_message()
+                error_message=error_msg
             )
 
         try:
@@ -868,6 +854,8 @@ class ContextService:
             # Get count from response
             count = resp.get_count()
 
+            result_msg = f"ContextId={validated_context_id}, Found {len(entries)} files, TotalCount={count}"
+            log_operation_success("ContextService.list_files", result_msg)
             return ContextFileListResult(
                 request_id=request_id or "",
                 success=True,
@@ -875,7 +863,7 @@ class ContextService:
                 count=count,
             )
         except Exception as e:
-            logger.error(f"Error parsing DescribeContextFiles response: {e}")
+            log_operation_error("ContextService.list_files", f"Error parsing response: {str(e)}", exc_info=True)
             return ContextFileListResult(
                 request_id=request_id or "",
                 success=False,
@@ -902,32 +890,29 @@ class ContextService:
             AGBError: If the backend API rejects the clearing request (e.g., invalid ID).
         """
         try:
-            log_api_call("ClearContext", f"ContextId={context_id}")
+            log_operation_start("ContextService.clear_async", f"ContextId={context_id}")
             request = ClearContextRequest(
                 authorization=f"Bearer {self.agb.api_key}",
                 id=context_id,
             )
             response = self.agb.client.clear_context(request)
-            try:
-                response_body = json.dumps(
-                    response.json_data, ensure_ascii=False, indent=2
-                )
-                log_api_response(response_body)
-            except Exception:
-                logger.debug(f"Response: {response}")
 
             request_id = response.request_id or ""
 
             # Check for API-level errors
             if not response.is_successful():
+                error_msg = response.get_error_message() or "Unknown error"
+                log_operation_error("ContextService.clear_async", error_msg)
                 return ClearContextResult(
                     request_id=request_id,
                     success=False,
-                    error_message=response.get_error_message() or "Unknown error",
+                    error_message=error_msg,
                 )
 
             # ClearContext API returns success info without Data field
             # Initial status is "clearing" when the task starts
+            result_msg = f"ContextId={context_id}, Status=clearing, RequestId={request_id}"
+            log_operation_success("ContextService.clear_async", result_msg)
             return ClearContextResult(
                 request_id=request_id,
                 success=True,
@@ -936,7 +921,7 @@ class ContextService:
                 error_message="",
             )
         except Exception as e:
-            log_operation_error("ClearContext", str(e))
+            log_operation_error("ContextService.clear_async", str(e), exc_info=True)
             raise AGBError(f"Failed to start context clearing for {context_id}: {e}")
 
     def get_clear_status(self, context_id: str) -> ClearContextResult:
@@ -953,29 +938,24 @@ class ContextService:
             ClearContextResult object containing the current task status.
         """
         try:
-            log_api_call("GetContext", f"ContextId={context_id} (for clear status)")
+            log_operation_start("ContextService.get_clear_status", f"ContextId={context_id}")
             request = GetContextRequest(
                 authorization=f"Bearer {self.agb.api_key}",
                 id=context_id,
                 allow_create=False,
             )
             response = self.agb.client.get_context(request)
-            try:
-                response_body = json.dumps(
-                    response.json_data, ensure_ascii=False, indent=2
-                )
-                log_api_response(response_body)
-            except Exception:
-                logger.debug(f"Response: {response}")
 
             request_id = response.request_id or ""
 
             # Check for API-level errors
             if not response.is_successful():
+                error_msg = response.get_error_message() or "Unknown error"
+                log_operation_error("ContextService.get_clear_status", error_msg)
                 return ClearContextResult(
                     request_id=request_id,
                     success=False,
-                    error_message=response.get_error_message() or "Unknown error",
+                    error_message=error_msg,
                 )
 
             # Extract clearing status from the response using get_context_data()
@@ -987,6 +967,8 @@ class ContextService:
             state = data.state or "clearing"  # Extract state from parsed response data
             error_message = ""  # ErrorMessage is not in GetContextResponse data
 
+            result_msg = f"ContextId={context_id}, Status={state}, RequestId={request_id}"
+            log_operation_success("ContextService.get_clear_status", result_msg)
             return ClearContextResult(
                 request_id=request_id,
                 success=True,
@@ -995,7 +977,7 @@ class ContextService:
                 error_message=error_message,
             )
         except Exception as e:
-            log_operation_error("GetContext (for clear status)", str(e))
+            log_operation_error("ContextService.get_clear_status", str(e), exc_info=True)
             return ClearContextResult(
                 request_id="",
                 success=False,
@@ -1028,12 +1010,11 @@ class ContextService:
             ClearanceTimeoutError: If the task fails to complete within the timeout.
             AGBError: If an API or network error occurs during execution.
         """
+        log_operation_start("ContextService.clear", f"ContextId={context_id}, Timeout={timeout}s, PollInterval={poll_interval}s")
         # 1. Asynchronously start the clearing task
         start_result = self.clear_async(context_id)
         if not start_result.success:
             return start_result
-
-        logger.info(f"Started context clearing task for: {context_id}")
 
         # 2. Poll task status until completion or timeout
         start_time = time.time()
@@ -1063,7 +1044,8 @@ class ContextService:
             # When clearing is complete, the state changes from "clearing" to "available"
             if status == "available":
                 elapsed = time.time() - start_time
-                logger.info(f"Context cleared successfully in {elapsed:.2f} seconds")
+                result_msg = f"ContextId={context_id}, Status={status}, Elapsed={elapsed:.2f}s"
+                log_operation_success("ContextService.clear", result_msg)
                 return ClearContextResult(
                     request_id=start_result.request_id,
                     success=True,
@@ -1083,5 +1065,5 @@ class ContextService:
         # Timeout
         elapsed = time.time() - start_time
         error_msg = f"Context clearing timed out after {elapsed:.2f} seconds"
-        logger.error(f"{error_msg}")
+        log_operation_error("ContextService.clear", error_msg)
         raise ClearanceTimeoutError(error_msg)

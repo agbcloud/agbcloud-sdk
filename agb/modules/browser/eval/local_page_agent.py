@@ -90,10 +90,10 @@ class LocalMCPClient:
                                         break
                                 if is_successful:
                                     mcp_response.data = text_content
-                                    logger.info(f"MCP tool text response (data): {str(text_content)[:2000]}")
+                                    logger.info(f"MCP tool text response (data): {str(text_content)}")
                                 else:
                                     mcp_response.error_message = text_content
-                                    logger.info(f"MCP tool text response (error): {str(text_content)[:2000]}")
+                                    logger.info(f"MCP tool text response (error): {str(text_content)}")
 
                             if asyncio.isfuture(future):
                                 fut_loop = future.get_loop()
@@ -134,7 +134,7 @@ class LocalPageAgent(BrowserAgent):
         coro = self._call_mcp_tool_async(name, args)
         fut = asyncio.run_coroutine_threadsafe(coro, target_loop)
         return fut.result()
-    
+
     async def _call_mcp_tool_async(self, name: str, args: dict) -> OperationResult:
         if not self.mcp_client:
             raise RuntimeError("mcp_client is not set on LocalBrowserAgent.")

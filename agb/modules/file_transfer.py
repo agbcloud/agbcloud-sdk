@@ -11,8 +11,11 @@ from typing import Callable, Dict, Optional, Tuple
 import httpx
 
 from agb.api.models import GetAndLoadInternalContextRequest
-from agb.logger import log_api_call, log_api_response, log_operation_error
+from agb.logger import get_logger, log_operation_start, log_operation_success, log_operation_error
 from agb.model.response import UploadResult, DownloadResult
+
+# Initialize logger for this module
+logger = get_logger("file_transfer")
 
 
 class FileTransfer:
@@ -72,12 +75,12 @@ class FileTransfer:
             return True, ""
 
         try:
+            log_operation_start("FileTransfer.ensure_context_id", f"SessionId={self._session.get_session_id()}")
             request = GetAndLoadInternalContextRequest(
                 authorization=f"Bearer {self._agb.api_key}",
                 session_id=self._session.get_session_id(),
                 context_types=["file_transfer"],
             )
-            log_api_call("GetAndLoadInternalContext", f"sessionId={self._session.get_session_id()}, contextTypes=file_transfer")
 
             client = self._agb.client
             if hasattr(client, "get_and_load_internal_context_async") and callable(
@@ -90,17 +93,12 @@ class FileTransfer:
             # Extract context_id from response data
             # Response has structure: response.data is a list of context items
             # Each item has contextId, contextType, and contextPath
-            try:
-                response_body = json.dumps(response.json_data, ensure_ascii=False, indent=2)
-            except Exception:
-                response_body = str(response.json_data)
 
             # Check for API-level errors
             if not response.is_successful():
-                log_api_response(response_body, success=False)
-                return False, response.get_error_message() or "Unknown error"
-
-            log_api_response(response_body, success=True)
+                error_msg = response.get_error_message() or "Unknown error"
+                log_operation_error("FileTransfer.ensure_context_id", error_msg)
+                return False, error_msg
 
             # Get context list from response
             data = response.get_context_list()
@@ -112,10 +110,14 @@ class FileTransfer:
                         if context_id and context_path:
                             self.context_id = context_id
                             self.context_path = context_path
+                            result_msg = f"ContextId={context_id}, ContextPath={context_path}"
+                            log_operation_success("FileTransfer.ensure_context_id", result_msg)
                             return True, ""
-            return False, "Response contains no data"
+            error_msg = "Response contains no data"
+            log_operation_error("FileTransfer.ensure_context_id", error_msg)
+            return False, error_msg
         except Exception as e:
-            log_operation_error("ensure_context_id", str(e))
+            log_operation_error("FileTransfer.ensure_context_id", str(e), exc_info=True)
             return False, str(e)
 
     def upload(
@@ -140,8 +142,11 @@ class FileTransfer:
 
         Returns UploadResult containing request_ids, HTTP status, ETag and other information.
         """
+        log_operation_start("FileTransfer.upload", f"LocalPath={local_path}, RemotePath={remote_path}, Wait={wait}")
         # 0. Parameter validation
         if not os.path.isfile(local_path):
+            error_msg = f"Local file not found: {local_path}"
+            log_operation_error("FileTransfer.upload", error_msg)
             return UploadResult(
                 success=False,
                 request_id_upload_url=None,
@@ -150,11 +155,12 @@ class FileTransfer:
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error=f"Local file not found: {local_path}",
+                error=error_msg,
             )
         if self.context_id is None:
             ensure_result, message = self.ensure_context_id()
             if not ensure_result:
+                log_operation_error("FileTransfer.upload", f"Failed to ensure context_id: {message}")
                 return UploadResult(
                     success=False,
                     request_id_upload_url=None,
@@ -167,6 +173,8 @@ class FileTransfer:
                 )
         # Ensure context_id is set
         if not self.context_id:
+            error_msg = "Context ID not available"
+            log_operation_error("FileTransfer.upload", error_msg)
             return UploadResult(
                 success=False,
                 request_id_upload_url=None,
@@ -175,13 +183,15 @@ class FileTransfer:
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error="Context ID not available",
+                error=error_msg,
             )
         # 1. Get pre-signed upload URL
         url_res = self._context_svc.get_file_upload_url(
             self.context_id, remote_path
         )
         if not getattr(url_res, "success", False) or not getattr(url_res, "url", None):
+            error_msg = f"get_file_upload_url failed: {getattr(url_res, 'message', 'unknown error')}"
+            log_operation_error("FileTransfer.upload", error_msg)
             return UploadResult(
                 success=False,
                 request_id_upload_url=getattr(url_res, "request_id", None),
@@ -190,13 +200,13 @@ class FileTransfer:
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error=f"get_file_upload_url failed: {getattr(url_res, 'message', 'unknown error')}",
+                error=error_msg,
             )
 
         upload_url = url_res.url
         req_id_upload = getattr(url_res, "request_id", None)
 
-        print(f"Uploading {local_path} to {upload_url}")
+        logger.info(f"Uploading {local_path} to OSS (URL: {upload_url})")
 
         # 2. PUT upload to pre-signed URL
         try:
@@ -207,8 +217,10 @@ class FileTransfer:
                 content_type,
                 progress_cb,
             )
-            print(f"Upload completed with HTTP {http_status}")
+            logger.info(f"Upload completed with HTTP {http_status}, BytesSent={bytes_sent}")
             if http_status not in (200, 201, 204):
+                error_msg = f"Upload failed with HTTP {http_status}"
+                log_operation_error("FileTransfer.upload", error_msg)
                 return UploadResult(
                     success=False,
                     request_id_upload_url=req_id_upload,
@@ -217,9 +229,10 @@ class FileTransfer:
                     etag=etag,
                     bytes_sent=bytes_sent,
                     path=remote_path,
-                    error=f"Upload failed with HTTP {http_status}",
+                    error=error_msg,
                 )
         except Exception as e:
+            log_operation_error("FileTransfer.upload", f"Upload exception: {str(e)}", exc_info=True)
             return UploadResult(
                 success=False,
                 request_id_upload_url=req_id_upload,
@@ -234,11 +247,13 @@ class FileTransfer:
         # 3. Trigger sync to cloud disk (download mode),download from oss to cloud disk
         req_id_sync = None
         try:
-            print("Triggering sync to cloud disk")
+            logger.info("Triggering sync to cloud disk (download mode)")
             req_id_sync = self._await_sync(
                 "download", remote_path, self.context_id or ""
             )
         except Exception as e:
+            error_msg = f"session.context.sync(download) failed: {e}"
+            log_operation_error("FileTransfer.upload", error_msg, exc_info=True)
             return UploadResult(
                 success=False,
                 request_id_upload_url=req_id_upload,
@@ -247,10 +262,10 @@ class FileTransfer:
                 etag=etag,
                 bytes_sent=bytes_sent,
                 path=remote_path,
-                error=f"session.context.sync(upload) failed: {e}",
+                error=error_msg,
             )
 
-        print(f"Sync request ID: {req_id_sync}")
+        logger.info(f"Sync request ID: {req_id_sync}")
         # 4. Optionally wait for task completion
         if wait:
             ok, err = self._wait_for_task(
@@ -261,6 +276,8 @@ class FileTransfer:
                 interval=poll_interval,
             )
             if not ok:
+                error_msg = f"Upload sync not finished: {err or 'timeout or unknown'}"
+                log_operation_error("FileTransfer.upload", error_msg)
                 return UploadResult(
                     success=False,
                     request_id_upload_url=req_id_upload,
@@ -269,9 +286,11 @@ class FileTransfer:
                     etag=etag,
                     bytes_sent=bytes_sent,
                     path=remote_path,
-                    error=f"Upload sync not finished: {err or 'timeout or unknown'}",
+                    error=error_msg,
                 )
 
+        result_msg = f"RemotePath={remote_path}, BytesSent={bytes_sent}, RequestIdUpload={req_id_upload}, RequestIdSync={req_id_sync}"
+        log_operation_success("FileTransfer.upload", result_msg)
         return UploadResult(
             success=True,
             request_id_upload_url=req_id_upload,
@@ -306,10 +325,12 @@ class FileTransfer:
 
         Returns DownloadResult containing sync and download request_ids, HTTP status, byte count, etc.
         """
+        log_operation_start("FileTransfer.download", f"RemotePath={remote_path}, LocalPath={local_path}, Wait={wait}, Overwrite={overwrite}")
         # Use default context if none provided
         if self.context_id is None:
             ensure_result, message = self.ensure_context_id()
             if not ensure_result:
+                log_operation_error("FileTransfer.download", f"Failed to ensure context_id: {message}")
                 return DownloadResult(
                     success=False,
                     request_id_download_url=None,
@@ -322,6 +343,8 @@ class FileTransfer:
                 )
         # Ensure context_id is set
         if not self.context_id:
+            error_msg = "Context ID not available"
+            log_operation_error("FileTransfer.download", error_msg)
             return DownloadResult(
                 success=False,
                 request_id_download_url=None,
@@ -330,15 +353,18 @@ class FileTransfer:
                 bytes_received=0,
                 path=remote_path,
                 local_path=local_path,
-                error="Context ID not available",
+                error=error_msg,
             )
         # 1. Trigger cloud disk to OSS download sync
         req_id_sync = None
         try:
+            logger.info(f"Triggering sync to OSS (upload mode) for path: {remote_path}")
             req_id_sync = self._await_sync(
                 "upload", remote_path, self.context_id or ""
             )
         except Exception as e:
+            error_msg = f"session.context.sync(upload) failed: {e}"
+            log_operation_error("FileTransfer.download", error_msg, exc_info=True)
             return DownloadResult(
                 success=False,
                 request_id_download_url=None,
@@ -347,7 +373,7 @@ class FileTransfer:
                 bytes_received=0,
                 path=remote_path,
                 local_path=local_path,
-                error=f"session.context.sync(download) failed: {e}",
+                error=error_msg,
             )
 
         # Optionally wait for task completion (ensure object is ready in OSS)
@@ -360,6 +386,8 @@ class FileTransfer:
                 interval=poll_interval,
             )
             if not ok:
+                error_msg = f"Download sync not finished: {err or 'timeout or unknown'}"
+                log_operation_error("FileTransfer.download", error_msg)
                 return DownloadResult(
                     success=False,
                     request_id_download_url=None,
@@ -368,7 +396,7 @@ class FileTransfer:
                     bytes_received=0,
                     path=remote_path,
                     local_path=local_path,
-                    error=f"Download sync not finished: {err or 'timeout or unknown'}",
+                    error=error_msg,
                 )
 
         # 2. Get pre-signed download URL
@@ -376,6 +404,8 @@ class FileTransfer:
             self.context_id, remote_path
         )
         if not getattr(url_res, "success", False) or not getattr(url_res, "url", None):
+            error_msg = f"get_file_download_url failed: {getattr(url_res, 'message', 'unknown error')}"
+            log_operation_error("FileTransfer.download", error_msg)
             return DownloadResult(
                 success=False,
                 request_id_download_url=getattr(url_res, "request_id", None),
@@ -384,7 +414,7 @@ class FileTransfer:
                 bytes_received=0,
                 path=remote_path,
                 local_path=local_path,
-                error=f"get_file_download_url failed: {getattr(url_res, 'message', 'unknown error')}",
+                error=error_msg,
             )
 
         download_url = url_res.url
@@ -405,13 +435,17 @@ class FileTransfer:
                     error=f"Destination exists and overwrite=False: {local_path}",
                 )
 
+            logger.info(f"Downloading from OSS to {local_path} (URL: {download_url})")
             http_status, bytes_received = self._get_file_sync(download_url,
                 local_path,
                 self._http_timeout,
                 self._follow_redirects,
                 progress_cb,
             )
+            logger.info(f"Download completed with HTTP {http_status}, BytesReceived={bytes_received}")
             if http_status != 200:
+                error_msg = f"Download failed with HTTP {http_status}"
+                log_operation_error("FileTransfer.download", error_msg)
                 return DownloadResult(
                     success=False,
                     request_id_download_url=req_id_download,
@@ -420,9 +454,10 @@ class FileTransfer:
                     bytes_received=bytes_received,
                     path=remote_path,
                     local_path=local_path,
-                    error=f"Download failed with HTTP {http_status}",
+                    error=error_msg,
                 )
         except Exception as e:
+            log_operation_error("FileTransfer.download", f"Download exception: {str(e)}", exc_info=True)
             return DownloadResult(
                 success=False,
                 request_id_download_url=req_id_download,
@@ -434,14 +469,15 @@ class FileTransfer:
                 error=f"Download exception: {e}",
             )
 
+        bytes_final = os.path.getsize(local_path) if os.path.exists(local_path) else 0
+        result_msg = f"RemotePath={remote_path}, LocalPath={local_path}, BytesReceived={bytes_final}, RequestIdDownload={req_id_download}, RequestIdSync={req_id_sync}"
+        log_operation_success("FileTransfer.download", result_msg)
         return DownloadResult(
             success=True,
             request_id_download_url=req_id_download,
             request_id_sync=req_id_sync,
             http_status=200,
-            bytes_received=(
-                os.path.getsize(local_path) if os.path.exists(local_path) else 0
-            ),
+            bytes_received=bytes_final,
             path=remote_path,
             local_path=local_path,
             error=None,
@@ -460,8 +496,8 @@ class FileTransfer:
         mode = mode.lower().strip()
 
         sync_fn = getattr(self._session.context, "sync")
-        print(
-            f"session.context.sync(mode={mode}, path={remote_path}, context_id={context_id})"
+        logger.info(
+            f"Calling session.context.sync(mode={mode}, path={remote_path}, context_id={context_id})"
         )
 
         async def _call_sync():
@@ -503,8 +539,9 @@ class FileTransfer:
 
         # Return request_id if available
         success = getattr(result, "success", False)
-        print(f"   Result: {success}")
-        return getattr(result, "request_id", None)
+        request_id = getattr(result, "request_id", None)
+        logger.info(f"Sync result: success={success}, request_id={request_id}")
+        return request_id
 
     def _wait_for_task(
         self,

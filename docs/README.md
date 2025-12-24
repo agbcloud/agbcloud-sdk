@@ -14,7 +14,7 @@ Unlike other sandboxes that only support code execution, AGB provides specialize
 | :--- | :--- | :--- | :--- |
 | **Code Space** | `agb-code-space-*` | - Python, Node.js, Java, R runtimes<br>- Shell access & File system<br>- Pre-installed data science libs | Data analysis, Code interpretation, Math solving, Backend logic. |
 | **Browser Use** | `agb-browser-use-*` | - **Headless Browser** automation<br>- AI-driven navigation & extraction<br>- Chrome Extension support | Web scraping, UI testing, Web-browsing agents, Data extraction. |
-| **Computer Use** | *(Coming Soon)* | - coordinate-based mouse/keyboard control<br>- window/app management<br>- screenshot capture | Desktop application operations, Software automation testing, Document processing tasks. |
+| **Computer Use** | *(Beta)* | - coordinate-based mouse/keyboard control<br>- window/app management<br>- screenshot capture | Desktop application operations, Software automation testing, Document processing tasks. |
 
 ### Session Lifecycle
 
@@ -55,44 +55,21 @@ else:
 
 ---
 
-## Documentation Index
-
-### 📘 Guides & Concepts
+## Quick Start
 
 Master the fundamental building blocks of AGB.
 
--   **[Session Management Guide](guides/session-management.md)**
-    Detailed API usage for creating, managing, and recovering sessions.
+-   **[Quick Start](quickstart.md)**
+    5-minute path: install the SDK, create your first session, and run a sample task.
 
--   **[Browser Automation](guides/browser-automation.md)**
-    Control headless browsers with AI-powered natural language actions.
+-   **[API key](api-key.md)**
+    Create AGB API keys for SDK and CLI use.
 
--   **[Code Execution](guides/code-execution.md)**
-    Run Python, JS, Java, and R code in secure sandboxes.
+-   **[MCP Guide](mcp-guide.md)**
+    Set up MCP servers, configure tools, and connect agents to AGB sessions via MCP.
 
--   **[File Operations](guides/file-operations.md)**
-    Read, write, and monitor files in your remote environment.
 
--   **[Command Execution](guides/command-execution.md)**
-    Execute shell commands and system tools.
-
--   **[Data Persistence](guides/context-usage-guide.md)**
-    Sync local context to remote sessions.
-
--   **[Best Practices](guides/best-practices.md)**
-    Production patterns for reliability and performance.
-
-### 🚀 Examples
-
-Practical, runnable code snippets for every feature.
-
--   **[Session Management Examples](examples/session_management/README.md)**
--   **[Code Execution Examples](examples/code_execution/README.md)**
--   **[File System Examples](examples/file_system/README.md)**
--   **[Browser Examples](examples/browser/README.md)**
--   **[Extension Examples](examples/extensions/README.md)**
-
-### ⚙️ API Reference
+## ⚙️ API Reference
 
 Low-level API documentation.
 

@@ -1,9 +1,6 @@
 # Quick Start
 
-## 🎯 Choose Your Learning Path
-
-<details>
-<summary><strong>👋 I'm a Beginner - Complete Tutorial</strong></summary>
+## 👋 I'm a Beginner - Complete Tutorial
 
 ### 1. Installation
 
@@ -13,7 +10,7 @@ export AGB_API_KEY="your_key"
 ```
 
 ### 2. First Example
-**Important**: When using AGB, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account. You can view and manage your available images in the [AGB Console Image Management](https://agb.cloud/console/image-management) page.
+**Important**: When using AGB, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account. You can view and manage your available images in the [AGB Console Image Management](https://agb.ai/console/image-management) page.
 
 ```python
 from agb import AGB
@@ -24,17 +21,19 @@ agb = AGB()
 
 # Create code execution session
 params = CreateSessionParams(image_id="agb-code-space-1")
-result = agb.create(params)
+result =agb .create(params)
+if not result.success:
+    print(f"✅ Session created failed: {result.error_message}")
+    exit(1)
 
-if result.success:
-    session = result.session
+session = result.session
 
-    # Execute code
-    result = session.code.run_code("print('Hello AGB!')", "python")
-    print(result.result)
+# Execute code
+result = session.code.run_code("print('Hello AGB!')", "python")
+print(result.result)
 
-    # Cleanup
-    agb.delete(session)
+# Cleanup
+agb.delete(session)
 ```
 
 
@@ -51,29 +50,28 @@ params = CreateSessionParams(
     image_id="agb-code-space-1"
 )
 result = agb.create(params)
+if not result.success:
+    print(f"Session creation failed: {result.error_message}")
+    exit(1)
+session = result.session
 
-if result.success:
-    session = result.session
+# Use different modules
+# Code execution
+code_result = session.code.run_code("import os; print(os.getcwd())", "python")
 
-    # Use different modules
-    # Code execution
-    code_result = session.code.run_code("import os; print(os.getcwd())", "python")
+# Command execution
+cmd_result = session.command.execute_command("ls -la")
 
-    # Command execution
-    cmd_result = session.command.execute_command("ls -la")
-
-    # File operations
-    session.file_system.write_file("/tmp/test.txt", "Hello World!")
-    file_result = session.file_system.read_file("/tmp/test.txt")
+# File operations
+session.file_system.write_file("/tmp/test.txt", "Hello World!")
+file_result = session.file_system.read_file("/tmp/test.txt")
 
 
-    print("Code output:", code_result.result)
-    print("Command output:", cmd_result.output)
-    print("File content:", file_result.content)
+print("Code output:", code_result.result)
+print("Command output:", cmd_result.output)
+print("File content:", file_result.content)
 
-    agb.delete(session)
-else:
-    print(f"Failed to create session: {result.error_message}")
+agb.delete(session)
 ```
 
 ### 4. Next Steps
@@ -82,10 +80,8 @@ else:
 - 🐍 [Code Execution Guide](guides/code-execution.md) - Deep dive into code execution
 - 💾 [File Operations Guide](guides/file-operations.md) - File and directory management
 
-</details>
 
-<details>
-<summary><strong>🚀 I Have Experience - Quick Start</strong></summary>
+## 🚀 I Have Experience - Quick Start
 
 ### Core Concepts
 
@@ -98,16 +94,15 @@ agb = AGB()
 # Type-safe session creation
 params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
+if not result.success:
+    print(f"Session creation failed: {result.error_message}")
+    exit(1)
+session = result.session
 
-if result.success:
-    session = result.session
-
-    # Modules included in all sessions
-    session.code.run_code(code, "python")           # Code execution
-    session.command.execute_command("ls -la")       # Shell commands
-    session.file_system.read_file("/path/file")     # File operations
-else:
-    print(f"Failed to create session: {result.error_message}")
+# Modules included in all sessions
+session.code.run_code(code, "python")           # Code execution
+session.command.execute_command("ls -la")       # Shell commands
+session.file_system.read_file("/path/file")     # File operations
 ```
 
 ### Key Differences
@@ -168,4 +163,3 @@ config = Config(
 )
 agb = AGB(cfg=config)
 ```
-</details>

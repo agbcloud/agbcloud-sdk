@@ -191,6 +191,82 @@ def test_command_execution(session):
                 print(f"   Error message: {result.error_message}")
                 if result.request_id:
                     print(f"   Request ID: {result.request_id}")
+                # Check for new fields if available
+                if hasattr(result, "exit_code") and result.exit_code is not None:
+                    print(f"   Exit code: {result.exit_code}")
+                if hasattr(result, "stdout") and result.stdout:
+                    print(f"   Stdout: {result.stdout}")
+                if hasattr(result, "stderr") and result.stderr:
+                    print(f"   Stderr: {result.stderr}")
+
+        # Test new features: cwd and envs
+        print("\n6. Testing new features (cwd and envs)...")
+        try:
+            # Test with working directory
+            print("\nTesting with working directory (cwd)...")
+            result = session.command.execute_command("pwd", timeout_ms=10000, cwd="/tmp")
+            if result.success:
+                print("✅ Command executed successfully with cwd!")
+                print(f"   Request ID: {result.request_id}")
+                print(f"   Output: {result.output}")
+            else:
+                print("❌ Command execution failed!")
+                print(f"   Error message: {result.error_message}")
+
+            # Test with environment variables
+            print("\nTesting with environment variables (envs)...")
+            envs = {"TEST_VAR": "test_value", "ANOTHER_VAR": "12345"}
+            result = session.command.execute_command(
+                "echo $TEST_VAR $ANOTHER_VAR", timeout_ms=10000, envs=envs
+            )
+            if result.success:
+                print("✅ Command executed successfully with envs!")
+                print(f"   Request ID: {result.request_id}")
+                print(f"   Output: {result.output}")
+            else:
+                print("❌ Command execution failed!")
+                print(f"   Error message: {result.error_message}")
+
+            # Test with both cwd and envs
+            print("\nTesting with both cwd and envs...")
+            result = session.command.execute_command(
+                "pwd && echo $TEST_VAR",
+                timeout_ms=10000,
+                cwd="/tmp",
+                envs={"TEST_VAR": "working_dir_test"},
+            )
+            if result.success:
+                print("✅ Command executed successfully with cwd and envs!")
+                print(f"   Request ID: {result.request_id}")
+                print(f"   Output: {result.output}")
+            else:
+                print("❌ Command execution failed!")
+                print(f"   Error message: {result.error_message}")
+
+        except Exception as e:
+            print(f"⚠️  Error testing new features: {e}")
+            import traceback
+            traceback.print_exc()
+
+        # Test new response format fields
+        print("\n7. Testing new response format fields...")
+        try:
+            result = session.command.execute_command("echo 'test output'", timeout_ms=10000)
+            if result.success:
+                print("✅ Command executed successfully!")
+                print(f"   Request ID: {result.request_id}")
+                print(f"   Output: {result.output}")
+                # Check for new fields
+                if hasattr(result, "exit_code") and result.exit_code is not None:
+                    print(f"   Exit code: {result.exit_code}")
+                if hasattr(result, "stdout") and result.stdout:
+                    print(f"   Stdout: {result.stdout}")
+                if hasattr(result, "stderr") and result.stderr:
+                    print(f"   Stderr: {result.stderr}")
+                if hasattr(result, "trace_id") and result.trace_id:
+                    print(f"   Trace ID: {result.trace_id}")
+        except Exception as e:
+            print(f"⚠️  Error testing new response format: {e}")
 
         return True
 
@@ -223,7 +299,6 @@ def main():
         print("Testing session deletion...")
         try:
             # Check if running in interactive mode (has stdin)
-            import sys
             if sys.stdin.isatty():
                 print("Do you want to delete the created session? (y/n): ", end="")
                 choice = input().strip().lower()

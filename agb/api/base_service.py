@@ -87,28 +87,29 @@ class BaseService:
             request_id = response.request_id or ""
 
             # Check response type, if it's CallMcpToolResponse, use new parsing method
-            if hasattr(response, "is_tool_successful"):
+            if hasattr(response, "is_successful"):
                 # This is a CallMcpToolResponse object
                 try:
                     logger.debug("Response body:")
-                    logger.debug(json.dumps(response.json_data, ensure_ascii=False, indent=2))
+                    logger.debug(
+                        json.dumps(response.json_data, ensure_ascii=False, indent=2)
+                    )
                 except Exception:
                     logger.debug(f"Response: {response}")
 
-                if response.is_tool_successful():
-                    # Tool execution successful
+                # Treat the call as successful only when BOTH API layer and tool layer are successful.
+                # This prevents false positives where the tool payload looks OK but the API wrapper
+                # reports an error (e.g. InvalidSession.NotFound).
+                if response.is_successful():
                     result = response.get_tool_result()
-                    return OperationResult(
-                        request_id=request_id, success=True, data=result
-                    )
-                else:
-                    # Tool execution failed
-                    error_msg = response.get_error_message() or "Tool execution failed"
-                    return OperationResult(
-                        request_id=request_id,
-                        success=False,
-                        error_message=error_msg,
-                    )
+                    return OperationResult(request_id=request_id, success=True, data=result)
+
+                error_msg = response.get_error_message() or "Tool execution failed"
+                return OperationResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=error_msg,
+                )
             else:
                 # This is the original OpenAPI response object, use existing parsing method
                 # Here you can add existing parsing logic if needed

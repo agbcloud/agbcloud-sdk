@@ -4,7 +4,8 @@ Get context response model
 
 from typing import Any, Dict, Optional
 
-class GetContextResponseBodyData():
+
+class GetContextResponseBodyData:
     def __init__(
         self,
         create_time: Optional[str] = None,
@@ -80,6 +81,7 @@ class GetContextResponse:
                 else None
             ),
         )
+
     def is_successful(self) -> bool:
         """Check if the operation was successful"""
         return self.status_code == 200 and self.api_success
@@ -104,4 +106,3 @@ class GetContextResponse:
                 state=self.data.get("state"),
             )
         return GetContextResponseBodyData()
-

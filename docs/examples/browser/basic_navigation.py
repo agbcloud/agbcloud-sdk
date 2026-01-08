@@ -70,7 +70,7 @@ async def main():
             websites = [
                 "https://example.com",
                 "https://httpbin.org/html",
-                "https://quotes.toscrape.com"
+                "https://quotes.toscrape.com",
             ]
 
             for url in websites:
@@ -109,11 +109,15 @@ async def main():
 
             try:
                 # Go back with minimal wait - just wait for navigation to start
-                await page.go_back(timeout=10000, wait_until="commit")  # 10 seconds, wait for navigation to commit
+                await page.go_back(
+                    timeout=10000, wait_until="commit"
+                )  # 10 seconds, wait for navigation to commit
                 print(f"  ⬅️  Went back to: {page.url}")
 
                 # Go forward with minimal wait
-                await page.go_forward(timeout=10000, wait_until="commit")  # 10 seconds, wait for navigation to commit
+                await page.go_forward(
+                    timeout=10000, wait_until="commit"
+                )  # 10 seconds, wait for navigation to commit
                 print(f"  ➡️  Went forward to: {page.url}")
 
             except Exception as nav_error:

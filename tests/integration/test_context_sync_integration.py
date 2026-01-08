@@ -364,6 +364,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
                 if session1:
                     delete_result = self.agb.delete(session1, sync_context=True)
                     self.assertTrue(delete_result.success, "Error deleting first session")
+                    session1 = None
 
                 # 8. Create a second session with the same context
                 print("Creating second session with the same context...")

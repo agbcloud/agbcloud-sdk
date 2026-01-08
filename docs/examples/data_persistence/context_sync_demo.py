@@ -45,17 +45,11 @@ async def main():
 
         # Step 2: Create first session with context sync
         print("\n2️⃣ Creating first session with context sync...")
-        session_params = CreateSessionParams(
-            image_id="agb-code-space-1"
-        )
+        session_params = CreateSessionParams(image_id="agb-code-space-1")
 
         # Configure context synchronization
         sync_path = "/home/demo-data"
-        context_sync = ContextSync.new(
-            context.id,
-            sync_path,
-            SyncPolicy()
-        )
+        context_sync = ContextSync.new(context.id, sync_path, SyncPolicy())
         session_params.context_syncs = [context_sync]
 
         session_result = agb.create(session_params)
@@ -113,16 +107,10 @@ async def main():
 
         # Step 6: Create second session with same context
         print("\n6️⃣ Creating second session with same context...")
-        session_params2 = CreateSessionParams(
-            image_id="agb-code-space-1"
-        )
+        session_params2 = CreateSessionParams(image_id="agb-code-space-1")
 
         # Use the same context sync configuration
-        context_sync2 = ContextSync.new(
-            context.id,
-            sync_path,
-            SyncPolicy()
-        )
+        context_sync2 = ContextSync.new(context.id, sync_path, SyncPolicy())
         session_params2.context_syncs = [context_sync2]
 
         session_result2 = agb.create(session_params2)
@@ -152,7 +140,9 @@ async def main():
         additional_file = f"{sync_path}/session2_data.txt"
         additional_content = f"Hello from session 2! Created at {time.time()}"
 
-        file_result2 = session2.file_system.write_file(additional_file, additional_content)
+        file_result2 = session2.file_system.write_file(
+            additional_file, additional_content
+        )
         if not file_result2.success:
             print(f"❌ Failed to create additional file: {file_result2.error_message}")
         else:
@@ -171,6 +161,7 @@ async def main():
     except Exception as e:
         print(f"❌ Demo failed with error: {e}")
         import traceback
+
         traceback.print_exc()
 
     finally:

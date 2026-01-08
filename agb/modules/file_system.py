@@ -2,11 +2,11 @@ import json
 import threading
 import time
 from collections import defaultdict
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union, overload, Literal
 
 from agb.api.base_service import BaseService
-from agb.model.response import ApiResponse, BoolResult, UploadResult, DownloadResult
-from agb.logger import get_logger, log_operation_start, log_operation_success, log_operation_error
+from agb.model.response import ApiResponse, BoolResult, UploadResult, DownloadResult, BinaryFileContentResult
+from agb.logger import get_logger, log_operation_start, log_operation_success, log_operation_error, log_warning
 from agb.modules.file_transfer import FileTransfer
 from agb.exceptions import FileError
 logger = get_logger(__name__)
@@ -375,7 +375,7 @@ class FileSystem(BaseService):
                 result_msg = f"RemotePath={remote_path}, BytesSent={result.bytes_sent}, RequestIdUpload={result.request_id_upload_url}, RequestIdSync={result.request_id_sync}"
                 log_operation_success("FileSystem.upload_file", result_msg)
             else:
-                log_operation_error("FileSystem.upload_file", result.error or "Upload failed")
+                log_operation_error("FileSystem.upload_file", result.error_message or "Upload failed")
             return result
         except Exception as e:
             log_operation_error("FileSystem.upload_file", str(e), exc_info=True)
@@ -387,7 +387,7 @@ class FileSystem(BaseService):
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error=f"Upload failed: {str(e)}",
+                error_message=f"Upload failed: {str(e)}",
             )
 
     def download_file(
@@ -440,7 +440,7 @@ class FileSystem(BaseService):
                 result_msg = f"RemotePath={remote_path}, LocalPath={local_path}, BytesReceived={result.bytes_received}, RequestIdDownload={result.request_id_download_url}, RequestIdSync={result.request_id_sync}"
                 log_operation_success("FileSystem.download_file", result_msg)
             else:
-                log_operation_error("FileSystem.download_file", result.error or "Download failed")
+                log_operation_error("FileSystem.download_file", result.error_message or "Download failed")
             return result
         except Exception as e:
             log_operation_error("FileSystem.download_file", str(e), exc_info=True)
@@ -452,7 +452,7 @@ class FileSystem(BaseService):
                 bytes_received=0,
                 path=remote_path,
                 local_path=local_path,
-                error=f"Download exception: {str(e)}",
+                error_message=f"Download exception: {str(e)}",
             )
 
 
@@ -586,15 +586,6 @@ class FileSystem(BaseService):
         args = {"path": path}
         try:
             result = self._call_mcp_tool("get_file_info", args)
-            try:
-                logger.debug("Response body:")
-                logger.debug(
-                    json.dumps(
-                        getattr(result, "body", result), ensure_ascii=False, indent=2
-                    )
-                )
-            except Exception:
-                logger.debug(f"Response: {result}")
             if result.success:
                 file_info = parse_file_info(result.data)
                 result_msg = f"Path={path}, RequestId={result.request_id}, IsDirectory={file_info.get('isDirectory', False)}"
@@ -754,56 +745,136 @@ class FileSystem(BaseService):
                 error_message=f"Failed to move file: {e}",
             )
 
-    def _read_file_chunk(
-        self, path: str, offset: int = 0, length: int = 0
-    ) -> FileContentResult:
+    def delete_file(self, path: str) -> BoolResult:
         """
-        Read the contents of a file (internal function for chunked reading).
+        Delete a file at the specified path.
+
+        Args:
+            path (str): The path of the file to delete.
+
+        Returns:
+            BoolResult: Result object containing success status and error message if any.
+
+        Example:
+            ```python
+            session = (agb.create()).session
+            session.file_system.write_file("/tmp/to_delete.txt", "hello")
+            delete_result = session.file_system.delete_file("/tmp/to_delete.txt")
+            session.delete()
+            ```
+        """
+        log_operation_start("FileSystem.delete_file", f"Path={path}")
+        args = {"path": path}
+        try:
+            result = self._call_mcp_tool("delete_file", args)
+            if result.success:
+                result_msg = f"Path={path}, RequestId={result.request_id}"
+                log_operation_success("FileSystem.delete_file", result_msg)
+                return BoolResult(request_id=result.request_id, success=True, data=True)
+            else:
+                error_msg = result.error_message or "Failed to delete file"
+                log_operation_error("FileSystem.delete_file", error_msg)
+                return BoolResult(
+                    request_id=result.request_id,
+                    success=False,
+                    error_message=error_msg,
+                )
+        except Exception as e:
+            log_operation_error("FileSystem.delete_file", str(e), exc_info=True)
+            return BoolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to delete file: {e}",
+            )
+
+    def _read_file_chunk(
+        self, path: str, offset: int = 0, length: int = 0, format_type: str = "text"
+    ) -> Union[FileContentResult, BinaryFileContentResult]:
+        """
+        Internal method to read a file chunk. Used for chunked file operations.
 
         Args:
             path: The path of the file to read.
             offset: Byte offset to start reading from (0-based).
             length: Number of bytes to read. If 0, reads the entire file from offset.
+            format_type: Format to read the file in. "text" (default) or "binary".
 
         Returns:
-            FileContentResult: Result object containing file content and error message
-                if any.
+            FileContentResult: For text format, contains file content as string.
+            BinaryFileContentResult: For binary format, contains file content as bytes.
         """
-        args: Dict[str, Union[str, int]] = {"path": path}
-        if offset > 0:
+        args = {"path": path}
+        if offset >= 0:
             args["offset"] = offset
-        if length > 0:
+        if length >= 0:
             args["length"] = length
 
+        # Only pass format parameter for binary files
+        if format_type == "binary":
+            args["format"] = "binary"
+
         try:
+            log_operation_start("FileSystem.read_file", f"Path={path}, Offset={offset}, Length={length}, Format={format_type}")
             result = self._call_mcp_tool("read_file", args)
-            try:
-                logger.debug("Response body:")
-                logger.debug(
-                    json.dumps(
-                        getattr(result, "body", result), ensure_ascii=False, indent=2
-                    )
-                )
-            except Exception:
-                logger.debug(f"Response: {result}")
             if result.success:
-                return FileContentResult(
-                    request_id=result.request_id,
-                    success=True,
-                    content=result.data,
-                )
+                if format_type == "binary":
+                    # Backend returns base64-encoded string, decode to bytes
+                    try:
+                        log_operation_success("FileSystem.read_file.binary", f"result={str(result.data)}, RequestId={result.request_id}")
+                        import base64
+                        binary_content = base64.b64decode(result.data)
+                        return BinaryFileContentResult(
+                            request_id=result.request_id,
+                            success=True,
+                            content=binary_content,
+                        )
+                    except Exception as e:
+                        log_operation_error("FileSystem.read_file.binary", str(e), exc_info=True)
+                        return BinaryFileContentResult(
+                            request_id=result.request_id,
+                            success=False,
+                            content=b"",
+                            error_message=f"Failed to decode base64: {e}",
+                        )
+                else:
+                    log_operation_success("FileSystem.read_file.text", f"result={str(result.data)}, RequestId={result.request_id}")
+                    # Text format, return as string
+                    return FileContentResult(
+                        request_id=result.request_id,
+                        success=True,
+                        content=result.data,
+                    )
             else:
-                return FileContentResult(
-                    request_id=result.request_id,
-                    success=False,
-                    error_message=result.error_message or "Failed to read file",
-                )
+                # Error case - return appropriate result type
+                if format_type == "binary":
+                    log_operation_error("FileSystem.read_file.binary", result.error_message or "Failed to read file")
+                    return BinaryFileContentResult(
+                        request_id=result.request_id,
+                        success=False,
+                        content=b"",
+                        error_message=result.error_message or "Failed to read file",
+                    )
+                else:
+                    log_operation_error("FileSystem.read_file.text", result.error_message or "Failed to read file")
+                    return FileContentResult(
+                        request_id=result.request_id,
+                        success=False,
+                        error_message=result.error_message or "Failed to read file",
+                    )
+        except FileError as e:
+            if format_type == "binary":
+                log_operation_error("FileSystem.read_file.binary", str(e), exc_info=True)
+                return BinaryFileContentResult(request_id="", success=False, content=b"", error_message=str(e))
+            else:
+                log_operation_error("FileSystem.read_file.text", str(e), exc_info=True)
+                return FileContentResult(request_id="", success=False, error_message=str(e))
         except Exception as e:
-            return FileContentResult(
-                request_id="",
-                success=False,
-                error_message=f"Failed to read file: {e}",
-            )
+            if format_type == "binary":
+                log_operation_error("FileSystem.read_file.binary", str(e), exc_info=True)
+                return BinaryFileContentResult(request_id="", success=False, content=b"", error_message=str(e))
+            else:
+                log_operation_error("FileSystem.read_file.text", str(e), exc_info=True)
+                return FileContentResult(request_id="", success=False, error_message=str(e))
 
     def _write_file_chunk(
         self, path: str, content: str, mode: str = "overwrite"
@@ -848,29 +919,78 @@ class FileSystem(BaseService):
                 error_message=f"Failed to write file: {e}",
             )
 
-    def read_file(self, path: str) -> FileContentResult:
+    @overload
+    def read_file(self, path: str) -> FileContentResult: ...
+
+    @overload
+    def read_file(self, path: str, *, format: Literal["text"]) -> FileContentResult: ...
+
+    @overload
+    def read_file(self, path: str, *, format: Literal["bytes"]) -> BinaryFileContentResult: ...
+
+    def read_file(
+        self, path: str, *, format: str = "text"
+    ) -> Union[FileContentResult, BinaryFileContentResult]:
         """
-        Read the contents of a file.
+        Read the contents of a file. Automatically handles large files by chunking.
 
         Args:
             path (str): The path of the file to read.
+            format (str): Format to read the file in. "text" (default) or "bytes".
+                - "text": Returns FileContentResult with content as string (UTF-8)
+                - "bytes": Returns BinaryFileContentResult with content as bytes
 
         Returns:
-            FileContentResult: Result object containing file content and error message
-                if any.
+            FileContentResult: For text format, contains file content as string.
+            BinaryFileContentResult: For bytes format, contains file content as bytes.
+
+        Raises:
+            FileError: If the file does not exist or is a directory.
+
+        Example:
+            ```python
+            session = (agb.create()).session
+            
+            # Read text file (default)
+            text_result = session.file_system.read_file("/tmp/test.txt")
+            print(text_result.content)  # str
+            
+            # Read binary file
+            binary_result = session.file_system.read_file("/tmp/image.png", format="bytes")
+            print(binary_result.content)  # bytes
+            
+            session.delete()
+            ```
+
+        Note:
+            - Automatically handles large files by reading in chunks (default 50KB per chunk)
+            - Returns empty string/bytes for empty files
+            - Returns error if path is a directory
+            - Binary files are returned as bytes (backend uses base64 encoding internally)
+
+        See Also:
+            FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
         """
-        log_operation_start("FileSystem.read_file", f"Path={path}")
+        chunk_size = self.DEFAULT_CHUNK_SIZE
+
+        log_operation_start("FileSystem.read_file", f"Path={path}, Format={format}")
         try:
             # Get file info to check size
             file_info_result = self.get_file_info(path)
             if not file_info_result.success:
-                error_msg = file_info_result.error_message or "Failed to get file info"
-                log_operation_error("FileSystem.read_file", error_msg)
-                return FileContentResult(
-                    request_id=file_info_result.request_id,
-                    success=False,
-                    error_message=error_msg,
-                )
+                if format == "bytes":
+                    return BinaryFileContentResult(
+                        request_id=file_info_result.request_id,
+                        success=False,
+                        content=b"",
+                        error_message=file_info_result.error_message,
+                    )
+                else:
+                    return FileContentResult(
+                        request_id=file_info_result.request_id,
+                        success=False,
+                        error_message=file_info_result.error_message,
+                    )
 
             # Check if file exists and is a file (not a directory)
             if not file_info_result.file_info or file_info_result.file_info.get(
@@ -878,56 +998,112 @@ class FileSystem(BaseService):
             ):
                 error_msg = f"Path does not exist or is a directory: {path}"
                 log_operation_error("FileSystem.read_file", error_msg)
-                return FileContentResult(
-                    request_id=file_info_result.request_id,
-                    success=False,
-                    error_message=error_msg,
-                )
+                if format == "bytes":
+                    return BinaryFileContentResult(
+                        request_id=file_info_result.request_id,
+                        success=False,
+                        content=b"",
+                        error_message=error_msg,
+                    )
+                else:
+                    return FileContentResult(
+                        request_id=file_info_result.request_id,
+                        success=False,
+                        error_message=error_msg,
+                    )
 
-            # If the file is empty, return empty string
+            # If the file is empty, return empty content
             file_size = file_info_result.file_info.get("size", 0)
             if file_size == 0:
+                log_operation_error("FileSystem.read_file", "File is empty")
+                if format == "bytes":
+                    return BinaryFileContentResult(
+                        request_id=file_info_result.request_id,
+                        success=True,
+                        content=b"",
+                        size=0,
+                    )
+                else:
+                    return FileContentResult(
+                        request_id=file_info_result.request_id,
+                        success=True,
+                        content="",
+                    )
+
+            # Read the file in chunks
+            if format == "bytes":
+                # Binary format
+                content_chunks = []
+                offset = 0
+                chunk_count = 0
+                while offset < file_size:
+                    length = min(chunk_size, file_size - offset)
+                    chunk_result = self._read_file_chunk(path, offset, length, format_type="binary")
+
+                    if not chunk_result.success:
+                        return chunk_result  # Return the error
+
+                    # chunk_result is BinaryFileContentResult for binary format
+                    if isinstance(chunk_result, BinaryFileContentResult):
+                        content_chunks.append(chunk_result.content)
+                    else:
+                        # Should not happen, but handle gracefully
+                        return BinaryFileContentResult(
+                            request_id=chunk_result.request_id,
+                            success=False,
+                            content=b"",
+                            error_message="Unexpected result type for binary format",
+                        )
+
+                    offset += length
+                    chunk_count += 1
+
+                # Combine all binary chunks
+                final_content = b"".join(content_chunks)
+                result_msg = f"Path={path}, Format={format}, ContentLength={len(final_content)}, RequestId={file_info_result.request_id}"
+                log_operation_success("FileSystem.read_file", result_msg)
+                return BinaryFileContentResult(
+                    request_id=file_info_result.request_id,
+                    success=True,
+                    content=final_content,
+                    size=len(final_content),
+                )
+            else:
+                # Text format (default)
+                content = []
+                offset = 0
+                chunk_count = 0
+                while offset < file_size:
+                    length = min(chunk_size, file_size - offset)
+                    chunk_result = self._read_file_chunk(path, offset, length, format_type="text")
+                    if not chunk_result.success:
+                        return chunk_result  # Return the error
+
+                    content.append(chunk_result.content)
+                    offset += length
+                    chunk_count += 1
+
+                content_str = "".join(content)
+                result_msg = f"Path={path}, Format={format}, ContentLength={len(content_str)}, RequestId={file_info_result.request_id}"
+                log_operation_success("FileSystem.read_file", result_msg)
                 return FileContentResult(
                     request_id=file_info_result.request_id,
                     success=True,
-                    content="",
+                    content=content_str,
                 )
-
-            # Read the file in chunks
-            content = []
-            offset = 0
-            chunk_count = 0
-            while offset < file_size:
-                length = min(self.DEFAULT_CHUNK_SIZE, file_size - offset)
-                chunk_result = self._read_file_chunk(path, offset, length)
-                logger.debug(
-                    f"ReadFile: Reading chunk {chunk_count + 1} "
-                    f"({length} bytes at offset {offset}/{file_size})"
-                )
-
-                if not chunk_result.success:
-                    return chunk_result  # Return the error
-
-                content.append(chunk_result.content)
-                offset += length
-                chunk_count += 1
-
-            content_str = "".join(content)
-            result_msg = f"Path={path}, ContentLength={len(content_str)}, RequestId={file_info_result.request_id}"
-            log_operation_success("FileSystem.read_file", result_msg)
-            return FileContentResult(
-                request_id=file_info_result.request_id,
-                success=True,
-                content=content_str,
-            )
 
         except Exception as e:
             log_operation_error("FileSystem.read_file", str(e), exc_info=True)
-            return FileContentResult(
-                request_id="",
-                success=False,
-                error_message=f"Failed to read file: {e}",
-            )
+            if format == "bytes":
+                return BinaryFileContentResult(request_id="", success=False, content=b"", error_message=str(e))
+            else:
+                return FileContentResult(request_id="", success=False, error_message=str(e))
+
+    def read(self, path: str) -> FileContentResult:
+        """
+        Alias of read_file().
+        """
+        return self.read_file(path)
 
     def write_file(
         self, path: str, content: str, mode: str = "overwrite"

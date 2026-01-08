@@ -46,7 +46,8 @@ class TestSessionLifecycleDeleted:
             # 4. Print the result
             print("\n=== Result of run_code on deleted session ===")
             print(f"Success: {result.success}")
-            print(f"Result: {result.result}")
+            for res in result.logs.stdout:
+                print(f"Result: {result.logs.stdout}")
             print(f"Error Message: {result.error_message}")
             print("=============================================")
 

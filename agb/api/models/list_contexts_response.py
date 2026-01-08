@@ -4,7 +4,8 @@ List contexts response model
 
 from typing import Any, Dict, List, Optional
 
-class ListContextsResponseBodyData():
+
+class ListContextsResponseBodyData:
     def __init__(
         self,
         create_time: Optional[str] = None,
@@ -16,7 +17,6 @@ class ListContextsResponseBodyData():
         self.id = id
         self.last_used_time = last_used_time
         self.name = name
-
 
 
 class ListContextsResponse:
@@ -59,7 +59,9 @@ class ListContextsResponse:
             self.http_status_code = None
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> "ListContextsResponse":
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "ListContextsResponse":
         """
         Create ListContextsResponse from HTTP client returned dictionary
 
@@ -101,12 +103,14 @@ class ListContextsResponse:
             result = []
             for item in self.data:
                 if isinstance(item, dict):
-                    result.append(ListContextsResponseBodyData(
-                        create_time=item.get("createTime"),
-                        id=item.get("id"),
-                        last_used_time=item.get("lastUsedTime"),
-                        name=item.get("name")
-                    ))
+                    result.append(
+                        ListContextsResponseBodyData(
+                            create_time=item.get("createTime"),
+                            id=item.get("id"),
+                            last_used_time=item.get("lastUsedTime"),
+                            name=item.get("name"),
+                        )
+                    )
             return result
         return []
 
@@ -133,4 +137,3 @@ class ListContextsResponse:
         if isinstance(self.data, dict):
             return self.data.get("totalCount")
         return None
-

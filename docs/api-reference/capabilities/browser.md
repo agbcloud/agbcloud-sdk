@@ -1,8 +1,8 @@
 # Browser API Reference
 
-## 🌐 Related Tutorial
+## Related Tutorial
 
-- [Browser Automation Guide](../../guides/browser-automation.md) - Complete guide to browser automation
+- [Browser Automation Guide](/browser/overview.md) - Complete guide to browser automation
 
 ## Overview
 

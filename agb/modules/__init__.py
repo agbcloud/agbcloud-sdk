@@ -1,4 +1,4 @@
-from .code import Code, CodeExecutionResult
+from .code import Code
 from .command import Command, CommandResult
 from .computer import Computer
 from .file_system import BoolResult as FileSystemBoolResult
@@ -13,7 +13,6 @@ from .file_system import (
 __all__ = [
     # Code execution
     "Code",
-    "CodeExecutionResult",
     # Command execution
     "Command",
     "CommandResult",

@@ -27,7 +27,9 @@ class GetAndLoadInternalContextResponseBodyData:
         self.context_path = context_path
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "GetAndLoadInternalContextResponseBodyData":
+    def from_dict(
+        cls, data: Dict[str, Any]
+    ) -> "GetAndLoadInternalContextResponseBodyData":
         """
         Create GetAndLoadInternalContextResponseBodyData from dictionary
 
@@ -84,7 +86,9 @@ class GetAndLoadInternalContextResponse:
             self.data = []
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> "GetAndLoadInternalContextResponse":
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "GetAndLoadInternalContextResponse":
         """
         Create GetAndLoadInternalContextResponse from HTTP client returned dictionary
 
@@ -147,7 +151,9 @@ class GetAndLoadInternalContextResponse:
             result = []
             for item in self.data:
                 if isinstance(item, dict):
-                    result.append(GetAndLoadInternalContextResponseBodyData.from_dict(item))
+                    result.append(
+                        GetAndLoadInternalContextResponseBodyData.from_dict(item)
+                    )
             return result
         return []
 

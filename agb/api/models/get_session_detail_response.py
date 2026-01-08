@@ -1,0 +1,92 @@
+from typing import Any, Dict, Optional
+
+
+class GetSessionDetailResponse:
+    """Get session detail response object."""
+
+    def __init__(
+        self,
+        status_code: int,
+        url: str,
+        headers: Dict[str, str],
+        success: bool,
+        json_data: Optional[Dict[str, Any]] = None,
+        text: Optional[str] = None,
+        error: Optional[str] = None,
+        request_id: Optional[str] = None,
+    ):
+        self.status_code = status_code
+        self.url = url
+        self.headers = headers
+        self.success = success
+        self.json_data = json_data
+        self.text = text
+        self.error = error
+        self.request_id = request_id
+
+        if json_data:
+            self.api_success = json_data.get("success")
+            self.code = json_data.get("code")
+            self.message = json_data.get("message")
+            self.http_status_code = json_data.get("httpStatusCode")
+            self.data = json_data.get("data")
+        else:
+            self.api_success = False
+            self.code = None
+            self.message = None
+            self.http_status_code = None
+            self.data = None
+
+    @classmethod
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "GetSessionDetailResponse":
+        """Create GetSessionDetailResponse from HTTP client returned dictionary."""
+        return cls(
+            status_code=response_dict.get("status_code", 0),
+            url=response_dict.get("url", ""),
+            headers=response_dict.get("headers", {}),
+            success=response_dict.get("success", False),
+            json_data=response_dict.get("json"),
+            text=response_dict.get("text"),
+            request_id=response_dict.get("request_id")
+            or (
+                response_dict.get("json", {}).get("requestId")
+                if response_dict.get("json")
+                else None
+            ),
+        )
+
+    def is_successful(self) -> bool:
+        """Check if API call was successful."""
+        return self.success and self.api_success is True
+
+    def get_error_message(self) -> str:
+        """Get error message."""
+        if self.error:
+            return self.error
+        if self.message:
+            return self.message
+        return "Unknown error"
+
+    def get_status(self) -> str:
+        """Get session status from response data."""
+        if not isinstance(self.data, dict):
+            return ""
+        return self.data.get("status") or self.data.get("Status") or ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary format."""
+        result: Dict[str, Any] = {
+            "status_code": self.status_code,
+            "url": self.url,
+            "success": self.success,
+            "request_id": self.request_id,
+        }
+        if self.json_data:
+            result["json"] = self.json_data
+        if self.text:
+            result["text"] = self.text
+        if self.error:
+            result["error"] = self.error
+        return result

@@ -112,7 +112,7 @@ if result.success:
         print(f"   Bytes sent: {upload_result.bytes_sent}")
         print(f"   Request ID: {upload_result.request_id_upload_url}")
     else:
-        print(f"❌ Upload failed: {upload_result.error}")
+        print(f"❌ Upload failed: {upload_result.error_message}")
 
     agb.delete(session)
 else:
@@ -158,7 +158,7 @@ if result.success:
         print(f"   Bytes received: {download_result.bytes_received}")
         print(f"   Request ID: {download_result.request_id_download_url}")
     else:
-        print(f"❌ Download failed: {download_result.error}")
+        print(f"❌ Download failed: {download_result.error_message}")
 
     agb.delete(session)
 else:
@@ -208,7 +208,7 @@ if result.success:
         )
 
         if not upload_result.success:
-            print(f"Upload failed: {upload_result.error}")
+            print(f"Upload failed: {upload_result.error_message}")
             exit(1)
 
         print(f"✅ Upload successful ({upload_result.bytes_sent} bytes)")
@@ -324,12 +324,12 @@ upload_result = session.file_system.upload_file(
 )
 
 if not upload_result.success:
-    if "Context ID not available" in (upload_result.error or ""):
+    if "Context ID not available" in (upload_result.error_message or ""):
         print("File transfer context not initialized")
-    elif "not found" in (upload_result.error or "").lower():
+    elif "not found" in (upload_result.error_message or "").lower():
         print("Local file not found")
     else:
-        print(f"Upload error: {upload_result.error}")
+        print(f"Upload error: {upload_result.error_message}")
 ```
 
 ### 4. Clean Up Remote Files After Use

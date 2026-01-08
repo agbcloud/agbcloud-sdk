@@ -1,8 +1,8 @@
 # Code API Reference
 
-## 💻 Related Tutorial
+## Related Tutorial
 
-- [Code Execution Guide](../../guides/code-execution.md) - Execute code in isolated environments
+- [Code Execution Guide](/code-interpreting/overview.md) - Execute code in isolated environments
 
 ## Overview
 
@@ -15,14 +15,6 @@ It supports multiple programming languages including Python, JavaScript, and mor
 - Requires `agb-code-space-1` image for code execution features
 
 
-
-## CodeExecutionResult
-
-```python
-class CodeExecutionResult(ApiResponse)
-```
-
-Result of code execution operations.
 
 ## Code
 
@@ -37,7 +29,7 @@ Handles code execution operations in the AGB cloud environment.
 ```python
 def run_code(code: str,
              language: str,
-             timeout_s: int = 60) -> CodeExecutionResult
+             timeout_s: int = 60) -> EnhancedCodeExecutionResult
 ```
 
 Execute code in the specified language with a timeout.
@@ -52,8 +44,9 @@ Execute code in the specified language with a timeout.
 
 **Returns**:
 
-    CodeExecutionResult: Result object containing success status, execution
-  result, and error message if any.
+    EnhancedCodeExecutionResult: Enhanced result object containing success status,
+  execution results with rich format support (HTML, images, charts, etc.),
+  logs, and error information if any.
 
 
 **Raises**:

@@ -6,7 +6,7 @@ environment.
 
 import json
 import os
-from threading import Lock
+import copy
 from typing import Dict, Optional
 
 from agb.api.client import Client as mcp_client
@@ -63,8 +63,6 @@ class AGB:
 
         # Initialize the HTTP API client with the complete config
         self.client = mcp_client(self.config)
-        self._sessions: Dict[str, Session] = {}
-        self._lock = Lock()
 
         # Initialize context service
         self.context = ContextService(self)
@@ -124,6 +122,20 @@ class AGB:
             if params is None:
                 error_msg = "params is required and cannot be None"
                 log_operation_error("AGB.create", error_msg)
+                return SessionResult(
+                    request_id="",
+                    success=False,
+                    error_message=error_msg,
+                )
+
+            # To avoid mutating the caller-provided params when create() performs any
+            # normalization or augmentation (e.g., appending auto-generated context syncs),
+            # we operate on a deep-copied params object.
+            try:
+                params = copy.deepcopy(params)
+            except Exception as e:
+                error_msg = f"Failed to copy params: {e}"
+                log_operation_error("AGB.create", error_msg, exc_info=True)
                 return SessionResult(
                     request_id="",
                     success=False,
@@ -229,46 +241,9 @@ class AGB:
             # Store image_id used for this session
             session.image_id = params.image_id or ""
 
-            with self._lock:
-                self._sessions[session_id] = session
-
             # If we have persistence data, wait for context synchronization
             if needs_context_sync:
-                log_operation_start("Context synchronization", "Waiting for completion")
-
-                # Wait for context synchronization to complete
-                max_retries = 150  # Maximum number of retries
-                retry_interval = 2  # Seconds to wait between retries
-
-                import time
-                for retry in range(max_retries):
-                    # Get context status data
-                    info_result = session.context.info()
-
-                    # Check if all context items have status "Success" or "Failed"
-                    all_completed = True
-                    has_failure = False
-
-                    for item in info_result.context_status_data:
-                        logger.info(f"📁 Context {item.context_id} status: {item.status}, path: {item.path}")
-
-                        if item.status != "Success" and item.status != "Failed":
-                            all_completed = False
-                            break
-
-                        if item.status == "Failed":
-                            has_failure = True
-                            logger.error(f"❌ Context synchronization failed for {item.context_id}: {item.error_message}")
-
-                    if all_completed or not info_result.context_status_data:
-                        if has_failure:
-                            log_warning("Context synchronization completed with failures")
-                        else:
-                            log_operation_success("Context synchronization")
-                        break
-
-                    logger.info(f"⏳ Waiting for context synchronization, attempt {retry+1}/{max_retries}")
-                    time.sleep(retry_interval)
+                self._wait_for_context_synchronization(session)
 
             # Return SessionResult with request ID
             result_msg = f"SessionId={session_id}, RequestId={request_id}"
@@ -284,6 +259,57 @@ class AGB:
                 success=False,
                 error_message=f"Failed to create session: {e}",
             )
+
+    def _wait_for_context_synchronization(
+        self,
+        session: "Session",
+        *,
+        max_retries: int = 150,
+        retry_interval_s: int = 2,
+    ) -> None:
+        """
+        Wait for context synchronization to complete for a newly created session.
+
+        This polls `session.context.info()` until all sync items are in terminal states
+        ("Success" or "Failed"), or until the retry limit is reached.
+        """
+        log_operation_start("Context synchronization", "Waiting for completion")
+
+        import time
+
+        for retry in range(max_retries):
+            info_result = session.context.info()
+
+            # Check if all context items have status "Success" or "Failed"
+            all_completed = True
+            has_failure = False
+
+            for item in info_result.context_status_data:
+                logger.info(
+                    f"📁 Context {item.context_id} status: {item.status}, path: {item.path}"
+                )
+
+                if item.status not in {"Success", "Failed"}:
+                    all_completed = False
+                    break
+
+                if item.status == "Failed":
+                    has_failure = True
+                    logger.error(
+                        f"❌ Context synchronization failed for {item.context_id}: {item.error_message}"
+                    )
+
+            if all_completed or not info_result.context_status_data:
+                if has_failure:
+                    log_warning("Context synchronization completed with failures")
+                else:
+                    log_operation_success("Context synchronization")
+                return
+
+            logger.info(
+                f"⏳ Waiting for context synchronization, attempt {retry + 1}/{max_retries}"
+            )
+            time.sleep(retry_interval_s)
 
     def list(
         self,
@@ -466,9 +492,6 @@ class AGB:
         try:
             # Delete the session and get the result
             delete_result = session.delete(sync_context=sync_context)
-
-            with self._lock:
-                self._sessions.pop(session.session_id, None)
 
             if delete_result.success:
                 result_msg = f"SessionId={session.session_id}, RequestId={delete_result.request_id}"

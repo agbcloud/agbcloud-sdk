@@ -11,7 +11,7 @@ The **Context Manager** allows you to prepare the environment before your code o
 
 ## Examples
 
-### Basic Context Usage (`main.py`)
+### Basic Context Usage
 Shows how to upload a local file and verify its existence in the remote session.
 
 <<< ./main.py

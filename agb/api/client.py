@@ -18,6 +18,8 @@ from .models import (
     GetMcpResourceResponse,
     GetSessionRequest,
     GetSessionResponse,
+    GetSessionDetailRequest,
+    GetSessionDetailResponse,
     InitBrowserRequest,
     InitBrowserResponse,
     ListMcpToolsRequest,
@@ -133,9 +135,7 @@ class Client:
             # Always close the HTTP client to release resources
             http_client.close()
 
-    def get_mcp_session(
-        self, request: GetSessionRequest
-    ) -> GetSessionResponse:
+    def get_mcp_session(self, request: GetSessionRequest) -> GetSessionResponse:
         """
         Get MCP session information using HTTP client
         """
@@ -150,6 +150,22 @@ class Client:
             return response
         finally:
             # Always close the HTTP client to release resources
+            http_client.close()
+
+    def get_session_detail(
+        self, request: GetSessionDetailRequest
+    ) -> GetSessionDetailResponse:
+        """
+        Get session detail (status only) using HTTP client.
+        """
+        if not request.authorization:
+            raise ValueError("authorization is required")
+
+        http_client = self._get_http_client(request.authorization)
+        try:
+            response = http_client.get_session_detail(request)
+            return response
+        finally:
             http_client.close()
 
     def list_sessions(self, request: ListSessionRequest) -> ListSessionResponse:
@@ -448,7 +464,9 @@ class Client:
             # Always close the HTTP client to release resources
             http_client.close()
 
-    def get_context_info(self, request: GetContextInfoRequest) -> GetContextInfoResponse:
+    def get_context_info(
+        self, request: GetContextInfoRequest
+    ) -> GetContextInfoResponse:
         """
         Get context info using HTTP client
         """
@@ -465,7 +483,9 @@ class Client:
             # Always close the HTTP client to release resources
             http_client.close()
 
-    def get_context_file_download_url(self, request: GetContextFileDownloadUrlRequest) -> GetContextFileDownloadUrlResponse:
+    def get_context_file_download_url(
+        self, request: GetContextFileDownloadUrlRequest
+    ) -> GetContextFileDownloadUrlResponse:
         """
         Get context file download URL using HTTP client
         """
@@ -482,7 +502,9 @@ class Client:
             # Always close the HTTP client to release resources
             http_client.close()
 
-    def get_context_file_upload_url(self, request: GetContextFileUploadUrlRequest) -> GetContextFileUploadUrlResponse:
+    def get_context_file_upload_url(
+        self, request: GetContextFileUploadUrlRequest
+    ) -> GetContextFileUploadUrlResponse:
         """
         Get context file upload URL using HTTP client
         """
@@ -499,7 +521,9 @@ class Client:
             # Always close the HTTP client to release resources
             http_client.close()
 
-    def delete_context_file(self, request: DeleteContextFileRequest) -> DeleteContextFileResponse:
+    def delete_context_file(
+        self, request: DeleteContextFileRequest
+    ) -> DeleteContextFileResponse:
         """
         Delete context file using HTTP client
         """
@@ -516,7 +540,9 @@ class Client:
             # Always close the HTTP client to release resources
             http_client.close()
 
-    def describe_context_files(self, request: DescribeContextFilesRequest) -> DescribeContextFilesResponse:
+    def describe_context_files(
+        self, request: DescribeContextFilesRequest
+    ) -> DescribeContextFilesResponse:
         """
         Describe context files using HTTP client
         """
@@ -567,7 +593,9 @@ class Client:
             # Always close the HTTP client to release resources
             http_client.close()
 
-    def get_and_load_internal_context(self, request: GetAndLoadInternalContextRequest) -> GetAndLoadInternalContextResponse:
+    def get_and_load_internal_context(
+        self, request: GetAndLoadInternalContextRequest
+    ) -> GetAndLoadInternalContextResponse:
         """
         Get and load internal context using HTTP client
         """
@@ -584,8 +612,9 @@ class Client:
             # Always close the HTTP client to release resources
             http_client.close()
 
-
-    def delete_session_async(self, request: "DeleteSessionAsyncRequest") -> "DeleteSessionAsyncResponse":
+    def delete_session_async(
+        self, request: "DeleteSessionAsyncRequest"
+    ) -> "DeleteSessionAsyncResponse":
         """
         Delete session asynchronously using HTTP client
         """
@@ -604,4 +633,3 @@ class Client:
         finally:
             # Always close the HTTP client to release resources
             http_client.close()
-

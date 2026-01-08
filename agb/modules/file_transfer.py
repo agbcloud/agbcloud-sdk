@@ -6,6 +6,7 @@ import asyncio
 import json
 import os
 import time
+from pathlib import PurePosixPath
 from typing import Callable, Dict, Optional, Tuple
 
 import httpx
@@ -155,7 +156,7 @@ class FileTransfer:
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error=error_msg,
+                error_message=error_msg,
             )
         if self.context_id is None:
             ensure_result, message = self.ensure_context_id()
@@ -169,7 +170,7 @@ class FileTransfer:
                     etag=None,
                     bytes_sent=0,
                     path=remote_path,
-                    error=message,
+                    error_message=message,
                 )
         # Ensure context_id is set
         if not self.context_id:
@@ -183,7 +184,7 @@ class FileTransfer:
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error=error_msg,
+                error_message=error_msg,
             )
         # 1. Get pre-signed upload URL
         url_res = self._context_svc.get_file_upload_url(
@@ -200,7 +201,7 @@ class FileTransfer:
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error=error_msg,
+                error_message=error_msg,
             )
 
         upload_url = url_res.url
@@ -229,7 +230,7 @@ class FileTransfer:
                     etag=etag,
                     bytes_sent=bytes_sent,
                     path=remote_path,
-                    error=error_msg,
+                    error_message=error_msg,
                 )
         except Exception as e:
             log_operation_error("FileTransfer.upload", f"Upload exception: {str(e)}", exc_info=True)
@@ -241,7 +242,7 @@ class FileTransfer:
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error=f"Upload exception: {e}",
+                error_message=f"Upload exception: {e}",
             )
 
         # 3. Trigger sync to cloud disk (download mode),download from oss to cloud disk
@@ -262,7 +263,7 @@ class FileTransfer:
                 etag=etag,
                 bytes_sent=bytes_sent,
                 path=remote_path,
-                error=error_msg,
+                error_message=error_msg,
             )
 
         logger.info(f"Sync request ID: {req_id_sync}")
@@ -286,7 +287,7 @@ class FileTransfer:
                     etag=etag,
                     bytes_sent=bytes_sent,
                     path=remote_path,
-                    error=error_msg,
+                    error_message=error_msg,
                 )
 
         result_msg = f"RemotePath={remote_path}, BytesSent={bytes_sent}, RequestIdUpload={req_id_upload}, RequestIdSync={req_id_sync}"
@@ -299,7 +300,7 @@ class FileTransfer:
             etag=etag,
             bytes_sent=bytes_sent,
             path=remote_path,
-            error=None,
+            error_message=None,
         )
 
     def download(
@@ -339,7 +340,7 @@ class FileTransfer:
                     bytes_received=0,
                     path=remote_path,
                     local_path=local_path,
-                    error=message,
+                    error_message=message,
                 )
         # Ensure context_id is set
         if not self.context_id:
@@ -353,7 +354,7 @@ class FileTransfer:
                 bytes_received=0,
                 path=remote_path,
                 local_path=local_path,
-                error=error_msg,
+                error_message=error_msg,
             )
         # 1. Trigger cloud disk to OSS download sync
         req_id_sync = None
@@ -373,7 +374,7 @@ class FileTransfer:
                 bytes_received=0,
                 path=remote_path,
                 local_path=local_path,
-                error=error_msg,
+                error_message=error_msg,
             )
 
         # Optionally wait for task completion (ensure object is ready in OSS)
@@ -396,7 +397,7 @@ class FileTransfer:
                     bytes_received=0,
                     path=remote_path,
                     local_path=local_path,
-                    error=error_msg,
+                    error_message=error_msg,
                 )
 
         # 2. Get pre-signed download URL
@@ -414,7 +415,7 @@ class FileTransfer:
                 bytes_received=0,
                 path=remote_path,
                 local_path=local_path,
-                error=error_msg,
+                error_message=error_msg,
             )
 
         download_url = url_res.url
@@ -432,7 +433,7 @@ class FileTransfer:
                     bytes_received=0,
                     path=remote_path,
                     local_path=local_path,
-                    error=f"Destination exists and overwrite=False: {local_path}",
+                    error_message=f"Destination exists and overwrite=False: {local_path}",
                 )
 
             logger.info(f"Downloading from OSS to {local_path} (URL: {download_url})")
@@ -454,7 +455,7 @@ class FileTransfer:
                     bytes_received=bytes_received,
                     path=remote_path,
                     local_path=local_path,
-                    error=error_msg,
+                    error_message=error_msg,
                 )
         except Exception as e:
             log_operation_error("FileTransfer.download", f"Download exception: {str(e)}", exc_info=True)
@@ -466,7 +467,7 @@ class FileTransfer:
                 bytes_received=0,
                 path=remote_path,
                 local_path=local_path,
-                error=f"Download exception: {e}",
+                error_message=f"Download exception: {e}",
             )
 
         bytes_final = os.path.getsize(local_path) if os.path.exists(local_path) else 0
@@ -480,10 +481,53 @@ class FileTransfer:
             bytes_received=bytes_final,
             path=remote_path,
             local_path=local_path,
-            error=None,
+            error_message=None,
         )
 
     # ========== Internal Utilities ==========
+
+    @staticmethod
+    def _extract_remote_dir_path(remote_path: str) -> Optional[str]:
+        """
+        Extract a directory path from a remote path (POSIX style).
+
+        Notes:
+        - This function is ONLY used for `session.context.sync` / `session.context.info`
+          `path` parameter. In those APIs, `path` means a mounted/sync directory, not a
+          single file path.
+        - Presigned URL APIs (`get_file_upload_url` / `get_file_download_url`) still use
+          the original file path.
+
+        Rules:
+        - Empty/blank input: return None
+        - If the input ends with '/': treat it as a directory and strip trailing slashes
+          (keep '/' for root)
+        - Otherwise: return the parent directory; if parent is '.' (e.g. 'a.txt'), return
+          None (meaning: do not pass `path`)
+        """
+        if remote_path is None:
+            return None
+        raw = remote_path.strip()
+        if not raw:
+            return None
+
+        # Normalize separators to POSIX to avoid issues with Windows-style backslashes.
+        raw = raw.replace("\\", "/")
+
+        if raw == "/":
+            return "/"
+
+        # If it's a directory path (ends with '/'), keep it as a directory.
+        if raw.endswith("/"):
+            normalized = raw.rstrip("/")
+            return normalized if normalized else "/"
+
+        p = PurePosixPath(raw)
+        parent = str(p.parent)
+        if parent == ".":
+            return None
+        # PurePosixPath turns parent of '/a' into '/', which is expected.
+        return parent
 
     def _await_sync(
         self, mode: str, remote_path: str = "", context_id: str = ""
@@ -496,8 +540,9 @@ class FileTransfer:
         mode = mode.lower().strip()
 
         sync_fn = getattr(self._session.context, "sync")
+        dir_path = self._extract_remote_dir_path(remote_path)
         logger.info(
-            f"Calling session.context.sync(mode={mode}, path={remote_path}, context_id={context_id})"
+            f"Calling session.context.sync(mode={mode}, path={dir_path}, context_id={context_id})"
         )
 
         async def _call_sync():
@@ -506,7 +551,7 @@ class FileTransfer:
             try:
                 return await sync_fn(
                     mode=mode,
-                    path=remote_path if remote_path else None,
+                    path=dir_path,
                     context_id=context_id if context_id else None,
                 )
             except TypeError:
@@ -514,7 +559,7 @@ class FileTransfer:
                 try:
                     return await sync_fn(
                         mode=mode,
-                        path=remote_path if remote_path else None
+                        path=dir_path
                     )
                 except TypeError:
                     # Backend may not support mode or path parameter
@@ -558,6 +603,7 @@ class FileTransfer:
         """
         deadline = time.time() + timeout
         last_err = None
+        dir_path = self._extract_remote_dir_path(remote_path)
 
         while time.time() < deadline:
             try:
@@ -565,7 +611,7 @@ class FileTransfer:
                 # Try calling with filter parameters
                 try:
                     res = info_fn(
-                        context_id=context_id, path=remote_path, task_type=task_type
+                        context_id=context_id, path=dir_path, task_type=task_type
                     )
                 except TypeError:
                     res = info_fn()
@@ -581,7 +627,7 @@ class FileTransfer:
 
                     if (
                         cid == context_id
-                        and path == remote_path
+                        and path == dir_path
                         and (task_type is None or ttype == task_type)
                     ):
                         if err:

@@ -11,6 +11,7 @@ import sys
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
+
 def main():
     # 1. Initialize AGB client
     api_key = os.getenv("AGB_API_KEY")
@@ -48,7 +49,8 @@ print(f"Squares: {numbers}")
         py_result = session.code.run_code(python_code, "python")
         if py_result.success:
             print("Output:")
-            print(py_result.result)
+            for stdout_item in py_result.logs.stdout:
+                print(stdout_item)
         else:
             print(f"Error: {py_result.error_message}")
 
@@ -63,7 +65,8 @@ console.log(`User Agent: ${navigator.userAgent}`);
         js_result = session.code.run_code(js_code, "javascript")
         if js_result.success:
             print("Output:")
-            print(js_result.result)
+            for stdout_item in py_result.logs.stdout:
+                print(stdout_item)
         else:
             print(f"Error: {js_result.error_message}")
 
@@ -82,7 +85,8 @@ System.out.println("Array sum: " + sum);
         java_result = session.code.run_code(java_code, "java")
         if java_result.success:
             print("Output:")
-            print(java_result.result)
+            for stdout_item in py_result.logs.stdout:
+                print(stdout_item)
         else:
             print(f"Error: {java_result.error_message}")
 
@@ -97,7 +101,8 @@ cat("SD:", sd(data), "\\n")
         r_result = session.code.run_code(r_code, "r")
         if r_result.success:
             print("Output:")
-            print(r_result.result)
+            for stdout_item in py_result.logs.stdout:
+                print(stdout_item)
         else:
             print(f"Error: {r_result.error_message}")
 
@@ -107,6 +112,6 @@ cat("SD:", sd(data), "\\n")
         agb.delete(session)
         print("Session deleted")
 
+
 if __name__ == "__main__":
     main()
-

@@ -1,8 +1,8 @@
 # Context API Reference
 
-## 💾 Related Tutorial
+## Related Tutorial
 
-- [Context Usage Guide](../../guides/context-usage-guide.md) - Learn about context management and data persistence
+- [Context Usage Guide](/context/overview.md) - Learn about context management and data persistence
 
 ## Overview
 

@@ -8,12 +8,12 @@ You can enhance the browser agent's capabilities by installing standard Chrome e
 
 ## Examples
 
-### Basic Extension Management (`basic_extension_management.py`)
+### Basic Extension Management
 Shows how to upload a `.crx` file and install it into the browser session.
 
 <<< ./basic_extension_management.py
 
-### Browser Session with Extensions (`browser_session_with_extensions.py`)
+### Browser Session with Extensions
 A comprehensive example of creating a browser session with pre-installed extensions.
 
 <<< ./browser_session_with_extensions.py

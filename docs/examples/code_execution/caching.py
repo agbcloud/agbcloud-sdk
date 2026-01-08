@@ -12,6 +12,7 @@ from typing import Any, Dict
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
+
 class CachedAGBClient:
     """AGB client with result caching for expensive operations"""
 
@@ -76,6 +77,7 @@ class CachedAGBClient:
             self.cache_order.remove(key)
         self.cache_order.append(key)
 
+
 def main():
     api_key = os.getenv("AGB_API_KEY")
     if not api_key:
@@ -89,11 +91,18 @@ def main():
 
     print("--- First execution (slow) ---")
     result1 = client.execute_with_cache(expensive_code)
-    print(f"Result: {result1.result.strip()}")
+    if result1.success and result1.logs.stdout and result1.logs.stdout[0]:
+        print(f"✅  execution result: {result1.logs.stdout[0]}")
+    else:
+        print(f"Execution failed: {result1.error_message}")
 
     print("\n--- Second execution (fast) ---")
     result2 = client.execute_with_cache(expensive_code)
-    print(f"Result: {result2.result.strip()}")
+    if result2.success and result2.logs.stdout and result2.logs.stdout[0]:
+        print(f"✅  execution result: {result2.logs.stdout[0]}")
+    else:
+        print(f"Execution failed: {result2.error_message}")
+
 
 if __name__ == "__main__":
     main()

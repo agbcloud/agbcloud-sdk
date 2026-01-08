@@ -29,6 +29,7 @@ from agb.session import Session
 # Optional Playwright import for verification
 try:
     from playwright.async_api import async_playwright
+
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     async_playwright = None
@@ -47,16 +48,11 @@ def create_sample_extension_zip(name: str) -> str:
         "version": "1.0.0",
         "description": "A sample extension for testing",
         "permissions": ["activeTab", "storage"],
-        "action": {
-            "default_popup": "popup.html",
-            "default_title": f"Sample {name}"
-        },
-        "background": {
-            "service_worker": "background.js"
-        }
+        "action": {"default_popup": "popup.html", "default_title": f"Sample {name}"},
+        "background": {"service_worker": "background.js"},
     }
 
-    with zipfile.ZipFile(zip_path, 'w') as zipf:
+    with zipfile.ZipFile(zip_path, "w") as zipf:
         # Add manifest.json
         zipf.writestr("manifest.json", json.dumps(manifest, indent=2))
 
@@ -90,7 +86,9 @@ def create_sample_extension_zip(name: str) -> str:
         zipf.writestr("popup.html", popup_html)
 
         # Add background.js
-        background_js = """console.log('Background service worker started for Sample Extension');"""
+        background_js = (
+            """console.log('Background service worker started for Sample Extension');"""
+        )
         zipf.writestr("background.js", background_js)
 
     return zip_path
@@ -119,11 +117,13 @@ async def verify_extensions_loaded(session: Session):
             for info in targets["targetInfos"]:
                 url = info.get("url", "")
                 if url.startswith("chrome-extension://"):
-                    extensions.append({
-                        "id": url.split("/")[2],  # Extract extension ID from URL
-                        "title": info.get("title"),
-                        "url": url
-                    })
+                    extensions.append(
+                        {
+                            "id": url.split("/")[2],  # Extract extension ID from URL
+                            "title": info.get("title"),
+                            "url": url,
+                        }
+                    )
 
             print(f"   Found {len(extensions)} loaded extensions:")
             for ext in extensions:
@@ -173,15 +173,19 @@ async def main():
 
         # 2. Create extension option for browser integration
         print("\n2. Creating extension option...")
-        ext_option = extensions_service.create_extension_option([extension1.id, extension2.id])
-        print(f"   Extension option created with {len(ext_option.extension_ids)} extensions")
+        ext_option = extensions_service.create_extension_option(
+            [extension1.id, extension2.id]
+        )
+        print(
+            f"   Extension option created with {len(ext_option.extension_ids)} extensions"
+        )
 
         # 3. Create browser context with extensions
         print("\n3. Creating browser context with extensions...")
         browser_context = BrowserContext(
             context_id="browser_session_with_extensions",
             auto_upload=True,
-            extension_option=ext_option
+            extension_option=ext_option,
         )
 
         # 4. Create session with browser context
@@ -189,7 +193,7 @@ async def main():
         session_params = CreateSessionParams(
             labels={"type": "browser_with_extensions", "example": "extensions"},
             image_id="agb-browser-use-1",
-            browser_context=browser_context
+            browser_context=browser_context,
         )
 
         session_result = agb.create(session_params)
@@ -204,9 +208,7 @@ async def main():
 
         # 5. Initialize browser with extensions
         print("\n5. Initializing browser with extensions...")
-        browser_option = BrowserOption(
-            extension_path="/tmp/extensions/"
-        )
+        browser_option = BrowserOption(extension_path="/tmp/extensions/")
 
         if session is not None:
             init_success = await session.browser.initialize_async(browser_option)
@@ -223,7 +225,9 @@ async def main():
         if extensions_loaded:
             print("   ✅ Extensions loaded successfully")
         else:
-            print("   ⚠️  Could not verify extensions (this may be normal in some environments)")
+            print(
+                "   ⚠️  Could not verify extensions (this may be normal in some environments)"
+            )
 
         print("\n=== Example completed successfully ===")
 

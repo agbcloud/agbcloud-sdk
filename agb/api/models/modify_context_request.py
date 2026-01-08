@@ -34,4 +34,3 @@ class ModifyContextRequest:
     def get_body(self) -> dict:
         """Get the request body as a dictionary."""
         return {}
-

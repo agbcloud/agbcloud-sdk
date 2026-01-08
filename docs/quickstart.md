@@ -76,9 +76,9 @@ agb.delete(session)
 
 ### 4. Next Steps
 
-- 📚 [Session Management Guide](guides/session-management.md) - Understanding session management
-- 🐍 [Code Execution Guide](guides/code-execution.md) - Deep dive into code execution
-- 💾 [File Operations Guide](guides/file-operations.md) - File and directory management
+- 📚 [Session Management Guide](/session/overview.md) - Understanding session management
+- 🐍 [Code Execution Guide](/code-interpreting/overview.md) - Deep dive into code execution
+- 💾 [File Operations Guide](/file-system/overview.md) - File and directory management
 
 
 ## 🚀 I Have Experience - Quick Start

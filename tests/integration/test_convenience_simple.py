@@ -7,6 +7,7 @@ Test for AGB create and delete interfaces
 import os
 import sys
 import traceback
+import pytest
 
 # Add project root directory to Python path
 project_root = os.path.dirname(
@@ -22,7 +23,7 @@ def get_api_key():
     """Get API Key from environment variables"""
     api_key = os.getenv("AGB_API_KEY")
     if not api_key:
-        raise ValueError(
+        pytest.fail(
             "AGB_API_KEY environment variable not set. Please set the environment variable:\n"
             "export AGB_API_KEY='your_api_key_here'"
         )
@@ -57,6 +58,7 @@ def test_agb_create_and_delete():
             if result.success:
                 print("✅ Session created successfully")
                 session = result.session
+                assert session is not None
                 print(f"   Session ID: {session.session_id}")
                 print(f"   Request ID: {result.request_id}")
 
@@ -85,9 +87,10 @@ def test_agb_create_and_delete():
                 print("\n4. Testing session listing...")
                 try:
                     sessions = agb.list()
-                    print(f"✅ Found {len(sessions)} sessions in local cache")
-                    for i, session_item in enumerate(sessions):
-                        print(f"   Session {i+1}: {session_item.session_id}")
+                    session_ids = getattr(sessions, "session_ids", [])
+                    print(f"✅ Found {len(session_ids)} sessions in local cache")
+                    for i, session_id in enumerate(session_ids):
+                        print(f"   Session {i+1}: {session_id}")
                 except Exception as e:
                     print(f"⚠️ Error listing sessions: {e}")
 
@@ -106,33 +109,33 @@ def test_agb_create_and_delete():
                     if delete_result.success:
                         print("✅ Session deleted successfully")
                         print(f"   Request ID: {delete_result.request_id}")
-                        return True
+                        assert True
                     else:
                         print(
                             f"❌ Failed to delete session: {delete_result.error_message}"
                         )
                         print(f"   Request ID: {delete_result.request_id}")
-                        return False
+                        assert False, delete_result.error_message or "Failed to delete session"
 
                 except Exception as e:
                     print(f"❌ Error deleting session: {e}")
                     traceback.print_exc()
-                    return False
+                    assert False, f"Error deleting session: {e}"
 
             else:
                 print(f"❌ Session creation failed: {result.error_message}")
                 print(f"   Request ID: {result.request_id}")
-                return False
+                assert False, result.error_message or "Session creation failed"
 
         except Exception as e:
             print(f"❌ Error creating session: {e}")
             traceback.print_exc()
-            return False
+            assert False, f"Error creating session: {e}"
 
     except Exception as e:
         print(f"❌ Test failed: {e}")
         traceback.print_exc()
-        return False
+        assert False, f"Test failed: {e}"
 
 
 def test_agb_with_custom_params():
@@ -162,6 +165,7 @@ def test_agb_with_custom_params():
             if result.success:
                 print("✅ Custom session created successfully")
                 session = result.session
+                assert session is not None
                 print(f"   Session ID: {session.session_id}")
                 print(f"   Request ID: {result.request_id}")
                 print(f"   Image ID: {session.image_id}")
@@ -173,26 +177,26 @@ def test_agb_with_custom_params():
                 if delete_result.success:
                     print("✅ Custom session deleted successfully")
                     print(f"   Request ID: {delete_result.request_id}")
-                    return True
+                    assert True
                 else:
                     print(
                         f"❌ Failed to delete custom session: {delete_result.error_message}"
                     )
-                    return False
+                    assert False, delete_result.error_message or "Failed to delete custom session"
 
             else:
                 print(f"❌ Custom session creation failed: {result.error_message}")
-                return False
+                assert False, result.error_message or "Custom session creation failed"
 
         except Exception as e:
             print(f"❌ Error creating custom session: {e}")
             traceback.print_exc()
-            return False
+            assert False, f"Error creating custom session: {e}"
 
     except Exception as e:
         print(f"❌ Custom parameters test failed: {e}")
         traceback.print_exc()
-        return False
+        assert False, f"Custom parameters test failed: {e}"
 
 
 if __name__ == "__main__":

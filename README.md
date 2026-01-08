@@ -61,7 +61,7 @@ For comprehensive documentation, guides, and examples, visit:
 📚 **[Complete Documentation](docs/README.md)**
 
 - [Quick Start Guide](docs/quickstart.md) - Get started quickly with basic examples
-- [User Guides](docs/guides/README.md) - Comprehensive guides and tutorials
+- [User Guides](docs/README.md) - Comprehensive guides and tutorials
 - [API Reference](docs/api-reference/README.md) - Detailed API documentation
 - [Examples](docs/examples/README.md) - Practical usage examples
 

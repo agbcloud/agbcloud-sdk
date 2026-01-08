@@ -65,7 +65,12 @@ def main():
             raise AssertionError(f"Java code execution failed! Error: {code_result.error_message}")
 
         print("✅ Java code execution succeeded!")
-        print(f"Output:\n{code_result.result}")
+        if len(code_result.logs.stderr) == 0:
+                for stdout_item in code_result.logs.stdout:
+                    print(f"   Execution result:\n{stdout_item}")
+        else:
+                for stderr_item in code_result.logs.stderr:
+                    print(f"   Execution result:\n{stderr_item}")
 
         # Clean up - delete session
         print("\nDeleting session...")

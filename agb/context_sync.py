@@ -18,14 +18,14 @@ class DownloadStrategy(Enum):
 
 class UploadMode(Enum):
     """Upload mode for context synchronization"""
-    
+
     FILE = "File"
     ARCHIVE = "Archive"
 
 
 class Lifecycle(Enum):
     """Lifecycle options for recycle policy"""
-    
+
     LIFECYCLE_1DAY = "Lifecycle_1Day"
     LIFECYCLE_3DAYS = "Lifecycle_3Days"
     LIFECYCLE_5DAYS = "Lifecycle_5Days"
@@ -133,7 +133,7 @@ class ExtractPolicy:
 class RecyclePolicy:
     """
     Defines the recycle policy for context synchronization
-    
+
     Attributes:
         lifecycle: Defines how long the context data should be retained
             Available options:
@@ -155,7 +155,7 @@ class RecyclePolicy:
             - Multiple paths can be specified as a list
             Default: [""] (applies to all paths)
     """
-    
+
     lifecycle: Lifecycle = Lifecycle.LIFECYCLE_FOREVER
     paths: List[str] = field(default_factory=lambda: [""])
 
@@ -168,7 +168,7 @@ class RecyclePolicy:
                 f"Invalid lifecycle value: {self.lifecycle}. "
                 f"Valid values are: {', '.join(valid_values)}"
             )
-        
+
         # Validate that paths don't contain wildcard patterns
         for path in self.paths:
             if path and path.strip() != "" and self._contains_wildcard(path):

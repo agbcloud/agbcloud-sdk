@@ -11,12 +11,17 @@ import time
 import unittest
 from agb import AGB
 from agb.session_params import CreateSessionParams, BrowserContext
-from agb.modules.browser.browser import BrowserOption, BrowserFingerprint, BrowserFingerprintContext
+from agb.modules.browser.browser import (
+    BrowserOption,
+    BrowserFingerprint,
+    BrowserFingerprintContext,
+)
 from playwright.async_api import async_playwright
 
 # Global variables for persistent context and fingerprint context
 persistent_context = None
 persistent_fingerprint_context = None
+
 
 def get_test_api_key():
     """Get API key for testing"""
@@ -30,21 +35,15 @@ def is_windows_user_agent(user_agent: str) -> bool:
     if not user_agent:
         return False
     user_agent_lower = user_agent.lower()
-    windows_indicators = [
-        'windows nt',
-        'win32',
-        'win64',
-        'windows',
-        'wow64'
-    ]
+    windows_indicators = ["windows nt", "win32", "win64", "windows", "wow64"]
     return any(indicator in user_agent_lower for indicator in windows_indicators)
 
 
 def run_as_first_time():
     """Run as first time"""
-    print("="*20)
+    print("=" * 20)
     print("Run as first time")
-    print("="*20)
+    print("=" * 20)
     global persistent_context, persistent_fingerprint_context
     api_key = os.environ.get("AGB_API_KEY")
     if not api_key:
@@ -61,7 +60,9 @@ def run_as_first_time():
         return
 
     persistent_context = context_result.context
-    print(f"Created browser context: {persistent_context.name} (ID: {persistent_context.id})")
+    print(
+        f"Created browser context: {persistent_context.name} (ID: {persistent_context.id})"
+    )
 
     # Create a browser fingerprint context for first time
     fingerprint_context_name = f"test-browser-fingerprint-{int(time.time())}"
@@ -71,17 +72,21 @@ def run_as_first_time():
         return
 
     persistent_fingerprint_context = fingerprint_context_result.context
-    print(f"Created fingerprint context: {persistent_fingerprint_context.name} (ID: {persistent_fingerprint_context.id})")
-
+    print(
+        f"Created fingerprint context: {persistent_fingerprint_context.name} (ID: {persistent_fingerprint_context.id})"
+    )
 
     # Create session with BrowserContext and FingerprintContext
-    print(f"Creating session with browser context ID: {persistent_context.id} "
-            f"and fingerprint context ID: {persistent_fingerprint_context.id}")
+    print(
+        f"Creating session with browser context ID: {persistent_context.id} "
+        f"and fingerprint context ID: {persistent_fingerprint_context.id}"
+    )
     fingerprint_context = BrowserFingerprintContext(persistent_fingerprint_context.id)
-    browser_context = BrowserContext(persistent_context.id, auto_upload=True, fingerprint_context=fingerprint_context)
+    browser_context = BrowserContext(
+        persistent_context.id, auto_upload=True, fingerprint_context=fingerprint_context
+    )
     params = CreateSessionParams(
-        image_id="agb-browser-use-1",
-        browser_context=browser_context
+        image_id="agb-browser-use-1", browser_context=browser_context
     )
 
     session_result = agb.create(params)
@@ -121,11 +126,15 @@ def run_as_first_time():
         print("Opening https://httpbin.org/user-agent and test user agent...")
         async with async_playwright() as p:
             browser = await p.chromium.connect_over_cdp(endpoint_url)
-            context = browser.contexts[0] if browser.contexts else await browser.new_context()
+            context = (
+                browser.contexts[0] if browser.contexts else await browser.new_context()
+            )
 
             page = await context.new_page()
             await page.goto("https://httpbin.org/user-agent", timeout=120000)
-            response = await page.evaluate("() => JSON.parse(document.body.textContent)")
+            response = await page.evaluate(
+                "() => JSON.parse(document.body.textContent)"
+            )
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
             is_windows = is_windows_user_agent(user_agent)
@@ -147,9 +156,9 @@ def run_as_first_time():
 
 def run_as_second_time():
     """Run as second time"""
-    print("="*20)
+    print("=" * 20)
     print("Run as second time")
-    print("="*20)
+    print("=" * 20)
     global persistent_context, persistent_fingerprint_context
     api_key = os.environ.get("AGB_API_KEY")
     if not api_key:
@@ -159,13 +168,16 @@ def run_as_second_time():
     agb = AGB(api_key)
 
     # Create second session with same browser context and fingerprint context
-    print(f"Creating second session with same browser context ID: {persistent_context.id} "
-            f"and fingerprint context ID: {persistent_fingerprint_context.id}")
+    print(
+        f"Creating second session with same browser context ID: {persistent_context.id} "
+        f"and fingerprint context ID: {persistent_fingerprint_context.id}"
+    )
     fingerprint_context = BrowserFingerprintContext(persistent_fingerprint_context.id)
-    browser_context = BrowserContext(persistent_context.id, auto_upload=True, fingerprint_context=fingerprint_context)
+    browser_context = BrowserContext(
+        persistent_context.id, auto_upload=True, fingerprint_context=fingerprint_context
+    )
     params = CreateSessionParams(
-        image_id="agb-browser-use-1",
-        browser_context=browser_context
+        image_id="agb-browser-use-1", browser_context=browser_context
     )
     session_result = agb.create(params)
     if not session_result.success or not session_result.session:
@@ -199,10 +211,14 @@ def run_as_second_time():
         # Connect with playwright and test second session fingerprint
         async with async_playwright() as p:
             browser = await p.chromium.connect_over_cdp(endpoint_url)
-            context = browser.contexts[0] if browser.contexts else await browser.new_context()
+            context = (
+                browser.contexts[0] if browser.contexts else await browser.new_context()
+            )
             page = await context.new_page()
             await page.goto("https://httpbin.org/user-agent", timeout=120000)
-            response = await page.evaluate("() => JSON.parse(document.body.textContent)")
+            response = await page.evaluate(
+                "() => JSON.parse(document.body.textContent)"
+            )
             user_agent = response["user-agent"]
             print("user_agent =", user_agent)
             is_windows = is_windows_user_agent(user_agent)
@@ -220,7 +236,9 @@ def run_as_second_time():
     # Delete second session with syncContext=True
     print("Deleting second session with syncContext=True...")
     delete_result = agb.delete(session, sync_context=True)
-    print(f"Second session deleted successfully (RequestID: {delete_result.request_id})")
+    print(
+        f"Second session deleted successfully (RequestID: {delete_result.request_id})"
+    )
 
 
 def main():
@@ -228,6 +246,7 @@ def main():
     run_as_first_time()
     time.sleep(3)
     run_as_second_time()
+
 
 if __name__ == "__main__":
     main()

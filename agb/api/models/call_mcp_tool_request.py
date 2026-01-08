@@ -49,11 +49,11 @@ class CallMcpToolRequest:
         params = {}
         if self.image_id:
             params["imageId"] = self.image_id
-        
+
         # Set auto_gen_session to False (disabled by default)
         # This parameter controls whether to automatically generate a new session  if not exists
         auto_gen_session = False
         # Add autoGenSession as query parameter
         params["autoGenSession"] = str(auto_gen_session).lower()
-        
+
         return params

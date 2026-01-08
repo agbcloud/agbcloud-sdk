@@ -44,7 +44,9 @@ class ModifyContextResponse:
             self.message = ""
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> "ModifyContextResponse":
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "ModifyContextResponse":
         """
         Create ModifyContextResponse from HTTP client returned dictionary
 
@@ -66,6 +68,7 @@ class ModifyContextResponse:
                 else None
             ),
         )
+
     def is_successful(self) -> bool:
         """Check if the operation was successful"""
         return self.status_code == 200 and self.api_success
@@ -75,4 +78,3 @@ class ModifyContextResponse:
         if not self.is_successful():
             return self.message or f"HTTP {self.status_code} error"
         return ""
-

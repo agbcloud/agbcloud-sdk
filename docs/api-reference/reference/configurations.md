@@ -1,8 +1,8 @@
 # Configurations API Reference
 
-## ⚙️ Related Tutorial
+## Related Tutorial
 
-- [Session Management Guide](../../guides/session-management.md) - Learn how to configure sessions
+- [Session Management Guide](/session/overview.md) - Learn how to configure sessions
 
 ## Overview
 

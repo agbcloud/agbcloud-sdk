@@ -66,6 +66,7 @@ class SyncContextResponse:
                 else None
             ),
         )
+
     def is_successful(self) -> bool:
         """Check if the operation was successful"""
         return self.status_code == 200 and self.api_success

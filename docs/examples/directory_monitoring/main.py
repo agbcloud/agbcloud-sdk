@@ -24,7 +24,7 @@ import threading
 from datetime import datetime
 
 # Add project root directory to Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
 
 from agb import AGB
 from agb.session_params import CreateSessionParams
@@ -56,6 +56,7 @@ def print_event(message, indent=1):
 # Global variable: record all events for final comparison analysis
 detected_events = []
 
+
 def file_change_callback(events):
     """
     File change callback function
@@ -72,13 +73,15 @@ def file_change_callback(events):
         file_name = os.path.basename(event.path)
 
         # Record event for final analysis
-        detected_events.append({
-            'timestamp': datetime.now().strftime('%H:%M:%S'),
-            'type': event_type,
-            'file': file_name,
-            'path': event.path,
-            'description': f"{event_type}: {file_name}"
-        })
+        detected_events.append(
+            {
+                "timestamp": datetime.now().strftime("%H:%M:%S"),
+                "type": event_type,
+                "file": file_name,
+                "path": event.path,
+                "description": f"{event_type}: {file_name}",
+            }
+        )
 
         if event_type == "CREATE":
             print_event(f"📄 File created: {file_name}", indent=2)
@@ -93,15 +96,19 @@ def file_change_callback(events):
 # Global variable: record all file operations for final comparison analysis
 file_operations = []
 
+
 def log_operation(operation_type, filename, description=""):
     """Record file operation"""
     global file_operations
-    file_operations.append({
-        'timestamp': datetime.now().strftime('%H:%M:%S'),
-        'type': operation_type,
-        'file': filename,
-        'description': description or f"{operation_type}: {filename}"
-    })
+    file_operations.append(
+        {
+            "timestamp": datetime.now().strftime("%H:%M:%S"),
+            "type": operation_type,
+            "file": filename,
+            "description": description or f"{operation_type}: {filename}",
+        }
+    )
+
 
 def create_demo_files(session, watch_dir):
     """
@@ -124,7 +131,9 @@ def create_demo_files(session, watch_dir):
 
         try:
             # Create file using touch command
-            result = session.command.execute_command(f"touch {filepath}", timeout_ms=5000)
+            result = session.command.execute_command(
+                f"touch {filepath}", timeout_ms=5000
+            )
             if result.success:
                 print_success(f"Touch creation successful: {filename}")
             else:
@@ -136,8 +145,16 @@ def create_demo_files(session, watch_dir):
 
     # Create files with content using touch command first, then add content
     content_files = [
-        ("data.json", '{"name": "test data", "value": 123, "timestamp": "' + datetime.now().isoformat() + '"}'),
-        ("readme.md", "# Test Document\n\nThis is a Markdown file used to demonstrate file monitoring functionality."),
+        (
+            "data.json",
+            '{"name": "test data", "value": 123, "timestamp": "'
+            + datetime.now().isoformat()
+            + '"}',
+        ),
+        (
+            "readme.md",
+            "# Test Document\n\nThis is a Markdown file used to demonstrate file monitoring functionality.",
+        ),
     ]
 
     for filename, content in content_files:
@@ -148,7 +165,9 @@ def create_demo_files(session, watch_dir):
         log_operation("CREATE", filename, f"Create file using touch: {filename}")
 
         try:
-            result = session.command.execute_command(f"touch {filepath}", timeout_ms=5000)
+            result = session.command.execute_command(
+                f"touch {filepath}", timeout_ms=5000
+            )
             if result.success:
                 print_success(f"Touch creation successful: {filename}")
             else:
@@ -322,9 +341,9 @@ def main():
 
         # Start directory monitoring - this is the core API call
         monitor_thread = session.file_system.watch_directory(
-            path=watch_dir,                    # Directory path to monitor
-            callback=file_change_callback,     # Callback function when changes detected                    # Polling interval (seconds)
-            stop_event=stop_event              # Stop signal
+            path=watch_dir,  # Directory path to monitor
+            callback=file_change_callback,  # Callback function when changes detected                    # Polling interval (seconds)
+            stop_event=stop_event,  # Stop signal
         )
 
         monitor_thread.start()
@@ -333,15 +352,17 @@ def main():
 
         # Start demo file creation (in background thread)
         demo_thread = threading.Thread(
-            target=create_demo_files,
-            args=(session, watch_dir),
-            daemon=True
+            target=create_demo_files, args=(session, watch_dir), daemon=True
         )
         demo_thread.start()
 
         print_step(5, "Monitoring running (press Ctrl+C to stop)")
-        print_info("Program will continuously monitor directory changes and display detection results in real-time")
-        print_info("You can also manually add/modify/delete files in the directory to test")
+        print_info(
+            "Program will continuously monitor directory changes and display detection results in real-time"
+        )
+        print_info(
+            "You can also manually add/modify/delete files in the directory to test"
+        )
 
         # Main loop: wait for user interruption
         try:
@@ -392,19 +413,23 @@ def print_analysis_report():
     """Print operation and event comparison analysis report"""
     global file_operations, detected_events
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("📊 File Operations and Monitoring Events Comparison Analysis")
-    print("="*80)
+    print("=" * 80)
 
     print(f"\n📋 Executed File Operations (Total: {len(file_operations)}):")
     print("-" * 60)
     for i, op in enumerate(file_operations, 1):
-        print(f"  {i:2d}. [{op['timestamp']}] {op['type']:6s} | {op['file']:15s} | {op['description']}")
+        print(
+            f"  {i:2d}. [{op['timestamp']}] {op['type']:6s} | {op['file']:15s} | {op['description']}"
+        )
 
     print(f"\n🔍 Detected Monitoring Events (Total: {len(detected_events)}):")
     print("-" * 60)
     for i, event in enumerate(detected_events, 1):
-        print(f"  {i:2d}. [{event['timestamp']}] {event['type']:6s} | {event['file']:15s} | {event['description']}")
+        print(
+            f"  {i:2d}. [{event['timestamp']}] {event['type']:6s} | {event['file']:15s} | {event['description']}"
+        )
 
     # Analyze operation and event correspondence
     print(f"\n🔗 Operation and Event Correspondence Analysis:")
@@ -415,10 +440,10 @@ def print_analysis_report():
     event_stats = {}
 
     for op in file_operations:
-        op_stats[op['type']] = op_stats.get(op['type'], 0) + 1
+        op_stats[op["type"]] = op_stats.get(op["type"], 0) + 1
 
     for event in detected_events:
-        event_stats[event['type']] = event_stats.get(event['type'], 0) + 1
+        event_stats[event["type"]] = event_stats.get(event["type"], 0) + 1
 
     print("  Operation Type Statistics:")
     for op_type, count in op_stats.items():
@@ -433,54 +458,70 @@ def print_analysis_report():
     print("-" * 60)
 
     # Check CREATE operation and event matching
-    create_ops = [op for op in file_operations if op['type'] == 'CREATE']
-    create_events = [e for e in detected_events if e['type'] == 'CREATE']
+    create_ops = [op for op in file_operations if op["type"] == "CREATE"]
+    create_events = [e for e in detected_events if e["type"] == "CREATE"]
 
     if len(create_ops) == len(create_events):
-        print(f"  ✅ CREATE operations fully matched: {len(create_ops)} operations → {len(create_events)} events")
+        print(
+            f"  ✅ CREATE operations fully matched: {len(create_ops)} operations → {len(create_events)} events"
+        )
     else:
-        print(f"  ⚠️  CREATE operations not fully matched: {len(create_ops)} operations → {len(create_events)} events")
+        print(
+            f"  ⚠️  CREATE operations not fully matched: {len(create_ops)} operations → {len(create_events)} events"
+        )
 
     # Check MODIFY operation and event matching
-    modify_ops = [op for op in file_operations if op['type'] == 'MODIFY']
-    modify_events = [e for e in detected_events if e['type'] == 'MODIFY']
+    modify_ops = [op for op in file_operations if op["type"] == "MODIFY"]
+    modify_events = [e for e in detected_events if e["type"] == "MODIFY"]
 
     if len(modify_ops) == len(modify_events):
-        print(f"  ✅ MODIFY operations fully matched: {len(modify_ops)} operations → {len(modify_events)} events")
+        print(
+            f"  ✅ MODIFY operations fully matched: {len(modify_ops)} operations → {len(modify_events)} events"
+        )
     else:
-        print(f"  ⚠️  MODIFY operations not fully matched: {len(modify_ops)} operations → {len(modify_events)} events")
+        print(
+            f"  ⚠️  MODIFY operations not fully matched: {len(modify_ops)} operations → {len(modify_events)} events"
+        )
 
     # Check DELETE operation and DESTROY event matching
-    delete_ops = [op for op in file_operations if op['type'] == 'DELETE']
-    destroy_events = [e for e in detected_events if e['type'] == 'DESTROY']
+    delete_ops = [op for op in file_operations if op["type"] == "DELETE"]
+    destroy_events = [e for e in detected_events if e["type"] == "DESTROY"]
 
     if len(delete_ops) == len(destroy_events):
-        print(f"  ✅ DELETE operations fully matched: {len(delete_ops)} operations → {len(destroy_events)} DESTROY events")
+        print(
+            f"  ✅ DELETE operations fully matched: {len(delete_ops)} operations → {len(destroy_events)} DESTROY events"
+        )
     else:
-        print(f"  ⚠️  DELETE operations not fully matched: {len(delete_ops)} operations → {len(destroy_events)} DESTROY events")
+        print(
+            f"  ⚠️  DELETE operations not fully matched: {len(delete_ops)} operations → {len(destroy_events)} DESTROY events"
+        )
 
     # Empty events are filtered at API level, so there won't be empty events here
     # All detected events are valid file changes
 
     # Time delay analysis
     if file_operations and detected_events:
-        first_op_time = file_operations[0]['timestamp']
-        first_event_time = detected_events[0]['timestamp']
+        first_op_time = file_operations[0]["timestamp"]
+        first_event_time = detected_events[0]["timestamp"]
         print(f"  ⏱️  First operation time: {first_op_time}")
         print(f"  ⏱️  First event time: {first_event_time}")
 
     print(f"\n📖 Learning Points:")
     print("-" * 60)
     print("  • watch_directory detects file changes through polling mechanism")
-    print("  • API automatically filters empty events, only passing events with actual changes")
+    print(
+        "  • API automatically filters empty events, only passing events with actual changes"
+    )
     print("  • Event detection may have slight delay (depends on polling interval)")
-    print("  • Using write_file to create files generates both CREATE and MODIFY events (as expected)")
+    print(
+        "  • Using write_file to create files generates both CREATE and MODIFY events (as expected)"
+    )
     print("  • Deleting files generates DESTROY events (as expected)")
     print("  • touch creating empty files only generates CREATE events")
     print("  • Modifying existing file content generates MODIFY events")
     print("  • Callback function is only called when there are file changes")
 
-    print("="*80)
+    print("=" * 80)
 
 
 if __name__ == "__main__":

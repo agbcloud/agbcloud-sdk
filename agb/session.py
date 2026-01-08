@@ -6,9 +6,10 @@ from agb.api.models import (
     SetLabelRequest,
     GetLabelRequest,
     DeleteSessionAsyncRequest,
+    GetSessionDetailRequest,
 )
 from agb.exceptions import SessionError
-from agb.model.response import OperationResult, DeleteResult
+from agb.model.response import OperationResult, DeleteResult, SessionStatusResult
 from agb.modules.browser import Browser
 from agb.modules.code import Code
 from agb.modules.command import Command
@@ -520,7 +521,7 @@ class Session:
 
             # Poll for session deletion status
             logger.info(f"🔄 Waiting for session {self.session_id} to be deleted...")
-            poll_timeout = 50.0  # 50 seconds timeout
+            poll_timeout = 300.0  # 300 seconds timeout
             poll_interval = 1.0  # Poll every 1 second
             poll_start_time = time.time()
 
@@ -536,14 +537,14 @@ class Session:
                         error_message=error_message,
                     )
 
-                # Get session status
-                session_result = self.agb.get_session(self.session_id)
+                # Get session status (status only)
+                status_result = self.get_status()
 
                 # Check if session is deleted (NotFound error)
-                if not session_result.success:
-                    error_code = session_result.code or ""
-                    error_message = session_result.error_message or ""
-                    http_status_code = session_result.http_status_code or 0
+                if not status_result.success:
+                    error_code = status_result.code or ""
+                    error_message = status_result.error_message or ""
+                    http_status_code = status_result.http_status_code or 0
 
                     # Check for InvalidMcpSession.NotFound, 400 with "not found", or error_message containing "not found"
                     is_not_found = (
@@ -566,8 +567,8 @@ class Session:
                         # Continue to next poll iteration
 
                 # Check session status if we got valid data
-                elif session_result.data and session_result.data.status:
-                    status = session_result.data.status
+                elif status_result.status:
+                    status = status_result.status
                     logger.debug(f"📊 Session status: {status}")
 
                     if status == "FINISH":
@@ -592,3 +593,54 @@ class Session:
                 error_message=f"Failed to delete session {self.session_id}: {e}",
             )
 
+    def get_status(self) -> "SessionStatusResult":
+        """
+        Get basic session status.
+
+        Returns:
+            SessionStatusResult: Result containing session status only.
+        """
+        log_operation_start("Session.get_status", f"SessionId={self.session_id}")
+        try:
+            request = GetSessionDetailRequest(
+                authorization=f"Bearer {self.get_api_key()}",
+                session_id=self.session_id,
+            )
+            response = self.get_client().get_session_detail(request)
+
+            request_id = getattr(response, "request_id", "") or ""
+            http_status_code = getattr(response, "http_status_code", 0) or 0
+            code = getattr(response, "code", "") or ""
+
+            if not response.is_successful():
+                error_msg = response.get_error_message() or "Unknown error"
+                log_warning(f"Session.get_status: {error_msg}")
+                return SessionStatusResult(
+                    request_id=request_id,
+                    http_status_code=http_status_code,
+                    code=code,
+                    success=False,
+                    status="",
+                    error_message=error_msg,
+                )
+
+            status = response.get_status()
+            log_operation_success(
+                "Session.get_status",
+                f"SessionId={self.session_id}, RequestId={request_id}, Status={status}",
+            )
+            return SessionStatusResult(
+                request_id=request_id,
+                http_status_code=http_status_code,
+                code=code,
+                success=True,
+                status=status,
+                error_message="",
+            )
+        except Exception as e:
+            log_operation_error("Session.get_status", str(e), exc_info=True)
+            return SessionStatusResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to get session status {self.session_id}: {e}",
+            )

@@ -1,5 +1,6 @@
 from typing import Optional
 
+
 class ListSessionRequest:
     """Request model for listing sessions."""
 

@@ -53,8 +53,7 @@ async def main():
         # Fingerprint format is dumped from local chrome browser by BrowserFingerprintGenerator
         # automatically, you can use it to sync to remote browser fingerprint.
         browser_option = BrowserOption(
-            use_stealth=True,
-            fingerprint_format=fingerprint_format
+            use_stealth=True, fingerprint_format=fingerprint_format
         )
 
         if await session.browser.initialize_async(browser_option):
@@ -70,11 +69,15 @@ async def main():
                 print("\n--- Check User Agent ---")
                 await page.goto("https://httpbin.org/user-agent", timeout=120000)
 
-                response = await page.evaluate("() => JSON.parse(document.body.textContent)")
+                response = await page.evaluate(
+                    "() => JSON.parse(document.body.textContent)"
+                )
                 user_agent = response.get("user-agent", "")
                 print(f"User Agent: {user_agent}")
 
-                print("Please check if User Agent is synced correctly by visiting https://httpbin.org/user-agent in local chrome browser.")
+                print(
+                    "Please check if User Agent is synced correctly by visiting https://httpbin.org/user-agent in local chrome browser."
+                )
 
                 await page.wait_for_timeout(3000)
                 await browser.close()

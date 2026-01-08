@@ -33,4 +33,3 @@ class DeleteContextFileRequest:
         if self.file_path:
             params["filePath"] = self.file_path
         return params
-

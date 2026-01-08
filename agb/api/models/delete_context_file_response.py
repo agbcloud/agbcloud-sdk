@@ -44,7 +44,9 @@ class DeleteContextFileResponse:
             self.message = ""
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> "DeleteContextFileResponse":
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "DeleteContextFileResponse":
         """
         Create DeleteContextFileResponse from HTTP client returned dictionary
 
@@ -66,6 +68,7 @@ class DeleteContextFileResponse:
                 else None
             ),
         )
+
     def is_successful(self) -> bool:
         """Check if the operation was successful"""
         return self.status_code == 200 and self.api_success
@@ -75,4 +78,3 @@ class DeleteContextFileResponse:
         if not self.is_successful():
             return self.message or f"HTTP {self.status_code} error"
         return ""
-

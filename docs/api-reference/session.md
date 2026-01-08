@@ -1,8 +1,8 @@
 # Session API Reference
 
-## 🔧 Related Tutorial
+## Related Tutorial
 
-- [Session Management Guide](../guides/session-management.md) - Detailed tutorial on session lifecycle and management
+- [Session Management Guide](/session/overview.md) - Detailed tutorial on session lifecycle and management
 
 ## Overview
 
@@ -117,6 +117,18 @@ Delete this session and release all associated resources.
   - success (bool): True if deletion succeeded
   - error_message (str): Error details if deletion failed
   - request_id (str): Unique identifier for this API request
+
+### get\_status
+
+```python
+def get_status() -> "SessionStatusResult"
+```
+
+Get basic session status.
+
+**Returns**:
+
+    SessionStatusResult: Result containing session status only.
 
 ## Related Resources
 

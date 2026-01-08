@@ -44,7 +44,9 @@ class ClearContextResponse:
             self.message = ""
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> "ClearContextResponse":
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "ClearContextResponse":
         """
         Create ClearContextResponse from HTTP client returned dictionary
 
@@ -76,4 +78,3 @@ class ClearContextResponse:
         if not self.is_successful():
             return self.message or f"HTTP {self.status_code} error"
         return ""
-

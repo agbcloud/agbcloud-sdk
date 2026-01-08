@@ -1,8 +1,8 @@
 # Extension API Reference
 
-## 🧩 Related Tutorial
+## Related Tutorial
 
-- [Browser Automation Guide](../../guides/browser-automation.md) - Learn how to use browser extensions and automation
+- [Browser Automation Guide](/browser/overview.md) - Learn how to use browser extensions and automation
 
 ## Overview
 

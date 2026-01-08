@@ -1,6 +1,6 @@
 # AGB API Reference
 
-## 🚀 Related Tutorial
+## Related Tutorial
 
 - [Quick Start Guide](../quickstart.md) - Get started with the AGB Python SDK
 

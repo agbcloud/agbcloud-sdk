@@ -47,7 +47,9 @@ async def test_browser_type(browser_type: str | None, description: str):
 
     try:
         # Initialize browser with specified type
-        print(f"\n2. Initializing browser with type: {browser_type or 'default (None)'}")
+        print(
+            f"\n2. Initializing browser with type: {browser_type or 'default (None)'}"
+        )
         option = BrowserOption(
             browser_type=browser_type,
         )
@@ -113,24 +115,21 @@ async def main():
 
     # Test 1: Chrome browser
     await test_browser_type(
-        browser_type="chrome",
-        description="Chrome Browser (Google Chrome)"
+        browser_type="chrome", description="Chrome Browser (Google Chrome)"
     )
 
     await asyncio.sleep(2)  # Brief pause between tests
 
     # Test 2: Chromium browser
     await test_browser_type(
-        browser_type="chromium",
-        description="Chromium Browser (Open Source)"
+        browser_type="chromium", description="Chromium Browser (Open Source)"
     )
 
     await asyncio.sleep(2)  # Brief pause between tests
 
     # Test 3: Default (None)
     await test_browser_type(
-        browser_type=None,
-        description="Default Browser (Platform decides)"
+        browser_type=None, description="Default Browser (Platform decides)"
     )
 
     print("\n" + "=" * 60)
@@ -190,11 +189,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Browser Type Selection Example")
-    parser.add_argument(
-        "--quick",
-        action="store_true",
-        help="Run quick example only"
-    )
+    parser.add_argument("--quick", action="store_true", help="Run quick example only")
 
     args = parser.parse_args()
 

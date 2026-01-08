@@ -4,7 +4,8 @@ Get context file upload URL response model
 
 from typing import Any, Dict, Optional
 
-class GetContextFileUploadUrlResponseBodyData():
+
+class GetContextFileUploadUrlResponseBodyData:
     def __init__(
         self,
         expire_time: Optional[int] = None,
@@ -12,6 +13,7 @@ class GetContextFileUploadUrlResponseBodyData():
     ):
         self.expire_time = expire_time
         self.url = url
+
 
 class GetContextFileUploadUrlResponse:
     """Structured response object for get context file upload URL operation"""
@@ -50,7 +52,9 @@ class GetContextFileUploadUrlResponse:
             self.data = {}
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> "GetContextFileUploadUrlResponse":
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "GetContextFileUploadUrlResponse":
         """
         Create GetContextFileUploadUrlResponse from HTTP client returned dictionary
 
@@ -72,6 +76,7 @@ class GetContextFileUploadUrlResponse:
                 else None
             ),
         )
+
     def is_successful(self) -> bool:
         """Check if the operation was successful"""
         return self.status_code == 200 and self.api_success
@@ -107,7 +112,6 @@ class GetContextFileUploadUrlResponse:
 
         if isinstance(self.data, dict):
             return GetContextFileUploadUrlResponseBodyData(
-                expire_time=self.data.get("expireTime"),
-                url=self.data.get("url")
+                expire_time=self.data.get("expireTime"), url=self.data.get("url")
             )
         return GetContextFileUploadUrlResponseBodyData()

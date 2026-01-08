@@ -121,4 +121,3 @@ class InitBrowserResponse:
         except (KeyError, TypeError):
             pass
         return None
-

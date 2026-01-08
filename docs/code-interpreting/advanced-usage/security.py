@@ -10,17 +10,18 @@ import re
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
+
 class SecureAGBClient:
     """AGB client with security validations"""
 
     DANGEROUS_PATTERNS = [
-        r'import\s+os',
-        r'import\s+subprocess',
-        r'__import__',
-        r'eval\s*\(',
-        r'exec\s*\(',
-        r'open\s*\(',
-        r'file\s*\(',
+        r"import\s+os",
+        r"import\s+subprocess",
+        r"__import__",
+        r"eval\s*\(",
+        r"exec\s*\(",
+        r"open\s*\(",
+        r"file\s*\(",
     ]
 
     def __init__(self, api_key: str):
@@ -76,6 +77,7 @@ class SecureAGBClient:
         finally:
             self.agb.delete(session)
 
+
 def main():
     api_key = os.getenv("AGB_API_KEY")
     if not api_key:
@@ -93,7 +95,10 @@ print(f"Result: {result}")
 """
     try:
         result = secure_client.safe_execute_code(safe_code)
-        print(f"✅ Safe execution result: {result.result.strip()}")
+        if result.success and result.logs.stdout and result.logs.stdout[0]:
+            print(f"✅ Safe execution result: {result.logs.stdout[0]}")
+        else:
+            print(f"Execution failed: {result.error_message}")
     except Exception as e:
         print(f"Execution failed: {e}")
 
@@ -108,6 +113,6 @@ os.system("rm -rf /")
     except ValueError as e:
         print(f"🛡️  Security validation passed: {e}")
 
+
 if __name__ == "__main__":
     main()
-

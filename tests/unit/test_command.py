@@ -4,6 +4,7 @@ Unit tests for Command module in AGB SDK.
 Tests command execution functionality with success and failure scenarios.
 """
 
+import json
 import unittest
 from unittest.mock import MagicMock
 
@@ -58,6 +59,47 @@ class TestCommandResult(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertEqual(result.output, "")
         self.assertEqual(result.error_message, "Command failed")
+
+    def test_command_result_with_new_fields(self):
+        """Test CommandResult with new fields (exit_code, stdout, stderr, trace_id)."""
+        result = CommandResult(
+            request_id="req-789",
+            success=True,
+            output="stdout output",
+            error_message="",
+            exit_code=0,
+            stdout="stdout output",
+            stderr="",
+            trace_id="trace-123",
+        )
+
+        self.assertEqual(result.request_id, "req-789")
+        self.assertTrue(result.success)
+        self.assertEqual(result.output, "stdout output")
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.stdout, "stdout output")
+        self.assertEqual(result.stderr, "")
+        self.assertEqual(result.trace_id, "trace-123")
+
+    def test_command_result_with_error_fields(self):
+        """Test CommandResult with error fields."""
+        result = CommandResult(
+            request_id="req-error",
+            success=False,
+            output="error output",
+            error_message="Command failed",
+            exit_code=1,
+            stdout="",
+            stderr="error output",
+            trace_id="trace-error-456",
+        )
+
+        self.assertEqual(result.request_id, "req-error")
+        self.assertFalse(result.success)
+        self.assertEqual(result.exit_code, 1)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "error output")
+        self.assertEqual(result.trace_id, "trace-error-456")
 
 
 class TestCommand(unittest.TestCase):
@@ -200,6 +242,246 @@ class TestCommand(unittest.TestCase):
 
                 self.assertTrue(result.success)
                 self.assertEqual(result.output, "output")
+
+    def test_execute_command_json_format_response(self):
+        """Test command execution with new JSON format response."""
+        json_data = {
+            "stdout": "Hello World",
+            "stderr": "",
+            "exit_code": 0,
+            "traceId": "trace-json-123",
+        }
+        mock_result = OperationResult(
+            request_id="req-json-1",
+            success=True,
+            data=json.dumps(json_data),
+        )
+        self.command._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.command.execute_command("echo 'Hello World'", timeout_ms=1000)
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.output, "Hello World")
+        self.assertEqual(result.stdout, "Hello World")
+        self.assertEqual(result.stderr, "")
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.trace_id, "trace-json-123")
+
+    def test_execute_command_json_format_with_stderr(self):
+        """Test command execution with JSON format containing stderr."""
+        json_data = {
+            "stdout": "",
+            "stderr": "cat: file.txt: No such file or directory",
+            "exit_code": 2,
+            "traceId": "trace-json-456",
+        }
+        mock_result = OperationResult(
+            request_id="req-json-2",
+            success=True,
+            data=json.dumps(json_data),
+        )
+        self.command._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.command.execute_command("cat file.txt", timeout_ms=1000)
+
+        # exit_code != 0, so success should be False
+        self.assertFalse(result.success)
+        self.assertEqual(result.output, "cat: file.txt: No such file or directory")
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "cat: file.txt: No such file or directory")
+        self.assertEqual(result.exit_code, 2)
+        self.assertEqual(result.trace_id, "trace-json-456")
+
+    def test_execute_command_json_format_dict_response(self):
+        """Test command execution with JSON format as dict (not string)."""
+        json_data = {
+            "stdout": "output text",
+            "stderr": "",
+            "exit_code": 0,
+        }
+        mock_result = OperationResult(
+            request_id="req-json-3",
+            success=True,
+            data=json_data,  # Already a dict, not a string
+        )
+        self.command._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.command.execute_command("echo test", timeout_ms=1000)
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.stdout, "output text")
+        self.assertEqual(result.exit_code, 0)
+
+    def test_execute_command_backward_compatibility(self):
+        """Test backward compatibility with old format (plain text)."""
+        mock_result = OperationResult(
+            request_id="req-old-format",
+            success=True,
+            data="Plain text output without JSON",
+        )
+        self.command._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.command.execute_command("ls", timeout_ms=1000)
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.output, "Plain text output without JSON")
+        # New fields should be None or empty for old format
+        self.assertIsNone(result.exit_code)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "")
+
+    def test_execute_command_with_cwd(self):
+        """Test command execution with working directory parameter."""
+        mock_result = OperationResult(
+            request_id="req-cwd",
+            success=True,
+            data="output",
+        )
+        self.command._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.command.execute_command("pwd", timeout_ms=1000, cwd="/tmp")
+
+        self.assertTrue(result.success)
+        call_args = self.command._call_mcp_tool.call_args
+        self.assertEqual(call_args[0][1]["cwd"], "/tmp")
+
+    def test_execute_command_with_envs(self):
+        """Test command execution with environment variables."""
+        mock_result = OperationResult(
+            request_id="req-envs",
+            success=True,
+            data="output",
+        )
+        self.command._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        envs = {"TEST_VAR": "test_value", "ANOTHER_VAR": "another_value"}
+        result = self.command.execute_command("echo $TEST_VAR", timeout_ms=1000, envs=envs)
+
+        self.assertTrue(result.success)
+        call_args = self.command._call_mcp_tool.call_args
+        self.assertEqual(call_args[0][1]["envs"], envs)
+
+    def test_execute_command_with_cwd_and_envs(self):
+        """Test command execution with both cwd and envs."""
+        mock_result = OperationResult(
+            request_id="req-both",
+            success=True,
+            data="output",
+        )
+        self.command._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        envs = {"VAR": "value"}
+        result = self.command.execute_command(
+            "pwd", timeout_ms=1000, cwd="/home", envs=envs
+        )
+
+        self.assertTrue(result.success)
+        call_args = self.command._call_mcp_tool.call_args
+        self.assertEqual(call_args[0][1]["cwd"], "/home")
+        self.assertEqual(call_args[0][1]["envs"], envs)
+
+    def test_execute_command_envs_validation_invalid_key_type(self):
+        """Test environment variable validation with invalid key type."""
+        envs = {123: "value"}  # Invalid: key is not a string
+
+        with self.assertRaises(ValueError) as context:
+            self.command.execute_command("echo test", envs=envs)
+
+        self.assertIn("Invalid environment variables", str(context.exception))
+        self.assertIn("all keys and values must be strings", str(context.exception))
+
+    def test_execute_command_envs_validation_invalid_value_type(self):
+        """Test environment variable validation with invalid value type."""
+        envs = {"KEY": 123}  # Invalid: value is not a string
+
+        with self.assertRaises(ValueError) as context:
+            self.command.execute_command("echo test", envs=envs)
+
+        self.assertIn("Invalid environment variables", str(context.exception))
+        self.assertIn("all keys and values must be strings", str(context.exception))
+
+    def test_execute_command_envs_validation_multiple_invalid(self):
+        """Test environment variable validation with multiple invalid entries."""
+        envs = {123: "value", "KEY": 456, "ANOTHER": "valid"}  # Multiple invalid
+
+        with self.assertRaises(ValueError) as context:
+            self.command.execute_command("echo test", envs=envs)
+
+        self.assertIn("Invalid environment variables", str(context.exception))
+
+    def test_execute_command_error_json_format(self):
+        """Test error response with JSON format in error_message."""
+        error_json = {
+            "stdout": "",
+            "stderr": "Command not found",
+            "exit_code": 127,
+            "traceId": "trace-error-789",
+        }
+        mock_result = OperationResult(
+            request_id="req-error-json",
+            success=False,
+            error_message=json.dumps(error_json),
+        )
+        self.command._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.command.execute_command("nonexistent_command", timeout_ms=1000)
+
+        self.assertFalse(result.success)
+        self.assertEqual(result.output, "Command not found")
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "Command not found")
+        self.assertEqual(result.exit_code, 127)
+        self.assertEqual(result.trace_id, "trace-error-789")
+
+    def test_execute_command_error_json_format_with_errorCode(self):
+        """Test error response with errorCode field (alternative to exit_code)."""
+        error_json = {
+            "stdout": "",
+            "stderr": "Permission denied",
+            "errorCode": 13,  # Alternative field name
+            "traceId": "trace-error-alt",
+        }
+        mock_result = OperationResult(
+            request_id="req-error-alt",
+            success=False,
+            error_message=json.dumps(error_json),
+        )
+        self.command._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.command.execute_command("cat /etc/shadow", timeout_ms=1000)
+
+        self.assertFalse(result.success)
+        self.assertEqual(result.exit_code, 13)  # Should use errorCode
+        self.assertEqual(result.stderr, "Permission denied")
+
+    def test_execute_command_error_json_format_exit_code_zero_with_errorCode(self):
+        """Test error response with exit_code=0 and errorCode both present.
+        
+        This tests the fix for the bug where exit_code=0 (falsy) would incorrectly
+        fall back to errorCode. Should use exit_code=0, not errorCode.
+        """
+        error_json = {
+            "stdout": "Some output",
+            "stderr": "",
+            "exit_code": 0,  # Valid exit code, but falsy value
+            "errorCode": 13,  # Should NOT be used when exit_code exists
+            "traceId": "trace-zero-test",
+        }
+        mock_result = OperationResult(
+            request_id="req-zero-test",
+            success=False,
+            error_message=json.dumps(error_json),
+        )
+        self.command._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.command.execute_command("test_command", timeout_ms=1000)
+
+        self.assertFalse(result.success)
+        # Should use exit_code=0, NOT errorCode=13
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.stdout, "Some output")
+        self.assertEqual(result.stderr, "")
+        self.assertEqual(result.trace_id, "trace-zero-test")
 
 
 if __name__ == "__main__":

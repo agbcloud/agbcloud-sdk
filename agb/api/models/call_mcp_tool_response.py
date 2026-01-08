@@ -79,7 +79,12 @@ class CallMcpToolResponse:
 
     def is_successful(self) -> bool:
         """Check if API call was successful"""
-        return self.success and self.status_code == 200 and self.api_success is True and self.tool_success is True
+        return (
+            self.success
+            and self.status_code == 200
+            and self.api_success is True
+            and self.tool_success is True
+        )
 
     def is_tool_successful(self) -> bool:
         """Check if tool execution was successful"""
@@ -98,7 +103,6 @@ class CallMcpToolResponse:
     def get_tool_result(self) -> Optional[Any]:
         """Get tool execution result"""
         return self.result
-
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary format"""

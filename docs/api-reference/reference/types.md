@@ -22,7 +22,7 @@ Result of operations returning a single Session
 
 ### Related Guide
 
-📖 **[Session Management APIs](../../guides/session-management.md)**
+**[Session Management APIs](/session/overview.md)**
 
 Get a session by its ID or create a new session in the AGB cloud environment
 
@@ -48,7 +48,7 @@ Result of delete operations
 
 ### Related Guide
 
-📖 **[Session and Resource Deletion APIs](../../guides/session-management.md)**
+**[Session and Resource Deletion APIs](/session/overview.md)**
 
 Delete sessions and manage resource cleanup operations
 
@@ -83,7 +83,7 @@ Result of general operations
 
 ### Related Guide
 
-📖 **[Context and Session Management APIs](../../guides/context-usage-guide.md)**
+**[Context and Session Management APIs](/context/overview.md)**
 
 Update context data, delete files, and manage session operations
 
@@ -99,6 +99,7 @@ Result of operations returning a boolean value
 - `session.file_system.create_directory()`
 - `session.file_system.edit_file()`
 - `session.file_system.move_file()`
+- `session.file_system.delete_file()`
 - `session.file_system.write_file()`
 - `session.computer.click_mouse()`
 - `session.computer.move_mouse()`
@@ -127,7 +128,7 @@ Result of operations returning a boolean value
 
 ### Related Guide
 
-📖 **[File System Validation APIs](../../guides/file-operations.md)**
+**[File System Validation APIs](/file-system/overview.md)**
 
 File existence checks and validation operations
 
@@ -156,7 +157,7 @@ Result of operations returning a list of Sessions
 
 ### Related Guide
 
-📖 **[Session Listing APIs](../../guides/session-management.md)**
+**[Session Listing APIs](/session/overview.md)**
 
 Returns paginated list of session IDs filtered by labels
 
@@ -182,7 +183,7 @@ Result of file info operations
 
 ### Related Guide
 
-📖 **[File Information and Metadata APIs](../../guides/file-operations.md)**
+**[File Information and Metadata APIs](/file-system/overview.md)**
 
 Get file properties, permissions, and metadata information
 
@@ -196,6 +197,7 @@ Result of file read operations
 ### API Methods Using This Response Type
 
 - `session.file_system.read_file()`
+- `session.file_system.read()`
 
 ### Properties
 
@@ -208,7 +210,7 @@ Result of file read operations
 
 ### Related Guide
 
-📖 **[File Content Access APIs](../../guides/file-operations.md)**
+**[File Content Access APIs](/file-system/overview.md)**
 
 Read file content and retrieve file data
 
@@ -234,7 +236,7 @@ Result of multiple file read operations
 
 ### Related Guide
 
-📖 **[File Content Management APIs](../../guides/file-operations.md)**
+**[File Content Management APIs](/file-system/overview.md)**
 
 Read multiple files and batch file content operations
 
@@ -260,7 +262,7 @@ Result of directory listing operations
 
 ### Related Guide
 
-📖 **[Directory Management APIs](../../guides/file-operations.md)**
+**[Directory Management APIs](/file-system/overview.md)**
 
 List directory contents and navigate file system structure
 
@@ -286,7 +288,7 @@ Result of file search operations
 
 ### Related Guide
 
-📖 **[File Search and Discovery APIs](../../guides/file-operations.md)**
+**[File Search and Discovery APIs](/file-system/overview.md)**
 
 Search files by patterns and locate specific file content
 

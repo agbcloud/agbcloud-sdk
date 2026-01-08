@@ -1,8 +1,8 @@
 # File System API Reference
 
-## 📁 Related Tutorial
+## Related Tutorial
 
-- [File Operations Guide](../../guides/file-operations.md) - Complete guide to file system operations
+- [File Operations Guide](/file-system/overview.md) - Complete guide to file system operations
 
 ## Overview
 
@@ -301,23 +301,122 @@ Move a file or directory from source path to destination path.
     BoolResult: Result object containing success status and error message if
   any.
 
-### read\_file
+### delete\_file
 
 ```python
-def read_file(path: str) -> FileContentResult
+def delete_file(path: str) -> BoolResult
 ```
 
-Read the contents of a file.
+Delete a file at the specified path.
 
 **Arguments**:
 
-- `path` _str_ - The path of the file to read.
+- `path` _str_ - The path of the file to delete.
 
 
 **Returns**:
 
-    FileContentResult: Result object containing file content and error message
-  if any.
+    BoolResult: Result object containing success status and error message if any.
+
+
+**Example**:
+
+```python
+session = (agb.create()).session
+session.file_system.write_file("/tmp/to_delete.txt", "hello")
+delete_result = session.file_system.delete_file("/tmp/to_delete.txt")
+session.delete()
+```
+
+### read\_file
+
+```python
+@overload
+def read_file(path: str) -> FileContentResult
+```
+
+### read\_file
+
+```python
+@overload
+def read_file(path: str, *, format: Literal["text"]) -> FileContentResult
+```
+
+### read\_file
+
+```python
+@overload
+def read_file(path: str, *,
+              format: Literal["bytes"]) -> BinaryFileContentResult
+```
+
+### read\_file
+
+```python
+def read_file(
+        path: str,
+        *,
+        format: str = "text"
+) -> Union[FileContentResult, BinaryFileContentResult]
+```
+
+Read the contents of a file. Automatically handles large files by chunking.
+
+**Arguments**:
+
+- `path` _str_ - The path of the file to read.
+- `format` _str_ - Format to read the file in. "text" (default) or "bytes".
+  - "text": Returns FileContentResult with content as string (UTF-8)
+  - "bytes": Returns BinaryFileContentResult with content as bytes
+
+
+**Returns**:
+
+    FileContentResult: For text format, contains file content as string.
+    BinaryFileContentResult: For bytes format, contains file content as bytes.
+
+
+**Raises**:
+
+    FileError: If the file does not exist or is a directory.
+
+
+**Example**:
+
+```python
+session = (agb.create()).session
+
+# Read text file (default)
+text_result = session.file_system.read_file("/tmp/test.txt")
+print(text_result.content)  # str
+
+# Read binary file
+binary_result = session.file_system.read_file("/tmp/image.png", format="bytes")
+print(binary_result.content)  # bytes
+
+session.delete()
+```
+
+
+**Notes**:
+
+- Automatically handles large files by reading in chunks (default 50KB per chunk)
+- Returns empty string/bytes for empty files
+- Returns error if path is a directory
+- Binary files are returned as bytes (backend uses base64 encoding internally)
+
+
+**See Also**:
+
+FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
+
+### read
+
+```python
+def read(path: str) -> FileContentResult
+```
+
+Alias of read_file().
 
 ### write\_file
 

@@ -18,6 +18,7 @@ from agb.modules.browser import BrowserOption, BrowserViewport
 
 from playwright.async_api import async_playwright
 
+
 async def main():
     # Get API key from environment variable
     api_key = os.getenv("AGB_API_KEY")
@@ -41,9 +42,7 @@ async def main():
         print(f"Session created with ID: {session.session_id}")
 
         # Configure browser options
-        browser_option = BrowserOption(
-            solve_captchas=True
-        )
+        browser_option = BrowserOption(solve_captchas=True)
 
         # Initialize browser
         print("🌐 Initializing browser...")
@@ -67,7 +66,7 @@ async def main():
                 await page.goto(url, wait_until="domcontentloaded")
 
                 # Use selector to locate input field
-                input_element = await page.wait_for_selector('#name_in', timeout=10000)
+                input_element = await page.wait_for_selector("#name_in", timeout=10000)
                 print("Found login name input field: #name_in")
 
                 # Clear input field and enter phone number
@@ -83,7 +82,7 @@ async def main():
                 await asyncio.sleep(1)
 
                 print("Clicking next step button...")
-                await page.click('#next_step1')
+                await page.click("#next_step1")
 
                 # Listen for captcha processing messages
                 captcha_solving_started = False
@@ -97,24 +96,37 @@ async def main():
                         captcha_solving_started = True
                         print("🎯 Setting captchaSolvingStarted = true")
                         # Use asyncio.create_task for async execution
-                        asyncio.create_task(page.evaluate("window.captchaSolvingStarted = true; window.captchaSolvingFinished = false;"))
+                        asyncio.create_task(
+                            page.evaluate(
+                                "window.captchaSolvingStarted = true; window.captchaSolvingFinished = false;"
+                            )
+                        )
                     elif msg.text == "wuying-captcha-solving-finished":
                         captcha_solving_finished = True
                         print("✅ Setting captchaSolvingFinished = true")
                         # Use asyncio.create_task for async execution
-                        asyncio.create_task(page.evaluate("window.captchaSolvingFinished = true;"))
+                        asyncio.create_task(
+                            page.evaluate("window.captchaSolvingFinished = true;")
+                        )
 
                 page.on("console", handle_console)
 
                 # Wait 1 second first, then check if captcha processing has started
                 try:
                     await asyncio.sleep(1)
-                    await page.wait_for_function("() => window.captchaSolvingStarted === true", timeout=1000)
-                    print("🎯 Detected captcha processing started, waiting for completion...")
+                    await page.wait_for_function(
+                        "() => window.captchaSolvingStarted === true", timeout=1000
+                    )
+                    print(
+                        "🎯 Detected captcha processing started, waiting for completion..."
+                    )
 
                     # If start is detected, wait for completion (max 30 seconds)
                     try:
-                        await page.wait_for_function("() => window.captchaSolvingFinished === true", timeout=30000)
+                        await page.wait_for_function(
+                            "() => window.captchaSolvingFinished === true",
+                            timeout=30000,
+                        )
                         print("✅ Captcha processing completed")
                     except:
                         print("⚠️ Captcha processing timeout, may still be in progress")
@@ -155,6 +167,7 @@ async def main():
         print("🧹 Session cleaned up")
 
     print("🎉 Captcha solving example completed successfully!")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

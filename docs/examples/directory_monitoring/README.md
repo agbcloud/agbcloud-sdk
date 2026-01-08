@@ -11,7 +11,7 @@ Directory monitoring allows you to react to file system events (create, modify, 
 
 ## Examples
 
-### Basic Monitoring (`main.py`)
+### Basic Monitoring
 Starts a background process that creates files, and uses the `filesystem.watch` API to detect and report these changes.
 
 <<< ./main.py

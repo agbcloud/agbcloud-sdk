@@ -54,8 +54,7 @@ async def main():
 
         # Configure browser options with custom viewport
         option = BrowserOption(
-            use_stealth=True,
-            viewport=BrowserViewport(width=1920, height=1080)
+            use_stealth=True, viewport=BrowserViewport(width=1920, height=1080)
         )
 
         # Initialize browser
@@ -113,10 +112,7 @@ async def main():
         # ============================================
         print("\n📸 Example 3: Taking JPEG screenshot with quality setting...")
         jpeg_data = await session.browser.screenshot(
-            page,
-            full_page=False,
-            type="jpeg",
-            quality=80  # JPEG quality 0-100
+            page, full_page=False, type="jpeg", quality=80  # JPEG quality 0-100
         )
 
         filename = "/tmp/screenshot_quality.jpg"
@@ -131,9 +127,7 @@ async def main():
         # ============================================
         print("\n📸 Example 4: Taking screenshot with custom timeout...")
         timeout_data = await session.browser.screenshot(
-            page,
-            full_page=True,
-            timeout=30000  # 30 seconds timeout
+            page, full_page=True, timeout=30000  # 30 seconds timeout
         )
 
         filename = "/tmp/screenshot_timeout.png"
@@ -146,10 +140,7 @@ async def main():
         # Example 5: Multiple Page Screenshots
         # ============================================
         print("\n📸 Example 5: Taking screenshots of multiple pages...")
-        urls = [
-            "https://example.com",
-            "https://httpbin.org/html"
-        ]
+        urls = ["https://example.com", "https://httpbin.org/html"]
 
         for i, url in enumerate(urls, 1):
             print(f"\n  📍 Navigating to: {url}")
@@ -170,6 +161,7 @@ async def main():
         try:
             # Create uninitialized browser to test error handling
             from agb.modules.browser.browser import Browser
+
             uninitialized_browser = Browser(session)
 
             # This should raise BrowserError

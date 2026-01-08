@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional
 
+
 class GetSessionRequest:
     """Request object for getting session information"""
 

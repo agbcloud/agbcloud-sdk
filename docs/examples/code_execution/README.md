@@ -11,22 +11,22 @@ This directory contains examples of executing code in various programming langua
 
 ## Examples
 
-### Basic Execution (`main.py`)
+### Basic Execution
 Comprehensive example demonstrating execution in all supported languages.
 
 <<< ./main.py
 
-### Caching Results (`caching.py`)
+### Caching Results
 Demonstrates how to implement client-side caching for deterministic code execution results to save costs and reduce latency.
 
 <<< ./caching.py
 
-### Concurrency (`concurrency.py`)
+### Concurrency
 Demonstrates how to execute multiple code tasks in parallel using threading for high-throughput scenarios.
 
 <<< ./concurrency.py
 
-### Security Best Practices (`security.py`)
+### Security Best Practices
 Demonstrates security best practices, including input validation and sanitization for untrusted code.
 
 <<< ./security.py

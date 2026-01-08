@@ -4,7 +4,8 @@ List session response model
 
 from typing import Any, Dict, List, Optional
 
-class ListSessionResponseBodyData():
+
+class ListSessionResponseBodyData:
     def __init__(
         self,
         session_id: Optional[str] = None,
@@ -12,6 +13,7 @@ class ListSessionResponseBodyData():
     ):
         self.session_id = session_id
         self.session_status = session_status
+
 
 class ListSessionResponse:
     """Structured response object for list session operation"""
@@ -95,10 +97,12 @@ class ListSessionResponse:
             result = []
             for item in self.data:
                 if isinstance(item, dict):
-                    result.append(ListSessionResponseBodyData(
-                        session_id=item.get("sessionId"),
-                        session_status=item.get("sessionStatus")
-                    ))
+                    result.append(
+                        ListSessionResponseBodyData(
+                            session_id=item.get("sessionId"),
+                            session_status=item.get("sessionStatus"),
+                        )
+                    )
             return result
         return []
 

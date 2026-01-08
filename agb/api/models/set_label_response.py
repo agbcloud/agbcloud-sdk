@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional
 
+
 class SetLabelResponse:
     """Set label response object"""
 
@@ -38,9 +39,7 @@ class SetLabelResponse:
             self.access_denied_detail = None
 
     @classmethod
-    def from_http_response(
-        cls, response_dict: Dict[str, Any]
-    ) -> "SetLabelResponse":
+    def from_http_response(cls, response_dict: Dict[str, Any]) -> "SetLabelResponse":
         """Create SetLabelResponse object from HTTP client returned dictionary"""
         return cls(
             status_code=response_dict.get("status_code", 0),
@@ -96,4 +95,6 @@ class SetLabelResponse:
 
     def __repr__(self) -> str:
         """Detailed string representation"""
-        return f"SetLabelResponse(status_code={self.status_code}, success={self.success})"
+        return (
+            f"SetLabelResponse(status_code={self.status_code}, success={self.success})"
+        )

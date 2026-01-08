@@ -32,16 +32,11 @@ def create_sample_extension_zip(name: str) -> str:
         "version": "1.0.0",
         "description": "A sample extension for testing",
         "permissions": ["activeTab", "storage"],
-        "action": {
-            "default_popup": "popup.html",
-            "default_title": f"Sample {name}"
-        },
-        "background": {
-            "service_worker": "background.js"
-        }
+        "action": {"default_popup": "popup.html", "default_title": f"Sample {name}"},
+        "background": {"service_worker": "background.js"},
     }
 
-    with zipfile.ZipFile(zip_path, 'w') as zipf:
+    with zipfile.ZipFile(zip_path, "w") as zipf:
         # Add manifest.json
         zipf.writestr("manifest.json", json.dumps(manifest, indent=2))
 

@@ -16,7 +16,7 @@ from agb.modules.file_system import (
     MultipleFileContentResult,
     FileChangeResult,
 )
-from agb.model.response import OperationResult, BoolResult
+from agb.model.response import OperationResult, BoolResult, BinaryFileContentResult
 
 
 class DummySession:
@@ -270,10 +270,78 @@ class TestFileSystem(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "Source file not found")
 
+    def test_delete_file_success(self):
+        """Test successful file deletion."""
+        mock_result = OperationResult(
+            request_id="req-delete-1",
+            success=True,
+            data=True,
+        )
+        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.file_system.delete_file("/tmp/test.txt")
+
+        self.assertTrue(result.success)
+        self.assertTrue(result.data)
+        self.file_system._call_mcp_tool.assert_called_once_with(
+            "delete_file", {"path": "/tmp/test.txt"}
+        )
+
+    def test_delete_file_failure(self):
+        """Test file deletion failure."""
+        mock_result = OperationResult(
+            request_id="req-delete-2",
+            success=False,
+            error_message="File not found",
+        )
+        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.file_system.delete_file("/tmp/nonexistent.txt")
+
+        self.assertFalse(result.success)
+        self.assertEqual(result.error_message, "File not found")
+
+    def test_delete_file_exception(self):
+        """Test file deletion exception handling."""
+        self.file_system._call_mcp_tool = MagicMock(side_effect=Exception("Network error"))
+
+        result = self.file_system.delete_file("/tmp/test.txt")
+
+        self.assertFalse(result.success)
+        self.assertIn("Failed to delete file", result.error_message)
+
+    def test_delete_file_permission_denied(self):
+        """Test file deletion with permission denied."""
+        mock_result = OperationResult(
+            request_id="req-delete-3",
+            success=False,
+            error_message="Permission denied",
+        )
+        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.file_system.delete_file("/root/protected.txt")
+
+        self.assertFalse(result.success)
+        self.assertEqual(result.error_message, "Permission denied")
+
+    def test_delete_file_directory_error(self):
+        """Test file deletion when path is a directory."""
+        mock_result = OperationResult(
+            request_id="req-delete-4",
+            success=False,
+            error_message="Cannot delete directory with delete_file",
+        )
+        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+
+        result = self.file_system.delete_file("/tmp/directory")
+
+        self.assertFalse(result.success)
+        self.assertIn("directory", result.error_message.lower())
+
     @patch.object(FileSystem, "get_file_info")
     @patch.object(FileSystem, "_read_file_chunk")
-    def test_read_file_success(self, mock_read_chunk, mock_get_info):
-        """Test successful file read."""
+    def test_read_file_success_text_format(self, mock_read_chunk, mock_get_info):
+        """Test successful file read with text format (default)."""
         # Mock file info
         mock_info_result = FileInfoResult(
             request_id="req-info-read",
@@ -294,7 +362,155 @@ class TestFileSystem(unittest.TestCase):
 
         self.assertTrue(result.success)
         self.assertEqual(result.content, "Hello, World!")
+        self.assertIsInstance(result, FileContentResult)
 
+    @patch.object(FileSystem, "get_file_info")
+    @patch.object(FileSystem, "_read_file_chunk")
+    def test_read_file_success_text_format_explicit(self, mock_read_chunk, mock_get_info):
+        """Test successful file read with explicit text format."""
+        # Mock file info
+        mock_info_result = FileInfoResult(
+            request_id="req-info-read-text",
+            success=True,
+            file_info={"size": 50, "isDirectory": False},
+        )
+        mock_get_info.return_value = mock_info_result
+
+        # Mock chunk read
+        mock_chunk_result = FileContentResult(
+            request_id="req-chunk-text",
+            success=True,
+            content="Text file content",
+        )
+        mock_read_chunk.return_value = mock_chunk_result
+
+        result = self.file_system.read_file("/tmp/test.txt", format="text")
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.content, "Text file content")
+        self.assertIsInstance(result, FileContentResult)
+        self.assertIsInstance(result.content, str)
+
+    @patch.object(FileSystem, "get_file_info")
+    @patch.object(FileSystem, "_read_file_chunk")
+    def test_read_file_success_bytes_format(self, mock_read_chunk, mock_get_info):
+        """Test successful file read with bytes format."""
+        # Mock file info
+        mock_info_result = FileInfoResult(
+            request_id="req-info-read-bytes",
+            success=True,
+            file_info={"size": 20, "isDirectory": False},
+        )
+        mock_get_info.return_value = mock_info_result
+
+        # Mock chunk read - return binary content
+        test_binary_content = b"Binary file content\x00\x01\x02"
+        mock_chunk_result = BinaryFileContentResult(
+            request_id="req-chunk-bytes",
+            success=True,
+            content=test_binary_content,
+        )
+        mock_read_chunk.return_value = mock_chunk_result
+
+        result = self.file_system.read_file("/tmp/binary.dat", format="bytes")
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.content, test_binary_content)
+        self.assertIsInstance(result, BinaryFileContentResult)
+        self.assertIsInstance(result.content, bytes)
+
+    @patch.object(FileSystem, "get_file_info")
+    @patch.object(FileSystem, "_read_file_chunk")
+    def test_read_file_bytes_format_failure(self, mock_read_chunk, mock_get_info):
+        """Test file read with bytes format failure."""
+        # Mock file info
+        mock_info_result = FileInfoResult(
+            request_id="req-info-bytes-fail",
+            success=True,
+            file_info={"size": 100, "isDirectory": False},
+        )
+        mock_get_info.return_value = mock_info_result
+
+        # Mock chunk read failure
+        mock_chunk_result = BinaryFileContentResult(
+            request_id="req-chunk-bytes-fail",
+            success=False,
+            content=b"",
+            error_message="Failed to read binary file",
+        )
+        mock_read_chunk.return_value = mock_chunk_result
+
+        result = self.file_system.read_file("/tmp/binary.dat", format="bytes")
+
+        self.assertFalse(result.success)
+        self.assertEqual(result.error_message, "Failed to read binary file")
+        self.assertIsInstance(result, BinaryFileContentResult)
+        self.assertEqual(result.content, b"")
+
+    @patch.object(FileSystem, "get_file_info")
+    def test_read_file_bytes_format_file_not_found(self, mock_get_info):
+        """Test file read with bytes format when file doesn't exist."""
+        mock_info_result = FileInfoResult(
+            request_id="req-info-bytes-404",
+            success=False,
+            error_message="File not found",
+        )
+        mock_get_info.return_value = mock_info_result
+
+        result = self.file_system.read_file("/tmp/nonexistent.dat", format="bytes")
+
+        self.assertFalse(result.success)
+        self.assertEqual(result.error_message, "File not found")
+        self.assertIsInstance(result, BinaryFileContentResult)
+        self.assertEqual(result.content, b"")
+
+    @patch.object(FileSystem, "get_file_info")
+    def test_read_file_bytes_format_is_directory(self, mock_get_info):
+        """Test file read with bytes format when path is a directory."""
+        mock_info_result = FileInfoResult(
+            request_id="req-info-bytes-dir",
+            success=False,
+            file_info={"isDirectory": True},
+            error_message="Path does not exist or is a directory:/tmp/directory"
+        )
+        mock_get_info.return_value = mock_info_result
+
+        result = self.file_system.read_file("/tmp/directory", format="bytes")
+
+        self.assertFalse(result.success)
+        self.assertIn("is a directory", result.error_message)
+        self.assertIsInstance(result, BinaryFileContentResult)
+
+    @patch.object(FileSystem, "get_file_info")
+    def test_read_file_bytes_format_empty_file(self, mock_get_info):
+        """Test reading an empty file with bytes format."""
+        mock_info_result = FileInfoResult(
+            request_id="req-info-bytes-empty",
+            success=True,
+            file_info={"size": 0, "isDirectory": False},
+        )
+        mock_get_info.return_value = mock_info_result
+
+        result = self.file_system.read_file("/tmp/empty.dat", format="bytes")
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.content, b"")
+        self.assertIsInstance(result, BinaryFileContentResult)
+    @patch.object(FileSystem, "read_file")
+    def test_read_alias_method_default(self, mock_read_file):
+        """Test that the read() alias method works correctly with default format."""
+        mock_result = FileContentResult(
+            request_id="req-read-alias",
+            success=True,
+            content="Test content",
+        )
+        mock_read_file.return_value = mock_result
+
+        result = self.file_system.read("/tmp/test.txt")
+
+        self.assertTrue(result.success)
+        self.assertEqual(result.content, "Test content")
+        mock_read_file.assert_called_once_with("/tmp/test.txt")
     @patch.object(FileSystem, "get_file_info")
     def test_read_file_not_found(self, mock_get_info):
         """Test file read when file doesn't exist."""

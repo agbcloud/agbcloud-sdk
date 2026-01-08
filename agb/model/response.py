@@ -139,6 +139,7 @@ class BoolResult(ApiResponse):
         self.data = data
         self.error_message = error_message
 
+
 class GetSessionData:
     """Data returned by GetSession API."""
 
@@ -168,6 +169,7 @@ class GetSessionData:
         self.success = success
         self.resource_url = resource_url
         self.status = status
+
 
 class GetSessionResult(ApiResponse):
     """Result of GetSession operations."""
@@ -235,8 +237,11 @@ class SessionListResult(ApiResponse):
         self.next_token = next_token
         self.max_results = max_results
         self.total_count = total_count
+
+
 class WindowInfoResult(ApiResponse):
     """Result of window info operations."""
+
     def __init__(
         self,
         request_id: str = "",
@@ -248,6 +253,7 @@ class WindowInfoResult(ApiResponse):
         self.success = success
         self.window = window
         self.error_message = error_message
+
 
 class AppOperationResult(ApiResponse):
     """Result of application operations like start/stop."""
@@ -261,6 +267,7 @@ class AppOperationResult(ApiResponse):
         super().__init__(request_id)
         self.success = success
         self.error_message = error_message
+
 
 class ProcessListResult(ApiResponse):
     """Result of operations returning a list of Processes."""
@@ -277,6 +284,7 @@ class ProcessListResult(ApiResponse):
         self.data = data if data is not None else []
         self.error_message = error_message
 
+
 class InstalledAppListResult(ApiResponse):
     """Result of operations returning a list of InstalledApps."""
 
@@ -292,8 +300,10 @@ class InstalledAppListResult(ApiResponse):
         self.data = data if data is not None else []
         self.error_message = error_message
 
+
 class WindowListResult(ApiResponse):
     """Result of window listing operations."""
+
     def __init__(
         self,
         request_id: str = "",
@@ -319,7 +329,7 @@ class UploadResult:
         etag: Optional[str] = None,
         bytes_sent: int = 0,
         path: str = "",
-        error: Optional[str] = None,
+        error_message: Optional[str] = None,
     ):
         """
         Initialize an UploadResult.
@@ -332,7 +342,7 @@ class UploadResult:
             etag (Optional[str]): ETag from upload response.
             bytes_sent (int): Number of bytes sent.
             path (str): Remote path where file was uploaded.
-            error (Optional[str]): Error message if upload failed.
+            error_message (Optional[str]): Error message if upload failed.
         """
         self.success = success
         self.request_id_upload_url = request_id_upload_url
@@ -341,7 +351,7 @@ class UploadResult:
         self.etag = etag
         self.bytes_sent = bytes_sent
         self.path = path
-        self.error = error
+        self.error_message = error_message
 
 
 class DownloadResult:
@@ -356,7 +366,7 @@ class DownloadResult:
         bytes_received: int = 0,
         path: str = "",
         local_path: str = "",
-        error: Optional[str] = None,
+        error_message: Optional[str] = None,
     ):
         """
         Initialize a DownloadResult.
@@ -369,7 +379,7 @@ class DownloadResult:
             bytes_received (int): Number of bytes received.
             path (str): Remote path where file was downloaded from.
             local_path (str): Local path where file was saved.
-            error (Optional[str]): Error message if download failed.
+            error_message (Optional[str]): Error message if download failed.
         """
         self.success = success
         self.request_id_download_url = request_id_download_url
@@ -378,5 +388,147 @@ class DownloadResult:
         self.bytes_received = bytes_received
         self.path = path
         self.local_path = local_path
-        self.error = error
+        self.error_message = error_message
 
+
+class ExecutionResult:
+    """Code execution result item"""
+
+    def __init__(
+        self,
+        text: Optional[str] = None,
+        html: Optional[str] = None,
+        markdown: Optional[str] = None,
+        png: Optional[str] = None,
+        jpeg: Optional[str] = None,
+        svg: Optional[str] = None,
+        json: Optional[Any] = None,
+        latex: Optional[str] = None,
+        chart: Optional[Any] = None,
+        is_main_result: bool = False,
+    ):
+        """
+        Initialize an ExecutionResult.
+
+        Args:
+            text (Optional[str]): Plain text output
+            html (Optional[str]): HTML output
+            markdown (Optional[str]): Markdown output
+            png (Optional[str]): PNG image data
+            jpeg (Optional[str]): JPEG image data
+            svg (Optional[str]): SVG image data
+            json (Optional[Any]): JSON data
+            latex (Optional[str]): LaTeX output
+            chart (Optional[Any]): Chart data
+            is_main_result (bool): Whether this is the main result
+        """
+        self.text = text
+        self.html = html
+        self.markdown = markdown
+        self.png = png
+        self.jpeg = jpeg
+        self.svg = svg
+        self.json = json
+        self.latex = latex
+        self.chart = chart
+        self.is_main_result = is_main_result
+
+
+class ExecutionLogs:
+    """Execution logs"""
+
+    def __init__(
+        self, stdout: Optional[List[str]] = None, stderr: Optional[List[str]] = None
+    ):
+        """
+        Initialize ExecutionLogs.
+
+        Args:
+            stdout (Optional[List[str]]): Standard output logs
+            stderr (Optional[List[str]]): Standard error logs
+        """
+        self.stdout = stdout or []
+        self.stderr = stderr or []
+
+class BinaryFileContentResult(ApiResponse):
+    """Result of binary file read operations."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        content: bytes = b"",
+        error_message: str = "",
+        size: Optional[int] = None,
+    ):
+        """
+        Initialize a BinaryFileContentResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request.
+                Defaults to "".
+            success (bool, optional): Whether the operation was successful.
+                Defaults to False.
+            content (bytes, optional): Binary file content. Defaults to b"".
+            error_message (str, optional): Error message if the operation failed.
+                Defaults to "".
+            size (int, optional): Size of the file in bytes. Defaults to None.
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.content = content
+        self.error_message = error_message
+        self.size = size
+
+class EnhancedCodeExecutionResult(ApiResponse):
+    """Enhanced code execution result"""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        execution_count: Optional[int] = None,
+        execution_time: float = 0.0,
+        logs: Optional[ExecutionLogs] = None,
+        results: Optional[List[ExecutionResult]] = None,
+        error_message: str = "",
+        success: bool = True,
+    ):
+        """
+        Initialize an EnhancedCodeExecutionResult.
+
+        Args:
+            request_id (str): Request ID
+            execution_count (Optional[int]): Execution count
+            execution_time (float): Execution time in seconds
+            logs (Optional[ExecutionLogs]): Execution logs
+            results (Optional[List[ExecutionResult]]): Execution results
+            error_message (str): Error message if any
+            success (bool): Whether execution was successful
+        """
+        super().__init__(request_id)
+        self.execution_count = execution_count
+        self.execution_time = execution_time
+        self.logs = logs or ExecutionLogs()
+        self.results = results or []
+        self.error_message = error_message or ""
+        self.success = success
+
+
+class SessionStatusResult(ApiResponse):
+    """Result of Session.get_status() (status only)."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        http_status_code: int = 0,
+        code: str = "",
+        success: bool = False,
+        status: str = "",
+        error_message: str = "",
+    ):
+        super().__init__(request_id)
+        self.http_status_code = http_status_code
+        self.code = code
+        self.success = success
+        self.status = status
+        self.error_message = error_message

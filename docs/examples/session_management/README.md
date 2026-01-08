@@ -22,17 +22,17 @@ This directory contains examples demonstrating the complete lifecycle of AGB ses
 
 ## Examples
 
-### Basic Session Lifecycle (`create_session.py`)
+### Basic Session Lifecycle
 Basic session creation, listing, and deletion.
 
 <<< ./create_session.py
 
-### Reconnecting to Sessions (`get_session.py`)
+### Reconnecting to Sessions
 How to retrieve an existing session by ID.
 
 <<< ./get_session.py
 
-### Session Pooling (`session_pool.py`)
+### Session Pooling
 Implementation of a thread-safe session pool for high-concurrency applications.
 
 <<< ./session_pool.py

@@ -125,7 +125,12 @@ print("Python code execution completed!")
         if result.success:
             print("✅ Python code execution successful!")
             print(f"   Request ID: {result.request_id}")
-            print(f"   Execution result:\n{result.result}")
+            if len(result.logs.stderr) == 0:
+                for stdout_item in result.logs.stdout:
+                    print(f"   Execution result:\n{stdout_item}")
+            else:
+                for stderr_item in result.logs.stderr:
+                    print(f"   Execution result:\n{stderr_item}")  
         else:
             print("❌ Python code execution failed!")
             print(f"   Error message: {result.error_message}")
@@ -167,7 +172,12 @@ console.log("JavaScript code execution completed!");
         if result.success:
             print("✅ JavaScript code execution successful!")
             print(f"   Request ID: {result.request_id}")
-            print(f"   Execution result:\n{result.result}")
+            if len(result.logs.stderr) == 0:
+                for stdout_item in result.logs.stdout:
+                    print(f"   Execution result:\n{stdout_item}")
+            else:
+                for stderr_item in result.logs.stderr:
+                    print(f"   Execution result:\n{stderr_item}")  
         else:
             print("❌ JavaScript code execution failed!")
             print(f"   Error message: {result.error_message}")
@@ -201,7 +211,12 @@ System.out.println("Java code execution completed!");
         if result.success:
             print("✅ Java code execution successful!")
             print(f"   Request ID: {result.request_id}")
-            print(f"   Execution result:\n{result.result}")
+            if len(result.logs.stderr) == 0:
+                for stdout_item in result.logs.stdout:
+                    print(f"   Execution result:\n{stdout_item}")
+            else:
+                for stderr_item in result.logs.stderr:
+                    print(f"   Execution result:\n{stderr_item}")  
         else:
             print("❌ Java code execution failed!")
             print(f"   Error message: {result.error_message}")
@@ -257,7 +272,12 @@ cat("R code execution completed!\\n")
         if result.success:
             print("✅ R code execution successful!")
             print(f"   Request ID: {result.request_id}")
-            print(f"   Execution result:\n{result.result}")
+            if len(result.logs.stderr) == 0:
+                for stdout_item in result.logs.stdout:
+                    print(f"   Execution result:\n{stdout_item}")
+            else:
+                for stderr_item in result.logs.stderr:
+                    print(f"   Execution result:\n{stderr_item}")  
         else:
             print("❌ R code execution failed!")
             print(f"   Error message: {result.error_message}")
@@ -307,7 +327,12 @@ cat("Advanced R operations completed!\\n")
         if result_advanced.success:
             print("✅ Advanced R code execution successful!")
             print(f"   Request ID: {result_advanced.request_id}")
-            print(f"   Execution result:\n{result_advanced.result}")
+            if len(result.logs.stderr) == 0:
+                for stdout_item in result.logs.stdout:
+                    print(f"   Execution result:\n{stdout_item}")
+            else:
+                for stderr_item in result.logs.stderr:
+                    print(f"   Execution result:\n{stderr_item}")  
         else:
             print("❌ Advanced R code execution failed!")
             print(f"   Error message: {result_advanced.error_message}")
@@ -326,7 +351,12 @@ print("This line won't execute")
         result = session.code.run_code(error_code, "python", timeout_s=30)
         if result.success:
             print("⚠️  Error code unexpectedly executed successfully")
-            print(f"   Result: {result.result}")
+            if len(result.logs.stderr) == 0:
+                for stdout_item in result.logs.stdout:
+                    print(f"   Execution result:\n{stdout_item}")
+            else:
+                for stderr_item in result.logs.stderr:
+                    print(f"   Execution result:\n{stderr_item}")  
         else:
             print("✅ Expected: Python error code execution failed!")
             print(f"   Error message: {result.error_message}")
@@ -440,12 +470,12 @@ def main():
             if delete_result.success:
                 print("✅ Session deleted successfully!")
             else:
-                print(f"❌ Session deletion failed: {delete_result.error_message}")
+                print(f"Session deletion failed: {delete_result.error_message}")
                 exit_code = 1
 
             # Print total time statistics
             print("\n" + "=" * 60)
-            print("📊 PERFORMANCE SUMMARY")
+            print("PERFORMANCE SUMMARY")
             print("=" * 60)
             print(f"Session Creation: {create_duration:.3f} seconds")
             print(f"Session Deletion: {delete_duration:.3f} seconds")

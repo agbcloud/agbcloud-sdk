@@ -32,9 +32,7 @@ async def main():
 
     # Create a session
     print("Creating a new session...")
-    params = CreateSessionParams(
-        image_id="agb-browser-use-1"
-    )
+    params = CreateSessionParams(image_id="agb-browser-use-1")
     session_result = agb.create(params)
 
     if session_result.success:
@@ -79,7 +77,8 @@ async def main():
                     # Test command arguments effect by checking Chrome version page
                     if "chrome://version/" in current_url:
                         print("\n--- Check Chrome Version Info ---")
-                        version_info = await page.evaluate("""
+                        version_info = await page.evaluate(
+                            """
                             () => {
                                 const versionElement = document.querySelector('#version');
                                 const commandLineElement = document.querySelector('#command_line');
@@ -88,12 +87,16 @@ async def main():
                                     commandLine: commandLineElement ? commandLineElement.textContent : 'Not found'
                                 };
                             }
-                        """)
+                        """
+                        )
 
                         print(f"Chrome Version: {version_info['version']}")
                         print(f"Command Line: {version_info['commandLine']}")
-                        
-                        if "--disable-features=PrivacySandboxSettings4" in version_info['commandLine']:
+
+                        if (
+                            "--disable-features=PrivacySandboxSettings4"
+                            in version_info["commandLine"]
+                        ):
                             print("✓ Custom command argument found in browser")
                         else:
                             print("✗ Custom command argument not found in browser")
@@ -109,6 +112,7 @@ async def main():
         agb.delete(session)
     else:
         print("Failed to create session", session_result.error_message)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

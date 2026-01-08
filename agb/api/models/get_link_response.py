@@ -100,5 +100,3 @@ class GetLinkResponse:
             Optional[str]: URL or None if not found
         """
         return self.url_data if self.is_successful() else None
-
-

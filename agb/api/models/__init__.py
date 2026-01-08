@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from .call_mcp_tool_request import CallMcpToolRequest
 from .call_mcp_tool_response import CallMcpToolResponse
-from .create_session_request import CreateSessionRequest, CreateMcpSessionRequestPersistenceDataList
+from .create_session_request import (
+    CreateSessionRequest,
+    CreateMcpSessionRequestPersistenceDataList,
+)
 from .create_session_response import CreateSessionResponse
 from .get_link_request import GetLinkRequest
 from .get_link_response import GetLinkResponse
@@ -12,6 +15,8 @@ from .get_mcp_resource_request import GetMcpResourceRequest
 from .get_mcp_resource_response import GetMcpResourceResponse
 from .get_session_request import GetSessionRequest
 from .get_session_response import GetSessionResponse
+from .get_session_detail_request import GetSessionDetailRequest
+from .get_session_detail_response import GetSessionDetailResponse
 from .init_browser_request import InitBrowserRequest
 from .init_browser_response import InitBrowserResponse
 from .list_mcp_tools_request import ListMcpToolsRequest
@@ -25,7 +30,10 @@ from .set_label_response import SetLabelResponse
 from .get_label_request import GetLabelRequest
 from .get_label_response import GetLabelResponse
 from .delete_session_async_request import DeleteSessionAsyncRequest
-from .delete_session_async_response import DeleteSessionAsyncResponse, DeleteSessionAsyncResponseBody
+from .delete_session_async_response import (
+    DeleteSessionAsyncResponse,
+    DeleteSessionAsyncResponseBody,
+)
 
 # Context related models
 from .list_contexts_request import ListContextsRequest
@@ -65,6 +73,8 @@ __all__ = [
     "GetMcpResourceResponse",
     "GetSessionRequest",
     "GetSessionResponse",
+    "GetSessionDetailRequest",
+    "GetSessionDetailResponse",
     "InitBrowserRequest",
     "InitBrowserResponse",
     "GetLinkRequest",

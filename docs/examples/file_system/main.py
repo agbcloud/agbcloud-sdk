@@ -10,6 +10,7 @@ This example shows how to use various file system operations including:
 - File editing
 - File searching
 - Multiple file reading
+- Binary file operations
 - Large file operations with chunking
 """
 
@@ -33,7 +34,7 @@ def main():
 
     # Create a session
     print("Creating a new session...")
-    params = CreateSessionParams(image_id="agb-code-space-1")
+    params = CreateSessionParams(image_id="agb-computer-use-ubuntu-2204")
     session_result = agb.create(params)
 
     if not session_result.success:
@@ -189,9 +190,51 @@ def main():
             print(f"Error reading moved file: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
+        # ===== FILE DELETION =====
+        print("\n===== FILE DELETION =====")
+
+        # Example 9: Delete a file
+        print("\nExample 9: Deleting a file...")
+        
+        # Create a test file for deletion
+        delete_test_file = "/tmp/delete_test.txt"
+        delete_content = "This is a test file created for deletion testing.\nIt will be deleted shortly."
+        
+        result = fs.write_file(delete_test_file, delete_content, "overwrite")
+        if result.success:
+            print(f"✅ Created test file for deletion: {delete_test_file}")
+        else:
+            print(f"❌ Failed to create test file: {result.error_message}")
+            
+        # Verify the file exists before deletion
+        result = fs.get_file_info(delete_test_file)
+        if result.success:
+            print(f"File exists before deletion: {delete_test_file}")
+            print(f"File size: {result.file_info.get('size', 'unknown')} bytes")
+        else:
+            print(f"File does not exist: {delete_test_file}")
+
+        # Delete the file
+        result = fs.delete_file(delete_test_file)
+        print(f"File deletion successful: {result.success}")
+        if not result.success:
+            print(f"Error: {result.error_message}")
+        print(f"Request ID: {result.request_id}")
+
+        # Verify the file was deleted
+        result = fs.get_file_info(delete_test_file)
+        if not result.success:
+            print(f"✅ File successfully deleted - file no longer exists")
+        else:
+            print(f"❌ File still exists after deletion attempt")
+
         # ===== FILE SEARCHING =====
         print("\n===== FILE SEARCHING =====")
-
+        create_direction = fs.create_directory("/tmp/test_directory")
+        if(create_direction.success):
+            print(f"✅ Created test directory: {create_direction.request_id}")
+        else:
+            print(f"❌ Failed to create test directory: {create_direction.error_message}")
         # Create some files for searching
         fs.write_file(
             "/tmp/test_directory/file1.txt",
@@ -211,7 +254,7 @@ def main():
 
         # Example 9: Search for files
         print("\nExample 9: Searching for files...")
-        result = fs.search_files("/tmp/test_directory", "SEARCHABLE")
+        result = fs.search_files("/tmp/test_directory", "file*")
         if result.success:
             search_results = result.matches
             print(f"Found {len(search_results)} files matching the search pattern:")
@@ -242,11 +285,59 @@ def main():
             print(f"Error reading multiple files: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
+        # ===== BINARY FILE OPERATIONS =====
+        print("\n===== BINARY FILE OPERATIONS =====")
+
+        # Example 11: Write and read binary files
+        print("\nExample 11: Writing and reading binary files...")
+        
+        # Create some binary test data
+        binary_data = bytes([0x48, 0x65, 0x6C, 0x6C, 0x6F])  # "Hello" in bytes
+        binary_data += b"\x00\x01\x02\x03\x04\x05"  # Some null bytes and control characters
+        binary_data += "World!".encode('utf-8')  # Unicode text as bytes
+        
+        binary_file_path = "/tmp/test_binary.dat"
+        
+        # Write binary data to file
+        result = fs.write_file(binary_file_path, binary_data.decode('latin-1'), "overwrite")
+        print(f"Binary file write successful: {result.success}")
+        if not result.success:
+            print(f"Error: {result.error_message}")
+        print(f"Request ID: {result.request_id}")
+        
+        # Read binary file using format="bytes"
+        print("\nReading binary file with format='bytes'...")
+        result = fs.read_file(binary_file_path, format="bytes")
+        if result.success:
+            read_binary_data = result.content
+            print(f"Binary file read successful")
+            print(f"Original data length: {len(binary_data)} bytes")
+            print(f"Read data length: {len(read_binary_data)} bytes")
+            print(f"Data type: {type(read_binary_data)}")
+            print(f"First 10 bytes: {read_binary_data[:10]}")
+            print(f"Data matches original: {read_binary_data == binary_data}")
+        else:
+            print(f"Error reading binary file: {result.error_message}")
+        print(f"Request ID: {result.request_id}")
+        
+        # Example 12: Read the same file as text (for comparison)
+        print("\nReading the same file as text (format='text')...")
+        result = fs.read_file(binary_file_path, format="text")
+        if result.success:
+            text_content = result.content
+            print(f"Text file read successful")
+            print(f"Content type: {type(text_content)}")
+            print(f"Content length: {len(text_content)} characters")
+            print(f"Content preview: {repr(text_content[:50])}")
+        else:
+            print(f"Error reading file as text: {result.error_message}")
+        print(f"Request ID: {result.request_id}")
+
         # ===== LARGE FILE OPERATIONS =====
         print("\n===== LARGE FILE OPERATIONS =====")
 
-        # Example 11: Write a large file (automatically chunked)
-        print("\nExample 11: Writing a large file (automatically chunked)...")
+        # Example 15: Write a large file (automatically chunked)
+        print("\nExample 15: Writing a large file (automatically chunked)...")
 
         # Generate approximately 1MB of test content
         line_content = "This is a line of test content for large file testing. " * 20
@@ -266,8 +357,8 @@ def main():
             print(f"Error: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # Example 12: Read the large file (automatically chunked)
-        print("\nExample 12: Reading the large file (automatically chunked)...")
+        # Example 16: Read the large file (automatically chunked)
+        print("\nExample 16: Reading the large file (automatically chunked)...")
 
         start_time = time.time()
         result = fs.read_file(test_file_path)
@@ -282,8 +373,8 @@ def main():
             print(f"Error reading large file: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # Example 13: Write another large file for comparison
-        print("\nExample 13: Writing another large file for comparison...")
+        # Example 17: Write another large file for comparison
+        print("\nExample 17: Writing another large file for comparison...")
 
         test_file_path2 = "/tmp/large_file2.txt"
 
@@ -297,8 +388,8 @@ def main():
             print(f"Error: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
-        # Example 14: Read the second large file
-        print("\nExample 14: Reading the second large file...")
+        # Example 18: Read the second large file
+        print("\nExample 18: Reading the second large file...")
 
         start_time = time.time()
         result = fs.read_file(test_file_path2)

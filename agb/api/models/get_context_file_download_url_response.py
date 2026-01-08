@@ -4,7 +4,8 @@ Get context file download URL response model
 
 from typing import Any, Dict, Optional
 
-class GetContextFileDownloadUrlResponseBodyData():
+
+class GetContextFileDownloadUrlResponseBodyData:
     def __init__(
         self,
         expire_time: Optional[int] = None,
@@ -12,6 +13,7 @@ class GetContextFileDownloadUrlResponseBodyData():
     ):
         self.expire_time = expire_time
         self.url = url
+
 
 class GetContextFileDownloadUrlResponse:
     """Structured response object for get context file download URL operation"""
@@ -52,7 +54,9 @@ class GetContextFileDownloadUrlResponse:
             self.http_status_code = None
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> "GetContextFileDownloadUrlResponse":
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "GetContextFileDownloadUrlResponse":
         """
         Create GetContextFileDownloadUrlResponse from HTTP client returned dictionary
 
@@ -74,6 +78,7 @@ class GetContextFileDownloadUrlResponse:
                 else None
             ),
         )
+
     def is_successful(self) -> bool:
         """Check if the operation was successful"""
         return self.status_code == 200 and self.api_success
@@ -109,7 +114,6 @@ class GetContextFileDownloadUrlResponse:
 
         if isinstance(self.data, dict):
             return GetContextFileDownloadUrlResponseBodyData(
-                expire_time=self.data.get("expireTime"),
-                url=self.data.get("url")
+                expire_time=self.data.get("expireTime"), url=self.data.get("url")
             )
         return GetContextFileDownloadUrlResponseBodyData()

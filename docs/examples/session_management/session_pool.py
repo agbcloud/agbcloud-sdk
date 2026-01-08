@@ -15,6 +15,7 @@ from typing import Dict, Optional
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
+
 class SessionPool:
     """Thread-safe session pool for high-throughput applications"""
 
@@ -32,10 +33,10 @@ class SessionPool:
         session_info = self._acquire_session()
         try:
             print(f"🟢 Acquired session: {session_info['id']}")
-            yield session_info['session']
+            yield session_info["session"]
         finally:
             print(f"🟡 Released session: {session_info['id']}")
-            self._release_session(session_info['id'])
+            self._release_session(session_info["id"])
 
     def _acquire_session(self):
         with self.lock:
@@ -44,9 +45,9 @@ class SessionPool:
 
             # 2. Try to reuse an idle session
             for session_id, info in self.sessions.items():
-                if not info['in_use']:
-                    info['in_use'] = True
-                    info['last_used'] = time.time()
+                if not info["in_use"]:
+                    info["in_use"] = True
+                    info["last_used"] = time.time()
                     return info
 
             # 3. Create new session if under limit
@@ -57,13 +58,13 @@ class SessionPool:
 
                 if result.success:
                     session_info = {
-                        'id': result.session.session_id,
-                        'session': result.session,
-                        'created': time.time(),
-                        'last_used': time.time(),
-                        'in_use': True
+                        "id": result.session.session_id,
+                        "session": result.session,
+                        "created": time.time(),
+                        "last_used": time.time(),
+                        "in_use": True,
                     }
-                    self.sessions[session_info['id']] = session_info
+                    self.sessions[session_info["id"]] = session_info
                     return session_info
                 else:
                     raise Exception(f"Failed to create session: {result.error_message}")
@@ -73,7 +74,7 @@ class SessionPool:
     def _release_session(self, session_id: str):
         with self.lock:
             if session_id in self.sessions:
-                self.sessions[session_id]['in_use'] = False
+                self.sessions[session_id]["in_use"] = False
 
     def _cleanup_expired_sessions(self):
         current_time = time.time()
@@ -81,14 +82,17 @@ class SessionPool:
 
         for session_id, info in self.sessions.items():
             # If idle for too long
-            if not info['in_use'] and (current_time - info['last_used']) > self.session_timeout:
+            if (
+                not info["in_use"]
+                and (current_time - info["last_used"]) > self.session_timeout
+            ):
                 expired_ids.append(session_id)
 
         for session_id in expired_ids:
             print(f"⌛ Cleaning up expired session: {session_id}")
             session_info = self.sessions.pop(session_id)
             try:
-                self.agb.delete(session_info['session'])
+                self.agb.delete(session_info["session"])
             except Exception as e:
                 print(f"Error deleting session {session_id}: {e}")
 
@@ -98,11 +102,12 @@ class SessionPool:
         with self.lock:
             for session_info in self.sessions.values():
                 try:
-                    self.agb.delete(session_info['session'])
+                    self.agb.delete(session_info["session"])
                     print(f"Deleted {session_info['id']}")
                 except Exception as e:
                     print(f"Error deleting session: {e}")
             self.sessions.clear()
+
 
 def main():
     api_key = os.getenv("AGB_API_KEY")
@@ -122,7 +127,9 @@ def main():
             try:
                 with pool.get_session() as session:
                     print(f"▶️  Running {task_name}...")
-                    result = session.code.run_code(f"print('Hello from {task_name}')", "python")
+                    result = session.code.run_code(
+                        f"print('Hello from {task_name}')", "python"
+                    )
                     # Simulate work holding the session
                     time.sleep(1)
                     print(f"✅ {task_name} Result: {result.result.strip()}")
@@ -141,6 +148,7 @@ def main():
     finally:
         # 3. Cleanup
         pool.destroy_all()
+
 
 if __name__ == "__main__":
     main()

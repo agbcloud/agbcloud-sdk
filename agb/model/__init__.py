@@ -6,6 +6,10 @@ from .response import (
     OperationResult,
     SessionResult,
     UploadResult,
+    EnhancedCodeExecutionResult,
+    ExecutionResult,
+    ExecutionLogs,
+    BinaryFileContentResult
 )
 
 __all__ = [
@@ -16,4 +20,8 @@ __all__ = [
     "BoolResult",
     "UploadResult",
     "DownloadResult",
+    "EnhancedCodeExecutionResult",
+    "ExecutionResult",
+    "ExecutionLogs",
+    "BinaryFileContentResult"
 ]

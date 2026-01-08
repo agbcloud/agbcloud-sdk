@@ -4,12 +4,14 @@ Get label response model
 
 from typing import Any, Dict, Optional
 
+
 class GetLabelResponseBodyData:
     def __init__(
         self,
         labels: Optional[str] = None,
     ):
         self.labels = labels
+
 
 class GetLabelResponse:
     """Structured response object for get label operation"""
@@ -92,9 +94,7 @@ class GetLabelResponse:
             return None
 
         if isinstance(self.data, dict):
-            return GetLabelResponseBodyData(
-                labels=self.data.get("labels")
-            )
+            return GetLabelResponseBodyData(labels=self.data.get("labels"))
         return None
 
     def get_count(self) -> Optional[int]:

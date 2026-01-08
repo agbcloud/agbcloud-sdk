@@ -29,6 +29,8 @@ from .models.get_mcp_resource_request import GetMcpResourceRequest
 from .models.get_mcp_resource_response import GetMcpResourceResponse
 from .models.get_session_request import GetSessionRequest
 from .models.get_session_response import GetSessionResponse
+from .models.get_session_detail_request import GetSessionDetailRequest
+from .models.get_session_detail_response import GetSessionDetailResponse
 from .models.init_browser_request import InitBrowserRequest
 from .models.init_browser_response import InitBrowserResponse
 from .models.list_mcp_tools_request import ListMcpToolsRequest
@@ -57,18 +59,27 @@ from .models.sync_context_request import SyncContextRequest
 from .models.sync_context_response import SyncContextResponse
 from .models.get_context_info_request import GetContextInfoRequest
 from .models.get_context_info_response import GetContextInfoResponse
-from .models.get_context_file_download_url_request import GetContextFileDownloadUrlRequest
-from .models.get_context_file_download_url_response import GetContextFileDownloadUrlResponse
+from .models.get_context_file_download_url_request import (
+    GetContextFileDownloadUrlRequest,
+)
+from .models.get_context_file_download_url_response import (
+    GetContextFileDownloadUrlResponse,
+)
 from .models.get_context_file_upload_url_request import GetContextFileUploadUrlRequest
 from .models.get_context_file_upload_url_response import GetContextFileUploadUrlResponse
 from .models.delete_context_file_request import DeleteContextFileRequest
 from .models.delete_context_file_response import DeleteContextFileResponse
 from .models.describe_context_files_request import DescribeContextFilesRequest
 from .models.describe_context_files_response import DescribeContextFilesResponse
-from .models.get_and_load_internal_context_request import GetAndLoadInternalContextRequest
-from .models.get_and_load_internal_context_response import GetAndLoadInternalContextResponse
+from .models.get_and_load_internal_context_request import (
+    GetAndLoadInternalContextRequest,
+)
+from .models.get_and_load_internal_context_response import (
+    GetAndLoadInternalContextResponse,
+)
 from .models.delete_session_async_request import DeleteSessionAsyncRequest
 from .models.delete_session_async_response import DeleteSessionAsyncResponse
+
 
 class HTTPClient:
     """HTTP client class for communicating with AGB API"""
@@ -231,6 +242,32 @@ class HTTPClient:
 
         # Return structured response object
         return GetSessionResponse.from_http_response(response_dict)
+
+    def get_session_detail(
+        self, request: GetSessionDetailRequest
+    ) -> GetSessionDetailResponse:
+        """
+        HTTP request interface for getting session detail (status only).
+
+        Args:
+            request (GetSessionDetailRequest): Request object for getting session detail.
+
+        Returns:
+            GetSessionDetailResponse: Structured response object.
+        """
+        headers: Dict[str, str] = {}
+        params = request.get_params()
+        body = request.get_body()
+
+        response_dict = self._make_request(
+            method="POST",
+            endpoint="/mcp/getSessionInfo",
+            headers=headers,
+            params=params,
+            json_data=body,
+        )
+
+        return GetSessionDetailResponse.from_http_response(response_dict)
 
     def list_sessions(self, request: ListSessionRequest) -> ListSessionResponse:
         """
@@ -532,13 +569,19 @@ class HTTPClient:
         request_data_parts = []
         if params:
             masked_params = mask_sensitive_data(params)
-            request_data_parts.append(f"Params: {json.dumps(masked_params, ensure_ascii=False)}")
+            request_data_parts.append(
+                f"Params: {json.dumps(masked_params, ensure_ascii=False)}"
+            )
         if json_data:
             masked_json = mask_sensitive_data(json_data)
-            request_data_parts.append(f"Body: {json.dumps(masked_json, ensure_ascii=False)}")
+            request_data_parts.append(
+                f"Body: {json.dumps(masked_json, ensure_ascii=False)}"
+            )
         elif data:
             masked_data = mask_sensitive_data(data)
-            request_data_parts.append(f"Data: {json.dumps(masked_data, ensure_ascii=False)}")
+            request_data_parts.append(
+                f"Data: {json.dumps(masked_data, ensure_ascii=False)}"
+            )
 
         request_data_str = " | ".join(request_data_parts) if request_data_parts else ""
 
@@ -697,13 +740,19 @@ class HTTPClient:
         request_data_parts = []
         if params:
             masked_params = mask_sensitive_data(params)
-            request_data_parts.append(f"Params: {json.dumps(masked_params, ensure_ascii=False)}")
+            request_data_parts.append(
+                f"Params: {json.dumps(masked_params, ensure_ascii=False)}"
+            )
         if json_data:
             masked_json = mask_sensitive_data(json_data)
-            request_data_parts.append(f"Body: {json.dumps(masked_json, ensure_ascii=False)}")
+            request_data_parts.append(
+                f"Body: {json.dumps(masked_json, ensure_ascii=False)}"
+            )
         elif data:
             masked_data = mask_sensitive_data(data)
-            request_data_parts.append(f"Data: {json.dumps(masked_data, ensure_ascii=False)}")
+            request_data_parts.append(
+                f"Data: {json.dumps(masked_data, ensure_ascii=False)}"
+            )
 
         request_data_str = " | ".join(request_data_parts) if request_data_parts else ""
 
@@ -732,14 +781,21 @@ class HTTPClient:
                         try:
                             response_dict["json"] = await response.json()
                             # Extract request_id from JSON response if available
-                            if response_dict["json"] and "requestId" in response_dict["json"]:
-                                response_dict["request_id"] = response_dict["json"]["requestId"]
+                            if (
+                                response_dict["json"]
+                                and "requestId" in response_dict["json"]
+                            ):
+                                response_dict["request_id"] = response_dict["json"][
+                                    "requestId"
+                                ]
                         except:
                             response_dict["json"] = None
 
                         # Extract request_id from response headers if not found in JSON
                         if "request_id" not in response_dict:
-                            response_dict["request_id"] = response.headers.get("x-request-id", "")
+                            response_dict["request_id"] = response.headers.get(
+                                "x-request-id", ""
+                            )
 
                         # Prepare response data for logging
                         response_success = response_dict["success"]
@@ -759,7 +815,9 @@ class HTTPClient:
                         full_response = ""
                         if response_dict.get("json"):
                             masked_response = mask_sensitive_data(response_dict["json"])
-                            full_response = json.dumps(masked_response, ensure_ascii=False)
+                            full_response = json.dumps(
+                                masked_response, ensure_ascii=False
+                            )
                         elif response_dict.get("text"):
                             full_response = response_dict["text"]
 
@@ -792,14 +850,21 @@ class HTTPClient:
                             try:
                                 response_dict["json"] = await response.json()
                                 # Extract request_id from JSON response if available
-                                if response_dict["json"] and "requestId" in response_dict["json"]:
-                                    response_dict["request_id"] = response_dict["json"]["requestId"]
+                                if (
+                                    response_dict["json"]
+                                    and "requestId" in response_dict["json"]
+                                ):
+                                    response_dict["request_id"] = response_dict["json"][
+                                        "requestId"
+                                    ]
                             except:
                                 response_dict["json"] = None
 
                             # Extract request_id from response headers if not found in JSON
                             if "request_id" not in response_dict:
-                                response_dict["request_id"] = response.headers.get("x-request-id", "")
+                                response_dict["request_id"] = response.headers.get(
+                                    "x-request-id", ""
+                                )
 
                             # Prepare response data for logging
                             response_success = response_dict["success"]
@@ -810,7 +875,9 @@ class HTTPClient:
                             if response_dict.get("json"):
                                 json_data = response_dict["json"]
                                 if isinstance(json_data, dict):
-                                    key_fields["status_code"] = response_dict["status_code"]
+                                    key_fields["status_code"] = response_dict[
+                                        "status_code"
+                                    ]
                                     for key in ["code", "message", "data", "result"]:
                                         if key in json_data:
                                             key_fields[key] = json_data[key]
@@ -818,8 +885,12 @@ class HTTPClient:
                             # Prepare full response for debug logging
                             full_response = ""
                             if response_dict.get("json"):
-                                masked_response = mask_sensitive_data(response_dict["json"])
-                                full_response = json.dumps(masked_response, ensure_ascii=False)
+                                masked_response = mask_sensitive_data(
+                                    response_dict["json"]
+                                )
+                                full_response = json.dumps(
+                                    masked_response, ensure_ascii=False
+                                )
                             elif response_dict.get("text"):
                                 full_response = response_dict["text"]
 
@@ -850,14 +921,21 @@ class HTTPClient:
                             try:
                                 response_dict["json"] = await response.json()
                                 # Extract request_id from JSON response if available
-                                if response_dict["json"] and "requestId" in response_dict["json"]:
-                                    response_dict["request_id"] = response_dict["json"]["requestId"]
+                                if (
+                                    response_dict["json"]
+                                    and "requestId" in response_dict["json"]
+                                ):
+                                    response_dict["request_id"] = response_dict["json"][
+                                        "requestId"
+                                    ]
                             except:
                                 response_dict["json"] = None
 
                             # Extract request_id from response headers if not found in JSON
                             if "request_id" not in response_dict:
-                                response_dict["request_id"] = response.headers.get("x-request-id", "")
+                                response_dict["request_id"] = response.headers.get(
+                                    "x-request-id", ""
+                                )
 
                             # Prepare response data for logging
                             response_success = response_dict["success"]
@@ -868,7 +946,9 @@ class HTTPClient:
                             if response_dict.get("json"):
                                 json_data = response_dict["json"]
                                 if isinstance(json_data, dict):
-                                    key_fields["status_code"] = response_dict["status_code"]
+                                    key_fields["status_code"] = response_dict[
+                                        "status_code"
+                                    ]
                                     for key in ["code", "message", "data", "result"]:
                                         if key in json_data:
                                             key_fields[key] = json_data[key]
@@ -876,8 +956,12 @@ class HTTPClient:
                             # Prepare full response for debug logging
                             full_response = ""
                             if response_dict.get("json"):
-                                masked_response = mask_sensitive_data(response_dict["json"])
-                                full_response = json.dumps(masked_response, ensure_ascii=False)
+                                masked_response = mask_sensitive_data(
+                                    response_dict["json"]
+                                )
+                                full_response = json.dumps(
+                                    masked_response, ensure_ascii=False
+                                )
                             elif response_dict.get("text"):
                                 full_response = response_dict["text"]
 
@@ -1109,7 +1193,9 @@ class HTTPClient:
         # Return structured response object
         return SyncContextResponse.from_http_response(response_dict)
 
-    def get_context_info(self, request: GetContextInfoRequest) -> GetContextInfoResponse:
+    def get_context_info(
+        self, request: GetContextInfoRequest
+    ) -> GetContextInfoResponse:
         """
         HTTP request interface for getting context info
 
@@ -1136,7 +1222,9 @@ class HTTPClient:
         # Return structured response object
         return GetContextInfoResponse.from_http_response(response_dict)
 
-    def get_context_file_download_url(self, request: GetContextFileDownloadUrlRequest) -> GetContextFileDownloadUrlResponse:
+    def get_context_file_download_url(
+        self, request: GetContextFileDownloadUrlRequest
+    ) -> GetContextFileDownloadUrlResponse:
         """
         HTTP request interface for getting context file download URL
 
@@ -1163,7 +1251,9 @@ class HTTPClient:
         # Return structured response object
         return GetContextFileDownloadUrlResponse.from_http_response(response_dict)
 
-    def get_context_file_upload_url(self, request: GetContextFileUploadUrlRequest) -> GetContextFileUploadUrlResponse:
+    def get_context_file_upload_url(
+        self, request: GetContextFileUploadUrlRequest
+    ) -> GetContextFileUploadUrlResponse:
         """
         HTTP request interface for getting context file upload URL
 
@@ -1190,7 +1280,9 @@ class HTTPClient:
         # Return structured response object
         return GetContextFileUploadUrlResponse.from_http_response(response_dict)
 
-    def delete_context_file(self, request: DeleteContextFileRequest) -> DeleteContextFileResponse:
+    def delete_context_file(
+        self, request: DeleteContextFileRequest
+    ) -> DeleteContextFileResponse:
         """
         HTTP request interface for deleting context file
 
@@ -1221,7 +1313,9 @@ class HTTPClient:
         # Return structured response object
         return DeleteContextFileResponse.from_http_response(response_dict)
 
-    def describe_context_files(self, request: DescribeContextFilesRequest) -> DescribeContextFilesResponse:
+    def describe_context_files(
+        self, request: DescribeContextFilesRequest
+    ) -> DescribeContextFilesResponse:
         """
         HTTP request interface for describing context files
 
@@ -1306,7 +1400,9 @@ class HTTPClient:
         # Return structured response object
         return GetLabelResponse.from_http_response(response_dict)
 
-    def get_and_load_internal_context(self, request: GetAndLoadInternalContextRequest) -> GetAndLoadInternalContextResponse:
+    def get_and_load_internal_context(
+        self, request: GetAndLoadInternalContextRequest
+    ) -> GetAndLoadInternalContextResponse:
         """
         HTTP request interface for getting and loading internal context
 
@@ -1337,7 +1433,9 @@ class HTTPClient:
         # Return structured response object
         return GetAndLoadInternalContextResponse.from_http_response(response_dict)
 
-    def delete_session_async(self, request: DeleteSessionAsyncRequest) -> DeleteSessionAsyncResponse:
+    def delete_session_async(
+        self, request: DeleteSessionAsyncRequest
+    ) -> DeleteSessionAsyncResponse:
         """
         HTTP request interface for asynchronously deleting session
 
@@ -1367,4 +1465,3 @@ class HTTPClient:
 
         # Return structured response object
         return DeleteSessionAsyncResponse.from_http_response(response_dict)
-

@@ -49,7 +49,9 @@ def create_session_with_custom_image() -> None:
 
     if result.success and result.session:
         session = result.session
-        print(f"Session with custom image created successfully with ID: {session.session_id}")
+        print(
+            f"Session with custom image created successfully with ID: {session.session_id}"
+        )
         print(f"Request ID: {result.request_id}")
 
         # Clean up
@@ -60,6 +62,7 @@ def create_session_with_custom_image() -> None:
             print(f"Failed to delete session: {delete_result.error_message}")
     else:
         print(f"Failed to create session with custom image: {result.error_message}")
+
 
 def create_session_with_labels() -> None:
     """Create a session with labels."""
@@ -73,14 +76,11 @@ def create_session_with_labels() -> None:
         "project": "example",
         "owner": "user123",
         "team": "backend",
-        "version": "v1.0.0"
+        "version": "v1.0.0",
     }
 
     # Create session parameters with labels
-    params = CreateSessionParams(
-        image_id="agb-browser-use-1",
-        labels=labels
-    )
+    params = CreateSessionParams(image_id="agb-browser-use-1", labels=labels)
 
     # Create a session with the parameters
     result = agb.create(params)
@@ -104,7 +104,7 @@ def create_session_with_labels() -> None:
         updated_labels = {
             **labels,
             "status": "active",
-            "last_updated": str(int(time.time()))
+            "last_updated": str(int(time.time())),
         }
 
         update_result = session.set_labels(updated_labels)

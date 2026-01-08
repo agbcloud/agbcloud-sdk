@@ -31,8 +31,6 @@ class TestAGB(unittest.TestCase):
         # Verify results
         self.assertEqual(agb.api_key, "test-api-key")
         self.assertEqual(agb.client, mock_client)
-        self.assertDictEqual(agb._sessions, {})
-        self.assertIsNotNone(agb._lock)
         self.assertIsNotNone(agb.context)
 
     @patch("agb.agb.load_config")
@@ -126,10 +124,7 @@ class TestAGB(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertIsNotNone(result.session)
         self.assertEqual(result.session.session_id, "new-session-id")
-
-        # Verify session was added to the internal dictionary
-        self.assertIn("new-session-id", agb._sessions)
-        self.assertEqual(agb._sessions["new-session-id"], result.session)
+        # Implementation note: AGB no longer maintains an internal session cache.
 
     @patch("agb.agb.load_config")
     @patch("agb.agb.mcp_client")
@@ -381,7 +376,6 @@ class TestAGB(unittest.TestCase):
         from agb.model.response import DeleteResult
 
         session = Session(agb, "session-to-delete")
-        agb._sessions["session-to-delete"] = session
 
         # Mock session delete method
         mock_delete_result = DeleteResult(
@@ -396,9 +390,7 @@ class TestAGB(unittest.TestCase):
         # Verify results
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "delete-request-id")
-
-        # Verify session was removed from internal dictionary
-        self.assertNotIn("session-to-delete", agb._sessions)
+        session.delete.assert_called_once_with(sync_context=False)
 
     @patch("agb.agb.load_config")
     @patch("agb.agb.mcp_client")
@@ -422,7 +414,6 @@ class TestAGB(unittest.TestCase):
         from agb.model.response import DeleteResult
 
         session = Session(agb, "session-with-sync")
-        agb._sessions["session-with-sync"] = session
 
         # Mock session delete method
         mock_delete_result = DeleteResult(
@@ -440,9 +431,6 @@ class TestAGB(unittest.TestCase):
 
         # Verify session.delete was called with sync_context=True
         session.delete.assert_called_once_with(sync_context=True)
-
-        # Verify session was removed from internal dictionary
-        self.assertNotIn("session-with-sync", agb._sessions)
 
     @patch("agb.agb.load_config")
     @patch("agb.agb.mcp_client")
@@ -465,7 +453,6 @@ class TestAGB(unittest.TestCase):
         from agb.session import Session
 
         session = Session(agb, "session-delete-fail")
-        agb._sessions["session-delete-fail"] = session
 
         # Mock session delete method to raise exception
         session.delete = MagicMock(side_effect=Exception("Delete failed"))
@@ -476,9 +463,7 @@ class TestAGB(unittest.TestCase):
         # Verify results
         self.assertFalse(result.success)
         self.assertIn("Failed to delete session: Delete failed", result.error_message)
-
-        # Verify session was NOT removed from internal dictionary on failure
-        self.assertIn("session-delete-fail", agb._sessions)
+        session.delete.assert_called_once_with(sync_context=False)
 
 if __name__ == "__main__":
     unittest.main()

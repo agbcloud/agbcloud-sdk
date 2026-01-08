@@ -30,8 +30,14 @@ class DeleteSessionAsyncResponseBody:
             code=data.get("Code") or data.get("code"),
             http_status_code=data.get("HttpStatusCode") or data.get("httpStatusCode"),
             message=data.get("Message") or data.get("message"),
-            request_id=data.get("RequestId") or data.get("requestId") or data.get("request_id"),
-            success=data.get("Success") if data.get("Success") is not None else data.get("success"),
+            request_id=data.get("RequestId")
+            or data.get("requestId")
+            or data.get("request_id"),
+            success=(
+                data.get("Success")
+                if data.get("Success") is not None
+                else data.get("success")
+            ),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -82,7 +88,9 @@ class DeleteSessionAsyncResponse:
             self.body = DeleteSessionAsyncResponseBody()
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> "DeleteSessionAsyncResponse":
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "DeleteSessionAsyncResponse":
         """Create response object from HTTP response dictionary"""
         json_data = response_dict.get("json")
 
@@ -101,11 +109,7 @@ class DeleteSessionAsyncResponse:
 
     def is_successful(self) -> bool:
         """Check if the response indicates success"""
-        return (
-            self.success
-            and self.status_code == 200
-            and self.body.success is True
-        )
+        return self.success and self.status_code == 200 and self.body.success is True
 
     def get_error_message(self) -> Optional[str]:
         """Get error message from the response"""

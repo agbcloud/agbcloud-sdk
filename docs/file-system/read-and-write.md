@@ -1,35 +1,46 @@
 # Read and write files
 
+## What you’ll do
+
+Read and write files inside a session with `session.file_system`.
+
+## Prerequisites
+
+- `AGB_API_KEY`
+- A valid `image_id` that supports filesystem operations (commonly `agb-code-space-1`)
+
+## Quickstart
+
 ```python
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
 agb = AGB()
-params = CreateSessionParams(image_id="agb-code-space-1")
-result = agb.create(params)
+create_result = agb.create(CreateSessionParams(image_id="agb-code-space-1"))
+if not create_result.success:
+    raise SystemExit(f"Failed to create session: {create_result.error_message}")
 
-if result.success:
-    session = result.session
-
+session = create_result.session
+try:
     # Write a text file
     write_result = session.file_system.write_file(
         path="/tmp/example.txt",
-        content="This is example content\nWith multiple lines"
+        content="This is example content\nWith multiple lines",
     )
+    if not write_result.success:
+        raise SystemExit(f"Failed to write file: {write_result.error_message}")
 
-    if write_result.success:
-        print("File written successfully")
+    # Read the file back (text)
+    read_result = session.file_system.read_file("/tmp/example.txt")
+    if not read_result.success:
+        raise SystemExit(f"Failed to read file: {read_result.error_message}")
 
-        # Read the file back
-        read_result = session.file_system.read_file("/tmp/example.txt")
-        if read_result.success:
-            print("File content:")
-            print(read_result.content)
-        else:
-            print(f"Failed to read file: {read_result.error_message}")
-        else:
-            print(f"Failed to write file: {write_result.error_message}")
-else:
-    print(f"Failed to create session: {result.error_message}")
+    print("File content:")
+    print(read_result.content)
+finally:
+    agb.delete(session)
+```
 
-agb.delete(session)
+## Related
+
+- Read binary (bytes): [`docs/file-system/read-binary-files.md`](read-binary-files.md)

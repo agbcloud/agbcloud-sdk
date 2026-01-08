@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional
 
+
 class SetLabelRequest:
     """Request object for setting labels"""
 

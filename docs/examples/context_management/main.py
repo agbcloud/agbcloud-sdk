@@ -6,6 +6,7 @@ from agb import AGB, ContextSync, SyncPolicy
 from agb.exceptions import AGBError, ClearanceTimeoutError
 from agb.session_params import CreateSessionParams
 
+
 def main():
     # Initialize the AGB client
     # You can provide the API key as a parameter or set the AGB_API_KEY
@@ -55,11 +56,9 @@ def main():
         try:
             params = CreateSessionParams(
                 image_id="agb-code-space-1",
-                context_syncs=[ContextSync.new(
-                    context.id,
-                    "/tmp/shared",
-                    SyncPolicy()
-                )]
+                context_syncs=[
+                    ContextSync.new(context.id, "/tmp/shared", SyncPolicy())
+                ],
             )
 
             session_result = agb.create(params)
@@ -70,8 +69,12 @@ def main():
             else:
                 print("Failed to create session")
                 return
-            print("Note: The create() method automatically monitored the context status")
-            print("and only returned after all context operations were complete or reached maximum retries.")
+            print(
+                "Note: The create() method automatically monitored the context status"
+            )
+            print(
+                "and only returned after all context operations were complete or reached maximum retries."
+            )
         except AGBError as e:
             print(f"Error creating session: {e}")
             return
@@ -110,7 +113,9 @@ def main():
             result = agb.context.get(context_id=context.id)
             print(f"Request ID: {result.request_id}")
             if result.success and result.context:
-                print(f"✅ Got context by ID: {result.context.name} ({result.context.id})")
+                print(
+                    f"✅ Got context by ID: {result.context.name} ({result.context.id})"
+                )
             else:
                 print(f"Failed to get context by ID")
         except AGBError as e:
@@ -126,7 +131,9 @@ def main():
                 delete_result = agb.delete(session, sync_context=True)
                 print(f"Session deletion request ID: {delete_result.request_id}")
                 print(f"Session deletion success: {delete_result.success}")
-                print("Note: The delete() method synchronized the context before session deletion")
+                print(
+                    "Note: The delete() method synchronized the context before session deletion"
+                )
                 print("and monitored all context operations until completion.")
                 session = None
 
@@ -149,12 +156,13 @@ def main():
 
     except Exception as e:
         print(f"Error initializing AGB: {e}")
-        if session and hasattr(session, 'session_id'):
+        if session and hasattr(session, "session_id"):
             try:
                 agb.delete(session)  # type: ignore
                 print("Session deleted during cleanup")
             except AGBError as delete_error:
                 print(f"Error deleting session during cleanup: {delete_error}")
+
 
 if __name__ == "__main__":
     main()

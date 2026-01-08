@@ -2,8 +2,8 @@
 
 ## Related Tutorials
 
-- **[Context Sync Policies Guide](../../../docs/guides/context-sync-policies.md)** - Learn about context synchronization policies
-- **[Cross-Platform Data Persistence Guide](../../../docs/guides/cross-platform-persistence.md)** - Enable cross-environment data persistence with MappingPolicy
+- **[Context Sync Policies Guide](/context/sync-policies.md)** - Learn about context synchronization policies
+- **[Cross-Platform Data Persistence Guide](/context/cross-platform-persistence.md)** - Enable cross-environment data persistence with MappingPolicy
 
 ## Overview
 

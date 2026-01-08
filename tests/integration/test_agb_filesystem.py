@@ -6,6 +6,7 @@ AGB filesystem test code
 
 import os
 import sys
+import time
 
 # Add project root directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -339,6 +340,80 @@ def test_filesystem_operations(session):
         traceback.print_exc()
         return False
 
+def test_delete_file_operations(session):
+    """Test delete_file operation functionality"""
+    print("\n" + "=" * 60)
+    print("Testing Delete File Operation Functionality")
+    print("=" * 60)
+
+    try:
+        # Test delete_file operations
+        print("1. Testing delete_file operations...")
+
+        # Create a test file first
+        test_file = f"/tmp/agb_delete_test_{int(time.time())}.txt"
+        test_content = "Hello AGB! This is a test file for delete operation.\nCreated for delete testing."
+
+        print(f"\nCreating test file: {test_file}")
+        result = session.file_system.write_file(test_file, test_content, mode="overwrite")
+        if result.success:
+            print("✅ Test file created successfully!")
+            print(f"   Request ID: {result.request_id}")
+        else:
+            print("❌ Test file creation failed!")
+            print(f"   Error message: {result.error_message}")
+            if result.request_id:
+                print(f"   Request ID: {result.request_id}")
+            return False
+
+        # Verify file exists before deletion
+        print(f"\nVerifying file exists before deletion: {test_file}")
+        result = session.file_system.get_file_info(test_file)
+        if result.success:
+            print("✅ File exists and info retrieved successfully!")
+            print(f"   Request ID: {result.request_id}")
+            if result.file_info:
+                print(f"   File info:")
+                for key, value in result.file_info.items():
+                    print(f"     {key}: {value}")
+        else:
+            print("❌ File info retrieval failed!")
+            print(f"   Error message: {result.error_message}")
+            return False
+
+        # Delete the file
+        print(f"\nDeleting file: {test_file}")
+        result = session.file_system.delete_file(test_file)
+        if result.success:
+            print("✅ File deleted successfully!")
+            print(f"   Request ID: {result.request_id}")
+        else:
+            print("❌ File deletion failed!")
+            print(f"   Error message: {result.error_message}")
+            if result.request_id:
+                print(f"   Request ID: {result.request_id}")
+            return False
+
+        # Verify file no longer exists after deletion
+        print(f"\nVerifying file no longer exists after deletion: {test_file}")
+        result = session.file_system.get_file_info(test_file)
+        if not result.success:
+            print("✅ File successfully deleted - file info retrieval failed as expected!")
+            print(f"   Request ID: {result.request_id}")
+            print(f"   Expected error message: {result.error_message}")
+        else:
+            print("❌ File still exists after deletion - this should not happen!")
+            print(f"   File info: {result.file_info}")
+            return False
+        print("\n✅ All delete_file operations completed successfully!")
+        return True
+
+    except Exception as e:
+        print(f"❌ Error occurred during delete_file test: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 
 def main():
     """Main function"""
@@ -354,6 +429,11 @@ def main():
         # Test filesystem operation functionality
         filesystem_test_success = test_filesystem_operations(result.session)
         if not filesystem_test_success:
+            exit_code = 1
+
+        # Test delete_file operation functionality
+        delete_file_test_success = test_delete_file_operations(result.session)
+        if not delete_file_test_success:
             exit_code = 1
 
         # Optional: Test deleting session

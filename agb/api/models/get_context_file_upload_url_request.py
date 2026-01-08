@@ -34,4 +34,3 @@ class GetContextFileUploadUrlRequest:
     def get_body(self) -> dict:
         """Get the request body as a dictionary (empty for GET requests)."""
         return {}
-

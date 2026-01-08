@@ -42,7 +42,9 @@ class GetContextInfoResponse:
             self.data = {}
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> "GetContextInfoResponse":
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "GetContextInfoResponse":
         """
         Create GetContextInfoResponse from HTTP client returned dictionary
 
@@ -64,6 +66,7 @@ class GetContextInfoResponse:
                 else None
             ),
         )
+
     def is_successful(self) -> bool:
         """Check if the operation was successful"""
         return self.status_code == 200 and self.api_success
@@ -82,4 +85,3 @@ class GetContextInfoResponse:
         if isinstance(self.data, dict):
             return self.data.get("contextStatus", "")
         return ""
-

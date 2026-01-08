@@ -11,12 +11,12 @@ AGB provides a powerful synchronization mechanism that can:
 
 ## Examples
 
-### File Archive Mode (`file_archive_mode.py`)
+### File Archive Mode
 Demonstrates the simplest way to persist data: downloading specific files (like generated charts or logs) after execution.
 
 <<< ./file_archive_mode.py
 
-### Context Sync Demo (`context_sync_demo.py`)
+### Context Sync Demo
 Shows bidirectional synchronization (uploading inputs, processing them, and downloading outputs).
 
 <<< ./context_sync_demo.py

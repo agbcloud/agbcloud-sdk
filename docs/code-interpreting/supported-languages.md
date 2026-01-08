@@ -5,7 +5,7 @@
 - **Java**: Java execution environment (supports snippets).
 - **R**: R statistical computing environment.
 
-## Basic Execution (`main.py`)
+## Basic Execution
 Comprehensive example demonstrating execution in all supported languages.
 
 <<< ./main.py

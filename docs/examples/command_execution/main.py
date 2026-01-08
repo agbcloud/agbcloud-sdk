@@ -8,6 +8,8 @@ It covers:
 3. Network Diagnostics
 4. Advanced Data Processing Pipeline
 5. System Monitoring Script
+6. Using cwd and envs Parameters (New Features)
+7. Accessing Detailed Command Results (exit_code, stdout, stderr)
 """
 
 import os
@@ -16,6 +18,7 @@ import time
 
 from agb import AGB
 from agb.session_params import CreateSessionParams
+
 
 def main():
     # 1. Initialize AGB client
@@ -71,7 +74,9 @@ def main():
         # 5. Network Diagnostics
         print("\n=== 3. Network Diagnostics ===")
         print("> curl -I https://www.google.com (Head Request)")
-        curl_result = session.command.execute_command("curl -I -s --connect-timeout 5 https://www.google.com")
+        curl_result = session.command.execute_command(
+            "curl -I -s --connect-timeout 5 https://www.google.com"
+        )
         if curl_result.success:
             # Print just the first few lines of headers
             print("\n".join(curl_result.output.splitlines()[:3]))
@@ -91,7 +96,9 @@ Eve,32,Berlin,65000
 Frank,27,Sydney,52000"""
 
         print("Creating CSV file...")
-        session.command.execute_command(f"cat > /tmp/employees.csv << 'EOF'\n{csv_data}\nEOF")
+        session.command.execute_command(
+            f"cat > /tmp/employees.csv << 'EOF'\n{csv_data}\nEOF"
+        )
 
         # Step B: Analyze with awk
         print("Analyzing data with awk...")
@@ -101,7 +108,9 @@ Frank,27,Sydney,52000"""
         print(awk_result.output.strip())
 
         # Step C: Filter high earners
-        filter_cmd = "awk -F',' 'NR>1 && $4>55000 {print $1 \": $\" $4}' /tmp/employees.csv"
+        filter_cmd = (
+            "awk -F',' 'NR>1 && $4>55000 {print $1 \": $\" $4}' /tmp/employees.csv"
+        )
         print(f"> {filter_cmd}")
         filter_result = session.command.execute_command(filter_cmd)
         print("High earners:")
@@ -123,7 +132,9 @@ echo "Health check completed"
 """
         # Write script
         print("Deploying health check script...")
-        session.command.execute_command(f"cat > /tmp/health_check.sh << 'EOF'\n{health_check_script}\nEOF")
+        session.command.execute_command(
+            f"cat > /tmp/health_check.sh << 'EOF'\n{health_check_script}\nEOF"
+        )
         session.command.execute_command("chmod +x /tmp/health_check.sh")
 
         # Run script
@@ -134,11 +145,78 @@ echo "Health check completed"
         else:
             print(f"Error: {health_result.error_message}")
 
+        # 8. Using cwd and envs Parameters (New Features)
+        print("\n=== 6. Using cwd and envs Parameters ===")
+
+        # Example: Using cwd parameter
+        print("\n6.1. Using cwd parameter to set working directory:")
+        pwd_result = session.command.execute_command("pwd", cwd="/tmp")
+        if pwd_result.success:
+            print(f"   Current directory: {pwd_result.output.strip()}")
+            if pwd_result.exit_code is not None:
+                print(f"   Exit code: {pwd_result.exit_code}")
+
+        # Example: Using envs parameter
+        print("\n6.2. Using envs parameter to set environment variables:")
+        env_result = session.command.execute_command(
+            "echo $TEST_VAR $ANOTHER_VAR",
+            envs={"TEST_VAR": "hello", "ANOTHER_VAR": "world"}
+        )
+        if env_result.success:
+            print(f"   Output: {env_result.output.strip()}")
+
+        # Example: Combining cwd and envs
+        print("\n6.3. Combining cwd and envs parameters:")
+        combined_result = session.command.execute_command(
+            "pwd && echo $MY_VAR",
+            cwd="/tmp",
+            envs={"MY_VAR": "test_value"}
+        )
+        if combined_result.success:
+            print(f"   Output:\n{combined_result.output.strip()}")
+
+        # 9. Accessing Detailed Command Results
+        print("\n=== 7. Accessing Detailed Command Results ===")
+
+        # Example: Successful command with detailed fields
+        print("\n7.1. Successful command:")
+        success_result = session.command.execute_command("echo 'Hello World'")
+        if success_result.success:
+            print(f"   Success: {success_result.success}")
+            print(f"   Exit code: {success_result.exit_code}")
+            print(f"   Stdout: {success_result.stdout}")
+            print(f"   Stderr: {success_result.stderr}")
+            print(f"   Output (stdout + stderr): {success_result.output}")
+
+        # Example: Failed command with detailed fields
+        print("\n7.2. Failed command (non-existent file):")
+        fail_result = session.command.execute_command("cat /nonexistent/file.txt")
+        print(f"   Success: {fail_result.success}")
+        if fail_result.exit_code is not None:
+            print(f"   Exit code: {fail_result.exit_code}")
+        print(f"   Stdout: {fail_result.stdout}")
+        print(f"   Stderr: {fail_result.stderr}")
+        if fail_result.trace_id:
+            print(f"   Trace ID: {fail_result.trace_id}")
+        print(f"   Error message: {fail_result.error_message}")
+
+        # Example: Command with both stdout and stderr
+        print("\n7.3. Command with both stdout and stderr:")
+        mixed_result = session.command.execute_command(
+            "echo 'This is stdout' && echo 'This is stderr' >&2"
+        )
+        if mixed_result.success:
+            print(f"   Exit code: {mixed_result.exit_code}")
+            print(f"   Stdout: {repr(mixed_result.stdout)}")
+            print(f"   Stderr: {repr(mixed_result.stderr)}")
+            print(f"   Combined output: {repr(mixed_result.output)}")
+
     finally:
-        # 8. Cleanup
+        # 10. Cleanup
         print("\nCleaning up...")
         agb.delete(session)
         print("Session deleted")
+
 
 if __name__ == "__main__":
     main()

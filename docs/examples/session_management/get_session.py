@@ -12,11 +12,12 @@ import os
 import sys
 
 # Add the project root to Python path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
 sys.path.insert(0, project_root)
 
 from agb import AGB
 from agb.session_params import CreateSessionParams
+
 
 def main():
     # Get API key from environment variable
@@ -66,6 +67,7 @@ def main():
         print(f"Session {session_id} deleted successfully")
     else:
         print(f"Failed to delete session {session_id}")
+
 
 if __name__ == "__main__":
     main()

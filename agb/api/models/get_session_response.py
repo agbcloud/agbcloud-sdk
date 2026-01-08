@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+
 class SessionData:
     """Session data object"""
 
@@ -37,6 +38,7 @@ class SessionData:
             "resourceUrl": self.resource_url,
             "status": self.status,
         }
+
 
 class GetSessionResponse:
     """Get session response object"""
@@ -82,9 +84,7 @@ class GetSessionResponse:
             self.data = None
 
     @classmethod
-    def from_http_response(
-        cls, response_dict: Dict[str, Any]
-    ) -> "GetSessionResponse":
+    def from_http_response(cls, response_dict: Dict[str, Any]) -> "GetSessionResponse":
         """Create GetSessionResponse object from HTTP client returned dictionary"""
         return cls(
             status_code=response_dict.get("status_code", 0),
@@ -147,9 +147,13 @@ class GetSessionResponse:
     def __str__(self) -> str:
         """String representation"""
         if self.is_successful():
-            return f"GetSessionResponse(success=True, session_id={self.get_session_id()})"
+            return (
+                f"GetSessionResponse(success=True, session_id={self.get_session_id()})"
+            )
         else:
-            return f"GetSessionResponse(success=False, error={self.get_error_message()})"
+            return (
+                f"GetSessionResponse(success=False, error={self.get_error_message()})"
+            )
 
     def __repr__(self) -> str:
         """Detailed string representation"""

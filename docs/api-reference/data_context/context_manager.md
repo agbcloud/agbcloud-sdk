@@ -1,8 +1,8 @@
 # Context Manager API Reference
 
-## 🗂️ Related Tutorial
+## Related Tutorial
 
-- [Context Usage Guide](../../guides/context-usage-guide.md) - Advanced context management features
+- [Context Usage Guide](/context/overview.md) - Advanced context management features
 
 ## Overview
 

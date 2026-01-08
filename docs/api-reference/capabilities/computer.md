@@ -1,8 +1,8 @@
 # Computer API Reference
 
-## 🖥️ Related Tutorial
+## Related Tutorial
 
-- [Computer Automation Guide](../../guides/computer-automation.md) - Complete guide to computer UI automation and control
+- [Computer Automation Guide](/computer/overview.md) - Complete guide to computer UI automation and control
 
 ## Overview
 

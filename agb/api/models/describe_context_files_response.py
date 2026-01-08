@@ -4,7 +4,8 @@ Describe context files response model
 
 from typing import Any, Dict, List, Optional
 
-class DescribeContextFilesResponseBodyData():
+
+class DescribeContextFilesResponseBodyData:
     def __init__(
         self,
         file_id: Optional[str] = None,
@@ -24,6 +25,7 @@ class DescribeContextFilesResponseBodyData():
         self.gmt_modified = gmt_modified
         self.size = size
         self.status = status
+
 
 class DescribeContextFilesResponse:
     """Structured response object for describe context files operation"""
@@ -66,7 +68,9 @@ class DescribeContextFilesResponse:
             self.data = {}
 
     @classmethod
-    def from_http_response(cls, response_dict: Dict[str, Any]) -> "DescribeContextFilesResponse":
+    def from_http_response(
+        cls, response_dict: Dict[str, Any]
+    ) -> "DescribeContextFilesResponse":
         """
         Create DescribeContextFilesResponse from HTTP client returned dictionary
 
@@ -90,6 +94,7 @@ class DescribeContextFilesResponse:
             next_token=response_dict.get("nextToken"),
             max_results=response_dict.get("maxResults"),
         )
+
     def is_successful(self) -> bool:
         """Check if the operation was successful"""
         return self.status_code == 200 and self.api_success
@@ -109,16 +114,18 @@ class DescribeContextFilesResponse:
             result = []
             for item in self.data:
                 if isinstance(item, dict):
-                    result.append(DescribeContextFilesResponseBodyData(
-                        file_id=item.get("fileId"),
-                        file_name=item.get("fileName", ""),
-                        file_path=item.get("filePath"),
-                        file_type=item.get("fileType"),
-                        gmt_create=item.get("gmtCreate"),
-                        gmt_modified=item.get("gmtModified", ""),
-                        size=item.get("size"),
-                        status=item.get("status")
-                    ))
+                    result.append(
+                        DescribeContextFilesResponseBodyData(
+                            file_id=item.get("fileId"),
+                            file_name=item.get("fileName", ""),
+                            file_path=item.get("filePath"),
+                            file_type=item.get("fileType"),
+                            gmt_create=item.get("gmtCreate"),
+                            gmt_modified=item.get("gmtModified", ""),
+                            size=item.get("size"),
+                            status=item.get("status"),
+                        )
+                    )
             return result
         return []
 

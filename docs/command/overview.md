@@ -1,133 +1,195 @@
-# Command execution guide
+# Run shell commands in a session
 
-This guide explains how to execute shell commands in the AGB cloud environment.
+## What you’ll do
 
-## Overview
+Execute Linux shell commands via `session.command.execute_command()`, handle outputs, and avoid common pitfalls (non-persistent working directory / environment variables).
 
-The `session.command` module provides a direct interface to the underlying Linux shell of your cloud session. It allows you to run system tools, manage processes, and perform operations that aren't covered by the specialized File or Code APIs.
+The Command Execution API also supports:
+- **Working Directory**: Use the `cwd` parameter to set the working directory for commands
+- **Environment Variables**: Use the `envs` parameter to set environment variables for commands
+- **Detailed Results**: Access `exit_code`, `stdout`, `stderr`, and `trace_id` fields for better error handling and output parsing
 
-## Quick Reference (1 minute)
+## Prerequisites
+
+- `AGB_API_KEY`
+- A valid `image_id` that supports command execution (commonly `agb-code-space-1`)
+- (Optional) Any tools you want to run must exist in the image or be installed at runtime
+
+## Quickstart
+
+Minimal runnable example: create a session, run a command, print output, then clean up.
 
 ```python
-# Execute a simple command
-result = session.command.execute_command("ls -la /tmp")
+from agb import AGB
+from agb.session_params import CreateSessionParams
 
-if result.success:
-    print("Output:", result.output)
+agb = AGB()
+create_result = agb.create(CreateSessionParams(image_id="agb-code-space-1"))
+if not create_result.success:
+    raise SystemExit(f"Session creation failed: {create_result.error_message}")
+
+session = create_result.session
+cmd_result = session.command.execute_command("ls -la /tmp")
+
+if cmd_result.success:
+    print("Output:", cmd_result.output)
+    # Access new fields for more detailed information
+    if cmd_result.exit_code is not None:
+        print("Exit code:", cmd_result.exit_code)
+    if cmd_result.stdout:
+        print("Stdout:", cmd_result.stdout)
+    if cmd_result.stderr:
+        print("Stderr:", cmd_result.stderr)
 else:
-    print("Error:", result.error_message)
+    print("Error:", cmd_result.error_message)
+    if cmd_result.exit_code is not None:
+        print("Exit code:", cmd_result.exit_code)
+
+agb.delete(session)
 ```
 
-## Core Concepts
+## Common tasks
 
-### Command Execution Model
-Each `execute_command` call runs in a **new, isolated shell session**. This means:
-- **Working Directory**: The working directory does NOT persist between separate command calls. Each command starts from the default directory (usually the home directory).
-- **Environment Variables**: Environment variables set with `export` do NOT persist to subsequent command calls.
+### Learn the new command execution features
 
-**To work with multiple operations in the same context:**
-- Use command chaining with `&&` or `;` to combine operations in a single command:
-  ```python
-  # Change directory and list files in one command
-  session.command.execute_command("cd /tmp && ls -la")
+- Working directory (`cwd`): [`docs/command/working-directory.md`](./working-directory.md)
+- Environment variables (`envs`): [`docs/command/environment-variables.md`](./environment-variables.md)
+- Detailed results (`exit_code`, `stdout`, `stderr`, `trace_id`): [`docs/command/detailed-results.md`](./detailed-results.md)
 
-  # Set environment variable and use it in the same command
-  session.command.execute_command("export MY_VAR=value && echo $MY_VAR")
-  ```
-- Use environment variable prefix syntax for single commands:
-  ```python
-  # Set variable only for this command
-  session.command.execute_command("MY_VAR=value ./script.sh")
-  ```
-- Use absolute paths instead of relying on working directory:
-  ```python
-  # Use absolute path instead of cd
-  session.command.execute_command("ls -la /tmp/myproject")
-  ```
+### Set working directory with `cwd` parameter
 
-### Output Handling
-- **Stdout & Stderr**: Both streams are captured and returned in `result.output`.
-- **Exit Codes**: A non-zero exit code typically results in `result.success = False`.
+Use the `cwd` parameter to set the working directory for a command:
 
-### Timeouts
-- Commands have a default timeout.
-- For long-running operations (like downloads), increase the `timeout_ms` parameter:
-  ```python
-  session.command.execute_command("wget large-file.zip", timeout_ms=60000)
-  ```
+```python
+# Using cwd parameter (recommended)
+result = session.command.execute_command("pwd", cwd="/tmp")
+print(result.output)  # Output: /tmp
 
-## Basic Usage (5-10 minutes)
+# Alternative: command chaining (still works)
+session.command.execute_command("cd /tmp && pwd")
+```
 
-### 1. System Diagnostics
-Check CPU, memory, and disk usage.
+### Set environment variables with `envs` parameter
+
+Use the `envs` parameter to set environment variables for a command:
+
+```python
+# Using envs parameter (recommended)
+result = session.command.execute_command(
+    "echo $TEST_VAR $ANOTHER_VAR",
+    envs={"TEST_VAR": "hello", "ANOTHER_VAR": "world"}
+)
+print(result.output)  # Output: hello world
+
+# Alternative: inline env vars (still works)
+session.command.execute_command("TEST_VAR=hello echo $TEST_VAR")
+```
+
+### Combine `cwd` and `envs` parameters
+
+```python
+result = session.command.execute_command(
+    "pwd && echo $MY_VAR",
+    cwd="/tmp",
+    envs={"MY_VAR": "test_value"}
+)
+```
+
+### Access detailed command results
+
+The command result includes separate `stdout`, `stderr`, and `exit_code` fields:
+
+```python
+result = session.command.execute_command("ls /nonexistent")
+
+if result.exit_code == 0:
+    print("Success!")
+    print("Output:", result.stdout)
+else:
+    print(f"Command failed with exit code: {result.exit_code}")
+    print("Stdout:", result.stdout)
+    print("Stderr:", result.stderr)
+    if result.trace_id:
+        print("Trace ID:", result.trace_id)
+```
+
+### Run multiple operations in one command (legacy approach)
+
+Each `execute_command` call runs in a **new, isolated shell session**. That means:
+
+- Working directory changes (e.g. `cd`) do **not** persist between calls.
+- Environment variables set with `export` do **not** persist between calls.
+
+You can still use command chaining (though using `cwd` and `envs` parameters is recommended):
+
+```python
+session.command.execute_command("cd /tmp && ls -la")
+session.command.execute_command("cd /tmp && ls -la && cat file.txt")
+```
+
+### Run diagnostics (CPU / memory / disk)
+
 ```python
 session.command.execute_command("free -h")
 session.command.execute_command("df -h")
 ```
 
-### 2. Advanced File Operations
-Use `tar`, `gzip`, `grep`, or `awk` for complex file tasks.
+### Do advanced file operations with CLI tools
+
 ```python
-# Compress logs
 session.command.execute_command("tar -czf logs.tar.gz /var/log/*.log")
 ```
 
-### 3. Installing Packages
-If your session image permits (e.g., has `sudo` or is root), you can install tools.
+### Install packages (if permitted by the image)
+
 ```python
 session.command.execute_command("apt-get update && apt-get install -y jq", timeout_ms=30000)
 ```
 
-## Best Practices
+### Increase timeout for long-running commands
 
-1. **Avoid Interactive Commands**: Do not run commands that wait for user input (like `python` without `-c`, or interactive installers). They will hang until timeout.
-2. **Check Exit Status**: Always check `result.success`.
-3. **Use Absolute Paths**: Since each command runs in a new shell session, always use absolute paths instead of relying on working directory persistence.
-4. **Chain Related Operations**: If you need to perform multiple operations that depend on each other (like `cd` followed by file operations), combine them in a single command using `&&` or `;`:
-   ```python
-   # Good: Combine operations in one command
-   session.command.execute_command("cd /tmp && ls -la && cat file.txt")
+```python
+session.command.execute_command("wget large-file.zip", timeout_ms=60000)
+```
 
-   # Avoid: Separate commands (cd won't persist)
-   session.command.execute_command("cd /tmp")  # This won't affect next command
-   session.command.execute_command("ls -la")   # Runs from default directory
-   ```
-5. **Set Environment Variables Per Command**: If you need environment variables, set them in the same command where they're used:
-   ```python
-   # Good: Set and use in same command
-   session.command.execute_command("export PATH=/custom/path:$PATH && my_command")
+## Best practices
 
-   # Avoid: Setting in one command and using in another
-   session.command.execute_command("export MY_VAR=value")  # Won't persist
-   session.command.execute_command("echo $MY_VAR")         # Variable not set
-   ```
+- Avoid interactive commands (they hang until timeout).
+- Always check `cmd_result.success` and handle `cmd_result.error_message`.
+- Use the `cwd` parameter instead of `cd` commands for better control.
+- Use the `envs` parameter instead of `export` commands for better control.
+- Check `exit_code` for more precise error handling (0 means success).
+- Use `stdout` and `stderr` separately for better output parsing.
+- Prefer absolute paths or use the `cwd` parameter (don't rely on `cd` across calls).
+- Chain dependent operations using `&&` or `;` when needed.
 
 ## Troubleshooting
 
-### Command Not Found
-- Use absolute paths (e.g. `/bin/ls` instead of `ls`) if PATH is issues.
-- Verify the tool is installed in the image.
+### Command not found
 
-### Permission Denied
-- Commands run as the default user.
-- Use `sudo` if needed and permitted.
+- **Likely cause**: the tool is not installed in the image, or `PATH` is missing it.
+- **Fix**: verify the tool exists, install it (if allowed), or use an absolute path (e.g. `/bin/ls`).
 
-### Command Timeout
-- Long running commands (like `apt-get install`) may hit default timeout.
-- Increase `timeout_ms` parameter in `execute_command`.
+### Permission denied
 
-### Working Directory or Environment Variables Not Persisting
-- **Issue**: Changes made with `cd` or `export` don't persist to the next command.
-- **Cause**: Each `execute_command` call runs in a new shell session.
-- **Solution**:
-  - Combine related operations in a single command using `&&` or `;`
-  - Use absolute paths instead of relative paths
-  - Set environment variables in the same command where they're used
-  ```python
-  # Instead of:
-  session.command.execute_command("cd /tmp")
-  session.command.execute_command("ls -la")
+- **Likely cause**: commands run as the default user and lack permissions.
+- **Fix**: use `sudo` if available and permitted, or switch to an image/user that has the needed access.
 
-  # Do this:
-  session.command.execute_command("cd /tmp && ls -la")
-  ```
+### Command timeout
+
+- **Likely cause**: the command runs longer than the default timeout.
+- **Fix**: increase `timeout_ms`, or split the operation into smaller steps.
+
+### Working directory / environment variables not persisting
+
+- **Likely cause**: each `execute_command` call runs in a new shell session.
+- **Fix**: use the `cwd` parameter to set working directory, and the `envs` parameter to set environment variables. Alternatively, chain commands (`cd /tmp && ...`) and set env vars in the same command.
+
+## Related
+
+- API reference: [`docs/api-reference/capabilities/shell_commands.md`](../api-reference/capabilities/shell_commands.md)
+- Examples: [`docs/examples/command_execution/README.md`](../examples/command_execution/README.md)
+- Sessions: [`docs/api-reference/session.md`](../api-reference/session.md)
+- Working directory (`cwd`): [`docs/command/working-directory.md`](./working-directory.md)
+- Environment variables (`envs`): [`docs/command/environment-variables.md`](./environment-variables.md)
+- Detailed results: [`docs/command/detailed-results.md`](./detailed-results.md)

@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.8.0] - 2026-01-08
+
+### New Features
+- **Code Execution**: Added Jupyter-style rich outputs support for `run_code()` (e.g., images/HTML/Markdown/LaTeX/JSON).
+- **File System**: Added `delete_file()` support with tests and documentation.
+- **File System**: Added support for returning binary file content (bytes) for read operations.
+- **Command Execution**: Added `cwd` and `envs` parameters, plus richer `CommandResult` fields for better diagnostics.
+
+### Enhancements
+- **Documentation**: Added/updated capability docs for binary reads, file deletion, and `run_code` rich outputs.
+- **Documentation**: Split large pages into focused sub-pages (browser, computer, context) and standardized the overview template.
+- **Documentation**: Removed source file names from headings for cleaner, goal-oriented titles.
+
+### Refactoring
+- **AGB Core**: Extracted context synchronization waiting/polling logic into a helper and removed an unused in-memory session cache.
+- **File System**: Removed a debug log line to reduce noise.
+
+### Testing & CI/CD
+- **CI/CD**: Skipped pipeline execution for docs-only changes to speed up iteration.
+- **CI/CD**: Improved docs sync behavior to preserve `public/` and `terms-of-service/` in the target docs repository.
+- **Tests**: Normalized line endings in file transfer tests for better cross-platform stability.
+
 ## [0.7.1] - 2025-12-22
 
 ### Enhancements

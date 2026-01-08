@@ -1,6 +1,10 @@
+from __future__ import annotations
+
 import unittest
 from unittest.mock import MagicMock, patch
+from typing import Any, cast
 from agb.session import Session, DeleteResult
+from agb.model.response import SessionStatusResult
 
 class DummyAGB:
     def __init__(self):
@@ -26,7 +30,7 @@ class TestSession(unittest.TestCase):
     def setUp(self):
         self.agb = DummyAGB()
         self.session_id = "test_session_id"
-        self.session = Session(self.agb, self.session_id)
+        self.session = Session(cast(Any, self.agb), self.session_id)
 
     def test_validate_labels_success(self):
         # Test successful validation with valid labels
@@ -37,16 +41,18 @@ class TestSession(unittest.TestCase):
     def test_validate_labels_none(self):
         # Test validation with None labels
         labels = None
-        result = self.session._validate_labels(labels)
+        result = self.session._validate_labels(cast(Any, labels))
         self.assertIsNotNone(result)
+        assert result is not None
         self.assertFalse(result.success)
         self.assertIn("Labels cannot be null", result.error_message)
 
     def test_validate_labels_list(self):
         # Test validation with list instead of dict
         labels = ["key1", "value1"]
-        result = self.session._validate_labels(labels)
+        result = self.session._validate_labels(cast(Any, labels))
         self.assertIsNotNone(result)
+        assert result is not None
         self.assertFalse(result.success)
         self.assertIn("Labels cannot be an array", result.error_message)
 
@@ -55,6 +61,7 @@ class TestSession(unittest.TestCase):
         labels = {}
         result = self.session._validate_labels(labels)
         self.assertIsNotNone(result)
+        assert result is not None
         self.assertFalse(result.success)
         self.assertIn("Labels cannot be empty", result.error_message)
 
@@ -63,6 +70,7 @@ class TestSession(unittest.TestCase):
         labels = {"": "value1"}
         result = self.session._validate_labels(labels)
         self.assertIsNotNone(result)
+        assert result is not None
         self.assertFalse(result.success)
         self.assertIn("Label keys cannot be empty", result.error_message)
 
@@ -71,14 +79,16 @@ class TestSession(unittest.TestCase):
         labels = {"key1": ""}
         result = self.session._validate_labels(labels)
         self.assertIsNotNone(result)
+        assert result is not None
         self.assertFalse(result.success)
         self.assertIn("Label values cannot be empty", result.error_message)
 
     def test_validate_labels_none_value(self):
         # Test validation with None value
         labels = {"key1": None}
-        result = self.session._validate_labels(labels)
+        result = self.session._validate_labels(cast(Any, labels))
         self.assertIsNotNone(result)
+        assert result is not None
         self.assertFalse(result.success)
         self.assertIn("Label values cannot be empty", result.error_message)
 
@@ -113,18 +123,34 @@ class TestSession(unittest.TestCase):
         mock_response_body.request_id = "request-123"
         mock_response.request_id = "request-123"
 
-        # Mock get_session to return NotFound error (session deleted)
-        mock_get_session_result = MagicMock()
-        mock_get_session_result.success = False
-        mock_get_session_result.code = "InvalidMcpSession.NotFound"
-        mock_get_session_result.error_message = "Session not found"
-        mock_get_session_result.http_status_code = 400
-        self.agb.get_session = MagicMock(return_value=mock_get_session_result)
+        # Mock get_status to return a normal flow: DELETING -> FINISH
+        self.session.get_status = MagicMock(
+            side_effect=[
+                SessionStatusResult(
+                    request_id="rid-1",
+                    http_status_code=200,
+                    code="",
+                    success=True,
+                    status="DELETING",
+                    error_message="",
+                ),
+                SessionStatusResult(
+                    request_id="rid-2",
+                    http_status_code=200,
+                    code="",
+                    success=True,
+                    status="FINISH",
+                    error_message="",
+                ),
+            ]
+        )
 
-        result = self.session.delete()
+        with patch("time.sleep", return_value=None):
+            result = self.session.delete()
         self.assertIsInstance(result, DeleteResult)
         self.assertEqual(result.request_id, "request-123")
         self.assertTrue(result.success)
+        self.assertGreaterEqual(self.session.get_status.call_count, 2)
 
         MockDeleteSessionAsyncRequest.assert_called_once_with(
             authorization="Bearer test_api_key", session_id="test_session_id"
@@ -149,13 +175,17 @@ class TestSession(unittest.TestCase):
         # Set up context mock object
         self.session.context = MagicMock()
 
-        # Mock get_session to return NotFound error (session deleted)
-        mock_get_session_result = MagicMock()
-        mock_get_session_result.success = False
-        mock_get_session_result.code = "InvalidMcpSession.NotFound"
-        mock_get_session_result.error_message = "Session not found"
-        mock_get_session_result.http_status_code = 400
-        self.agb.get_session = MagicMock(return_value=mock_get_session_result)
+        # Mock get_status to return NotFound error (session deleted)
+        self.session.get_status = MagicMock(
+            return_value=SessionStatusResult(
+                request_id="",
+                http_status_code=400,
+                code="InvalidMcpSession.NotFound",
+                success=False,
+                status="",
+                error_message="Session not found",
+            )
+        )
 
         # Call delete method without parameters
         result = self.session.delete()
@@ -198,13 +228,17 @@ class TestSession(unittest.TestCase):
             return sync_result
         self.session.context.sync.return_value = mock_sync()
 
-        # Mock get_session to return NotFound error (session deleted)
-        mock_get_session_result = MagicMock()
-        mock_get_session_result.success = False
-        mock_get_session_result.code = "InvalidMcpSession.NotFound"
-        mock_get_session_result.error_message = "Session not found"
-        mock_get_session_result.http_status_code = 400
-        self.agb.get_session = MagicMock(return_value=mock_get_session_result)
+        # Mock get_status to return NotFound error (session deleted)
+        self.session.get_status = MagicMock(
+            return_value=SessionStatusResult(
+                request_id="",
+                http_status_code=400,
+                code="InvalidMcpSession.NotFound",
+                success=False,
+                status="",
+                error_message="Session not found",
+            )
+        )
 
         # Call delete method with sync_context=True
         result = self.session.delete(sync_context=True)

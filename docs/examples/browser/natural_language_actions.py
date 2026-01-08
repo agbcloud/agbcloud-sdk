@@ -47,8 +47,7 @@ async def main():
 
         # Configure browser with stealth mode
         option = BrowserOption(
-            use_stealth=True,
-            viewport=BrowserViewport(width=1366, height=768)
+            use_stealth=True, viewport=BrowserViewport(width=1366, height=768)
         )
 
         # Initialize browser
@@ -69,12 +68,16 @@ async def main():
             # Example 1: Search on a more reliable site
             print("\n🔍 Example 1: Search and Navigation")
             try:
-                await page.goto("https://httpbin.org/html", wait_until="domcontentloaded", timeout=15000)
+                await page.goto(
+                    "https://httpbin.org/html",
+                    wait_until="domcontentloaded",
+                    timeout=15000,
+                )
 
                 # Use natural language to interact with the page
-                search_result = await session.browser.agent.act_async(ActOptions(
-                    action="Find and click on any link on this page"
-                ), page)
+                search_result = await session.browser.agent.act_async(
+                    ActOptions(action="Find and click on any link on this page"), page
+                )
 
                 print(f"  Link click result: {search_result.success}")
                 if search_result.success:
@@ -89,7 +92,11 @@ async def main():
 
             # Example 2: Form Interaction
             print("\n📝 Example 2: Form Interaction")
-            await page.goto("https://httpbin.org/forms/post", wait_until="domcontentloaded", timeout=15000)
+            await page.goto(
+                "https://httpbin.org/forms/post",
+                wait_until="domcontentloaded",
+                timeout=15000,
+            )
 
             # Fill out a form using natural language
             form_actions = [
@@ -98,13 +105,13 @@ async def main():
                 "Fill the 'custemail' field with 'john.doe@example.com'",
                 "Select 'Large' from the size dropdown",
                 "Check the 'Bacon' checkbox",
-                "Fill the delivery instructions with 'Please ring the doorbell'"
+                "Fill the delivery instructions with 'Please ring the doorbell'",
             ]
 
             for action_text in form_actions:
-                result = await session.browser.agent.act_async(ActOptions(
-                    action=action_text
-                ), page)
+                result = await session.browser.agent.act_async(
+                    ActOptions(action=action_text), page
+                )
 
                 print(f"  Action: {action_text}")
                 print(f"  Result: {'✅' if result.success else '❌'} {result.message}")
@@ -112,66 +119,85 @@ async def main():
                 if not result.success:
                     print(f"    Retrying with more specific instruction...")
                     # Retry with more specific instruction
-                    retry_result = await session.browser.agent.act_async(ActOptions(
-                        action=f"Find and {action_text.lower()}"
-                    ), page)
-                    print(f"    Retry result: {'✅' if retry_result.success else '❌'} {retry_result.message}")
+                    retry_result = await session.browser.agent.act_async(
+                        ActOptions(action=f"Find and {action_text.lower()}"), page
+                    )
+                    print(
+                        f"    Retry result: {'✅' if retry_result.success else '❌'} {retry_result.message}"
+                    )
 
             # Submit the form
-            submit_result = await session.browser.agent.act_async(ActOptions(
-                action="Click the submit button to submit the form"
-            ), page)
+            submit_result = await session.browser.agent.act_async(
+                ActOptions(action="Click the submit button to submit the form"), page
+            )
 
-            print(f"  Form submission: {'✅' if submit_result.success else '❌'} {submit_result.message}")
+            print(
+                f"  Form submission: {'✅' if submit_result.success else '❌'} {submit_result.message}"
+            )
 
             # Example 3: Dynamic Content Interaction
             print("\n🔄 Example 3: Dynamic Content")
-            await page.goto("https://quotes.toscrape.com", wait_until="domcontentloaded", timeout=15000)
+            await page.goto(
+                "https://quotes.toscrape.com",
+                wait_until="domcontentloaded",
+                timeout=15000,
+            )
 
             # Scroll and interact with dynamic content
-            scroll_result = await session.browser.agent.act_async(ActOptions(
-                action="Scroll down to see more quotes on the page"
-            ), page)
+            scroll_result = await session.browser.agent.act_async(
+                ActOptions(action="Scroll down to see more quotes on the page"), page
+            )
 
-            print(f"  Scroll result: {'✅' if scroll_result.success else '❌'} {scroll_result.message}")
+            print(
+                f"  Scroll result: {'✅' if scroll_result.success else '❌'} {scroll_result.message}"
+            )
 
             # Click on a tag to filter quotes
-            tag_result = await session.browser.agent.act_async(ActOptions(
-                action="Click on any tag link to filter quotes by that tag"
-            ), page)
+            tag_result = await session.browser.agent.act_async(
+                ActOptions(action="Click on any tag link to filter quotes by that tag"),
+                page,
+            )
 
-            print(f"  Tag click result: {'✅' if tag_result.success else '❌'} {tag_result.message}")
+            print(
+                f"  Tag click result: {'✅' if tag_result.success else '❌'} {tag_result.message}"
+            )
             if tag_result.success:
                 print(f"  Current URL after tag click: {page.url}")
 
             # Example 4: Complex Multi-Step Workflow
             print("\n🔗 Example 4: Multi-Step Workflow")
-            await page.goto("https://quotes.toscrape.com", wait_until="domcontentloaded", timeout=15000)
+            await page.goto(
+                "https://quotes.toscrape.com",
+                wait_until="domcontentloaded",
+                timeout=15000,
+            )
 
             # Multi-step workflow with error handling
             workflow_steps = [
                 {
                     "action": "Find and click on the 'Next' button to go to the next page",
-                    "description": "Navigate to next page"
+                    "description": "Navigate to next page",
                 },
                 {
                     "action": "Click on the author name of the first quote to view author details",
-                    "description": "View author details"
+                    "description": "View author details",
                 },
                 {
                     "action": "Go back to the previous page using browser navigation",
-                    "description": "Return to quotes page"
-                }
+                    "description": "Return to quotes page",
+                },
             ]
 
             for i, step in enumerate(workflow_steps, 1):
                 print(f"  Step {i}: {step['description']}")
 
-                result = await session.browser.agent.act_async(ActOptions(
-                    action=step['action']
-                ), page)
+                result = await session.browser.agent.act_async(
+                    ActOptions(action=step["action"]), page
+                )
 
-                print(f"    Result: {'✅' if result.success else '❌'} {result.message}")
+                print(
+                    f"    Result: {'✅' if result.success else '❌'} {result.message}"
+                )
 
                 if result.success:
                     print(f"    Current URL: {page.url}")
@@ -181,14 +207,21 @@ async def main():
 
             # Example 5: Conditional Actions
             print("\n🤔 Example 5: Conditional Actions")
-            await page.goto("https://httpbin.org/html", wait_until="domcontentloaded", timeout=15000)
+            await page.goto(
+                "https://httpbin.org/html", wait_until="domcontentloaded", timeout=15000
+            )
 
             # Perform conditional actions based on page content
-            conditional_result = await session.browser.agent.act_async(ActOptions(
-                action="If there is a link that says 'Herman Melville', click on it. Otherwise, just scroll down the page"
-            ), page)
+            conditional_result = await session.browser.agent.act_async(
+                ActOptions(
+                    action="If there is a link that says 'Herman Melville', click on it. Otherwise, just scroll down the page"
+                ),
+                page,
+            )
 
-            print(f"  Conditional action result: {'✅' if conditional_result.success else '❌'} {conditional_result.message}")
+            print(
+                f"  Conditional action result: {'✅' if conditional_result.success else '❌'} {conditional_result.message}"
+            )
 
             await browser.close()
             print("✅ Browser closed successfully")

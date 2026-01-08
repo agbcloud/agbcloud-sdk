@@ -12,6 +12,14 @@ from agb.model.response import SessionResult
 # Add the parent directory to the path so we can import the agb package
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Optional PIL import for image validation
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    Image = None
+    PIL_AVAILABLE = False
+
 # Optional Playwright import
 try:
     from playwright.async_api import async_playwright
@@ -111,7 +119,7 @@ class TestBrowserScreenshotIntegration(unittest.TestCase):
         print("\n=== Testing screenshot with valid page ===")
         
         async def run_test():
-            page = await self._create_page_and_navigate("https://www.aliyun.com")
+            page = await self._create_page_and_navigate("https://www.tmall.com")
             try:
                 # Take screenshot with default full_page=False
                 screenshot_data = await self.browser.screenshot(page)
@@ -138,7 +146,7 @@ class TestBrowserScreenshotIntegration(unittest.TestCase):
         print("\n=== Testing screenshot with full_page=True ===")
         
         async def run_test():
-            page = await self._create_page_and_navigate("https://www.aliyun.com")
+            page = await self._create_page_and_navigate("https://www.tmall.com")
             try:
                 # Take screenshot with full_page=True
                 screenshot_data = await self.browser.screenshot(page, full_page=True)
@@ -152,6 +160,21 @@ class TestBrowserScreenshotIntegration(unittest.TestCase):
                 with open(filename, "wb") as f:
                     f.write(screenshot_data)
                 print(f"✅ Full page screenshot saved to {filename}")
+                 # Verify it's a long screenshot (by image dimensions validation)
+                if PIL_AVAILABLE:
+                    try:
+                        with Image.open(filename) as img:
+                            width, height = img.size
+                            # Verify image dimension reasonableness, long screenshots typically have height much greater than width
+                            assert width > 0 and height > 0, "Invalid image dimensions"
+                            assert height > width * 1.5, f"Image {filename} does not have long screenshot characteristics, dimensions: {width}x{height}"
+                            print(f"✅ Verified as long screenshot, dimensions: {width}x{height}")
+                    except Exception as e:
+                        print(f"Image validation failed: {e}")
+                else:
+                    print("PIL library not installed, skipping long screenshot dimension validation")
+
+                print(f"✅ All parameters screenshot completed, size: {len(screenshot_data)} bytes")
                 
                 print(f"✅ Full page screenshot captured successfully. Size: {len(screenshot_data)} bytes")
             finally:
@@ -165,7 +188,7 @@ class TestBrowserScreenshotIntegration(unittest.TestCase):
         print("\n=== Testing screenshot with custom options ===")
         
         async def run_test():
-            page = await self._create_page_and_navigate("https://www.aliyun.com")
+            page = await self._create_page_and_navigate("https://www.tmall.com")
             try:
                 # Take screenshot with custom options
                 screenshot_data = await self.browser.screenshot(
@@ -197,7 +220,7 @@ class TestBrowserScreenshotIntegration(unittest.TestCase):
         print("\n=== Testing function parameter priority ===")
         
         async def run_test():
-            page = await self._create_page_and_navigate("https://www.aliyun.com")
+            page = await self._create_page_and_navigate("https://www.tmall.com")
             try:
                 # Take screenshot with function parameter full_page=False
                 # The function parameter should take priority over options
@@ -263,7 +286,7 @@ class TestBrowserScreenshotIntegration(unittest.TestCase):
         print("\n=== Testing screenshot with multiple pages ===")
         
         urls = [
-            "https://www.aliyun.com",
+            "https://www.tmall.com",
             "https://www.taobao.com"
         ]
         
@@ -308,7 +331,7 @@ class TestBrowserScreenshotIntegration(unittest.TestCase):
         print("\n=== Testing screenshot performance ===")
         
         async def run_test():
-            page = await self._create_page_and_navigate("https://www.aliyun.com")
+            page = await self._create_page_and_navigate("https://www.tmall.com")
             
             # Measure screenshot time
             start_time = time.time()

@@ -2,7 +2,7 @@
 
 ## What you’ll do
 
-Delete a file in an AGB session using `session.file_system.delete_file(path)` and handle common failure cases safely.
+Delete a file in an AGB session using `session.file.remove(path)` and handle common failure cases safely.
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ try:
     # For example, it may have been produced by a previous step in your workflow.
     path = "/tmp/to_delete.txt"
 
-    delete_result = session.file_system.delete_file(path)
+    delete_result = session.file.remove(path)
     if not delete_result.success:
         raise SystemExit(f"Delete failed: {delete_result.error_message}")
 finally:
@@ -40,10 +40,10 @@ finally:
 ### Delete multiple files under a directory
 
 ```python
-entries = session.file_system.list_directory("/tmp").entries
+entries = session.file.list("/tmp").entries
 for e in entries:
     if e.is_file and e.name.endswith(".tmp"):
-        session.file_system.delete_file(f"/tmp/{e.name}")
+        session.file.remove(f"/tmp/{e.name}")
 ```
 
 ## Best practices
@@ -61,7 +61,7 @@ for e in entries:
 
 ### “Path is a directory”
 
-- **Likely cause**: you passed a directory path to `delete_file`.
+- **Likely cause**: you passed a directory path to `remove`.
 - **Fix**: delete a file path; for directories use directory APIs (see directory management docs).
 
 ## Related

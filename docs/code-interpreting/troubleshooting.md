@@ -5,7 +5,7 @@
 **Timeout Errors**
 ```python
 # Increase timeout for long-running code
-result = session.code.run_code(long_code, "python", timeout_s=600)  # 10 minutes
+result = session.code.run(long_code, "python", timeout_s=600)  # 10 minutes
 ```
 
 **Memory Issues**
@@ -35,7 +35,7 @@ installed_packages = [d.project_name for d in pkg_resources.working_set]
 print("Available packages:", sorted(installed_packages))
 """
 
-session.code.run_code(check_packages, "python")
+session.code.run(check_packages, "python")
 ```
 
 **Syntax Errors**
@@ -52,5 +52,5 @@ def validate_python_syntax(code: str) -> bool:
 # Usage
 code_to_check = "print('Hello World')"
 if validate_python_syntax(code_to_check):
-    result = session.code.run_code(code_to_check, "python")
+    result = session.code.run(code_to_check, "python")
 ```

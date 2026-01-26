@@ -50,7 +50,7 @@ class Command(BaseService):
     Handles command execution operations in the AGB cloud environment.
     """
 
-    def execute_command(
+    def execute(
         self,
         command: str,
         timeout_ms: int = 1000,
@@ -85,13 +85,13 @@ class Command(BaseService):
 
         Example:
             session = agb.create().session
-            result = session.command.execute_command("echo 'Hello, World!'")
+            result = session.command.execute("echo 'Hello, World!'")
             print(result.output)
             print(result.exit_code)
             session.delete()
 
         Example:
-            result = session.command.execute_command(
+            result = session.command.execute(
                 "pwd",
                 timeout_ms=5000,
                 cwd="/tmp",
@@ -123,7 +123,7 @@ class Command(BaseService):
             if envs is not None:
                 args["envs"] = envs
 
-            log_operation_start("Command.execute_command", f"Command={command}, TimeoutMs={timeout_ms}, Cwd={cwd}, Envs={bool(envs)}")
+            log_operation_start("Command.execute", f"Command={command}, TimeoutMs={timeout_ms}, Cwd={cwd}, Envs={bool(envs)}")
             result = self._call_mcp_tool("shell", args)
             logger.debug(f"Command executed response: {result}")
 
@@ -149,7 +149,7 @@ class Command(BaseService):
                     output = stdout + stderr
 
                     result_msg = f"RequestId={result.request_id}, ExitCode={exit_code}, OutputLength={len(output)}"
-                    log_operation_success("Command.execute_command", result_msg)
+                    log_operation_success("Command.execute", result_msg)
                     return CommandResult(
                         request_id=result.request_id,
                         success=success,
@@ -163,7 +163,7 @@ class Command(BaseService):
                     # Fallback to old format if JSON parsing fails
                     logger.debug(f"Failed to parse JSON response, using old format: {e}")
                     result_msg = f"RequestId={result.request_id}, OutputLength={len(result.data) if result.data else 0}"
-                    log_operation_success("Command.execute_command", result_msg)
+                    log_operation_success("Command.execute", result_msg)
                     return CommandResult(
                         request_id=result.request_id,
                         success=True,
@@ -189,7 +189,7 @@ class Command(BaseService):
                         output = stdout + stderr
                         
                         error_msg = stderr or result.error_message or "Failed to execute command"
-                        log_operation_error("Command.execute_command", error_msg)
+                        log_operation_error("Command.execute", error_msg)
                         return CommandResult(
                             request_id=result.request_id,
                             success=False,
@@ -205,14 +205,14 @@ class Command(BaseService):
                     pass
                 
                 error_msg = result.error_message or "Failed to execute command"
-                log_operation_error("Command.execute_command", error_msg)
+                log_operation_error("Command.execute", error_msg)
                 return CommandResult(
                     request_id=result.request_id,
                     success=False,
                     error_message=error_msg,
                 )
         except Exception as e:
-            log_operation_error("Command.execute_command", str(e), exc_info=True)
+            log_operation_error("Command.execute", str(e), exc_info=True)
             return CommandResult(
                 request_id="",
                 success=False,

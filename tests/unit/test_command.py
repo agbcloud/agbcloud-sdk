@@ -110,7 +110,7 @@ class TestCommand(unittest.TestCase):
         self.session = DummySession()
         self.command = Command(self.session)
 
-    def test_execute_command_success(self):
+    def test_execute_success(self):
         """Test successful command execution."""
         # Mock the _call_mcp_tool response
         mock_result = OperationResult(
@@ -121,7 +121,7 @@ class TestCommand(unittest.TestCase):
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Execute command
-        result = self.command.execute_command("ls -la", timeout_ms=5000)
+        result = self.command.execute("ls -la", timeout_ms=5000)
 
         # Assertions
         self.assertTrue(result.success)
@@ -133,7 +133,7 @@ class TestCommand(unittest.TestCase):
             {"command": "ls -la", "timeout_ms": 5000}
         )
 
-    def test_execute_command_empty_output(self):
+    def test_execute_empty_output(self):
         """Test command execution with empty output."""
         mock_result = OperationResult(
             request_id="req-456",
@@ -142,13 +142,13 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("echo", timeout_ms=1000)
+        result = self.command.execute("echo", timeout_ms=1000)
 
         self.assertTrue(result.success)
         self.assertEqual(result.output, "")
         self.assertEqual(result.request_id, "req-456")
 
-    def test_execute_command_default_timeout(self):
+    def test_execute_default_timeout(self):
         """Test command execution with default timeout."""
         mock_result = OperationResult(
             request_id="req-timeout-1",
@@ -157,14 +157,14 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("ls")
+        result = self.command.execute("ls")
 
         self.assertTrue(result.success)
         # Verify default timeout is 1000ms
         call_args = self.command._call_mcp_tool.call_args
         self.assertEqual(call_args[0][1]["timeout_ms"], 1000)
 
-    def test_execute_command_custom_timeout(self):
+    def test_execute_custom_timeout(self):
         """Test command execution with custom timeout."""
         mock_result = OperationResult(
             request_id="req-timeout-2",
@@ -173,13 +173,13 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("sleep 5", timeout_ms=10000)
+        result = self.command.execute("sleep 5", timeout_ms=10000)
 
         self.assertTrue(result.success)
         call_args = self.command._call_mcp_tool.call_args
         self.assertEqual(call_args[0][1]["timeout_ms"], 10000)
 
-    def test_execute_command_api_failure(self):
+    def test_execute_api_failure(self):
         """Test command execution when API returns failure."""
         mock_result = OperationResult(
             request_id="req-fail-1",
@@ -189,13 +189,13 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("sleep 60", timeout_ms=1000)
+        result = self.command.execute("sleep 60", timeout_ms=1000)
 
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "req-fail-1")
         self.assertEqual(result.error_message, "Command execution timeout")
 
-    def test_execute_command_api_failure_no_error_message(self):
+    def test_execute_api_failure_no_error_message(self):
         """Test command execution when API fails without error message."""
         mock_result = OperationResult(
             request_id="req-fail-2",
@@ -204,22 +204,22 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("invalid_command", timeout_ms=1000)
+        result = self.command.execute("invalid_command", timeout_ms=1000)
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "Failed to execute command")
 
-    def test_execute_command_exception_handling(self):
+    def test_execute_exception_handling(self):
         """Test exception handling during command execution."""
         self.command._call_mcp_tool = MagicMock(side_effect=Exception("Network error"))
 
-        result = self.command.execute_command("ls", timeout_ms=1000)
+        result = self.command.execute("ls", timeout_ms=1000)
 
         self.assertFalse(result.success)
         self.assertIn("Failed to execute command", result.error_message)
         self.assertIn("Network error", result.error_message)
 
-    def test_execute_command_various_commands(self):
+    def test_execute_various_commands(self):
         """Test various command types."""
         commands = [
             "pwd",
@@ -238,12 +238,12 @@ class TestCommand(unittest.TestCase):
                 )
                 self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-                result = self.command.execute_command(cmd, timeout_ms=1000)
+                result = self.command.execute(cmd, timeout_ms=1000)
 
                 self.assertTrue(result.success)
                 self.assertEqual(result.output, "output")
 
-    def test_execute_command_json_format_response(self):
+    def test_execute_json_format_response(self):
         """Test command execution with new JSON format response."""
         json_data = {
             "stdout": "Hello World",
@@ -258,7 +258,7 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("echo 'Hello World'", timeout_ms=1000)
+        result = self.command.execute("echo 'Hello World'", timeout_ms=1000)
 
         self.assertTrue(result.success)
         self.assertEqual(result.output, "Hello World")
@@ -267,7 +267,7 @@ class TestCommand(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(result.trace_id, "trace-json-123")
 
-    def test_execute_command_json_format_with_stderr(self):
+    def test_execute_json_format_with_stderr(self):
         """Test command execution with JSON format containing stderr."""
         json_data = {
             "stdout": "",
@@ -282,7 +282,7 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("cat file.txt", timeout_ms=1000)
+        result = self.command.execute("cat file.txt", timeout_ms=1000)
 
         # exit_code != 0, so success should be False
         self.assertFalse(result.success)
@@ -292,7 +292,7 @@ class TestCommand(unittest.TestCase):
         self.assertEqual(result.exit_code, 2)
         self.assertEqual(result.trace_id, "trace-json-456")
 
-    def test_execute_command_json_format_dict_response(self):
+    def test_execute_json_format_dict_response(self):
         """Test command execution with JSON format as dict (not string)."""
         json_data = {
             "stdout": "output text",
@@ -306,13 +306,13 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("echo test", timeout_ms=1000)
+        result = self.command.execute("echo test", timeout_ms=1000)
 
         self.assertTrue(result.success)
         self.assertEqual(result.stdout, "output text")
         self.assertEqual(result.exit_code, 0)
 
-    def test_execute_command_backward_compatibility(self):
+    def test_execute_backward_compatibility(self):
         """Test backward compatibility with old format (plain text)."""
         mock_result = OperationResult(
             request_id="req-old-format",
@@ -321,7 +321,7 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("ls", timeout_ms=1000)
+        result = self.command.execute("ls", timeout_ms=1000)
 
         self.assertTrue(result.success)
         self.assertEqual(result.output, "Plain text output without JSON")
@@ -330,7 +330,7 @@ class TestCommand(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertEqual(result.stderr, "")
 
-    def test_execute_command_with_cwd(self):
+    def test_execute_with_cwd(self):
         """Test command execution with working directory parameter."""
         mock_result = OperationResult(
             request_id="req-cwd",
@@ -339,13 +339,13 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("pwd", timeout_ms=1000, cwd="/tmp")
+        result = self.command.execute("pwd", timeout_ms=1000, cwd="/tmp")
 
         self.assertTrue(result.success)
         call_args = self.command._call_mcp_tool.call_args
         self.assertEqual(call_args[0][1]["cwd"], "/tmp")
 
-    def test_execute_command_with_envs(self):
+    def test_execute_with_envs(self):
         """Test command execution with environment variables."""
         mock_result = OperationResult(
             request_id="req-envs",
@@ -355,13 +355,13 @@ class TestCommand(unittest.TestCase):
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
         envs = {"TEST_VAR": "test_value", "ANOTHER_VAR": "another_value"}
-        result = self.command.execute_command("echo $TEST_VAR", timeout_ms=1000, envs=envs)
+        result = self.command.execute("echo $TEST_VAR", timeout_ms=1000, envs=envs)
 
         self.assertTrue(result.success)
         call_args = self.command._call_mcp_tool.call_args
         self.assertEqual(call_args[0][1]["envs"], envs)
 
-    def test_execute_command_with_cwd_and_envs(self):
+    def test_execute_with_cwd_and_envs(self):
         """Test command execution with both cwd and envs."""
         mock_result = OperationResult(
             request_id="req-both",
@@ -371,7 +371,7 @@ class TestCommand(unittest.TestCase):
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
         envs = {"VAR": "value"}
-        result = self.command.execute_command(
+        result = self.command.execute(
             "pwd", timeout_ms=1000, cwd="/home", envs=envs
         )
 
@@ -380,36 +380,36 @@ class TestCommand(unittest.TestCase):
         self.assertEqual(call_args[0][1]["cwd"], "/home")
         self.assertEqual(call_args[0][1]["envs"], envs)
 
-    def test_execute_command_envs_validation_invalid_key_type(self):
+    def test_execute_envs_validation_invalid_key_type(self):
         """Test environment variable validation with invalid key type."""
         envs = {123: "value"}  # Invalid: key is not a string
 
         with self.assertRaises(ValueError) as context:
-            self.command.execute_command("echo test", envs=envs)
+            self.command.execute("echo test", envs=envs)
 
         self.assertIn("Invalid environment variables", str(context.exception))
         self.assertIn("all keys and values must be strings", str(context.exception))
 
-    def test_execute_command_envs_validation_invalid_value_type(self):
+    def test_execute_envs_validation_invalid_value_type(self):
         """Test environment variable validation with invalid value type."""
         envs = {"KEY": 123}  # Invalid: value is not a string
 
         with self.assertRaises(ValueError) as context:
-            self.command.execute_command("echo test", envs=envs)
+            self.command.execute("echo test", envs=envs)
 
         self.assertIn("Invalid environment variables", str(context.exception))
         self.assertIn("all keys and values must be strings", str(context.exception))
 
-    def test_execute_command_envs_validation_multiple_invalid(self):
+    def test_execute_envs_validation_multiple_invalid(self):
         """Test environment variable validation with multiple invalid entries."""
         envs = {123: "value", "KEY": 456, "ANOTHER": "valid"}  # Multiple invalid
 
         with self.assertRaises(ValueError) as context:
-            self.command.execute_command("echo test", envs=envs)
+            self.command.execute("echo test", envs=envs)
 
         self.assertIn("Invalid environment variables", str(context.exception))
 
-    def test_execute_command_error_json_format(self):
+    def test_execute_error_json_format(self):
         """Test error response with JSON format in error_message."""
         error_json = {
             "stdout": "",
@@ -424,7 +424,7 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("nonexistent_command", timeout_ms=1000)
+        result = self.command.execute("nonexistent_command", timeout_ms=1000)
 
         self.assertFalse(result.success)
         self.assertEqual(result.output, "Command not found")
@@ -433,7 +433,7 @@ class TestCommand(unittest.TestCase):
         self.assertEqual(result.exit_code, 127)
         self.assertEqual(result.trace_id, "trace-error-789")
 
-    def test_execute_command_error_json_format_with_errorCode(self):
+    def test_execute_error_json_format_with_errorCode(self):
         """Test error response with errorCode field (alternative to exit_code)."""
         error_json = {
             "stdout": "",
@@ -448,13 +448,13 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("cat /etc/shadow", timeout_ms=1000)
+        result = self.command.execute("cat /etc/shadow", timeout_ms=1000)
 
         self.assertFalse(result.success)
         self.assertEqual(result.exit_code, 13)  # Should use errorCode
         self.assertEqual(result.stderr, "Permission denied")
 
-    def test_execute_command_error_json_format_exit_code_zero_with_errorCode(self):
+    def test_execute_error_json_format_exit_code_zero_with_errorCode(self):
         """Test error response with exit_code=0 and errorCode both present.
         
         This tests the fix for the bug where exit_code=0 (falsy) would incorrectly
@@ -474,7 +474,7 @@ class TestCommand(unittest.TestCase):
         )
         self.command._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.command.execute_command("test_command", timeout_ms=1000)
+        result = self.command.execute("test_command", timeout_ms=1000)
 
         self.assertFalse(result.success)
         # Should use exit_code=0, NOT errorCode=13

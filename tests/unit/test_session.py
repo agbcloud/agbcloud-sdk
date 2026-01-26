@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 from typing import Any, cast
 from agb.session import Session, DeleteResult
-from agb.model.response import SessionStatusResult
+from agb.model.response import SessionStatusResult, SessionMetricsResult, SessionMetrics
 
 class DummyAGB:
     def __init__(self):
@@ -95,9 +95,9 @@ class TestSession(unittest.TestCase):
     def test_initialization(self):
         self.assertEqual(self.session.session_id, self.session_id)
         self.assertEqual(self.session.agb, self.agb)
-        self.assertIsNotNone(self.session.file_system)
+        self.assertIsNotNone(self.session.file)
         self.assertIsNotNone(self.session.command)
-        self.assertEqual(self.session.file_system.session, self.session)
+        self.assertEqual(self.session.file.session, self.session)
         self.assertEqual(self.session.command.session, self.session)
 
     def test_get_api_key(self):
@@ -429,6 +429,207 @@ class TestSession(unittest.TestCase):
             authorization="Bearer test_api_key", session_id="test_session_id"
         )
         self.agb.client.get_mcp_resource.assert_called_once_with(mock_request)
+
+    @patch.object(Session, 'call_mcp_tool')
+    def test_get_metrics_success(self, mock_call_mcp_tool):
+        """Test successful get_metrics operation"""
+        from agb.model.response import McpToolResult
+        
+        # Mock successful tool result with metrics data
+        mock_tool_result = McpToolResult(
+            request_id="request-123",
+            success=True,
+            data='{"cpu_count": 4, "cpu_used_pct": 25.5, "disk_total": 1000000, "disk_used": 500000, "mem_total": 8192, "mem_used": 4096, "rx_rate_kbyte_per_s": 100.5, "tx_rate_kbyte_per_s": 50.2, "rx_used_kbyte": 1024.0, "tx_used_kbyte": 512.0, "timestamp": "2024-01-01T12:00:00Z"}',
+            error_message=""
+        )
+        mock_call_mcp_tool.return_value = mock_tool_result
+
+        result = self.session.get_metrics()
+
+        self.assertIsInstance(result, SessionMetricsResult)
+        self.assertEqual(result.request_id, "request-123")
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.metrics)
+        
+        # Verify metrics data
+        metrics = result.metrics
+        self.assertEqual(metrics.cpu_count, 4)
+        self.assertEqual(metrics.cpu_used_pct, 25.5)
+        self.assertEqual(metrics.disk_total, 1000000)
+        self.assertEqual(metrics.disk_used, 500000)
+        self.assertEqual(metrics.mem_total, 8192)
+        self.assertEqual(metrics.mem_used, 4096)
+        self.assertEqual(metrics.rx_rate_kbyte_per_s, 100.5)
+        self.assertEqual(metrics.tx_rate_kbyte_per_s, 50.2)
+        self.assertEqual(metrics.rx_used_kbyte, 1024.0)
+        self.assertEqual(metrics.tx_used_kbyte, 512.0)
+        self.assertEqual(metrics.timestamp, "2024-01-01T12:00:00Z")
+
+        # Verify tool was called correctly
+        mock_call_mcp_tool.assert_called_once_with(
+            tool_name="get_metrics",
+            args={},
+            read_timeout=None,
+            connect_timeout=None
+        )
+
+    @patch.object(Session, 'call_mcp_tool')
+    def test_get_metrics_with_timeouts(self, mock_call_mcp_tool):
+        """Test get_metrics with custom timeouts"""
+        from agb.model.response import McpToolResult
+        
+        # Mock successful tool result
+        mock_tool_result = McpToolResult(
+            request_id="request-456",
+            success=True,
+            data='{"cpu_count": 2, "cpu_used_pct": 10.0, "timestamp": "2024-01-01T12:00:00Z"}',
+            error_message=""
+        )
+        mock_call_mcp_tool.return_value = mock_tool_result
+
+        result = self.session.get_metrics(read_timeout=5000, connect_timeout=3000)
+
+        self.assertIsInstance(result, SessionMetricsResult)
+        self.assertTrue(result.success)
+        
+        # Verify tool was called with correct timeouts
+        mock_call_mcp_tool.assert_called_once_with(
+            tool_name="get_metrics",
+            args={},
+            read_timeout=5000,
+            connect_timeout=3000
+        )
+
+    @patch.object(Session, 'call_mcp_tool')
+    def test_get_metrics_tool_failure(self, mock_call_mcp_tool):
+        """Test get_metrics when underlying tool call fails"""
+        from agb.model.response import McpToolResult
+        
+        # Mock failed tool result
+        mock_tool_result = McpToolResult(
+            request_id="request-789",
+            success=False,
+            data="",
+            error_message="Tool execution failed"
+        )
+        mock_call_mcp_tool.return_value = mock_tool_result
+
+        result = self.session.get_metrics()
+
+        self.assertIsInstance(result, SessionMetricsResult)
+        self.assertEqual(result.request_id, "request-789")
+        self.assertFalse(result.success)
+        self.assertIsNone(result.metrics)
+        self.assertEqual(result.error_message, "Tool execution failed")
+        self.assertEqual(result.raw, {})
+
+    @patch.object(Session, 'call_mcp_tool')
+    def test_get_metrics_invalid_json(self, mock_call_mcp_tool):
+        """Test get_metrics with invalid JSON response"""
+        from agb.model.response import McpToolResult
+        
+        # Mock tool result with invalid JSON
+        mock_tool_result = McpToolResult(
+            request_id="request-invalid",
+            success=True,
+            data='invalid json data',
+            error_message=""
+        )
+        mock_call_mcp_tool.return_value = mock_tool_result
+
+        result = self.session.get_metrics()
+
+        self.assertIsInstance(result, SessionMetricsResult)
+        self.assertEqual(result.request_id, "request-invalid")
+        self.assertFalse(result.success)
+        self.assertIsNone(result.metrics)
+        self.assertIn("Failed to parse get_metrics response", result.error_message)
+        self.assertEqual(result.raw, {})
+
+    @patch.object(Session, 'call_mcp_tool')
+    def test_get_metrics_non_dict_response(self, mock_call_mcp_tool):
+        """Test get_metrics with non-dict JSON response"""
+        from agb.model.response import McpToolResult
+        
+        # Mock tool result with array instead of object
+        mock_tool_result = McpToolResult(
+            request_id="request-array",
+            success=True,
+            data='["not", "an", "object"]',
+            error_message=""
+        )
+        mock_call_mcp_tool.return_value = mock_tool_result
+
+        result = self.session.get_metrics()
+
+        self.assertIsInstance(result, SessionMetricsResult)
+        self.assertEqual(result.request_id, "request-array")
+        self.assertFalse(result.success)
+        self.assertIsNone(result.metrics)
+        self.assertIn("get_metrics returned non-object JSON", result.error_message)
+        self.assertEqual(result.raw, {})
+
+    @patch.object(Session, 'call_mcp_tool')
+    def test_get_metrics_alternative_field_names(self, mock_call_mcp_tool):
+        """Test get_metrics with alternative field names for backward compatibility"""
+        from agb.model.response import McpToolResult
+        
+        # Mock tool result with alternative field names
+        mock_tool_result = McpToolResult(
+            request_id="request-alt",
+            success=True,
+            data='{"cpu_count": 8, "rx_rate_kbps": 200.5, "tx_rate_KBps": 100.2, "rx_used_KB": 2048.0, "tx_used_kb": 1024.0, "timestamp": "2024-01-01T12:00:00Z"}',
+            error_message=""
+        )
+        mock_call_mcp_tool.return_value = mock_tool_result
+
+        result = self.session.get_metrics()
+
+        self.assertIsInstance(result, SessionMetricsResult)
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.metrics)
+        
+        # Verify alternative field names are correctly parsed
+        metrics = result.metrics
+        self.assertEqual(metrics.cpu_count, 8)
+        self.assertEqual(metrics.rx_rate_kbyte_per_s, 200.5)  # from rx_rate_kbps
+        self.assertEqual(metrics.tx_rate_kbyte_per_s, 100.2)  # from tx_rate_KBps
+        self.assertEqual(metrics.rx_used_kbyte, 2048.0)       # from rx_used_KB
+        self.assertEqual(metrics.tx_used_kbyte, 1024.0)       # from tx_used_kb
+
+    @patch.object(Session, 'call_mcp_tool')
+    def test_get_metrics_missing_fields(self, mock_call_mcp_tool):
+        """Test get_metrics with missing fields (should use defaults)"""
+        from agb.model.response import McpToolResult
+        
+        # Mock tool result with minimal data
+        mock_tool_result = McpToolResult(
+            request_id="request-minimal",
+            success=True,
+            data='{"cpu_count": 2}',  # Only cpu_count provided
+            error_message=""
+        )
+        mock_call_mcp_tool.return_value = mock_tool_result
+
+        result = self.session.get_metrics()
+
+        self.assertIsInstance(result, SessionMetricsResult)
+        self.assertTrue(result.success)
+        self.assertIsNotNone(result.metrics)
+        
+        # Verify defaults are used for missing fields
+        metrics = result.metrics
+        self.assertEqual(metrics.cpu_count, 2)
+        self.assertEqual(metrics.cpu_used_pct, 0.0)
+        self.assertEqual(metrics.disk_total, 0)
+        self.assertEqual(metrics.disk_used, 0)
+        self.assertEqual(metrics.mem_total, 0)
+        self.assertEqual(metrics.mem_used, 0)
+        self.assertEqual(metrics.rx_rate_kbyte_per_s, 0.0)
+        self.assertEqual(metrics.tx_rate_kbyte_per_s, 0.0)
+        self.assertEqual(metrics.rx_used_kbyte, 0.0)
+        self.assertEqual(metrics.tx_used_kbyte, 0.0)
+        self.assertEqual(metrics.timestamp, "")
 
 if __name__ == "__main__":
     unittest.main()

@@ -20,7 +20,7 @@ def simple_directory_monitoring():
         session = result.session
 
         # Create directory to monitor
-        session.file_system.create_directory("/tmp/watch_demo")
+        session.file.mkdir("/tmp/watch_demo")
 
         # Define callback function
         def on_file_change(events):
@@ -31,7 +31,7 @@ def simple_directory_monitoring():
 
         try:
             # Start monitoring
-            monitor_thread = session.file_system.watch_directory(
+            monitor_thread = session.file.watch_dir(
                 path="/tmp/watch_demo",
                 callback=on_file_change,
                 interval=1.0  # Check every 1 second
@@ -41,14 +41,14 @@ def simple_directory_monitoring():
 
             # Simulate file operations
             print("Creating files...")
-            session.file_system.write_file("/tmp/watch_demo/file1.txt", "Content 1")
+            session.file.write("/tmp/watch_demo/file1.txt", "Content 1")
             time.sleep(2)
 
-            session.file_system.write_file("/tmp/watch_demo/file2.txt", "Content 2")
+            session.file.write("/tmp/watch_demo/file2.txt", "Content 2")
             time.sleep(2)
 
             print("Modifying file...")
-            session.file_system.write_file("/tmp/watch_demo/file1.txt", "Modified content")
+            session.file.write("/tmp/watch_demo/file1.txt", "Modified content")
             time.sleep(2)
 
             # Stop monitoring
@@ -79,7 +79,7 @@ def advanced_directory_monitoring():
 
     session = result.session
     # Create monitoring directory
-    session.file_system.create_directory("/tmp/project_watch")
+    session.file.mkdir("/tmp/project_watch")
 
     # Event statistics
     event_stats = {"create": 0, "modify": 0, "delete": 0}
@@ -109,7 +109,7 @@ def advanced_directory_monitoring():
 
     try:
         # Start monitoring with custom interval
-        monitor_thread = session.file_system.watch_directory(
+        monitor_thread = session.file.watch_dir(
             path="/tmp/project_watch",
             callback=process_file_events,
             interval=0.5  # More frequent checking
@@ -121,12 +121,12 @@ def advanced_directory_monitoring():
 
         # Create multiple files
         for i in range(3):
-            session.file_system.write_file(f"/tmp/project_watch/doc{i}.txt", f"Document {i}")
-            session.file_system.write_file(f"/tmp/project_watch/data{i}.json", f'{{"id": {i}}}')
+            session.file.write(f"/tmp/project_watch/doc{i}.txt", f"Document {i}")
+            session.file.write(f"/tmp/project_watch/data{i}.json", f'{{"id": {i}}}')
             time.sleep(1)
 
         # Modify some files
-        session.file_system.write_file("/tmp/project_watch/doc0.txt", "Updated document 0")
+        session.file.write("/tmp/project_watch/doc0.txt", "Updated document 0")
         time.sleep(1)
 
         print(f"Total processed .txt files: {len(processed_files)}")

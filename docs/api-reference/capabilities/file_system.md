@@ -108,25 +108,25 @@ class FileSystem(BaseService)
 
 FileSystem provides file system operations for the session.
 
-### get\_file\_transfer\_context\_path
+### transfer\_path
 
 ```python
-def get_file_transfer_context_path() -> Optional[str]
+def transfer_path() -> Optional[str]
 ```
 
-Get the context path for file transfer operations.
+Get the path for file transfer operations.
 
 This method ensures the context ID is loaded and returns the associated
 context path that was retrieved from GetAndLoadInternalContext API.
 
 **Returns**:
 
-    Optional[str]: The context path if available, None otherwise.
+    Optional[str]: The transfer path if available, None otherwise.
 
-### upload\_file
+### upload
 
 ```python
-def upload_file(
+def upload(
         local_path: str,
         remote_path: str,
         *,
@@ -158,14 +158,14 @@ Upload a file from local to remote path using pre-signed URLs.
 **Example**:
 
 ```python
-remote_path = session.file_system.get_file_transfer_context_path() + "/file.txt"
-upload_result = session.file_system.upload_file("/local/file.txt", remote_path)
+remote_path = session.file.transfer_path() + "/file.txt"
+upload_result = session.file.upload("/local/file.txt", remote_path)
 ```
 
-### download\_file
+### download
 
 ```python
-def download_file(
+def download(
         remote_path: str,
         local_path: str,
         *,
@@ -197,8 +197,8 @@ Download a file from remote path to local path using pre-signed URLs.
 **Example**:
 
 ```python
-remote_path = session.file_system.get_file_transfer_context_path() + "/file.txt"
-download_result = session.file_system.download_file(remote_path, "/local/file.txt")
+remote_path = session.file.transfer_path() + "/file.txt"
+download_result = session.file.download(remote_path, "/local/file.txt")
 ```
 
 #### DEFAULT\_CHUNK\_SIZE
@@ -207,10 +207,10 @@ download_result = session.file_system.download_file(remote_path, "/local/file.tx
 DEFAULT_CHUNK_SIZE = 50 * 1024
 ```
 
-### create\_directory
+### mkdir
 
 ```python
-def create_directory(path: str) -> BoolResult
+def mkdir(path: str) -> BoolResult
 ```
 
 Create a new directory at the specified path.
@@ -225,12 +225,12 @@ Create a new directory at the specified path.
     BoolResult: Result object containing success status and error message if
   any.
 
-### edit\_file
+### edit
 
 ```python
-def edit_file(path: str,
-              edits: List[Dict[str, str]],
-              dry_run: bool = False) -> BoolResult
+def edit(path: str,
+         edits: List[Dict[str, str]],
+         dry_run: bool = False) -> BoolResult
 ```
 
 Edit a file by replacing occurrences of oldText with newText.
@@ -247,10 +247,10 @@ Edit a file by replacing occurrences of oldText with newText.
     BoolResult: Result object containing success status and error message if
   any.
 
-### get\_file\_info
+### info
 
 ```python
-def get_file_info(path: str) -> FileInfoResult
+def info(path: str) -> FileInfoResult
 ```
 
 Get information about a file or directory.
@@ -264,10 +264,10 @@ Get information about a file or directory.
 
     FileInfoResult: Result object containing file info and error message if any.
 
-### list\_directory
+### list
 
 ```python
-def list_directory(path: str) -> DirectoryListResult
+def list(path: str) -> DirectoryListResult
 ```
 
 List the contents of a directory.
@@ -282,10 +282,10 @@ List the contents of a directory.
     DirectoryListResult: Result object containing directory entries and error
   message if any.
 
-### move\_file
+### move
 
 ```python
-def move_file(source: str, destination: str) -> BoolResult
+def move(source: str, destination: str) -> BoolResult
 ```
 
 Move a file or directory from source path to destination path.
@@ -301,10 +301,10 @@ Move a file or directory from source path to destination path.
     BoolResult: Result object containing success status and error message if
   any.
 
-### delete\_file
+### remove
 
 ```python
-def delete_file(path: str) -> BoolResult
+def remove(path: str) -> BoolResult
 ```
 
 Delete a file at the specified path.
@@ -323,37 +323,36 @@ Delete a file at the specified path.
 
 ```python
 session = (agb.create()).session
-session.file_system.write_file("/tmp/to_delete.txt", "hello")
-delete_result = session.file_system.delete_file("/tmp/to_delete.txt")
+session.file.write("/tmp/to_delete.txt", "hello")
+delete_result = session.file.remove("/tmp/to_delete.txt")
 session.delete()
 ```
 
-### read\_file
+### read
 
 ```python
 @overload
-def read_file(path: str) -> FileContentResult
+def read(path: str) -> FileContentResult
 ```
 
-### read\_file
+### read
 
 ```python
 @overload
-def read_file(path: str, *, format: Literal["text"]) -> FileContentResult
+def read(path: str, *, format: Literal["text"]) -> FileContentResult
 ```
 
-### read\_file
+### read
 
 ```python
 @overload
-def read_file(path: str, *,
-              format: Literal["bytes"]) -> BinaryFileContentResult
+def read(path: str, *, format: Literal["bytes"]) -> BinaryFileContentResult
 ```
 
-### read\_file
+### read
 
 ```python
-def read_file(
+def read(
         path: str,
         *,
         format: str = "text"
@@ -387,11 +386,11 @@ Read the contents of a file. Automatically handles large files by chunking.
 session = (agb.create()).session
 
 # Read text file (default)
-text_result = session.file_system.read_file("/tmp/test.txt")
+text_result = session.file.read("/tmp/test.txt")
 print(text_result.content)  # str
 
 # Read binary file
-binary_result = session.file_system.read_file("/tmp/image.png", format="bytes")
+binary_result = session.file.read("/tmp/image.png", format="bytes")
 print(binary_result.content)  # bytes
 
 session.delete()
@@ -408,20 +407,12 @@ session.delete()
 
 **See Also**:
 
-FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
+FileSystem.write, FileSystem.list, FileSystem.info
 
-### read
-
-```python
-def read(path: str) -> FileContentResult
-```
-
-Alias of read_file().
-
-### write\_file
+### write
 
 ```python
-def write_file(path: str, content: str, mode: str = "overwrite") -> BoolResult
+def write(path: str, content: str, mode: str = "overwrite") -> BoolResult
 ```
 
 Write content to a file. Automatically handles large files by chunking.
@@ -438,10 +429,10 @@ Write content to a file. Automatically handles large files by chunking.
     BoolResult: Result object containing success status and error message if
   any.
 
-### read\_multiple\_files
+### read\_batch
 
 ```python
-def read_multiple_files(paths: List[str]) -> MultipleFileContentResult
+def read_batch(paths: List[str]) -> MultipleFileContentResult
 ```
 
 Read the contents of multiple files at once.
@@ -457,13 +448,12 @@ Read the contents of multiple files at once.
   file paths to contents,
   and error message if any.
 
-### search\_files
+### search
 
 ```python
-def search_files(
-        path: str,
-        pattern: str,
-        exclude_patterns: Optional[List[str]] = None) -> FileSearchResult
+def search(path: str,
+           pattern: str,
+           exclude_patterns: Optional[List[str]] = None) -> FileSearchResult
 ```
 
 Search for files in the specified path using a pattern.
@@ -481,10 +471,10 @@ Search for files in the specified path using a pattern.
     FileSearchResult: Result object containing matching file paths and error
   message if any.
 
-### watch\_directory
+### watch\_dir
 
 ```python
-def watch_directory(
+def watch_dir(
         path: str,
         callback: Callable[[List[FileChangeEvent]], None],
         interval: float = 1.0,

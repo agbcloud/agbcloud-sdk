@@ -51,7 +51,7 @@ async def demo_archive_mode(agb, context):
 
         # Create directory
         print(f"📁 Creating directory: {sync_path}")
-        dir_result = session.file_system.create_directory(sync_path)
+        dir_result = session.file.mkdir(sync_path)
         if not dir_result.success:
             print(f"❌ Failed to create directory: {dir_result.error_message}")
             return False
@@ -69,7 +69,7 @@ async def demo_archive_mode(agb, context):
         print(f"Creating file: {file_path}")
         print(f"File content size: {len(file_content)} bytes")
 
-        write_result = session.file_system.write_file(
+        write_result = session.file.write(
             file_path, file_content, "overwrite"
         )
         if not write_result.success:
@@ -171,7 +171,7 @@ async def demo_file_mode(agb, context):
 
         # Create directory
         print(f"📁 Creating directory: {sync_path}")
-        dir_result = session.file_system.create_directory(sync_path)
+        dir_result = session.file.mkdir(sync_path)
         if not dir_result.success:
             print(f"❌ Failed to create directory: {dir_result.error_message}")
             return False
@@ -184,7 +184,7 @@ async def demo_file_mode(agb, context):
         text_path = f"{sync_path}/file-mode-test.txt"
         print(f"Creating text file: {text_path}")
 
-        write_result = session.file_system.write_file(
+        write_result = session.file.write(
             text_path, text_content, "overwrite"
         )
         if not write_result.success:

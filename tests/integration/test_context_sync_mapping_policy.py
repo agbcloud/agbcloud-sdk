@@ -97,13 +97,13 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
             test_file_path = f"{browser_path}/{test_file_name}"
             print(f"Creating test file in Browser: {test_file_path}")
             create_file_cmd = f'echo {test_content} > "{test_file_path}"'
-            browser_cmd_result = browser_session.command.execute_command(create_file_cmd)
+            browser_cmd_result = browser_session.command.execute(create_file_cmd)
             self.assertIsNotNone(browser_cmd_result)
             print(f"Browser file creation result: {browser_cmd_result.output}")
 
             # Verify file exists in Browser session
             verify_file_cmd = f'cat "{test_file_path}"'
-            verify_result = browser_session.command.execute_command(verify_file_cmd)
+            verify_result = browser_session.command.execute(verify_file_cmd)
             self.assertIsNotNone(verify_result)
             print(f"Browser file content: {verify_result.output}")
             self.assertIn(test_content, verify_result.output, "File should contain test content in browser")
@@ -172,7 +172,7 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
 
                 # Check if file exists
                 check_file_cmd = f'test -f "{code_test_file_path}" && echo "FILE_EXISTS" || echo "FILE_NOT_FOUND"'
-                check_result = code_session.command.execute_command(check_file_cmd)
+                check_result = code_session.command.execute(check_file_cmd)
                 self.assertIsNotNone(check_result)
                 print(f"Code file check result: {check_result.output}")
 
@@ -181,7 +181,7 @@ class TestContextSyncWithMappingPolicyIntegration(unittest.TestCase):
 
                 # Read file content in Code session
                 read_file_cmd = f'cat "{code_test_file_path}"'
-                read_result = code_session.command.execute_command(read_file_cmd)
+                read_result = code_session.command.execute(read_file_cmd)
                 self.assertIsNotNone(read_result)
                 print(f"Code file content: {read_result.output}")
 

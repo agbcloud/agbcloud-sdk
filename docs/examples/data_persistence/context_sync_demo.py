@@ -73,13 +73,13 @@ async def main():
 
         # Create directory and file
         print(f"📁 Creating directory: {sync_path}")
-        dir_result = session1.file_system.create_directory(sync_path)
+        dir_result = session1.file.mkdir(sync_path)
         if not dir_result.success:
             print(f"❌ Failed to create directory: {dir_result.error_message}")
             return
 
         print(f"📝 Creating test file: {test_file_path}")
-        file_result = session1.file_system.write_file(test_file_path, test_content)
+        file_result = session1.file.write(test_file_path, test_content)
         if not file_result.success:
             print(f"❌ Failed to create file: {file_result.error_message}")
             return
@@ -129,7 +129,7 @@ async def main():
         await asyncio.sleep(10)
 
         # Read the file content
-        read_result = session2.file_system.read_file(test_file_path)
+        read_result = session2.file.read(test_file_path)
         if read_result.success:
             print(f"📄 File content: {read_result.content}")
         else:
@@ -140,7 +140,7 @@ async def main():
         additional_file = f"{sync_path}/session2_data.txt"
         additional_content = f"Hello from session 2! Created at {time.time()}"
 
-        file_result2 = session2.file_system.write_file(
+        file_result2 = session2.file.write(
             additional_file, additional_content
         )
         if not file_result2.success:

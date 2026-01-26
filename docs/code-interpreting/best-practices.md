@@ -13,7 +13,7 @@ import pandas as pd
 data = pd.read_csv('/tmp/input.csv')
 print(f"Loaded {len(data)} rows")
 """
-    result1 = session.code.run_code(load_code, "python")
+    result1 = session.code.run(load_code, "python")
     if not result1.success:
         return False, "Data loading failed"
 
@@ -24,7 +24,7 @@ data_cleaned = data.dropna()
 data_processed = data_cleaned.groupby('category').sum()
 print("Data processed successfully")
 """
-    result2 = session.code.run_code(process_code, "python")
+    result2 = session.code.run(process_code, "python")
     if not result2.success:
         return False, "Data processing failed"
 
@@ -33,7 +33,7 @@ print("Data processed successfully")
 data_processed.to_csv('/tmp/output.csv')
 print("Results saved")
 """
-    result3 = session.code.run_code(save_code, "python")
+    result3 = session.code.run(save_code, "python")
     return result3.success, "Pipeline completed" if result3.success else "Save failed"
 ```
 
@@ -44,7 +44,7 @@ def robust_code_execution(session, code: str, language: str, max_retries: int = 
     """Execute code with retry logic"""
     for attempt in range(max_retries):
         try:
-            result = session.code.run_code(code, language)
+            result = session.code.run(code, language)
             if result.success:
                 return result
             else:
@@ -72,7 +72,7 @@ def execute_with_resource_monitoring(session, code: str, language: str):
     initial_info = session.info()
 
     try:
-        result = session.code.run_code(code, language)
+        result = session.code.run(code, language)
         execution_time = time.time() - start_time
 
         print(f"Execution completed in {execution_time:.2f}s")
@@ -112,11 +112,14 @@ def validate_and_execute(session, code: str, language: str):
                 print(f"Warning: Potentially dangerous operation detected: {pattern}")
 
     # Execute the code
-    result = session.code.run_code(code, language)
+    result = session.code.run(code, language)
+
+    # Extract output from results
+    output = result.results[0].text if result.success and result.results else ""
 
     return {
         "success": result.success,
-        "output": result.result,
+        "output": output,
         "error": result.error_message if not result.success else None
     }
 ```

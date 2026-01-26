@@ -4,7 +4,7 @@
 
 **File Not Found Errors**
 ```python
-read_result = session.file_system.read_file("/nonexistent/file.txt")
+read_result = session.file.read("/nonexistent/file.txt")
 if not read_result.success:
     if "not found" in read_result.error_message.lower():
         print("File doesn't exist - create it first")
@@ -21,7 +21,7 @@ def ensure_directory_exists(session, filepath):
     parent_dir = os.path.dirname(filepath)
 
     if parent_dir and parent_dir != "/":
-        create_result = session.file_system.create_directory(parent_dir)
+        create_result = session.file.mkdir(parent_dir)
         if not create_result.success:
             print(f"Warning: Could not create directory {parent_dir}")
 
@@ -30,5 +30,5 @@ def ensure_directory_exists(session, filepath):
 # Usage
 filepath = "/tmp/deep/nested/file.txt"
 ensure_directory_exists(session, filepath)
-session.file_system.write_file(filepath, "content")
+session.file.write(filepath, "content")
 ```

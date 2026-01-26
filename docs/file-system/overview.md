@@ -2,7 +2,7 @@
 
 ## What you’ll do
 
-Use `session.file_system` to read, write, and manage files/directories inside an AGB session.
+Use `session.file` to read, write, and manage files/directories inside an AGB session.
 
 ## Prerequisites
 
@@ -25,8 +25,8 @@ if not create_result.success:
 session = create_result.session
 
 try:
-    session.file_system.write_file("/tmp/hello.txt", "Hello World!")
-    content = session.file_system.read_file("/tmp/hello.txt").content
+    session.file.write("/tmp/hello.txt", "Hello World!")
+    content = session.file.read("/tmp/hello.txt").content
     print(content)
 finally:
     agb.delete(session)
@@ -37,15 +37,15 @@ finally:
 ### Create and list directories
 
 ```python
-session.file_system.create_directory("/tmp/trash/")
-entries = session.file_system.list_directory("/tmp").entries
+session.file.mkdir("/tmp/trash/")
+entries = session.file.list("/tmp").entries
 print([e.name for e in entries])
 ```
 
 ### Move files
 
 ```python
-session.file_system.move_file("/tmp/hello.txt", "/tmp/trash/hello.txt")
+session.file.move("/tmp/hello.txt", "/tmp/trash/hello.txt")
 ```
 
 ### Upload / download files
@@ -86,7 +86,7 @@ See:
 ### File not found
 
 - **Likely cause**: the path does not exist.
-- **Fix**: create directories first (`create_directory`) and use `list_directory` to verify paths.
+- **Fix**: create directories first (`mkdir`) and use `list` to verify paths.
 ## Related
 
 - API reference: [`docs/api-reference/capabilities/file_system.md`](../api-reference/capabilities/file_system.md)

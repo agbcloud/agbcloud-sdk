@@ -90,7 +90,7 @@ test_content = "This file was created in the first session"
 
 # Create file in session
 create_cmd = f'echo "{test_content}" > "{test_file_path}"'
-session.command.execute_command(create_cmd)
+session.command.execute(create_cmd)
 
 # Sync to persist data
 import asyncio
@@ -137,7 +137,7 @@ time.sleep(15)
 # Access the file at the new path
 target_file_path = f"{target_path}/test-file.txt"
 read_cmd = f'cat "{target_file_path}"'
-result = session.command.execute_command(read_cmd)
+result = session.command.execute(read_cmd)
 
 print(f"File content: {result.output}")
 # Output: This file was created in the first session
@@ -226,16 +226,16 @@ class CrossPlatformDataManager:
 
         # Create directory if needed (Linux command)
         mkdir_cmd = f'mkdir -p "{path}"'
-        session.command.execute_command(mkdir_cmd)
+        session.command.execute(mkdir_cmd)
 
         # Create file (Linux command)
         file_path = f"{path}/{filename}"
         create_cmd = f'echo "{content}" > "{file_path}"'
-        result = session.command.execute_command(create_cmd)
+        result = session.command.execute(create_cmd)
 
         # Verify file creation (Linux command)
         verify_cmd = f'cat "{file_path}"'
-        verify_result = session.command.execute_command(verify_cmd)
+        verify_result = session.command.execute(verify_cmd)
         print(f"Created file content: {verify_result.output}")
 
         # Sync to persist
@@ -252,12 +252,12 @@ class CrossPlatformDataManager:
         # Check if file exists (Linux command)
         file_path = f"{path}/{filename}"
         check_cmd = f'test -f "{file_path}" && echo "EXISTS" || echo "NOT_FOUND"'
-        check_result = session.command.execute_command(check_cmd)
+        check_result = session.command.execute(check_cmd)
 
         if "EXISTS" in check_result.output:
             # Read file content (Linux command)
             read_cmd = f'cat "{file_path}"'
-            read_result = session.command.execute_command(read_cmd)
+            read_result = session.command.execute(read_cmd)
             print(f"Accessed file content: {read_result.output}")
             return read_result.output
         else:
@@ -384,7 +384,7 @@ for data in context_info.context_status_data:
 ```python
 # Check permissions (Linux command)
 check_perms_cmd = f'ls -ld "{target_path}"'
-result = session.command.execute_command(check_perms_cmd)
+result = session.command.execute(check_perms_cmd)
 print(f"Directory permissions: {result.output}")
 ```
 ---

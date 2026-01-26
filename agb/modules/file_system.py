@@ -308,24 +308,27 @@ class FileSystem(BaseService):
         return self._file_transfer
 
 
-    def get_file_transfer_context_path(self) -> Optional[str]:
+    def transfer_path(self) -> Optional[str]:
         """
-        Get the context path for file transfer operations.
+        Get the path for file transfer operations.
 
         This method ensures the context ID is loaded and returns the associated
         context path that was retrieved from GetAndLoadInternalContext API.
 
         Returns:
-            Optional[str]: The context path if available, None otherwise.
+            Optional[str]: The transfer path if available, None otherwise.
         """
         # Ensure FileTransfer is initialized
         file_transfer = self._ensure_file_transfer()
         # Ensure context_id is loaded (this will also load context_path)
         if file_transfer.context_id is None:
-            file_transfer.ensure_context_id()
+            success, error_msg = file_transfer.ensure_context_id()
+            if not success:
+                logger.warning(f"Failed to ensure context_id: {error_msg}")
+                return None
         return file_transfer.context_path
 
-    def upload_file(
+    def upload(
         self,
         local_path: str,
         remote_path: str,
@@ -353,11 +356,11 @@ class FileSystem(BaseService):
 
         Example:
             ```python
-            remote_path = session.file_system.get_file_transfer_context_path() + "/file.txt"
-            upload_result = session.file_system.upload_file("/local/file.txt", remote_path)
+            remote_path = session.file.transfer_path() + "/file.txt"
+            upload_result = session.file.upload("/local/file.txt", remote_path)
             ```
         """
-        log_operation_start("FileSystem.upload_file", f"LocalPath={local_path}, RemotePath={remote_path}, Wait={wait}")
+        log_operation_start("FileSystem.upload", f"LocalPath={local_path}, RemotePath={remote_path}, Wait={wait}")
         try:
             # Ensure FileTransfer is initialized
             file_transfer = self._ensure_file_transfer()
@@ -373,12 +376,12 @@ class FileSystem(BaseService):
             # Upload completed successfully
             if result.success:
                 result_msg = f"RemotePath={remote_path}, BytesSent={result.bytes_sent}, RequestIdUpload={result.request_id_upload_url}, RequestIdSync={result.request_id_sync}"
-                log_operation_success("FileSystem.upload_file", result_msg)
+                log_operation_success("FileSystem.upload", result_msg)
             else:
-                log_operation_error("FileSystem.upload_file", result.error_message or "Upload failed")
+                log_operation_error("FileSystem.upload", result.error_message or "Upload failed")
             return result
         except Exception as e:
-            log_operation_error("FileSystem.upload_file", str(e), exc_info=True)
+            log_operation_error("FileSystem.upload", str(e), exc_info=True)
             return UploadResult(
                 success=False,
                 request_id_upload_url=None,
@@ -390,7 +393,7 @@ class FileSystem(BaseService):
                 error_message=f"Upload failed: {str(e)}",
             )
 
-    def download_file(
+    def download(
         self,
         remote_path: str,
         local_path: str,
@@ -418,11 +421,11 @@ class FileSystem(BaseService):
 
         Example:
             ```python
-            remote_path = session.file_system.get_file_transfer_context_path() + "/file.txt"
-            download_result = session.file_system.download_file(remote_path, "/local/file.txt")
+            remote_path = session.file.transfer_path() + "/file.txt"
+            download_result = session.file.download(remote_path, "/local/file.txt")
             ```
         """
-        log_operation_start("FileSystem.download_file", f"RemotePath={remote_path}, LocalPath={local_path}, Wait={wait}, Overwrite={overwrite}")
+        log_operation_start("FileSystem.download", f"RemotePath={remote_path}, LocalPath={local_path}, Wait={wait}, Overwrite={overwrite}")
         try:
             # Ensure FileTransfer is initialized
             file_transfer = self._ensure_file_transfer()
@@ -438,12 +441,12 @@ class FileSystem(BaseService):
             # Download completed successfully
             if result.success:
                 result_msg = f"RemotePath={remote_path}, LocalPath={local_path}, BytesReceived={result.bytes_received}, RequestIdDownload={result.request_id_download_url}, RequestIdSync={result.request_id_sync}"
-                log_operation_success("FileSystem.download_file", result_msg)
+                log_operation_success("FileSystem.download", result_msg)
             else:
-                log_operation_error("FileSystem.download_file", result.error_message or "Download failed")
+                log_operation_error("FileSystem.download", result.error_message or "Download failed")
             return result
         except Exception as e:
-            log_operation_error("FileSystem.download_file", str(e), exc_info=True)
+            log_operation_error("FileSystem.download", str(e), exc_info=True)
             return DownloadResult(
                 success=False,
                 request_id_download_url=None,
@@ -459,7 +462,7 @@ class FileSystem(BaseService):
     # Default chunk size is 50KB
     DEFAULT_CHUNK_SIZE = 50 * 1024
 
-    def create_directory(self, path: str) -> BoolResult:
+    def mkdir(self, path: str) -> BoolResult:
         """
         Create a new directory at the specified path.
 
@@ -470,32 +473,32 @@ class FileSystem(BaseService):
             BoolResult: Result object containing success status and error message if
                 any.
         """
-        log_operation_start("FileSystem.create_directory", f"Path={path}")
+        log_operation_start("FileSystem.mkdir", f"Path={path}")
         args = {"path": path}
         try:
             result = self._call_mcp_tool("create_directory", args)
             logger.debug(f"Response from CallMcpTool - create_directory: {result}")
             if result.success:
                 result_msg = f"Path={path}, RequestId={result.request_id}"
-                log_operation_success("FileSystem.create_directory", result_msg)
+                log_operation_success("FileSystem.mkdir", result_msg)
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
                 error_msg = result.error_message or "Unknown error"
-                log_operation_error("FileSystem.create_directory", error_msg)
+                log_operation_error("FileSystem.mkdir", error_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=False,
                     error_message=error_msg,
                 )
         except Exception as e:
-            log_operation_error("FileSystem.create_directory", str(e), exc_info=True)
+            log_operation_error("FileSystem.mkdir", str(e), exc_info=True)
             return BoolResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to create directory: {e}",
             )
 
-    def edit_file(
+    def edit(
         self, path: str, edits: List[Dict[str, str]], dry_run: bool = False
     ) -> BoolResult:
         """
@@ -510,32 +513,32 @@ class FileSystem(BaseService):
             BoolResult: Result object containing success status and error message if
                 any.
         """
-        log_operation_start("FileSystem.edit_file", f"Path={path}, EditsCount={len(edits)}, DryRun={dry_run}")
+        log_operation_start("FileSystem.edit", f"Path={path}, EditsCount={len(edits)}, DryRun={dry_run}")
         args = {"path": path, "edits": edits, "dryRun": dry_run}
         try:
             result = self._call_mcp_tool("edit_file", args)
             logger.debug(f"Response from CallMcpTool - edit_file: {result}")
             if result.success:
                 result_msg = f"Path={path}, RequestId={result.request_id}"
-                log_operation_success("FileSystem.edit_file", result_msg)
+                log_operation_success("FileSystem.edit", result_msg)
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
                 error_msg = result.error_message or "Unknown error"
-                log_operation_error("FileSystem.edit_file", error_msg)
+                log_operation_error("FileSystem.edit", error_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=False,
                     error_message=error_msg,
                 )
         except Exception as e:
-            log_operation_error("FileSystem.edit_file", str(e), exc_info=True)
+            log_operation_error("FileSystem.edit", str(e), exc_info=True)
             return BoolResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to edit file: {e}",
             )
 
-    def get_file_info(self, path: str) -> FileInfoResult:
+    def info(self, path: str) -> FileInfoResult:
         """
         Get information about a file or directory.
 
@@ -582,14 +585,14 @@ class FileSystem(BaseService):
                     result[key] = value
             return result
 
-        log_operation_start("FileSystem.get_file_info", f"Path={path}")
+        log_operation_start("FileSystem.info", f"Path={path}")
         args = {"path": path}
         try:
             result = self._call_mcp_tool("get_file_info", args)
             if result.success:
                 file_info = parse_file_info(result.data)
                 result_msg = f"Path={path}, RequestId={result.request_id}, IsDirectory={file_info.get('isDirectory', False)}"
-                log_operation_success("FileSystem.get_file_info", result_msg)
+                log_operation_success("FileSystem.info", result_msg)
                 return FileInfoResult(
                     request_id=result.request_id,
                     success=True,
@@ -597,21 +600,21 @@ class FileSystem(BaseService):
                 )
             else:
                 error_msg = result.error_message or "Failed to get file info"
-                log_operation_error("FileSystem.get_file_info", error_msg)
+                log_operation_error("FileSystem.info", error_msg)
                 return FileInfoResult(
                     request_id=result.request_id,
                     success=False,
                     error_message=error_msg,
                 )
         except Exception as e:
-            log_operation_error("FileSystem.get_file_info", str(e), exc_info=True)
+            log_operation_error("FileSystem.info", str(e), exc_info=True)
             return FileInfoResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to get file info: {e}",
             )
 
-    def list_directory(self, path: str) -> DirectoryListResult:
+    def list(self, path: str) -> DirectoryListResult:
         """
         List the contents of a directory.
 
@@ -672,7 +675,7 @@ class FileSystem(BaseService):
 
             return result
 
-        log_operation_start("FileSystem.list_directory", f"Path={path}")
+        log_operation_start("FileSystem.list", f"Path={path}")
         args = {"path": path}
         try:
             result = self._call_mcp_tool("list_directory", args)
@@ -688,27 +691,27 @@ class FileSystem(BaseService):
             if result.success:
                 entries = parse_directory_listing(result.data)
                 result_msg = f"Path={path}, EntriesCount={len(entries)}, RequestId={result.request_id}"
-                log_operation_success("FileSystem.list_directory", result_msg)
+                log_operation_success("FileSystem.list", result_msg)
                 return DirectoryListResult(
                     request_id=result.request_id, success=True, entries=entries
                 )
             else:
                 error_msg = result.error_message or "Failed to list directory"
-                log_operation_error("FileSystem.list_directory", error_msg)
+                log_operation_error("FileSystem.list", error_msg)
                 return DirectoryListResult(
                     request_id=result.request_id,
                     success=False,
                     error_message=error_msg,
                 )
         except Exception as e:
-            log_operation_error("FileSystem.list_directory", str(e), exc_info=True)
+            log_operation_error("FileSystem.list", str(e), exc_info=True)
             return DirectoryListResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to list directory: {e}",
             )
 
-    def move_file(self, source: str, destination: str) -> BoolResult:
+    def move(self, source: str, destination: str) -> BoolResult:
         """
         Move a file or directory from source path to destination path.
 
@@ -720,32 +723,32 @@ class FileSystem(BaseService):
             BoolResult: Result object containing success status and error message if
                 any.
         """
-        log_operation_start("FileSystem.move_file", f"Source={source}, Destination={destination}")
+        log_operation_start("FileSystem.move", f"Source={source}, Destination={destination}")
         args = {"source": source, "destination": destination}
         try:
             result = self._call_mcp_tool("move_file", args)
             logger.debug(f"Response from CallMcpTool - move_file: {result}")
             if result.success:
                 result_msg = f"Source={source}, Destination={destination}, RequestId={result.request_id}"
-                log_operation_success("FileSystem.move_file", result_msg)
+                log_operation_success("FileSystem.move", result_msg)
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
                 error_msg = result.error_message or "Failed to move file"
-                log_operation_error("FileSystem.move_file", error_msg)
+                log_operation_error("FileSystem.move", error_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=False,
                     error_message=error_msg,
                 )
         except Exception as e:
-            log_operation_error("FileSystem.move_file", str(e), exc_info=True)
+            log_operation_error("FileSystem.move", str(e), exc_info=True)
             return BoolResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to move file: {e}",
             )
 
-    def delete_file(self, path: str) -> BoolResult:
+    def remove(self, path: str) -> BoolResult:
         """
         Delete a file at the specified path.
 
@@ -758,29 +761,29 @@ class FileSystem(BaseService):
         Example:
             ```python
             session = (agb.create()).session
-            session.file_system.write_file("/tmp/to_delete.txt", "hello")
-            delete_result = session.file_system.delete_file("/tmp/to_delete.txt")
+            session.file.write("/tmp/to_delete.txt", "hello")
+            delete_result = session.file.remove("/tmp/to_delete.txt")
             session.delete()
             ```
         """
-        log_operation_start("FileSystem.delete_file", f"Path={path}")
+        log_operation_start("FileSystem.remove", f"Path={path}")
         args = {"path": path}
         try:
             result = self._call_mcp_tool("delete_file", args)
             if result.success:
                 result_msg = f"Path={path}, RequestId={result.request_id}"
-                log_operation_success("FileSystem.delete_file", result_msg)
+                log_operation_success("FileSystem.remove", result_msg)
                 return BoolResult(request_id=result.request_id, success=True, data=True)
             else:
                 error_msg = result.error_message or "Failed to delete file"
-                log_operation_error("FileSystem.delete_file", error_msg)
+                log_operation_error("FileSystem.remove", error_msg)
                 return BoolResult(
                     request_id=result.request_id,
                     success=False,
                     error_message=error_msg,
                 )
         except Exception as e:
-            log_operation_error("FileSystem.delete_file", str(e), exc_info=True)
+            log_operation_error("FileSystem.remove", str(e), exc_info=True)
             return BoolResult(
                 request_id="",
                 success=False,
@@ -814,13 +817,13 @@ class FileSystem(BaseService):
             args["format"] = "binary"
 
         try:
-            log_operation_start("FileSystem.read_file", f"Path={path}, Offset={offset}, Length={length}, Format={format_type}")
+            log_operation_start("FileSystem.read", f"Path={path}, Offset={offset}, Length={length}, Format={format_type}")
             result = self._call_mcp_tool("read_file", args)
             if result.success:
                 if format_type == "binary":
                     # Backend returns base64-encoded string, decode to bytes
                     try:
-                        log_operation_success("FileSystem.read_file.binary", f"result={str(result.data)}, RequestId={result.request_id}")
+                        log_operation_success("FileSystem.read.binary", f"result={str(result.data)}, RequestId={result.request_id}")
                         import base64
                         binary_content = base64.b64decode(result.data)
                         return BinaryFileContentResult(
@@ -829,7 +832,7 @@ class FileSystem(BaseService):
                             content=binary_content,
                         )
                     except Exception as e:
-                        log_operation_error("FileSystem.read_file.binary", str(e), exc_info=True)
+                        log_operation_error("FileSystem.read.binary", str(e), exc_info=True)
                         return BinaryFileContentResult(
                             request_id=result.request_id,
                             success=False,
@@ -837,7 +840,7 @@ class FileSystem(BaseService):
                             error_message=f"Failed to decode base64: {e}",
                         )
                 else:
-                    log_operation_success("FileSystem.read_file.text", f"result={str(result.data)}, RequestId={result.request_id}")
+                    log_operation_success("FileSystem.read.text", f"result={str(result.data)}, RequestId={result.request_id}")
                     # Text format, return as string
                     return FileContentResult(
                         request_id=result.request_id,
@@ -847,7 +850,7 @@ class FileSystem(BaseService):
             else:
                 # Error case - return appropriate result type
                 if format_type == "binary":
-                    log_operation_error("FileSystem.read_file.binary", result.error_message or "Failed to read file")
+                    log_operation_error("FileSystem.read.binary", result.error_message or "Failed to read file")
                     return BinaryFileContentResult(
                         request_id=result.request_id,
                         success=False,
@@ -855,7 +858,7 @@ class FileSystem(BaseService):
                         error_message=result.error_message or "Failed to read file",
                     )
                 else:
-                    log_operation_error("FileSystem.read_file.text", result.error_message or "Failed to read file")
+                    log_operation_error("FileSystem.read.text", result.error_message or "Failed to read file")
                     return FileContentResult(
                         request_id=result.request_id,
                         success=False,
@@ -863,17 +866,17 @@ class FileSystem(BaseService):
                     )
         except FileError as e:
             if format_type == "binary":
-                log_operation_error("FileSystem.read_file.binary", str(e), exc_info=True)
+                log_operation_error("FileSystem.read.binary", str(e), exc_info=True)
                 return BinaryFileContentResult(request_id="", success=False, content=b"", error_message=str(e))
             else:
-                log_operation_error("FileSystem.read_file.text", str(e), exc_info=True)
+                log_operation_error("FileSystem.read.text", str(e), exc_info=True)
                 return FileContentResult(request_id="", success=False, error_message=str(e))
         except Exception as e:
             if format_type == "binary":
-                log_operation_error("FileSystem.read_file.binary", str(e), exc_info=True)
+                log_operation_error("FileSystem.read.binary", str(e), exc_info=True)
                 return BinaryFileContentResult(request_id="", success=False, content=b"", error_message=str(e))
             else:
-                log_operation_error("FileSystem.read_file.text", str(e), exc_info=True)
+                log_operation_error("FileSystem.read.text", str(e), exc_info=True)
                 return FileContentResult(request_id="", success=False, error_message=str(e))
 
     def _write_file_chunk(
@@ -920,15 +923,15 @@ class FileSystem(BaseService):
             )
 
     @overload
-    def read_file(self, path: str) -> FileContentResult: ...
+    def read(self, path: str) -> FileContentResult: ...
 
     @overload
-    def read_file(self, path: str, *, format: Literal["text"]) -> FileContentResult: ...
+    def read(self, path: str, *, format: Literal["text"]) -> FileContentResult: ...
 
     @overload
-    def read_file(self, path: str, *, format: Literal["bytes"]) -> BinaryFileContentResult: ...
+    def read(self, path: str, *, format: Literal["bytes"]) -> BinaryFileContentResult: ...
 
-    def read_file(
+    def read(
         self, path: str, *, format: str = "text"
     ) -> Union[FileContentResult, BinaryFileContentResult]:
         """
@@ -950,15 +953,15 @@ class FileSystem(BaseService):
         Example:
             ```python
             session = (agb.create()).session
-            
+
             # Read text file (default)
-            text_result = session.file_system.read_file("/tmp/test.txt")
+            text_result = session.file.read("/tmp/test.txt")
             print(text_result.content)  # str
-            
+
             # Read binary file
-            binary_result = session.file_system.read_file("/tmp/image.png", format="bytes")
+            binary_result = session.file.read("/tmp/image.png", format="bytes")
             print(binary_result.content)  # bytes
-            
+
             session.delete()
             ```
 
@@ -969,14 +972,14 @@ class FileSystem(BaseService):
             - Binary files are returned as bytes (backend uses base64 encoding internally)
 
         See Also:
-            FileSystem.write_file, FileSystem.list_directory, FileSystem.get_file_info
+            FileSystem.write, FileSystem.list, FileSystem.info
         """
         chunk_size = self.DEFAULT_CHUNK_SIZE
 
-        log_operation_start("FileSystem.read_file", f"Path={path}, Format={format}")
+        log_operation_start("FileSystem.read", f"Path={path}, Format={format}")
         try:
             # Get file info to check size
-            file_info_result = self.get_file_info(path)
+            file_info_result = self.info(path)
             if not file_info_result.success:
                 if format == "bytes":
                     return BinaryFileContentResult(
@@ -997,7 +1000,7 @@ class FileSystem(BaseService):
                 "isDirectory", False
             ):
                 error_msg = f"Path does not exist or is a directory: {path}"
-                log_operation_error("FileSystem.read_file", error_msg)
+                log_operation_error("FileSystem.read", error_msg)
                 if format == "bytes":
                     return BinaryFileContentResult(
                         request_id=file_info_result.request_id,
@@ -1015,7 +1018,7 @@ class FileSystem(BaseService):
             # If the file is empty, return empty content
             file_size = file_info_result.file_info.get("size", 0)
             if file_size == 0:
-                log_operation_error("FileSystem.read_file", "File is empty")
+                log_operation_error("FileSystem.read", "File is empty")
                 if format == "bytes":
                     return BinaryFileContentResult(
                         request_id=file_info_result.request_id,
@@ -1061,7 +1064,7 @@ class FileSystem(BaseService):
                 # Combine all binary chunks
                 final_content = b"".join(content_chunks)
                 result_msg = f"Path={path}, Format={format}, ContentLength={len(final_content)}, RequestId={file_info_result.request_id}"
-                log_operation_success("FileSystem.read_file", result_msg)
+                log_operation_success("FileSystem.read", result_msg)
                 return BinaryFileContentResult(
                     request_id=file_info_result.request_id,
                     success=True,
@@ -1085,7 +1088,7 @@ class FileSystem(BaseService):
 
                 content_str = "".join(content)
                 result_msg = f"Path={path}, Format={format}, ContentLength={len(content_str)}, RequestId={file_info_result.request_id}"
-                log_operation_success("FileSystem.read_file", result_msg)
+                log_operation_success("FileSystem.read", result_msg)
                 return FileContentResult(
                     request_id=file_info_result.request_id,
                     success=True,
@@ -1093,19 +1096,14 @@ class FileSystem(BaseService):
                 )
 
         except Exception as e:
-            log_operation_error("FileSystem.read_file", str(e), exc_info=True)
+            log_operation_error("FileSystem.read", str(e), exc_info=True)
             if format == "bytes":
                 return BinaryFileContentResult(request_id="", success=False, content=b"", error_message=str(e))
             else:
                 return FileContentResult(request_id="", success=False, error_message=str(e))
 
-    def read(self, path: str) -> FileContentResult:
-        """
-        Alias of read_file().
-        """
-        return self.read_file(path)
 
-    def write_file(
+    def write(
         self, path: str, content: str, mode: str = "overwrite"
     ) -> BoolResult:
         """
@@ -1121,7 +1119,7 @@ class FileSystem(BaseService):
                 any.
         """
         content_len = len(content)
-        log_operation_start("FileSystem.write_file", f"Path={path}, Mode={mode}, ContentLength={content_len}")
+        log_operation_start("FileSystem.write", f"Path={path}, Mode={mode}, ContentLength={content_len}")
 
         # If the content length is less than the chunk size, write it directly
         if content_len <= self.DEFAULT_CHUNK_SIZE:
@@ -1142,23 +1140,23 @@ class FileSystem(BaseService):
                 result = self._write_file_chunk(path, current_chunk, "append")
                 if not result.success:
                     error_msg = result.error_message or "Failed to write file chunk"
-                    log_operation_error("FileSystem.write_file", error_msg)
+                    log_operation_error("FileSystem.write", error_msg)
                     return result
                 offset = end
 
             result_msg = f"Path={path}, ContentLength={content_len}, RequestId={result.request_id}"
-            log_operation_success("FileSystem.write_file", result_msg)
+            log_operation_success("FileSystem.write", result_msg)
             return BoolResult(request_id=result.request_id, success=True, data=True)
 
         except Exception as e:
-            log_operation_error("FileSystem.write_file", str(e), exc_info=True)
+            log_operation_error("FileSystem.write", str(e), exc_info=True)
             return BoolResult(
                 request_id="",
                 success=False,
                 error_message=f"Failed to write file: {e}",
             )
 
-    def read_multiple_files(self, paths: List[str]) -> MultipleFileContentResult:
+    def read_batch(self, paths: List[str]) -> MultipleFileContentResult:
         """
         Read the contents of multiple files at once.
 
@@ -1259,7 +1257,7 @@ class FileSystem(BaseService):
                 error_message=f"Failed to read multiple files: {e}",
             )
 
-    def search_files(
+    def search(
         self,
         path: str,
         pattern: str,
@@ -1392,7 +1390,7 @@ class FileSystem(BaseService):
                 error_message=f"Failed to get file change: {e}",
             )
 
-    def watch_directory(
+    def watch_dir(
         self,
         path: str,
         callback: Callable[[List[FileChangeEvent]], None],

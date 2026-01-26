@@ -509,7 +509,7 @@ def log_api_response_with_details(
 
 def log_code_execution_output(request_id: str, raw_output: str) -> None:
     """
-    Extract and log the actual code execution output from run_code response.
+    Extract and log the actual code execution output from run response.
 
     Args:
         request_id: Request ID from the API response

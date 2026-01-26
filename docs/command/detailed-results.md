@@ -24,7 +24,7 @@ if not create_result.success:
 
 session = create_result.session
 try:
-    result = session.command.execute_command("ls /path/does-not-exist")
+    result = session.command.execute("ls /path/does-not-exist")
     print("success:", result.success)
     print("exit_code:", result.exit_code)
     print("stdout:", result.stdout)
@@ -39,7 +39,7 @@ finally:
 ### Branch logic based on `exit_code`
 
 ```python
-result = session.command.execute_command("grep -R \"needle\" /tmp")
+result = session.command.execute("grep -R \"needle\" /tmp")
 if result.exit_code == 0:
     print("Found matches")
 elif result.exit_code == 1:
@@ -51,7 +51,7 @@ else:
 ### Parse `stdout` and keep `stderr` for diagnostics
 
 ```python
-result = session.command.execute_command("python -c 'print(\"ok\")'")
+result = session.command.execute("python -c 'print(\"ok\")'")
 if not result.success:
     raise RuntimeError(f"Command failed: {result.error_message} (stderr={result.stderr})")
 
@@ -64,7 +64,7 @@ print("parsed:", stdout)
 If you need to open a ticket with server-side logs, include `trace_id` (when present):
 
 ```python
-result = session.command.execute_command("some-command")
+result = session.command.execute("some-command")
 if not result.success and result.trace_id:
     print("trace_id:", result.trace_id)
 ```

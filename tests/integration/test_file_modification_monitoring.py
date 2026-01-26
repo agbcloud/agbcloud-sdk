@@ -1,20 +1,28 @@
 import os
 import threading
 import time
-import sys
+import uuid
+
+import pytest
+from typing import Any
 
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
 
-def get_api_key():
-    """Get API Key from environment variables"""
+def _require_api_key() -> str:
     api_key = os.getenv("AGB_API_KEY")
     if not api_key:
-        raise ValueError(
-            "AGB_API_KEY environment variable not set. Please set the environment variable."
-        )
+        pytest.skip("AGB_API_KEY environment variable not set")
     return api_key
+
+
+def _err(result) -> str:
+    return (
+        f"success={getattr(result, 'success', None)!r}, "
+        f"error_message={getattr(result, 'error_message', None)!r}, "
+        f"request_id={getattr(result, 'request_id', None)!r}"
+    )
 
 
 def test_watch_directory_file_modification():
@@ -30,50 +38,37 @@ def test_watch_directory_file_modification():
     """
     print("=== Testing file modification monitoring ===\n")
 
-    # Initialize AGB client
-    try:
-        api_key = get_api_key()
-    except ValueError as e:
-        print(f"❌ {e}")
-        return False
-    except Exception as e:
-        print(f"❌ Unexpected error getting API key: {e}")
-        return False
+    api_key = _require_api_key()
 
     try:
         agb = AGB(api_key=api_key)
         print("✅ AGB client initialized")
     except Exception as e:
-        print(f"❌ Failed to initialize AGB client: {e}")
-        return False
+        pytest.fail(f"Failed to initialize AGB client: {e}")
 
     # Create session with specified ImageId
     session_params = CreateSessionParams(image_id="agb-code-space-2")
     session_result = agb.create(session_params)
 
-    if not session_result.success:
-        print(f"❌ Failed to create session: {session_result.error_message}")
-        return False
+    assert session_result.success and session_result.session is not None, (
+        f"Failed to create session: {_err(session_result)}"
+    )
 
     session = session_result.session
     print(f"✅ Session created successfully with ID: {session.session_id}")
 
     # Create test directory and initial file
-    test_dir = f"/tmp/test_modify_watch_{int(time.time())}"
+    test_dir = f"/tmp/test_modify_watch_{int(time.time())}_{uuid.uuid4().hex[:8]}"
     print(f"\n1. Creating test directory: {test_dir}")
-    create_dir_result = session.file_system.create_directory(test_dir)
-    if not create_dir_result.success:
-        print(f"❌ Failed to create directory: {create_dir_result.error_message}")
-        return False
+    create_dir_result = session.file.mkdir(test_dir)
+    assert create_dir_result.success, f"Failed to create directory: {_err(create_dir_result)}"
     print("✅ Test directory created")
 
     # Create initial file
     test_file = f"{test_dir}/modify_test.txt"
     print(f"\n2. Creating initial file: {test_file}")
-    write_result = session.file_system.write_file(test_file, "Initial content")
-    if not write_result.success:
-        print(f"❌ Failed to create initial file: {write_result.error_message}")
-        return False
+    write_result = session.file.write(test_file, "Initial content")
+    assert write_result.success, f"Failed to create initial file: {_err(write_result)}"
     print("✅ Initial file created")
 
     # Storage for captured events
@@ -89,13 +84,13 @@ def test_watch_directory_file_modification():
             for event in modify_events:
                 print(f"🔔 Captured modify event: {event.path} ({event.path_type})")
 
-    monitor_thread = None
+    monitor_thread: Any = None
     test_passed = False
 
     try:
         # Start monitoring
         print(f"\n3. Starting directory monitoring...")
-        monitor_thread = session.file_system.watch_directory(
+        monitor_thread = session.file.watch_dir(
             path=test_dir, callback=on_file_modified, interval=1.0
         )
         monitor_thread.start()
@@ -107,13 +102,9 @@ def test_watch_directory_file_modification():
         for i in range(3):
             content = f"Modified content version {i + 1}"
             print(f"   Modification {i + 1}: Writing '{content}'")
-            modify_result = session.file_system.write_file(test_file, content)
-            if not modify_result.success:
-                print(
-                    f"❌ Failed to modify file (attempt {i + 1}): {modify_result.error_message}"
-                )
-            else:
-                print(f"✅ File modified successfully (attempt {i + 1})")
+            modify_result = session.file.write(test_file, content)
+            assert modify_result.success, f"Failed to modify file: {_err(modify_result)}"
+            print(f"✅ File modified successfully (attempt {i + 1})")
             time.sleep(1.5)  # Ensure events are captured
 
         # Wait a bit more for final events
@@ -181,9 +172,7 @@ def test_watch_directory_file_modification():
 
             if valid_events >= 2: # Requiring at least 2 valid events
                 print("✅ File modification monitoring test passed!")
-                if not test_passed: # If previously failed due to count, double check logic
-                     if len(captured_events) >= 2:
-                         test_passed = True
+                test_passed = True
             else:
                 print("❌ No valid modification events detected")
                 test_passed = False
@@ -192,31 +181,24 @@ def test_watch_directory_file_modification():
         # Stop monitoring
         print(f"\n6. Stopping directory monitoring...")
         if monitor_thread:
-            monitor_thread.stop_event.set()
+            monitor_thread.stop_event.set()  # type: ignore[attr-defined]
             monitor_thread.join(timeout=5)
             print("✅ Directory monitoring stopped")
 
         # Clean up session
         print(f"\n7. Cleaning up session...")
+        try:
+            # Best-effort cleanup: directory
+            session.command.execute(f"rm -rf {test_dir}", timeout_ms=10000)
+        except Exception as e:
+            print(f"Warning: Failed to cleanup dir {test_dir}: {e}")
         delete_result = agb.delete(session)
-        if delete_result.success:
-            print("✅ Session deleted successfully")
-        else:
-            print(f"❌ Failed to delete session: {delete_result.error_message}")
+        assert delete_result.success, f"Failed to delete session: {_err(delete_result)}"
+        print("✅ Session deleted successfully")
 
     print("\n=== File modification monitoring test completed ===")
-    return test_passed
+    assert test_passed, "File modification monitoring did not capture enough valid events"
 
 
 if __name__ == "__main__":
-    try:
-        success = test_watch_directory_file_modification()
-        if success:
-            print("\n🎉 All tests passed!")
-            sys.exit(0)
-        else:
-            print("\n💥 Some tests failed!")
-            sys.exit(1)
-    except Exception as e:
-        print(f"\n❌ Test failed with exception: {e}")
-        sys.exit(1)
+    raise SystemExit(pytest.main([__file__, "-v"]))

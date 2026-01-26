@@ -2,7 +2,7 @@
 
 ## What you’ll do
 
-Execute Linux shell commands via `session.command.execute_command()`, handle outputs, and avoid common pitfalls (non-persistent working directory / environment variables).
+Execute Linux shell commands via `session.command.execute()`, handle outputs, and avoid common pitfalls (non-persistent working directory / environment variables).
 
 The Command Execution API also supports:
 - **Working Directory**: Use the `cwd` parameter to set the working directory for commands
@@ -29,7 +29,7 @@ if not create_result.success:
     raise SystemExit(f"Session creation failed: {create_result.error_message}")
 
 session = create_result.session
-cmd_result = session.command.execute_command("ls -la /tmp")
+cmd_result = session.command.execute("ls -la /tmp")
 
 if cmd_result.success:
     print("Output:", cmd_result.output)
@@ -62,11 +62,11 @@ Use the `cwd` parameter to set the working directory for a command:
 
 ```python
 # Using cwd parameter (recommended)
-result = session.command.execute_command("pwd", cwd="/tmp")
+result = session.command.execute("pwd", cwd="/tmp")
 print(result.output)  # Output: /tmp
 
 # Alternative: command chaining (still works)
-session.command.execute_command("cd /tmp && pwd")
+session.command.execute("cd /tmp && pwd")
 ```
 
 ### Set environment variables with `envs` parameter
@@ -75,20 +75,20 @@ Use the `envs` parameter to set environment variables for a command:
 
 ```python
 # Using envs parameter (recommended)
-result = session.command.execute_command(
+result = session.command.execute(
     "echo $TEST_VAR $ANOTHER_VAR",
     envs={"TEST_VAR": "hello", "ANOTHER_VAR": "world"}
 )
 print(result.output)  # Output: hello world
 
 # Alternative: inline env vars (still works)
-session.command.execute_command("TEST_VAR=hello echo $TEST_VAR")
+session.command.execute("TEST_VAR=hello echo $TEST_VAR")
 ```
 
 ### Combine `cwd` and `envs` parameters
 
 ```python
-result = session.command.execute_command(
+result = session.command.execute(
     "pwd && echo $MY_VAR",
     cwd="/tmp",
     envs={"MY_VAR": "test_value"}
@@ -100,7 +100,7 @@ result = session.command.execute_command(
 The command result includes separate `stdout`, `stderr`, and `exit_code` fields:
 
 ```python
-result = session.command.execute_command("ls /nonexistent")
+result = session.command.execute("ls /nonexistent")
 
 if result.exit_code == 0:
     print("Success!")
@@ -115,7 +115,7 @@ else:
 
 ### Run multiple operations in one command (legacy approach)
 
-Each `execute_command` call runs in a **new, isolated shell session**. That means:
+Each `execute` call runs in a **new, isolated shell session**. That means:
 
 - Working directory changes (e.g. `cd`) do **not** persist between calls.
 - Environment variables set with `export` do **not** persist between calls.
@@ -123,33 +123,33 @@ Each `execute_command` call runs in a **new, isolated shell session**. That mean
 You can still use command chaining (though using `cwd` and `envs` parameters is recommended):
 
 ```python
-session.command.execute_command("cd /tmp && ls -la")
-session.command.execute_command("cd /tmp && ls -la && cat file.txt")
+session.command.execute("cd /tmp && ls -la")
+session.command.execute("cd /tmp && ls -la && cat file.txt")
 ```
 
 ### Run diagnostics (CPU / memory / disk)
 
 ```python
-session.command.execute_command("free -h")
-session.command.execute_command("df -h")
+session.command.execute("free -h")
+session.command.execute("df -h")
 ```
 
 ### Do advanced file operations with CLI tools
 
 ```python
-session.command.execute_command("tar -czf logs.tar.gz /var/log/*.log")
+session.command.execute("tar -czf logs.tar.gz /var/log/*.log")
 ```
 
 ### Install packages (if permitted by the image)
 
 ```python
-session.command.execute_command("apt-get update && apt-get install -y jq", timeout_ms=30000)
+session.command.execute("apt-get update && apt-get install -y jq", timeout_ms=30000)
 ```
 
 ### Increase timeout for long-running commands
 
 ```python
-session.command.execute_command("wget large-file.zip", timeout_ms=60000)
+session.command.execute("wget large-file.zip", timeout_ms=60000)
 ```
 
 ## Best practices
@@ -182,7 +182,7 @@ session.command.execute_command("wget large-file.zip", timeout_ms=60000)
 
 ### Working directory / environment variables not persisting
 
-- **Likely cause**: each `execute_command` call runs in a new shell session.
+- **Likely cause**: each `execute` call runs in a new shell session.
 - **Fix**: use the `cwd` parameter to set working directory, and the `envs` parameter to set environment variables. Alternatively, chain commands (`cd /tmp && ...`) and set env vars in the same command.
 
 ## Related

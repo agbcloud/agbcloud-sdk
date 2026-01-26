@@ -21,8 +21,8 @@ from agb.session_params import CreateSessionParams
 def _require_agb_api_key() -> str:
     """Read AGB_API_KEY from environment; fail fast if missing."""
     api_key = os.environ.get("AGB_API_KEY", "").strip()
-    if not api_key or os.environ.get("CI"):
-        pytest.fail("Integration test prerequisite not met: AGB_API_KEY is not set or running in CI")
+    if not api_key:
+        pytest.fail("Integration test prerequisite not met: AGB_API_KEY is not set")
     return api_key
 
 
@@ -61,7 +61,7 @@ def test_file_transfer_upload_integration() -> None:
     try:
         _sleep_for_session_ready()
 
-        context_path = session.file_system.get_file_transfer_context_path()
+        context_path = session.file.transfer_path()
         if not context_path:
             pytest.fail("Failed to get file_transfer context_path (backend may not return internal context)")
 
@@ -74,7 +74,7 @@ def test_file_transfer_upload_integration() -> None:
             local_path = f.name
 
         try:
-            upload_result = session.file_system.upload_file(
+            upload_result = session.file.upload(
                 local_path=local_path,
                 remote_path=remote_path,
                 wait=True,
@@ -88,23 +88,23 @@ def test_file_transfer_upload_integration() -> None:
             assert upload_result.request_id_sync
 
             # Verify the directory exists
-            ls = session.command.execute_command(
+            ls = session.command.execute(
                 f"ls -la {context_path.rstrip('/')}/",
                 timeout_ms=10_000,
             )
             assert ls.success, f"Remote directory does not exist or is not accessible: {ls.error_message}"
 
             # Verify the file exists
-            list_result = session.file_system.list_directory(f"{context_path.rstrip('/')}/")
-            assert list_result.success, f"list_directory failed: {list_result.error_message}"
+            list_result = session.file.list(f"{context_path.rstrip('/')}/")
+            assert list_result.success, f"list failed: {list_result.error_message}"
             assert any(
                 (it.get("name") == "upload_test.txt" and not it.get("isDirectory", False))
                 for it in list_result.entries
             ), "Uploaded file is not present in directory listing"
 
             # Verify content matches
-            read_result = session.file_system.read_file(remote_path)
-            assert read_result.success, f"read_file failed: {read_result.error_message}"
+            read_result = session.file.read(remote_path)
+            assert read_result.success, f"read failed: {read_result.error_message}"
             # Normalize line endings to handle \r\n vs \n differences
             expected_content = test_content.replace('\r\n', '\n').replace('\r', '\n').strip()
             actual_content = read_result.content.replace('\r\n', '\n').replace('\r', '\n').strip()
@@ -144,7 +144,7 @@ def test_file_transfer_download_integration() -> None:
     try:
         _sleep_for_session_ready()
 
-        context_path = session.file_system.get_file_transfer_context_path()
+        context_path = session.file.transfer_path()
         if not context_path:
             pytest.fail("Failed to get file_transfer context_path (backend may not return internal context)")
 
@@ -152,17 +152,17 @@ def test_file_transfer_download_integration() -> None:
         test_content = ("This is AGB FileTransfer download integration test content.\n" * 15)
 
         # Ensure directory exists, then write the remote file
-        mkdir_res = session.file_system.create_directory(f"{context_path.rstrip('/')}/")
+        mkdir_res = session.file.mkdir(f"{context_path.rstrip('/')}/")
         assert mkdir_res.success, f"create_directory failed: {mkdir_res.error_message}"
 
-        write_res = session.file_system.write_file(remote_path, test_content, "overwrite")
-        assert write_res.success, f"write_file failed: {write_res.error_message}"
+        write_res = session.file.write(remote_path, test_content, "overwrite")
+        assert write_res.success, f"write failed: {write_res.error_message}"
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as f:
             local_path = f.name
 
         try:
-            download_result = session.file_system.download_file(
+            download_result = session.file.download(
                 remote_path=remote_path,
                 local_path=local_path,
                 overwrite=True,

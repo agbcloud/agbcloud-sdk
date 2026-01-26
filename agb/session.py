@@ -1,5 +1,5 @@
 import json
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from agb.api.models import (
     GetMcpResourceRequest,
@@ -7,9 +7,20 @@ from agb.api.models import (
     GetLabelRequest,
     DeleteSessionAsyncRequest,
     GetSessionDetailRequest,
+    CallMcpToolRequest,
+    ListMcpToolsRequest,
 )
-from agb.exceptions import SessionError
-from agb.model.response import OperationResult, DeleteResult, SessionStatusResult
+from agb.exceptions import SessionError, AGBError
+from agb.model.response import (
+    OperationResult,
+    DeleteResult,
+    SessionStatusResult,
+    McpTool,
+    McpToolResult,
+    McpToolsResult,
+    SessionMetrics,
+    SessionMetricsResult,
+)
 from agb.modules.browser import Browser
 from agb.modules.code import Code
 from agb.modules.command import Command
@@ -31,6 +42,7 @@ class Session:
     """
 
     def __init__(self, agb: "AGB", session_id: str):
+
         self.agb = agb
         self.session_id = session_id
         self.resource_url = ""
@@ -44,7 +56,7 @@ class Session:
     def _init_modules(self):
         """Initialize all available modules"""
         self.command = Command(self)
-        self.file_system = FileSystem(self)
+        self.file = FileSystem(self)
         self.code = Code(self)
         self.browser = Browser(self)
         self.computer = Computer(self)
@@ -257,6 +269,18 @@ class Session:
         Returns:
             OperationResult: Result containing the session information as data and
                 request ID.
+                - success (bool): True if the operation succeeded
+                - data (dict): Session information dictionary containing:
+                    - session_id (str): The session ID
+                    - resource_url (str): Resource URL for the session
+                    - app_id (str, optional): Application ID (if desktop session)
+                    - auth_code (str, optional): Authentication code (if desktop session)
+                    - connection_properties (dict, optional): Connection properties
+                    - resource_id (str, optional): Resource ID
+                    - resource_type (str, optional): Resource type
+                    - ticket (str, optional): Ticket for connection
+                - error_message (str): Error details if the operation failed
+                - request_id (str): Unique identifier for this API request
         """
         log_operation_start("Session.info", f"SessionId={self.get_session_id()}")
         try:
@@ -362,12 +386,17 @@ class Session:
         Get a link associated with the current session.
 
         Args:
-            protocol_type (Optional[str]): The protocol type to use for the
+            protocol_type (Optional[str], optional): The protocol type to use for the
                 link. Defaults to None.
-            port (Optional[int]): The port to use for the link.
+            port (Optional[int], optional): The port to use for the link.
+                Defaults to None.
 
         Returns:
-            OperationResult: Result containing the link as data and request ID.
+            OperationResult: Result containing the link URL as data and request ID.
+                - success (bool): True if the operation succeeded
+                - data (str): The link URL (when success is True)
+                - error_message (str): Error details if the operation failed
+                - request_id (str): Unique identifier for this API request
 
         Raises:
             SessionError: If the request fails or the response is invalid.
@@ -598,7 +627,13 @@ class Session:
         Get basic session status.
 
         Returns:
-            SessionStatusResult: Result containing session status only.
+            SessionStatusResult: Result containing session status information.
+                - success (bool): True if the operation succeeded
+                - status (str): Current session status
+                - http_status_code (int): HTTP status code from the API response
+                - code (str): Response code
+                - error_message (str): Error details if the operation failed
+                - request_id (str): Unique identifier for this API request
         """
         log_operation_start("Session.get_status", f"SessionId={self.session_id}")
         try:
@@ -643,4 +678,343 @@ class Session:
                 request_id="",
                 success=False,
                 error_message=f"Failed to get session status {self.session_id}: {e}",
+            )
+
+    def call_mcp_tool(
+        self,
+        tool_name: str,
+        args: Dict[str, Any],
+        read_timeout: Optional[int] = None,
+        connect_timeout: Optional[int] = None,
+    ) -> McpToolResult:
+        """
+        Call the specified MCP tool.
+
+        Args:
+            tool_name (str): Tool name (e.g., "tap", "get_ui_elements").
+            args (Dict[str, Any]): Tool arguments dictionary.
+            read_timeout (Optional[int], optional): Read timeout in milliseconds.
+                Defaults to None.
+            connect_timeout (Optional[int], optional): Connection timeout in milliseconds.
+                Defaults to None.
+
+        Returns:
+            McpToolResult: Tool call result, data field contains tool return data in JSON string format.
+                - success (bool): True if tool call succeeded
+                - data (str): Tool return data in JSON string format (when success is True)
+                - error_message (str): Error details if tool call failed
+                - request_id (str): Unique identifier for this API request
+
+        Raises:
+            SessionError: If the tool call fails.
+
+        Example:
+            ```python
+            # Call mobile device tap tool
+            result = session.call_mcp_tool("tap", {"x": 100, "y": 200})
+
+            # Call get UI elements tool
+            result = session.call_mcp_tool("get_ui_elements", {})
+            ```
+        """
+        log_operation_start(
+            "Session.call_mcp_tool",
+            f"SessionId={self.session_id}, ToolName={tool_name}",
+        )
+        try:
+            # Serialize arguments
+            args_json = json.dumps(args, ensure_ascii=False)
+
+            # Build request
+            request = CallMcpToolRequest(
+                authorization=f"Bearer {self.get_api_key()}",
+                session_id=self.get_session_id(),
+                name=tool_name,
+                args=args_json,
+            )
+
+            # Call Client API
+            response = self.get_client().call_mcp_tool(
+                request,
+                read_timeout=read_timeout,
+                connect_timeout=connect_timeout,
+            )
+
+            # Check if response is None
+            if response is None:
+                log_operation_error(
+                    "Session.call_mcp_tool",
+                    "OpenAPI client returned None response",
+                )
+                return McpToolResult(
+                    request_id="",
+                    success=False,
+                    error_message="OpenAPI client returned None response",
+                )
+
+            request_id = response.request_id or ""
+
+            # Parse response using CallMcpToolResponse methods
+            if hasattr(response, "is_successful"):
+                if response.is_successful():
+                    result = response.get_tool_result()
+                    log_operation_success(
+                        "Session.call_mcp_tool",
+                        f"SessionId={self.session_id}, RequestId={request_id}, ToolName={tool_name}",
+                    )
+                    return McpToolResult(
+                        request_id=request_id,
+                        success=True,
+                        data=result,
+                        error_message="",
+                    )
+                else:
+                    error_msg = response.get_error_message() or "Tool execution failed"
+                    log_warning(
+                        f"Session.call_mcp_tool failed: {error_msg}, RequestId={request_id}"
+                    )
+                    return McpToolResult(
+                        request_id=request_id,
+                        success=False,
+                        error_message=error_msg,
+                    )
+            else:
+                log_operation_error(
+                    "Session.call_mcp_tool",
+                    "Unsupported response type",
+                )
+                return McpToolResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message="Unsupported response type",
+                )
+
+        except AGBError as e:
+            log_operation_error("Session.call_mcp_tool", str(e), exc_info=True)
+            return McpToolResult(
+                request_id="",
+                success=False,
+                error_message=str(e),
+            )
+        except Exception as e:
+            log_operation_error("Session.call_mcp_tool", str(e), exc_info=True)
+            return McpToolResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to call MCP tool {tool_name}: {e}",
+            )
+
+    def list_mcp_tools(self, image_id: Optional[str] = None) -> McpToolsResult:
+        """
+        List MCP tools available for the current session.
+
+        Args:
+            image_id (Optional[str], optional): Image ID. Defaults to current session's
+                image_id or "agb-code-space-1" if not specified.
+
+        Returns:
+            McpToolsResult: Result containing the list of available MCP tools.
+                - success (bool): True if the operation succeeded
+                - tools (List[McpTool]): List of MCP tool objects, each containing name,
+                    description, input_schema, server, and tool fields
+                - error_message (str): Error details if the operation failed
+                - request_id (str): Unique identifier for this API request
+
+        Example:
+            ```python
+            # List available tools
+            result = session.list_mcp_tools()
+            if result.success:
+                for tool in result.tools:
+                    print(f"{tool.name}: {tool.description}")
+            ```
+        """
+        log_operation_start(
+            "Session.list_mcp_tools",
+            f"SessionId={self.session_id}, ImageId={image_id or 'default'}",
+        )
+        try:
+            # Determine image_id to use, ensure it's a string type
+            if image_id is None:
+                image_id = getattr(self, "image_id", "") or "agb-code-space-1"
+
+            # Ensure image_id is a string type (handle possible None case)
+            image_id_str: str = str(image_id) if image_id else "agb-code-space-1"
+
+            # Build request
+            request = ListMcpToolsRequest(
+                authorization=f"Bearer {self.get_api_key()}",
+                image_id=image_id_str,
+            )
+
+            # Call API
+            response = self.get_client().list_mcp_tools(request)
+            request_id = response.request_id or ""
+
+            # Check if response is successful
+            if not response.is_successful():
+                error_msg = response.get_error_message() or "Failed to list MCP tools"
+                log_warning(
+                    f"Session.list_mcp_tools failed: {error_msg}, RequestId={request_id}"
+                )
+                return McpToolsResult(
+                    request_id=request_id,
+                    success=False,
+                    error_message=error_msg,
+                )
+
+            # Parse tools list
+            tools = []
+            tools_data_str = response.get_tools_list()
+
+            if tools_data_str:
+                try:
+                    tools_data = json.loads(tools_data_str)
+                    if isinstance(tools_data, list):
+                        for tool_data in tools_data:
+                            tool = McpTool(
+                                name=tool_data.get("name", ""),
+                                description=tool_data.get("description", ""),
+                                input_schema=tool_data.get("inputSchema", {}),
+                                server=tool_data.get("server", ""),
+                                tool=tool_data.get("tool", ""),
+                            )
+                            tools.append(tool)
+                except json.JSONDecodeError as e:
+                    log_operation_error(
+                        "Session.list_mcp_tools",
+                        f"Failed to parse tools list: {e}",
+                    )
+                    return McpToolsResult(
+                        request_id=request_id,
+                        success=False,
+                        error_message=f"Failed to parse tools list: {e}",
+                    )
+
+            log_operation_success(
+                "Session.list_mcp_tools",
+                f"SessionId={self.session_id}, RequestId={request_id}, ToolsCount={len(tools)}",
+            )
+            return McpToolsResult(
+                request_id=request_id,
+                success=True,
+                tools=tools,
+            )
+
+        except Exception as e:
+            log_operation_error("Session.list_mcp_tools", str(e), exc_info=True)
+            return McpToolsResult(
+                request_id="",
+                success=False,
+                error_message=f"Failed to list MCP tools: {e}",
+            )
+
+    def get_metrics(
+        self,
+        read_timeout: Optional[int] = None,
+        connect_timeout: Optional[int] = None,
+    ) -> SessionMetricsResult:
+        """
+        Get runtime metrics for this session.
+
+        Args:
+            read_timeout (Optional[int]): Read timeout in milliseconds.
+            connect_timeout (Optional[int]): Connect timeout in milliseconds.
+
+        Returns:
+            SessionMetricsResult: Result containing session metrics data.
+        """
+        log_operation_start(
+            "Session.get_metrics",
+            f"SessionId={self.session_id}",
+        )
+
+        # Use Session's call_mcp_tool method
+        tool_result = self.call_mcp_tool(
+            tool_name="get_metrics",
+            args={},
+            read_timeout=read_timeout,
+            connect_timeout=connect_timeout,
+        )
+
+        if not tool_result.success:
+            log_operation_error(
+                "Session.get_metrics",
+                tool_result.error_message or "Failed to get metrics",
+            )
+            return SessionMetricsResult(
+                request_id=tool_result.request_id,
+                success=False,
+                metrics=None,
+                error_message=tool_result.error_message,
+                raw={},
+            )
+
+        try:
+            # Parse the JSON response data
+            raw = (
+                json.loads(tool_result.data)
+                if isinstance(tool_result.data, str)
+                else tool_result.data
+            )
+            if not isinstance(raw, dict):
+                raise ValueError("get_metrics returned non-object JSON")
+
+            def _float_from_first_key(data: dict, keys: list, default: float = 0.0) -> float:
+                """Helper function to get float value from first available key."""
+                for k in keys:
+                    if k in data and data.get(k) is not None:
+                        try:
+                            return float(data.get(k) or 0.0)
+                        except Exception:
+                            pass
+                return float(default)
+
+            # Create SessionMetrics object with parsed data
+            metrics = SessionMetrics(
+                cpu_count=int(raw.get("cpu_count", 0) or 0),
+                cpu_used_pct=float(raw.get("cpu_used_pct", 0.0) or 0.0),
+                disk_total=int(raw.get("disk_total", 0) or 0),
+                disk_used=int(raw.get("disk_used", 0) or 0),
+                mem_total=int(raw.get("mem_total", 0) or 0),
+                mem_used=int(raw.get("mem_used", 0) or 0),
+                rx_rate_kbyte_per_s=_float_from_first_key(
+                    raw,
+                    ["rx_rate_kbyte_per_s", "rx_rate_kbps", "rx_rate_KBps"],
+                ),
+                tx_rate_kbyte_per_s=_float_from_first_key(
+                    raw,
+                    ["tx_rate_kbyte_per_s", "tx_rate_kbps", "tx_rate_KBps"],
+                ),
+                rx_used_kbyte=_float_from_first_key(
+                    raw, ["rx_used_kbyte", "rx_used_kb", "rx_used_KB"]
+                ),
+                tx_used_kbyte=_float_from_first_key(
+                    raw, ["tx_used_kbyte", "tx_used_kb", "tx_used_KB"]
+                ),
+                timestamp=str(raw.get("timestamp", "") or ""),
+            )
+
+            log_operation_success(
+                "Session.get_metrics",
+                f"SessionId={self.session_id}, RequestId={tool_result.request_id}",
+            )
+
+            return SessionMetricsResult(
+                request_id=tool_result.request_id,
+                success=True,
+                metrics=metrics,
+                error_message="",
+                raw=raw,
+            )
+
+        except Exception as e:
+            error_msg = f"Failed to parse get_metrics response: {e}"
+            log_operation_error("Session.get_metrics", error_msg, exc_info=True)
+            return SessionMetricsResult(
+                request_id=tool_result.request_id,
+                success=False,
+                metrics=None,
+                error_message=error_msg,
+                raw={},
             )

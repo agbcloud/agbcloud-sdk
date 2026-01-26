@@ -48,7 +48,7 @@ def main():
 
         for cmd in commands:
             print(f"> {cmd}")
-            cmd_result = session.command.execute_command(cmd)
+            cmd_result = session.command.execute(cmd)
             if cmd_result.success:
                 print(cmd_result.output.strip())
             else:
@@ -59,22 +59,22 @@ def main():
 
         # Create a file
         print("> echo 'Hello via Shell' > /tmp/shell_test.txt")
-        session.command.execute_command("echo 'Hello via Shell' > /tmp/shell_test.txt")
+        session.command.execute("echo 'Hello via Shell' > /tmp/shell_test.txt")
 
         # Read it back
         print("> cat /tmp/shell_test.txt")
-        read_result = session.command.execute_command("cat /tmp/shell_test.txt")
+        read_result = session.command.execute("cat /tmp/shell_test.txt")
         print(read_result.output.strip())
 
         # List details
         print("> ls -l /tmp/shell_test.txt")
-        ls_result = session.command.execute_command("ls -l /tmp/shell_test.txt")
+        ls_result = session.command.execute("ls -l /tmp/shell_test.txt")
         print(ls_result.output.strip())
 
         # 5. Network Diagnostics
         print("\n=== 3. Network Diagnostics ===")
         print("> curl -I https://www.google.com (Head Request)")
-        curl_result = session.command.execute_command(
+        curl_result = session.command.execute(
             "curl -I -s --connect-timeout 5 https://www.google.com"
         )
         if curl_result.success:
@@ -96,7 +96,7 @@ Eve,32,Berlin,65000
 Frank,27,Sydney,52000"""
 
         print("Creating CSV file...")
-        session.command.execute_command(
+        session.command.execute(
             f"cat > /tmp/employees.csv << 'EOF'\n{csv_data}\nEOF"
         )
 
@@ -104,7 +104,7 @@ Frank,27,Sydney,52000"""
         print("Analyzing data with awk...")
         awk_cmd = "awk -F',' 'NR>1 {sum+=$4; count++} END {print \"Average salary: $\" sum/count}' /tmp/employees.csv"
         print(f"> {awk_cmd}")
-        awk_result = session.command.execute_command(awk_cmd)
+        awk_result = session.command.execute(awk_cmd)
         print(awk_result.output.strip())
 
         # Step C: Filter high earners
@@ -112,7 +112,7 @@ Frank,27,Sydney,52000"""
             "awk -F',' 'NR>1 && $4>55000 {print $1 \": $\" $4}' /tmp/employees.csv"
         )
         print(f"> {filter_cmd}")
-        filter_result = session.command.execute_command(filter_cmd)
+        filter_result = session.command.execute(filter_cmd)
         print("High earners:")
         print(filter_result.output.strip())
 
@@ -132,14 +132,14 @@ echo "Health check completed"
 """
         # Write script
         print("Deploying health check script...")
-        session.command.execute_command(
+        session.command.execute(
             f"cat > /tmp/health_check.sh << 'EOF'\n{health_check_script}\nEOF"
         )
-        session.command.execute_command("chmod +x /tmp/health_check.sh")
+        session.command.execute("chmod +x /tmp/health_check.sh")
 
         # Run script
         print("Running health check...")
-        health_result = session.command.execute_command("/tmp/health_check.sh")
+        health_result = session.command.execute("/tmp/health_check.sh")
         if health_result.success:
             print(health_result.output.strip())
         else:
@@ -150,7 +150,7 @@ echo "Health check completed"
 
         # Example: Using cwd parameter
         print("\n6.1. Using cwd parameter to set working directory:")
-        pwd_result = session.command.execute_command("pwd", cwd="/tmp")
+        pwd_result = session.command.execute("pwd", cwd="/tmp")
         if pwd_result.success:
             print(f"   Current directory: {pwd_result.output.strip()}")
             if pwd_result.exit_code is not None:
@@ -158,7 +158,7 @@ echo "Health check completed"
 
         # Example: Using envs parameter
         print("\n6.2. Using envs parameter to set environment variables:")
-        env_result = session.command.execute_command(
+        env_result = session.command.execute(
             "echo $TEST_VAR $ANOTHER_VAR",
             envs={"TEST_VAR": "hello", "ANOTHER_VAR": "world"}
         )
@@ -167,7 +167,7 @@ echo "Health check completed"
 
         # Example: Combining cwd and envs
         print("\n6.3. Combining cwd and envs parameters:")
-        combined_result = session.command.execute_command(
+        combined_result = session.command.execute(
             "pwd && echo $MY_VAR",
             cwd="/tmp",
             envs={"MY_VAR": "test_value"}
@@ -180,7 +180,7 @@ echo "Health check completed"
 
         # Example: Successful command with detailed fields
         print("\n7.1. Successful command:")
-        success_result = session.command.execute_command("echo 'Hello World'")
+        success_result = session.command.execute("echo 'Hello World'")
         if success_result.success:
             print(f"   Success: {success_result.success}")
             print(f"   Exit code: {success_result.exit_code}")
@@ -190,7 +190,7 @@ echo "Health check completed"
 
         # Example: Failed command with detailed fields
         print("\n7.2. Failed command (non-existent file):")
-        fail_result = session.command.execute_command("cat /nonexistent/file.txt")
+        fail_result = session.command.execute("cat /nonexistent/file.txt")
         print(f"   Success: {fail_result.success}")
         if fail_result.exit_code is not None:
             print(f"   Exit code: {fail_result.exit_code}")
@@ -202,7 +202,7 @@ echo "Health check completed"
 
         # Example: Command with both stdout and stderr
         print("\n7.3. Command with both stdout and stderr:")
-        mixed_result = session.command.execute_command(
+        mixed_result = session.command.execute(
             "echo 'This is stdout' && echo 'This is stderr' >&2"
         )
         if mixed_result.success:

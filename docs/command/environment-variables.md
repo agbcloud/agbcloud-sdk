@@ -24,7 +24,7 @@ if not create_result.success:
 
 session = create_result.session
 try:
-    result = session.command.execute_command(
+    result = session.command.execute(
         "echo $GREETING $TARGET",
         envs={"GREETING": "hello", "TARGET": "world"},
     )
@@ -40,13 +40,13 @@ finally:
 ### Set a single variable
 
 ```python
-session.command.execute_command("echo $FOO", envs={"FOO": "bar"})
+session.command.execute("echo $FOO", envs={"FOO": "bar"})
 ```
 
 ### Pass multiple variables
 
 ```python
-session.command.execute_command(
+session.command.execute(
     "python -c 'import os; print(os.environ[\"A\"], os.environ[\"B\"])'",
     envs={"A": "1", "B": "2"},
 )
@@ -55,7 +55,7 @@ session.command.execute_command(
 ### Legacy alternative: inline env vars (still works)
 
 ```python
-session.command.execute_command("FOO=bar echo $FOO")
+session.command.execute("FOO=bar echo $FOO")
 ```
 
 Note: inline env vars can be fine for simple cases, but `envs` is easier to manage and less error-prone for complex values.

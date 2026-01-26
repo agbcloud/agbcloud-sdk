@@ -17,23 +17,6 @@ Practical, runnable examples demonstrating the capabilities of the AGB SDK.
 | | [**Context Sync**](data_persistence/README.md) | Sync local context to remote sessions. |
 | | [**Directory Monitoring**](directory_monitoring/README.md) | Watch for file changes in real-time. |
 
-## How to Run
-
-1. **Install the SDK**:
-   ```bash
-   pip install agbcloud-sdk
-   ```
-
-2. **Set your API Key**:
-   ```bash
-   export AGB_API_KEY="your_api_key_here"
-   ```
-
-3. **Run a script**:
-   ```bash
-   # Run from the project root
-   python docs/examples/session_management/create_session.py
-   ```
 
 ## Key Concepts Demonstrated
 

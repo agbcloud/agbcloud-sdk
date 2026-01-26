@@ -30,9 +30,9 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
         """Set up test fixtures."""
         # Skip if no API key is available or in CI environment
         api_key = os.environ.get("AGB_API_KEY")
-        if not api_key or os.environ.get("CI"):
+        if not api_key:
             raise unittest.SkipTest(
-                "Skipping integration test: No API key available or running in CI"
+                "Skipping integration test: No API key available"
             )
 
         # Initialize AGB client
@@ -116,13 +116,13 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
 
             print(f"App Instance ID: {session_info.data.app_instance_id}")
             print(f"Get session request ID: {session_info.request_id}")
-            result = session.file_system.create_directory(f"{sync_path}/test")
+            result = session.file.mkdir(f"{sync_path}/test")
             self.assertTrue(result.success)
             print(f"Created directory {sync_path}")
-            result = session.file_system.write_file(f'{sync_path}/test/test.txt', "test data")
+            result = session.file.write(f'{sync_path}/test/test.txt', "test data")
             self.assertTrue(result.success)
             print(f"Wrote file to {sync_path}/test.txt")
-            read_result = session.file_system.read_file(f"{sync_path}/test/test.txt")
+            read_result = session.file.read(f"{sync_path}/test/test.txt")
             self.assertTrue(read_result.success)
             self.assertEqual(read_result.content, "test data")
             print("✅ All default RecyclePolicy functionality tests passed!")
@@ -209,13 +209,13 @@ class TestRecyclePolicyIntegration(unittest.IsolatedAsyncioTestCase):
             self.assertIsNotNone(session.session_id)
             self.assertGreater(len(session.session_id), 0)
 
-            result = session.file_system.create_directory("/tmp/custom-recycle-test/test-data")
+            result = session.file.mkdir("/tmp/custom-recycle-test/test-data")
             self.assertTrue(result.success)
             print(f"Created directory /tmp/custom-recycle-test/test-data")
 
-            write_result = session.file_system.write_file("/tmp/custom-recycle-test/test-data/test.txt", "test data")
+            write_result = session.file.write("/tmp/custom-recycle-test/test-data/test.txt", "test data")
             self.assertTrue(write_result.success)
-            read_result = session.file_system.read_file("/tmp/custom-recycle-test/test-data/test.txt")
+            read_result = session.file.read("/tmp/custom-recycle-test/test-data/test.txt")
             self.assertTrue(read_result.success)
             self.assertEqual(read_result.content, "test data")
             print("Session with custom recyclePolicy created and verified successfully")

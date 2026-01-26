@@ -31,14 +31,7 @@ Demonstrates security best practices, including input validation and sanitizatio
 
 <<< ./security.py
 
-## How to Run
+### Multiple Results Scenarios
+Demonstrates scenarios where code execution returns multiple results, including multiple display() calls, charts, and mixed output types.
 
-1. **Set API Key**:
-   ```bash
-   export AGB_API_KEY="your_api_key"
-   ```
-
-2. **Run Script**:
-   ```bash
-   python docs/examples/code_execution/main.py
-   ```
+<<< ./multiple_results_demo.py

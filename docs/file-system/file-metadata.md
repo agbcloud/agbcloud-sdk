@@ -2,7 +2,7 @@
 
 ```python
 # Get file information
-info_result = session.file_system.get_file_info("/tmp/example.txt")
+info_result = session.file.info("/tmp/example.txt")
 if info_result.success:
     info = info_result.file_info
     print(f"File size: {info.get('size', 'unknown')} bytes")

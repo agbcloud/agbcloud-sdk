@@ -30,9 +30,9 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
         """Set up test fixtures."""
         # Skip if no API key is available or in CI environment
         api_key = os.environ.get("AGB_API_KEY")
-        if not api_key or os.environ.get("CI"):
+        if not api_key:
             raise unittest.SkipTest(
-                "Skipping integration test: No API key available or running in CI"
+                "Skipping integration test: No API key available"
             )
 
         # Initialize AGB client
@@ -129,7 +129,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
             print(f"Creating file: {file_path}")
             print(f"File content size: {len(file_content)} bytes")
 
-            write_result = session.file_system.write_file(file_path, file_content, "overwrite")
+            write_result = session.file.write(file_path, file_content, "overwrite")
 
             # Verify file write success
             self.assertTrue(write_result.success, f"Failed to write file: {write_result.error_message}")
@@ -288,7 +288,7 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
             print(f"Creating file: {file_path}")
             print(f"File content size: {len(file_content)} bytes")
 
-            write_result = session.file_system.write_file(file_path, file_content, "overwrite")
+            write_result = session.file.write(file_path, file_content, "overwrite")
 
             # Verify file write success
             self.assertTrue(write_result.success, f"Failed to write file: {write_result.error_message}")
@@ -420,13 +420,13 @@ class TestUploadModeIntegration(unittest.IsolatedAsyncioTestCase):
 
                 # Create directory first
                 print(f"Creating directory: {sync_path}")
-                dir_result = session1.file_system.create_directory(sync_path)
+                dir_result = session1.file.mkdir(sync_path)
                 self.assertTrue(dir_result.success, "Error creating directory")
 
                 # Create a 1GB file using dd command
                 print(f"Creating 1GB file at {test_file_path}")
                 create_file_cmd = f"dd if=/dev/zero of={test_file_path} bs=1M count=1024"
-                cmd_result = session1.command.execute_command(create_file_cmd,timeout_ms=10000)
+                cmd_result = session1.command.execute(create_file_cmd,timeout_ms=10000)
                 self.assertTrue(cmd_result.success, "Error creating 1GB file")
                 print(f"Created 1GB file: {cmd_result.output}")
 

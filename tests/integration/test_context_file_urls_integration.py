@@ -12,14 +12,14 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
     def setUpClass(cls):
         api_key = os.environ.get("AGB_API_KEY")
         if not api_key:
-            raise unittest.SkipTest("Skipping integration test: No API key available")
+            raise AssertionError("Integration test failed: No API key available")
         cls.agb = AGB(api_key)
 
         # Create a test context
         cls.context_name = f"test-file-url-py-{int(time.time())}"
         context_result = cls.agb.context.create(cls.context_name)
         if not context_result.success or not context_result.context:
-            raise unittest.SkipTest("Failed to create context for file URL test")
+            raise AssertionError("Failed to create context for file URL test")
         cls.context = context_result.context
         print(f"Created context: {cls.context.name} (ID: {cls.context.id})")
 
@@ -46,8 +46,8 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
         # Check if the API call was successful
         if not result.success:
             print(f"Upload URL API failed: {result.error_message}")
-            # Skip the rest of the test if API is not working
-            self.skipTest(f"Upload URL API not working: {result.error_message}")
+            # Fail the test if API is not working
+            self.fail(f"Upload URL API not working: {result.error_message}")
 
         self.assertTrue(isinstance(result.url, str) and len(result.url) > 0, "URL should be non-empty")
         # Expire time may be optional depending on backend; if present, should be int-like
@@ -76,11 +76,11 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
                 print(f"Uploaded {len(upload_content)} bytes, status={response.status_code}, ETag={etag}")
         except httpx.ConnectError as e:
             print(f"⚠️ Upload failed due to network connection error: {e}")
-            print("This is likely a system-level network issue, skipping upload test")
-            self.skipTest(f"Network connection error during upload: {e}")
+            print("This is likely a system-level network issue, failing upload test")
+            self.fail(f"Network connection error during upload: {e}")
         except Exception as e:
             print(f"⚠️ Upload failed with unexpected error: {e}")
-            self.skipTest(f"Unexpected error during upload: {e}")
+            self.fail(f"Unexpected error during upload: {e}")
 
         # Fetch a presigned download URL for the same file and verify content
         dl_result = self.agb.context.get_file_download_url(self.context.id, test_path)
@@ -102,11 +102,11 @@ class TestContextFileUrlsIntegration(unittest.TestCase):
                 print(f"Downloaded {len(dl_resp.content)} bytes, content matches uploaded data")
         except httpx.ConnectError as e:
             print(f"⚠️ Download failed due to network connection error: {e}")
-            print("This is likely a system-level network issue, skipping download test")
-            self.skipTest(f"Network connection error during download: {e}")
+            print("This is likely a system-level network issue, failing download test")
+            self.fail(f"Network connection error during download: {e}")
         except Exception as e:
             print(f"⚠️ Download failed with unexpected error: {e}")
-            self.skipTest(f"Unexpected error during download: {e}")
+            self.fail(f"Unexpected error during download: {e}")
 
         # List files to verify presence of the uploaded file under /tmp (with small retry)
         file_name = os.path.basename(test_path)

@@ -46,7 +46,7 @@ print(f"Pi is approximately: {math.pi:.4f}")
 numbers = [x**2 for x in range(5)]
 print(f"Squares: {numbers}")
 """
-        py_result = session.code.run_code(python_code, "python")
+        py_result = session.code.run(python_code, "python")
         if py_result.success:
             print("Output:")
             for stdout_item in py_result.logs.stdout:
@@ -62,10 +62,10 @@ const sum = numbers.reduce((a, b) => a + b, 0);
 console.log(`Sum of [${numbers}] is ${sum}`);
 console.log(`User Agent: ${navigator.userAgent}`);
 """
-        js_result = session.code.run_code(js_code, "javascript")
+        js_result = session.code.run(js_code, "javascript")
         if js_result.success:
             print("Output:")
-            for stdout_item in py_result.logs.stdout:
+            for stdout_item in js_result.logs.stdout:
                 print(stdout_item)
         else:
             print(f"Error: {js_result.error_message}")
@@ -82,10 +82,10 @@ int sum = 0;
 for(int i : arr) sum += i;
 System.out.println("Array sum: " + sum);
 """
-        java_result = session.code.run_code(java_code, "java")
+        java_result = session.code.run(java_code, "java")
         if java_result.success:
             print("Output:")
-            for stdout_item in py_result.logs.stdout:
+            for stdout_item in java_result.logs.stdout:
                 print(stdout_item)
         else:
             print(f"Error: {java_result.error_message}")
@@ -98,10 +98,10 @@ cat("Data:", data, "\\n")
 cat("Mean:", mean(data), "\\n")
 cat("SD:", sd(data), "\\n")
 """
-        r_result = session.code.run_code(r_code, "r")
+        r_result = session.code.run(r_code, "r")
         if r_result.success:
             print("Output:")
-            for stdout_item in py_result.logs.stdout:
+            for stdout_item in r_result.logs.stdout:
                 print(stdout_item)
         else:
             print(f"Error: {r_result.error_message}")

@@ -56,6 +56,6 @@ for task in tasks:
             break
 
     # Execute task
-    session.code.run_code(task["code"], "python")
+    session.code.run(task["code"], "python")
     operation_count += 1
 ```

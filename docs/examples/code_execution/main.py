@@ -24,7 +24,7 @@ def main():
     # 2. Create a session
     print("Creating session...")
     # Note: For code execution, we recommend using the 'agb-code-space-1' image
-    params = CreateSessionParams(image_id="agb-code-space-2")
+    params = CreateSessionParams(image_id="agb-code-space-1")
     result = agb.create(params)
 
     if not result.success:
@@ -46,7 +46,7 @@ print(f"Pi is approximately: {math.pi:.4f}")
 numbers = [x**2 for x in range(5)]
 print(f"Squares: {numbers}")
 """
-        py_result = session.code.run_code(python_code, "python")
+        py_result = session.code.run(python_code, "python")
         if py_result.success:
             print("Output:")
             # Display stdout logs
@@ -66,7 +66,7 @@ const sum = numbers.reduce((a, b) => a + b, 0);
 console.log(`Sum of [${numbers}] is ${sum}`);
 console.log(`User Agent: ${navigator.userAgent}`);
 """
-        js_result = session.code.run_code(js_code, "javascript")
+        js_result = session.code.run(js_code, "javascript")
         if js_result.success:
             print("Output:")
             # Display stdout logs
@@ -91,7 +91,7 @@ int sum = 0;
 for(int i : arr) sum += i;
 System.out.println("Array sum: " + sum);
 """
-        java_result = session.code.run_code(java_code, "java")
+        java_result = session.code.run(java_code, "java")
         if java_result.success:
             print("Output:")
             # Display stdout logs
@@ -111,7 +111,7 @@ cat("Data:", data, "\\n")
 cat("Mean:", mean(data), "\\n")
 cat("SD:", sd(data), "\\n")
 """
-        r_result = session.code.run_code(r_code, "r")
+        r_result = session.code.run(r_code, "r")
         if r_result.success:
             print("Output:")
             # Display stdout logs
@@ -158,7 +158,7 @@ display(HTML(html_content))
 
 print("Rich media example completed!")
 """
-        rich_result = session.code.run_code(rich_code, "python")
+        rich_result = session.code.run(rich_code, "python")
         if rich_result.success:
             print("Output:")
             # Display stdout logs

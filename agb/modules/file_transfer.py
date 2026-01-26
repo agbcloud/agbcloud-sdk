@@ -232,6 +232,32 @@ class FileTransfer:
                     path=remote_path,
                     error_message=error_msg,
                 )
+        except httpx.ConnectError as e:
+            error_msg = f"Network connection error: {str(e)}. This may be due to network issues, firewall, or OSS server unavailability."
+            log_operation_error("FileTransfer.upload", error_msg, exc_info=True)
+            return UploadResult(
+                success=False,
+                request_id_upload_url=req_id_upload,
+                request_id_sync=None,
+                http_status=None,
+                etag=None,
+                bytes_sent=0,
+                path=remote_path,
+                error_message=error_msg,
+            )
+        except httpx.TimeoutException as e:
+            error_msg = f"Upload timeout: {str(e)}. The request took longer than {self._http_timeout}s."
+            log_operation_error("FileTransfer.upload", error_msg, exc_info=True)
+            return UploadResult(
+                success=False,
+                request_id_upload_url=req_id_upload,
+                request_id_sync=None,
+                http_status=None,
+                etag=None,
+                bytes_sent=0,
+                path=remote_path,
+                error_message=error_msg,
+            )
         except Exception as e:
             log_operation_error("FileTransfer.upload", f"Upload exception: {str(e)}", exc_info=True)
             return UploadResult(
@@ -242,7 +268,7 @@ class FileTransfer:
                 etag=None,
                 bytes_sent=0,
                 path=remote_path,
-                error_message=f"Upload exception: {e}",
+                error_message=f"Upload exception: {str(e)}",
             )
 
         # 3. Trigger sync to cloud disk (download mode),download from oss to cloud disk
@@ -457,6 +483,32 @@ class FileTransfer:
                     local_path=local_path,
                     error_message=error_msg,
                 )
+        except httpx.ConnectError as e:
+            error_msg = f"Network connection error: {str(e)}. This may be due to network issues, firewall, or OSS server unavailability."
+            log_operation_error("FileTransfer.download", error_msg, exc_info=True)
+            return DownloadResult(
+                success=False,
+                request_id_download_url=req_id_download,
+                request_id_sync=req_id_sync,
+                http_status=None,
+                bytes_received=0,
+                path=remote_path,
+                local_path=local_path,
+                error_message=error_msg,
+            )
+        except httpx.TimeoutException as e:
+            error_msg = f"Download timeout: {str(e)}. The request took longer than {self._http_timeout}s."
+            log_operation_error("FileTransfer.download", error_msg, exc_info=True)
+            return DownloadResult(
+                success=False,
+                request_id_download_url=req_id_download,
+                request_id_sync=req_id_sync,
+                http_status=None,
+                bytes_received=0,
+                path=remote_path,
+                local_path=local_path,
+                error_message=error_msg,
+            )
         except Exception as e:
             log_operation_error("FileTransfer.download", f"Download exception: {str(e)}", exc_info=True)
             return DownloadResult(

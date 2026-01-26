@@ -4,14 +4,14 @@
 
 ```python
 # ✅ Good: Always check success status
-write_result = session.file_system.write_file("/tmp/file.txt", "content")
+write_result = session.file.write("/tmp/file.txt", "content")
 if write_result.success:
     print("File written successfully")
 else:
     print(f"Write failed: {write_result.error_message}")
 
 # ❌ Bad: Assuming operations always succeed
-session.file_system.write_file("/tmp/file.txt", "content")
+session.file.write("/tmp/file.txt", "content")
 # No error checking - could fail silently
 ```
 
@@ -19,10 +19,10 @@ session.file_system.write_file("/tmp/file.txt", "content")
 
 ```python
 # ✅ Good: Use absolute paths
-session.file_system.write_file("/tmp/myfile.txt", "content")
+session.file.write("/tmp/myfile.txt", "content")
 
 # ❌ Avoid: Relative paths can be unpredictable
-session.file_system.write_file("myfile.txt", "content")
+session.file.write("myfile.txt", "content")
 ```
 
 ## Large Files Are Handled Automatically
@@ -31,7 +31,7 @@ session.file_system.write_file("myfile.txt", "content")
 def write_content(session, filepath, content):
     """Write content to file - large files are handled automatically"""
     # No need to check file size - the system handles chunking automatically
-    result = session.file_system.write_file(filepath, content)
+    result = session.file.write(filepath, content)
     return result.success, result.error_message
 
 # Example: Write a large file (automatically chunked)
@@ -52,7 +52,7 @@ def with_temp_file(session, content, operation):
 
     try:
         # Create temp file
-        write_result = session.file_system.write_file(temp_file, content)
+        write_result = session.file.write(temp_file, content)
         if not write_result.success:
             raise Exception(f"Failed to create temp file: {write_result.error_message}")
 
@@ -61,11 +61,11 @@ def with_temp_file(session, content, operation):
 
     finally:
         # Clean up
-        session.file_system.move_file(temp_file, "/tmp/trash/" + temp_file.split("/")[-1])
+        session.file.move(temp_file, "/tmp/trash/" + temp_file.split("/")[-1])
 
 # Usage
 def process_file(session, filepath):
-    read_result = session.file_system.read_file(filepath)
+    read_result = session.file.read(filepath)
     return read_result.content.upper() if read_result.success else None
 
 result = with_temp_file(session, "hello world", process_file)

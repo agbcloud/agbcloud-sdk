@@ -12,7 +12,7 @@ class Code(BaseService):
     Handles code execution operations in the AGB cloud environment.
     """
 
-    def run_code(
+    def run(
         self, code: str, language: str, timeout_s: int = 60
     ) -> EnhancedCodeExecutionResult:
         """
@@ -50,7 +50,7 @@ class Code(BaseService):
             supported_languages = {"python", "javascript", "java", "r"}
             if canonical_language not in supported_languages:
                 error_msg = f"Unsupported language: {language}. Supported languages are: {', '.join(supported_languages)}"
-                log_operation_error("Code.run_code", error_msg)
+                log_operation_error("Code.run", error_msg)
                 return EnhancedCodeExecutionResult(
                     request_id="",
                     success=False,
@@ -60,20 +60,20 @@ class Code(BaseService):
                     execution_count=None,
                     execution_time=0.0
                 )
-            log_operation_start("Code.run_code", f"Language={language}, TimeoutS={timeout_s}, Code={code}")
+            log_operation_start("Code.run", f"Language={language}, TimeoutS={timeout_s}, Code={code}")
             args = {"code": code, "language": canonical_language, "timeout_s": timeout_s}
             result = self._call_mcp_tool("run_code", args)
             
             if result.success:
                 # result_msg = f"RequestId={result.request_id}, ResultLength={result.data if result.data else 0}"
-                # log_operation_success("Code.run_code", result_msg)
-                # Parse the run_code specific result format
-                log_operation_success("Code.run_code", f"ResponseData={result.data}")
+                # log_operation_success("Code.run", result_msg)
+                # Parse the run specific result format
+                log_operation_success("Code.run", f"ResponseData={result.data}")
                 parsed_result = self._parse_run_code_result(result.data, result.request_id)
                 return parsed_result
             else:
                 error_msg = result.error_message or "Failed to run code"
-                log_operation_error("Code.run_code", error_msg)
+                log_operation_error("Code.run", error_msg)
                 return EnhancedCodeExecutionResult(
                     request_id=result.request_id,
                     success=False,
@@ -84,7 +84,7 @@ class Code(BaseService):
                     execution_time=0.0
                 )
         except Exception as e:
-            log_operation_error("Code.run_code", str(e), exc_info=True)
+            log_operation_error("Code.run", str(e), exc_info=True)
             return EnhancedCodeExecutionResult(
                 request_id="",
                 success=False,

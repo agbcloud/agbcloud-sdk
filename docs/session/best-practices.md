@@ -16,7 +16,7 @@ if result.success:
 
     try:
     # Your code here
-        session.code.run_code("print('Hello')", "python")
+        session.code.run("print('Hello')", "python")
     finally:
         agb.delete(session)
 else:
@@ -43,7 +43,7 @@ class SessionContext:
 # Usage
 agb = AGB()
 with SessionContext(agb) as session:
-    session.code.run_code("print('Hello')", "python")
+    session.code.run("print('Hello')", "python")
 # Session automatically cleaned up
 ```
 
@@ -74,8 +74,9 @@ def safe_session_operation(agb: AGB, operation_func):
 
 # Usage
 def my_operation(session):
-    result = session.code.run_code("print('Hello')", "python")
-    return {"success": result.success, "output": result.result}
+    result = session.code.run("print('Hello')", "python")
+    output = result.results[0].text if result.success and result.results else ""
+    return {"success": result.success, "output": output}
 
 agb = AGB()
 result = safe_session_operation(agb, my_operation)
@@ -177,7 +178,7 @@ if result.success:
     session = result.session
 
     with monitor_session_usage(session, "data_processing") as monitored_session:
-        monitored_session.code.run_code("import pandas as pd; print('Processing data...')", "python")
+        monitored_session.code.run("import pandas as pd; print('Processing data...')", "python")
 
     agb.delete(session)
 else:

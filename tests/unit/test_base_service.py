@@ -152,8 +152,101 @@ class TestBaseServiceCallMcpTool(unittest.TestCase):
 
         session.get_client().call_mcp_tool.return_value = response
 
-        result = service._call_mcp_tool("write_file", {"path": "/tmp/a.txt", "content": "x", "mode": "overwrite"})
+        result = service._call_mcp_tool("write_file", {"path": "/tmp/a.txt", "content": "x", "mode": "overwrite"})  # MCP tool name unchanged
         self.assertFalse(result.success)
         self.assertEqual(result.request_id, "req-1")
         self.assertIn("not found", (result.error_message or "").lower())
 
+    def test_call_mcp_tool_none_response_should_fail(self):
+        session = DummySession()
+        service = DummyService(session)
+
+        session.get_client().call_mcp_tool.return_value = None
+        result = service._call_mcp_tool("noop", {"x": 1})
+        self.assertFalse(result.success)
+        self.assertIn("returned None", result.error_message)
+
+    def test_call_mcp_tool_unsupported_response_type_should_fail(self):
+        session = DummySession()
+        service = DummyService(session)
+
+        # A plain object without is_successful should hit the unsupported response type branch
+        session.get_client().call_mcp_tool.return_value = types.SimpleNamespace(request_id="rid")
+        result = service._call_mcp_tool("noop", {"x": 1})
+        self.assertFalse(result.success)
+        self.assertEqual(result.request_id, "rid")
+        self.assertIn("unsupported", (result.error_message or "").lower())
+
+    def test_call_mcp_tool_handles_agb_error(self):
+        session = DummySession()
+        service = DummyService(session)
+
+        # Raise the stubbed AGBError from agb.exceptions (installed in _install_agb_stubs)
+        AGBError = sys.modules["agb.exceptions"].AGBError
+
+        session.get_client().call_mcp_tool.side_effect = AGBError("boom")
+        result = service._call_mcp_tool("noop", {"x": 1})
+        self.assertFalse(result.success)
+        self.assertIn("boom", result.error_message)
+
+    def test_call_mcp_tool_handles_generic_exception(self):
+        session = DummySession()
+        service = DummyService(session)
+
+        session.get_client().call_mcp_tool.side_effect = RuntimeError("oops")
+        result = service._call_mcp_tool("noop", {"x": 1})
+        self.assertFalse(result.success)
+        self.assertIn("Failed to call MCP tool", result.error_message)
+
+
+    def test_call_mcp_tool_success_should_return_success_true(self):
+        session = DummySession()
+        service = DummyService(session)
+
+        response = CallMcpToolResponse.from_http_response(
+            {
+                "status_code": 200,
+                "url": "http://example/mcp",
+                "headers": {},
+                "success": True,
+                "request_id": "req-ok",
+                "json": {
+                    "success": True,
+                    "code": "OK",
+                    "message": "",
+                    "data": {
+                        "isError": False,
+                        "content": [{"type": "text", "text": "ok"}],
+                    },
+                    "requestId": "req-ok",
+                },
+            }
+        )
+
+        session.get_client().call_mcp_tool.return_value = response
+        result = service._call_mcp_tool("ping", {"x": 1})
+        self.assertTrue(result.success)
+        self.assertEqual(result.request_id, "req-ok")
+        self.assertEqual(result.data, "ok")
+
+
+    def test_call_mcp_tool_logging_json_dump_failure(self):
+        session = DummySession()
+        service = DummyService(session)
+
+        class _BadResp:
+            request_id = "rid-bad"
+            # not JSON serializable (set)
+            json_data = {"x": {1}}
+
+            def is_successful(self):
+                return False
+
+            def get_error_message(self):
+                return "bad"
+
+        session.get_client().call_mcp_tool.return_value = _BadResp()
+        result = service._call_mcp_tool("noop", {"x": 1})
+        self.assertFalse(result.success)
+        self.assertEqual(result.request_id, "rid-bad")
+        self.assertIn("bad", result.error_message)

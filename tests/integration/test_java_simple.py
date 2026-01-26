@@ -59,7 +59,7 @@ def main():
         print(java_code)
 
         # Run the Java code
-        code_result = result.session.code.run_code(java_code, "java", timeout_s=30)
+        code_result = result.session.code.run(java_code, "java", timeout_s=30)
 
         if not code_result.success:
             raise AssertionError(f"Java code execution failed! Error: {code_result.error_message}")

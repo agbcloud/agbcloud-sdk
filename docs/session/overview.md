@@ -30,7 +30,7 @@ if not create_result.success:
 session = create_result.session
 
 # Do something in the session
-session.code.run_code("print('Hello from AGB')", "python")
+session.code.run("print('Hello from AGB')", "python")
 
 agb.delete(session)
 ```
@@ -122,6 +122,29 @@ if result.success:
     for session_id in result.session_ids:
         print("Session ID:", session_id)
 ```
+
+### Call MCP tools
+
+You can call MCP (Model Context Protocol) tools directly from a session. This allows you to interact with various capabilities available in the AGB cloud environment.
+
+```python
+# List available MCP tools
+result = session.list_mcp_tools()
+if result.success:
+    print(f"Available tools: {len(result.tools)}")
+    for tool in result.tools:
+        print(f"  - {tool.name}: {tool.description}")
+
+# Call an MCP tool
+result = session.call_mcp_tool("tool_name", {"param1": "value1", "param2": "value2"})
+if result.success:
+    print("Tool executed successfully")
+    print("Result:", result.data)  # Result is in JSON string format
+else:
+    print("Tool call failed:", result.error_message)
+```
+
+**Note**: The available tools depend on the image type. For example, browser images may have UI interaction tools, while code images may have different tools. Use `list_mcp_tools()` to discover available tools for your session's image.
 
 ### Delete a session (recommended)
 

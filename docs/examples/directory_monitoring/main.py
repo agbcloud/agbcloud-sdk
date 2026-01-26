@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-AGB watch_directory Simple Example
+AGB watch Simple Example
 
-This example demonstrates how to use the AGB SDK's watch_directory functionality to monitor directory changes.
+This example demonstrates how to use the AGB SDK's watch functionality to monitor directory changes.
 Run this file directly to see the complete demonstration without reading complex documentation.
 
 Usage:
@@ -61,7 +61,7 @@ def file_change_callback(events):
     """
     File change callback function
 
-    This is the core of watch_directory: this function is called when file changes are detected
+    This is the core of watch: this function is called when file changes are detected
     Note: Empty events are filtered at the API level, this callback only receives events with actual changes
     """
     global detected_events
@@ -115,7 +115,7 @@ def create_demo_files(session, watch_dir):
     Create demo files
 
     This function will automatically create some files in the background to let users see the monitoring effect
-    All files are created using touch command first, then content is added using write_file method if needed
+    All files are created using touch command first, then content is added using write method if needed
     """
     print_step(4, "Starting to create demo files (starting in 3 seconds)")
     time.sleep(3)  # Wait for monitoring to start
@@ -131,7 +131,7 @@ def create_demo_files(session, watch_dir):
 
         try:
             # Create file using touch command
-            result = session.command.execute_command(
+            result = session.command.execute(
                 f"touch {filepath}", timeout_ms=5000
             )
             if result.success:
@@ -165,7 +165,7 @@ def create_demo_files(session, watch_dir):
         log_operation("CREATE", filename, f"Create file using touch: {filename}")
 
         try:
-            result = session.command.execute_command(
+            result = session.command.execute(
                 f"touch {filepath}", timeout_ms=5000
             )
             if result.success:
@@ -179,12 +179,12 @@ def create_demo_files(session, watch_dir):
 
         time.sleep(1)  # Wait 1 second before adding content
 
-        # Then add content using write_file
+        # Then add content using write
         print_info(f"Adding content to file: {filename}")
         log_operation("MODIFY", filename, f"Add content to file: {filename}")
 
         try:
-            result = session.file_system.write_file(filepath, content)
+            result = session.file.write(filepath, content)
             if result.success:
                 print_success(f"Content addition successful: {filename}")
             else:
@@ -199,12 +199,12 @@ def create_demo_files(session, watch_dir):
     time.sleep(3)
 
     modify_file = os.path.join(watch_dir, "hello.txt")
-    new_content = f"Hello, AGB watch_directory!\nThis is the first content added to the empty file.\nModification time: {datetime.now().isoformat()}"
+    new_content = f"Hello, AGB watch!\nThis is the first content added to the empty file.\nModification time: {datetime.now().isoformat()}"
 
     print_info("Modifying file: hello.txt (adding content to empty file)")
     log_operation("MODIFY", "hello.txt", "Add content to empty file")
     try:
-        result = session.file_system.write_file(modify_file, new_content)
+        result = session.file.write(modify_file, new_content)
         if result.success:
             print_success("File modification successful")
         else:
@@ -216,12 +216,12 @@ def create_demo_files(session, watch_dir):
     print_info("Waiting 3 seconds before modifying the same file again...")
     time.sleep(3)
 
-    new_content2 = f"Hello, AGB watch_directory!\nThis is the second modification content.\nModification time: {datetime.now().isoformat()}\nAdded more content lines.\nDemonstrating continuous modification detection."
+    new_content2 = f"Hello, AGB watch!\nThis is the second modification content.\nModification time: {datetime.now().isoformat()}\nAdded more content lines.\nDemonstrating continuous modification detection."
 
     print_info("Modifying file again: hello.txt")
     log_operation("MODIFY", "hello.txt", "Second file content modification")
     try:
-        result = session.file_system.write_file(modify_file, new_content2)
+        result = session.file.write(modify_file, new_content2)
         if result.success:
             print_success("Second file modification successful")
         else:
@@ -237,7 +237,7 @@ def create_demo_files(session, watch_dir):
     print_info("Deleting file: config.ini (using rm command)")
     log_operation("DELETE", "config.ini", "Delete file using rm command")
     try:
-        result = session.command.execute_command(f"rm {delete_file}", timeout_ms=5000)
+        result = session.command.execute(f"rm {delete_file}", timeout_ms=5000)
         if result.success:
             print_success("File deletion successful")
         else:
@@ -256,7 +256,7 @@ def create_demo_files(session, watch_dir):
     print_info("Creating summary file using touch command: summary.txt")
     log_operation("CREATE", "summary.txt", "Create summary file using touch")
     try:
-        result = session.command.execute_command(f"touch {new_file}", timeout_ms=5000)
+        result = session.command.execute(f"touch {new_file}", timeout_ms=5000)
         if result.success:
             print_success("Touch creation successful: summary.txt")
         else:
@@ -266,11 +266,11 @@ def create_demo_files(session, watch_dir):
 
     time.sleep(1)  # Wait 1 second before adding content
 
-    # Then add content using write_file
+    # Then add content using write
     print_info("Adding content to summary file: summary.txt")
     log_operation("MODIFY", "summary.txt", "Add content to summary file")
     try:
-        result = session.file_system.write_file(new_file, summary_content)
+        result = session.file.write(new_file, summary_content)
         if result.success:
             print_success("Summary file content addition successful")
         else:
@@ -283,7 +283,7 @@ def create_demo_files(session, watch_dir):
 
 def main():
     """Main function"""
-    print("🎬 AGB watch_directory Simple Example")
+    print("🎬 AGB watch Simple Example")
     print("=" * 50)
 
     # Check API key
@@ -321,7 +321,7 @@ def main():
     print_step(2, f"Prepare monitoring directory: {watch_dir}")
     try:
         # Create monitoring directory
-        result = session.file_system.create_directory(watch_dir)
+        result = session.file.mkdir(watch_dir)
         if result.success:
             print_success("Monitoring directory created successfully")
         else:
@@ -331,7 +331,7 @@ def main():
         return 1
 
     print_step(3, "Start directory monitoring")
-    print_info("Calling session.file_system.watch_directory() to start monitoring")
+    print_info("Calling session.file.watch_dir() to start monitoring")
     print_info("Monitoring interval: 1 second")
     print_info("Callback function: file_change_callback")
 
@@ -340,7 +340,7 @@ def main():
         stop_event = threading.Event()
 
         # Start directory monitoring - this is the core API call
-        monitor_thread = session.file_system.watch_directory(
+        monitor_thread = session.file.watch_dir(
             path=watch_dir,  # Directory path to monitor
             callback=file_change_callback,  # Callback function when changes detected                    # Polling interval (seconds)
             stop_event=stop_event,  # Stop signal
@@ -401,7 +401,7 @@ def main():
     print("\n📚 API Usage Summary:")
     print("   1. Use AGB() to create client")
     print("   2. Use agb.create() to create session")
-    print("   3. Use session.file_system.watch_directory() to monitor directory")
+    print("   3. Use session.file.watch_dir() to monitor directory")
     print("   4. Handle file change events in callback function")
     print("   5. Use stop_event to gracefully stop monitoring")
     print("   6. Use agb.delete() to clean up session")
@@ -508,13 +508,13 @@ def print_analysis_report():
 
     print(f"\n📖 Learning Points:")
     print("-" * 60)
-    print("  • watch_directory detects file changes through polling mechanism")
+    print("  • watch detects file changes through polling mechanism")
     print(
         "  • API automatically filters empty events, only passing events with actual changes"
     )
     print("  • Event detection may have slight delay (depends on polling interval)")
     print(
-        "  • Using write_file to create files generates both CREATE and MODIFY events (as expected)"
+        "  • Using write to create files generates both CREATE and MODIFY events (as expected)"
     )
     print("  • Deleting files generates DESTROY events (as expected)")
     print("  • touch creating empty files only generates CREATE events")

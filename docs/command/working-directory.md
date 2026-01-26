@@ -24,7 +24,7 @@ if not create_result.success:
 
 session = create_result.session
 try:
-    result = session.command.execute_command("pwd && ls -la", cwd="/tmp")
+    result = session.command.execute("pwd && ls -la", cwd="/tmp")
     if not result.success:
         raise RuntimeError(f"Command failed: {result.error_message}")
     print("Output:", result.output)
@@ -37,21 +37,21 @@ finally:
 ### Run a command relative to a directory
 
 ```python
-session.command.execute_command("ls -la", cwd="/var/log")
+session.command.execute("ls -la", cwd="/var/log")
 ```
 
 ### Create files in a directory without `cd`
 
 ```python
-session.command.execute_command("mkdir -p demo && echo hello > demo/hello.txt", cwd="/tmp")
+session.command.execute("mkdir -p demo && echo hello > demo/hello.txt", cwd="/tmp")
 ```
 
 ### Legacy alternative: command chaining (still works)
 
-Each `execute_command()` call runs in a new shell session, so `cd` does not persist between calls. You can still chain commands in one call:
+Each `execute()` call runs in a new shell session, so `cd` does not persist between calls. You can still chain commands in one call:
 
 ```python
-session.command.execute_command("cd /tmp && pwd && ls -la")
+session.command.execute("cd /tmp && pwd && ls -la")
 ```
 
 ## Best practices

@@ -88,7 +88,7 @@ def test_create_session():
         return None, None, 0
 
 
-def test_run_code(session):
+def test_run(session):
     """Test code execution functionality"""
     print("\n" + "=" * 60)
     print("Testing Code Execution Functionality")
@@ -121,7 +121,7 @@ print(f"2 to the power of 10: {result}")
 print("Python code execution completed!")
 """
 
-        result = session.code.run_code(python_code, "python", timeout_s=60)
+        result = session.code.run(python_code, "python", timeout_s=60)
         if result.success:
             print("✅ Python code execution successful!")
             print(f"   Request ID: {result.request_id}")
@@ -168,7 +168,7 @@ console.log(`Uppercase: ${message.toUpperCase()}`);
 console.log("JavaScript code execution completed!");
 """
 
-        result = session.code.run_code(js_code, "javascript", timeout_s=60)
+        result = session.code.run(js_code, "javascript", timeout_s=60)
         if result.success:
             print("✅ JavaScript code execution successful!")
             print(f"   Request ID: {result.request_id}")
@@ -207,7 +207,7 @@ System.out.println("Array sum: " + total);
 System.out.println("Java code execution completed!");
 """
 
-        result = session.code.run_code(java_code, "java", timeout_s=60)
+        result = session.code.run(java_code, "java", timeout_s=60)
         if result.success:
             print("✅ Java code execution successful!")
             print(f"   Request ID: {result.request_id}")
@@ -268,7 +268,7 @@ print(df)
 cat("R code execution completed!\\n")
 """
 
-        result = session.code.run_code(r_code, "r", timeout_s=60)
+        result = session.code.run(r_code, "r", timeout_s=60)
         if result.success:
             print("✅ R code execution successful!")
             print(f"   Request ID: {result.request_id}")
@@ -323,7 +323,7 @@ print(result_matrix)
 cat("Advanced R operations completed!\\n")
 """
 
-        result_advanced = session.code.run_code(r_advanced_code, "r", timeout_s=60)
+        result_advanced = session.code.run(r_advanced_code, "r", timeout_s=60)
         if result_advanced.success:
             print("✅ Advanced R code execution successful!")
             print(f"   Request ID: {result_advanced.request_id}")
@@ -348,7 +348,7 @@ undefined_variable + 1
 print("This line won't execute")
 """
 
-        result = session.code.run_code(error_code, "python", timeout_s=30)
+        result = session.code.run(error_code, "python", timeout_s=30)
         if result.success:
             print("⚠️  Error code unexpectedly executed successfully")
             if len(result.logs.stderr) == 0:
@@ -396,7 +396,7 @@ print("This line won't execute")
 
         for code, language_param, description in test_cases:
             print(f"   Testing {description}: '{language_param}'")
-            result = session.code.run_code(code, language_param, timeout_s=30)
+            result = session.code.run(code, language_param, timeout_s=30)
             if result.success:
                 print(f"   ✅ {description} accepted successfully!")
             else:
@@ -412,7 +412,7 @@ print("This line won't execute")
 
         for language_param, description in unsupported_cases:
             print(f"   Testing {description}: '{language_param}'")
-            result = session.code.run_code(
+            result = session.code.run(
                 'print("test")', language_param, timeout_s=30
             )
             if result.success:
@@ -444,7 +444,7 @@ def main():
     exit_code = 0
     if result and result.success and agb:
         # Test code execution functionality
-        code_test_success = test_run_code(result.session)
+        code_test_success = test_run(result.session)
         if not code_test_success:
             exit_code = 1
 

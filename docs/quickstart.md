@@ -29,8 +29,12 @@ if not result.success:
 session = result.session
 
 # Execute code
-result = session.code.run_code("print('Hello AGB!')", "python")
-print(result.result)
+result = session.code.run("print('Hello AGB!')", "python")
+# Print execution results
+if result.success and result.results:
+    for exec_result in result.results:
+        if exec_result.text:
+            print(exec_result.text)
 
 # Cleanup
 agb.delete(session)
@@ -57,17 +61,19 @@ session = result.session
 
 # Use different modules
 # Code execution
-code_result = session.code.run_code("import os; print(os.getcwd())", "python")
+code_result = session.code.run("import os; print(os.getcwd())", "python")
 
 # Command execution
-cmd_result = session.command.execute_command("ls -la")
+cmd_result = session.command.execute("ls -la")
 
 # File operations
-session.file_system.write_file("/tmp/test.txt", "Hello World!")
-file_result = session.file_system.read_file("/tmp/test.txt")
+session.file.write("/tmp/test.txt", "Hello World!")
+file_result = session.file.read("/tmp/test.txt")
 
 
-print("Code output:", code_result.result)
+# Print results with proper handling
+if code_result.success and code_result.results:
+    print("Code output:", code_result.results[0].text if code_result.results else "No output")
 print("Command output:", cmd_result.output)
 print("File content:", file_result.content)
 
@@ -100,9 +106,9 @@ if not result.success:
 session = result.session
 
 # Modules included in all sessions
-session.code.run_code(code, "python")           # Code execution
-session.command.execute_command("ls -la")       # Shell commands
-session.file_system.read_file("/path/file")     # File operations
+session.code.run(code, "python")           # Code execution
+session.command.execute("ls -la")       # Shell commands
+session.file.read("/path/file")     # File operations
 ```
 
 ### Key Differences

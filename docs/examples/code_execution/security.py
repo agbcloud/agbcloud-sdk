@@ -47,7 +47,7 @@ class SecureAGBClient:
         try:
             # Use shorter timeout for security
             print("🔒 Executing validated code...")
-            code_result = session.code.run_code(code, language, timeout_s=30)
+            code_result = session.code.run(code, language, timeout_s=30)
             return code_result
         finally:
             self.agb.delete(session)
@@ -73,7 +73,7 @@ class SecureAGBClient:
 
         session = result.session
         try:
-            return session.code.run_code(code, language)
+            return session.code.run(code, language)
         finally:
             self.agb.delete(session)
 

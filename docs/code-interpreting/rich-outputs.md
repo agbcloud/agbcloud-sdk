@@ -1,8 +1,8 @@
-# Rich outputs from `run_code`
+# Rich outputs from `run`
 
 ## What you’ll do
 
-Run code and consume **rich outputs** returned by `session.code.run_code(...)`, including text, HTML, images, Markdown, LaTeX, JSON, and charts.
+Run code and consume **rich outputs** returned by `session.code.run(...)`, including text, HTML, images, Markdown, LaTeX, JSON, and charts.
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ if not create_result.success:
 
 session = create_result.session
 try:
-    exec_result = session.code.run_code(
+    exec_result = session.code.run(
         "import matplotlib.pyplot as plt\n"
         "plt.plot([1, 2, 3], [1, 4, 9])\n"
         "plt.title('AGB rich output demo')\n"
@@ -114,7 +114,7 @@ if exec_result.logs:
 ### Increase timeout for long-running code
 
 ```python
-session.code.run_code("import time; time.sleep(100)", "python", timeout_s=120)
+session.code.run("import time; time.sleep(100)", "python", timeout_s=120)
 ```
 
 ## Best practices

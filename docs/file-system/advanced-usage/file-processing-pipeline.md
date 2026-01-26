@@ -5,7 +5,7 @@ def file_processing_pipeline(session, input_file, output_file):
     """Complete file processing pipeline"""
 
     # Step 1: Read input file
-    read_result = session.file_system.read_file(input_file)
+    read_result = session.file.read(input_file)
     if not read_result.success:
         return False, f"Failed to read input: {read_result.error_message}"
 
@@ -14,12 +14,12 @@ def file_processing_pipeline(session, input_file, output_file):
     processed_content = original_content.upper()
 
     # Step 3: Write processed content
-    write_result = session.file_system.write_file(output_file, processed_content)
+    write_result = session.file.write(output_file, processed_content)
     if not write_result.success:
         return False, f"Failed to write output: {write_result.error_message}"
 
     # Step 4: Verify output
-    verify_result = session.file_system.read_file(output_file)
+    verify_result = session.file.read(output_file)
     if not verify_result.success:
         return False, f"Failed to verify output: {verify_result.error_message}"
 
@@ -41,7 +41,7 @@ if result.success:
     session = result.session
 
     # Create input file
-    session.file_system.write_file("/tmp/input.txt", "hello world\nthis is a test")
+    session.file.write("/tmp/input.txt", "hello world\nthis is a test")
 
     # Process file
     success, result = file_processing_pipeline(

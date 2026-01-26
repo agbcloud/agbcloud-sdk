@@ -45,7 +45,7 @@ class CachedAGBClient:
 
         session = result.session
         try:
-            code_result = session.code.run_code(code, language)
+            code_result = session.code.run(code, language)
 
             # Cache successful results
             if code_result.success:

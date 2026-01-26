@@ -29,7 +29,7 @@ Please specify the appropriate image in the `IMAGEID` field of the MCP address a
 {
     "mcpServers":{
         "agbcloud_mcp_server":{
-            "url":"https://mcp.agb.cloud/sse?APIKEY=ako-**************&IMAGEID=agb-code-space-1"
+            "url":"https://mcp.agb.cloud/v2/sse?APIKEY=ako-**************&IMAGEID=agb-code-space-1"
         }
     }
 }
@@ -40,8 +40,8 @@ Please specify the appropriate image in the `IMAGEID` field of the MCP address a
 ```json
 {
   "mcpServers": {
-    "wuying_mcp_server": {
-      "url": "https://mcp.agb.cloud/sse?APIKEY=ako-**************&IMAGEID=agb-browser-use-1"
+    "agbcloud_mcp_server": {
+      "url": "https://mcp.agb.cloud/v2/sse?APIKEY=ako-**************&IMAGEID=agb-browser-use-1"
     }
   }
 }
@@ -52,8 +52,8 @@ Please specify the appropriate image in the `IMAGEID` field of the MCP address a
 ```json
 {
   "mcpServers": {
-    "wuying_mcp_server": {
-      "url": "https://mcp.agb.cloud/sse?APIKEY=ako-**************&IMAGEID=agb-computer-use-ubuntu-2204"
+    "agbcloud_mcp_server": {
+      "url": "https://mcp.agb.cloud/v2/sse?APIKEY=ako-**************&IMAGEID=agb-computer-use-ubuntu-2204"
     }
   }
 }
@@ -74,8 +74,8 @@ Please log in to the AGB console and click **Images**. In **Images**, select the
 ```json
 {
   "mcpServers": {
-    "wuying_mcp_server": {
-      "url": "https://mcp.agb.cloud/sse?APIKEY=ako-**************&IMAGEID=<YOUR_IMAGEID>"
+    "agbcloud_mcp_server": {
+      "url": "https://mcp.agb.cloud/v2/sse?APIKEY=ako-**************&IMAGEID=<YOUR_IMAGEID>"
     }
   }
 }
@@ -95,8 +95,8 @@ Add the MCP address code block in MCP-supported tools (such as Cline, Cursor, et
 ```json
 {
   "mcpServers": {
-    "wuying_mcp_server": {
-      "url": "https://mcp.agb.cloud/sse?APIKEY=YOUR_API_KEY&IMAGEID=<YOUR_IMAGEID>"
+    "agbcloud_mcp_server": {
+      "url": "https://mcp.agb.cloud/v2/sse?APIKEY=YOUR_API_KEY&IMAGEID=<YOUR_IMAGEID>"
     }
   }
 }
@@ -107,8 +107,8 @@ Add the MCP address code block in MCP-supported tools (such as Cline, Cursor, et
 ```json
 {
   "mcpServers": {
-    "wuying_mcp_server": {
-      "url": "https://mcp.agb.cloud/mcp?APIKEY=YOUR_API_KEY&IMAGEID=<YOUR_IMAGEID>"
+    "agbcloud_mcp_server": {
+      "url": "https://mcp.agb.cloud/v2/mcp?APIKEY=YOUR_API_KEY&IMAGEID=<YOUR_IMAGEID>"
     }
   }
 }

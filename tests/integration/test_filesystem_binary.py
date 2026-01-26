@@ -52,16 +52,16 @@ def test_session(agb_client):
 def test_binary_file_creation(test_session):
     """Test creating binary file using command."""
     cmd = test_session.command
-    fs = test_session.file_system
+    fs = test_session.file
 
     # Create binary file
-    result = cmd.execute_command(
+    result = cmd.execute(
         "dd if=/dev/zero of=/tmp/binary_test bs=1024 count=10"
     )
     assert result.success
 
     # Check file info
-    info = fs.get_file_info("/tmp/binary_test")
+    info = fs.info("/tmp/binary_test")
     assert info.success
     size = int(info.file_info["size"])
     assert size > 0
@@ -71,18 +71,18 @@ def test_binary_file_creation(test_session):
 def test_binary_file_copy(test_session):
     """Test copying binary file."""
     cmd = test_session.command
-    fs = test_session.file_system
+    fs = test_session.file
 
     # Create binary file
-    cmd.execute_command("dd if=/dev/zero of=/tmp/binary_src bs=1024 count=5")
+    cmd.execute("dd if=/dev/zero of=/tmp/binary_src bs=1024 count=5")
 
     # Copy file
-    copy_result = cmd.execute_command("cp /tmp/binary_src /tmp/binary_dst")
+    copy_result = cmd.execute("cp /tmp/binary_src /tmp/binary_dst")
     assert copy_result.success
 
     # Verify both files exist
-    src_info = fs.get_file_info("/tmp/binary_src")
-    dst_info = fs.get_file_info("/tmp/binary_dst")
+    src_info = fs.info("/tmp/binary_src")
+    dst_info = fs.info("/tmp/binary_dst")
 
     assert src_info.success
     assert dst_info.success
@@ -94,7 +94,7 @@ def test_binary_file_copy(test_session):
 
 def test_read_binary_file(test_session):
     """Test reading a binary file using format='bytes'."""
-    fs = test_session.file_system
+    fs = test_session.file
     
     # File path where user will manually upload the test file
     file_path = "/tmp/test_binary.dat"
@@ -147,7 +147,7 @@ def test_read_binary_file(test_session):
     print(f"🎯 Remote path: {remote_path}")
     
     print(f"\n📤 Uploading file from {local_test_path} to {remote_path}")
-    upload_result = fs.upload_file(local_test_path, remote_path, wait=True, wait_timeout=60)
+    upload_result = fs.upload(local_test_path, remote_path, wait=True, wait_timeout=60)
     assert upload_result.success, f"Upload failed: {upload_result.error_message}"
     assert upload_result.bytes_sent > 0
     assert upload_result.request_id_upload_url
@@ -157,7 +157,7 @@ def test_read_binary_file(test_session):
     
     # Verify file exists
     print(f"\n🔍 Checking if file exists: {file_path}")
-    info = fs.get_file_info(file_path)
+    info = fs.info(file_path)
     if not info.success:
         pytest.fail(f"File not found at {file_path}. Please ensure the file is uploaded correctly.")
     
@@ -166,7 +166,7 @@ def test_read_binary_file(test_session):
     
     # Read binary file using format='bytes'
     print(f"\n📖 Reading binary file: {file_path}")
-    result = fs.read_file(file_path, format="bytes")
+    result = fs.read(file_path, format="bytes")
     assert result.success, f"Failed to read binary file: {result.error_message}"
     assert isinstance(result, BinaryFileContentResult), "Result should be BinaryFileContentResult"
     assert isinstance(result.content, bytes), "Content should be bytes type"
@@ -243,17 +243,17 @@ def test_read_binary_file(test_session):
 def test_read_binary_file_with_non_zero_content(test_session):
     """Test reading a binary file with non-zero content."""
     cmd = test_session.command
-    fs = test_session.file_system
+    fs = test_session.file
 
     # Create binary file with pattern (using printf to create specific bytes)
     # Create a file with pattern: 0x00, 0x01, 0x02, ... repeating
-    create_result = cmd.execute_command(
+    create_result = cmd.execute(
         "python3 -c \"with open('/tmp/binary_pattern_test', 'wb') as f: f.write(bytes(range(256)) * 4)\""
     )
     assert create_result.success
 
     # Read binary file
-    result = fs.read_file("/tmp/binary_pattern_test", format="bytes")
+    result = fs.read("/tmp/binary_pattern_test", format="bytes")
     assert result.success, f"Failed to read binary file: {result.error_message}"
     assert isinstance(result, BinaryFileContentResult)
     assert isinstance(result.content, bytes)
@@ -268,34 +268,34 @@ def test_read_binary_file_with_non_zero_content(test_session):
 
 def test_read_text_file_still_works(test_session):
     """Test that reading text files still works with default format."""
-    fs = test_session.file_system
+    fs = test_session.file
 
     test_content = "This is a test text file for binary read feature."
     test_file_path = "/tmp/test_text_for_binary_feature.txt"
 
     # Write text file
-    write_result = fs.write_file(test_file_path, test_content, "overwrite")
+    write_result = fs.write(test_file_path, test_content, "overwrite")
     assert write_result.success
 
     # Read as text (default format)
-    result = fs.read_file(test_file_path)
+    result = fs.read(test_file_path)
     assert result.success
     assert result.content == test_content
     assert isinstance(result.content, str)
     
     # Explicitly read as text format
-    result_explicit = fs.read_file(test_file_path, format="text")
+    result_explicit = fs.read(test_file_path, format="text")
     assert result_explicit.success
     assert result_explicit.content == test_content
 
 def test_read_alias_method(test_session):
     """Test that the read() alias method works correctly."""
-    fs = test_session.file_system
+    fs = test_session.file
 
     test_content = "This is a test for the read() alias method."
     test_file_path = "/tmp/test_read_alias.txt"
     # Write text file
-    write_result = fs.write_file(test_file_path, test_content, "overwrite")
+    write_result = fs.write(test_file_path, test_content, "overwrite")
     assert write_result.success
     # Test read() alias with default format
     result = fs.read(test_file_path)

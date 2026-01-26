@@ -6,7 +6,7 @@ The AGB SDK provides file transfer capabilities to upload files from your local 
 
 **Key Points:**
 - The file transfer context is **automatically managed by the server**
-- On first use, the context is **automatically created** when you call `get_file_transfer_context_path()`
+- On first use, the context is **automatically created** when you call `transfer_path()`
 - When the session ends, the context is **automatically deleted**
 - You don't need to manually create, configure, or manage the file transfer context
 
@@ -24,16 +24,16 @@ if result.success:
     session = result.session
 
     # Get the file transfer context path (context is auto-created on first use)
-    context_path = session.file_system.get_file_transfer_context_path()
+    context_path = session.file.transfer_path()
 
     # Upload a file
-    upload_result = session.file_system.upload_file(
+    upload_result = session.file.upload(
         local_path="/local/file.txt",
         remote_path=context_path + "/remote_file.txt"
     )
 
     # Download a file
-    download_result = session.file_system.download_file(
+    download_result = session.file.download(
         remote_path=context_path + "/remote_file.txt",
         local_path="/local/downloaded_file.txt"
     )
@@ -60,7 +60,7 @@ if result.success:
 
     # Get the file transfer context path
     # The context is automatically created by the server if it doesn't exist
-    context_path = session.file_system.get_file_transfer_context_path()
+    context_path = session.file.transfer_path()
 
     if context_path is None:
         # This should rarely happen - only if there's a server issue
@@ -90,7 +90,7 @@ if result.success:
     session = result.session
 
     # Get context path (automatically created if needed)
-    context_path = session.file_system.get_file_transfer_context_path()
+    context_path = session.file.transfer_path()
     if context_path is None:
         print("File transfer not available")
         agb.delete(session)
@@ -100,7 +100,7 @@ if result.success:
     local_file = "/path/to/local/file.txt"
     remote_path = context_path + "/uploaded_file.txt"
 
-    upload_result = session.file_system.upload_file(
+    upload_result = session.file.upload(
         local_path=local_file,
         remote_path=remote_path,
         wait=True,  # Wait for sync to complete
@@ -135,7 +135,7 @@ if result.success:
     session = result.session
 
     # Get context path (automatically created if needed)
-    context_path = session.file_system.get_file_transfer_context_path()
+    context_path = session.file.transfer_path()
     if context_path is None:
         print("File transfer not available")
         agb.delete(session)
@@ -145,7 +145,7 @@ if result.success:
     remote_path = context_path + "/file_to_download.txt"
     local_file = "/path/to/local/downloaded_file.txt"
 
-    download_result = session.file_system.download_file(
+    download_result = session.file.download(
         remote_path=remote_path,
         local_path=local_file,
         overwrite=True,  # Overwrite if file exists
@@ -184,7 +184,7 @@ if result.success:
     session = result.session
 
     # Get context path (automatically created if needed)
-    context_path = session.file_system.get_file_transfer_context_path()
+    context_path = session.file.transfer_path()
     if context_path is None:
         print("File transfer not available")
         agb.delete(session)
@@ -200,7 +200,7 @@ if result.success:
         remote_path = context_path + f"/test_file_{int(time.time())}.txt"
         print(f"📤 Uploading: {local_upload_file} -> {remote_path}")
 
-        upload_result = session.file_system.upload_file(
+        upload_result = session.file.upload(
             local_path=local_upload_file,
             remote_path=remote_path,
             wait=True,
@@ -214,10 +214,10 @@ if result.success:
         print(f"✅ Upload successful ({upload_result.bytes_sent} bytes)")
 
         # Step 2: Process file in cloud (example: read and modify)
-        read_result = session.file_system.read_file(remote_path)
+        read_result = session.file.read(remote_path)
         if read_result.success:
             modified_content = read_result.content.upper()
-            session.file_system.write_file(remote_path, modified_content)
+            session.file.write(remote_path, modified_content)
             print("✅ File processed in cloud")
 
         # Step 3: Download processed file
@@ -226,7 +226,7 @@ if result.success:
 
         print(f"📥 Downloading: {remote_path} -> {local_download_file}")
 
-        download_result = session.file_system.download_file(
+        download_result = session.file.download(
             remote_path=remote_path,
             local_path=local_download_file,
             wait=True,
@@ -260,7 +260,7 @@ else:
 def progress_callback(bytes_sent):
     print(f"Uploaded {bytes_sent} bytes...")
 
-upload_result = session.file_system.upload_file(
+upload_result = session.file.upload(
     local_path="/path/to/image.png",
     remote_path=context_path + "/image.png",
     content_type="image/png",  # Specify content type
@@ -274,7 +274,7 @@ upload_result = session.file_system.upload_file(
 
 ```python
 # Upload without waiting for sync to complete
-upload_result = session.file_system.upload_file(
+upload_result = session.file.upload(
     local_path="/path/to/file.txt",
     remote_path=context_path + "/file.txt",
     wait=False  # Don't wait for sync
@@ -290,7 +290,7 @@ if upload_result.success:
 ### 1. Always Check Context Path Availability
 
 ```python
-context_path = session.file_system.get_file_transfer_context_path()
+context_path = session.file.transfer_path()
 if context_path is None:
     # Handle case where file transfer is not available
     print("File transfer context not available")
@@ -301,14 +301,14 @@ if context_path is None:
 
 ```python
 # For small files
-upload_result = session.file_system.upload_file(
+upload_result = session.file.upload(
     local_path="small_file.txt",
     remote_path=context_path + "/small_file.txt",
     wait_timeout=30.0  # 30 seconds
 )
 
 # For large files
-upload_result = session.file_system.upload_file(
+upload_result = session.file.upload(
     local_path="large_file.zip",
     remote_path=context_path + "/large_file.zip",
     wait_timeout=300.0  # 5 minutes
@@ -318,7 +318,7 @@ upload_result = session.file_system.upload_file(
 ### 3. Handle Errors Gracefully
 
 ```python
-upload_result = session.file_system.upload_file(
+upload_result = session.file.upload(
     local_path=local_file,
     remote_path=remote_path
 )
@@ -338,7 +338,7 @@ if not upload_result.success:
 # After downloading a file, clean up the remote copy if needed
 if download_result.success:
     # Use context API to delete remote file
-    context_id = session.file_system._file_transfer.context_id
+    context_id = session.file._file_transfer.context_id
     if context_id:
         delete_result = agb.context.delete_file(context_id, remote_path)
         if delete_result.success:
@@ -349,7 +349,7 @@ if download_result.success:
 
 The file transfer feature uses a **server-managed context** that is automatically created and deleted:
 
-1. **First Use**: When you first call `get_file_transfer_context_path()`, the server automatically creates a `file_transfer` context for your session
+1. **First Use**: When you first call `transfer_path()`, the server automatically creates a `file_transfer` context for your session
 2. **During Use**: The context persists throughout your session, allowing multiple uploads and downloads
 3. **Session End**: When you call `agb.delete(session)`, the server automatically deletes the context and cleans up all associated resources
 
@@ -365,7 +365,7 @@ All of this is handled automatically by the server.
 
 ### Context Path Returns None
 
-If `get_file_transfer_context_path()` returns `None`, it usually means:
+If `transfer_path()` returns `None`, it usually means:
 - The server is temporarily unavailable
 - There was an error creating the context
 

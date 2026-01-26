@@ -10,11 +10,11 @@ def handle_json_file(session, filepath, data):
     """Handle JSON file operations"""
     # Write JSON data
     json_content = json.dumps(data, indent=2)
-    write_result = session.file_system.write_file(filepath, json_content)
+    write_result = session.file.write(filepath, json_content)
 
     if write_result.success:
         # Read and parse JSON
-        read_result = session.file_system.read_file(filepath)
+        read_result = session.file.read(filepath)
         if read_result.success:
             parsed_data = json.loads(read_result.content)
             return True, parsed_data
@@ -31,11 +31,11 @@ def handle_csv_file(session, filepath, data):
     csv_content = output.getvalue()
 
     # Write CSV file
-    write_result = session.file_system.write_file(filepath, csv_content)
+    write_result = session.file.write(filepath, csv_content)
 
     if write_result.success:
         # Read and parse CSV
-        read_result = session.file_system.read_file(filepath)
+        read_result = session.file.read(filepath)
         if read_result.success:
             reader = csv.DictReader(StringIO(read_result.content))
             parsed_data = list(reader)

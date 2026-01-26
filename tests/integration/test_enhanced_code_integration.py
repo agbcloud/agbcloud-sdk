@@ -10,6 +10,13 @@ from agb import AGB
 from agb.session_params import CreateSessionParams
 from agb.model.response import EnhancedCodeExecutionResult
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed, environment variables must be set manually
+
 # Global session variable for reuse
 _shared_session = None
 
@@ -39,7 +46,7 @@ def test_enhanced_result_structure():
 print("Hello, enhanced world!")
 42
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
 
     assert isinstance(result, EnhancedCodeExecutionResult)
     assert result.success
@@ -61,7 +68,7 @@ print("This also goes to stdout", file=sys.stdout)
 print("This goes to stderr", file=sys.stderr)
 "Final result"
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
 
     assert result.success
     assert isinstance(result.logs.stdout, list)
@@ -91,7 +98,7 @@ json_data = {"key": "value", "number": 42}
 # Return the text result
 text_result
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
 
     assert result.success
     assert isinstance(result.results, list)
@@ -108,7 +115,7 @@ import time
 time.sleep(0.1)  # Small delay
 "Execution completed"
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
 
     assert result.success
     assert hasattr(result, 'execution_time')
@@ -124,7 +131,7 @@ def test_error_details():
 # This should cause a NameError
 print(undefined_variable_that_does_not_exist)
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
 
     # Error handling may vary - could be success=False or an error in results
     # In some cases, the error might be captured in executionError rather than success=False
@@ -147,7 +154,7 @@ const data = {message: "Hello from JS", value: 123};
 console.log(JSON.stringify(data));
 data.value * 2;
 """
-    result = session.code.run_code(code, "javascript")
+    result = session.code.run(code, "javascript")
 
     assert isinstance(result, EnhancedCodeExecutionResult)
     assert result.success
@@ -166,7 +173,7 @@ for i in range(10):
     print(f"Line {i}: {i * i}")
 "Processing completed"
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
 
     assert result.success
     assert result.logs is not None
@@ -186,8 +193,8 @@ def test_execution_count_tracking():
     code1 = "print('First execution')"
     code2 = "print('Second execution')"
 
-    result1 = session.code.run_code(code1, "python")
-    result2 = session.code.run_code(code2, "python")
+    result1 = session.code.run(code1, "python")
+    result2 = session.code.run(code2, "python")
 
     assert result1.success
     assert result2.success
@@ -219,7 +226,7 @@ print("JSON:", json.dumps(json_data))
 # Final result
 "Mixed output test completed"
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
 
     assert result.success
     assert result.logs is not None
@@ -234,7 +241,7 @@ def test_empty_code_execution():
     """Test execution of empty or minimal code."""
     session = get_shared_session()
     code = "# Just a comment"
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
 
     assert result.success
     assert result.logs is not None
@@ -248,7 +255,7 @@ print("Testing backward compatibility")
 final_result = "This is the final result"
 final_result
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
 
     assert result.success
 
@@ -277,7 +284,7 @@ from IPython.display import display, HTML
 # Display HTML content
 display(HTML("<h1>Hello HTML</h1>"))
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
     assert result.success
     # Check if any result has html content - handle both direct attribute and JSON structure
     has_html = any(
@@ -297,7 +304,7 @@ from IPython.display import display, Markdown
 
 display(Markdown('# Hello Markdown'))
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
     assert result.success
     # Markdown output may not be available in all environments, so we just check that execution succeeded
     has_markdown = any(
@@ -318,7 +325,7 @@ plt.plot([1, 2, 3], [1, 2, 3])
 plt.title("Test Plot")
 plt.show()
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
     assert result.success
     # Image output may not be available in all environments, so we just check that execution succeeded
     has_png_or_jpeg = any(
@@ -338,7 +345,7 @@ from IPython.display import display, SVG
 svg_code = '<svg height="100" width="100"><circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" /></svg>'
 display(SVG(svg_code))
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
     assert result.success
     # SVG output may not be available in all environments, so we just check that execution succeeded
     has_svg = any(
@@ -356,7 +363,7 @@ from IPython.display import display, Latex
 
 display(Latex(r'\frac{1}{2}'))
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
     assert result.success
     # LaTeX output may not be available in all environments, so we just check that execution succeeded
     has_latex = any(
@@ -380,7 +387,7 @@ class MockChart:
         }
 display(MockChart())
 """
-    result = session.code.run_code(code, "python")
+    result = session.code.run(code, "python")
     assert result.success
     # Chart output may not be available in all environments, so we just check that execution succeeded
     has_chart = any(
@@ -400,18 +407,18 @@ def test_language_aliases():
     session = get_shared_session()
 
     # Test python3 -> python
-    result = session.code.run_code("print('Python3 alias test')", "python3")
+    result = session.code.run("print('Python3 alias test')", "python3")
     assert result.success
 
     # Test js -> javascript
-    result = session.code.run_code("console.log('JS alias test')", "js")
+    result = session.code.run("console.log('JS alias test')", "js")
     assert result.success
     assert len(result.logs.stdout) > 0
 
 def test_unsupported_language():
     """Test execution with unsupported language."""
     session = get_shared_session()
-    result = session.code.run_code("print('test')", "ruby")
+    result = session.code.run("print('test')", "ruby")
 
     assert isinstance(result, EnhancedCodeExecutionResult)
     assert not result.success

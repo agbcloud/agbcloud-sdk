@@ -99,7 +99,7 @@ for item in data:
 
 print(json.dumps(result))
 """
-    code_result = session.code.run_code(code, "python")
+    code_result = session.code.run(code, "python")
 
     if code_result.success:
         # Parse the last line of output as JSON result

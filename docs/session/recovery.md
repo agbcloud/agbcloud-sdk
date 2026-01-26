@@ -22,7 +22,7 @@ if get_result.success:
     print(f"Request ID: {get_result.request_id}")
 
     # You can now perform any session operations
-    result = session.command.execute_command("echo 'Hello, World!'")
+    result = session.command.execute("echo 'Hello, World!'")
     if result.success:
         print(result.output)
 else:

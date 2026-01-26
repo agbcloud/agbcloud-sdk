@@ -5,16 +5,16 @@ This directory demonstrates direct file system manipulation using the Filesystem
 ## Overview
 
 While the Context Manager handles bulk uploads/downloads, the **Filesystem API** gives you fine-grained control to:
-- List directories (`list_directory`).
-- Read file contents (`read_file`).
-- Write file contents (`write_file`).
-- Create directories (`create_directory`).
-- Get file information (`get_file_info`).
-- Edit files (`edit_file`).
-- Move files (`move_file`).
-- Delete files (`delete_file`).
-- Search files (`search_files`).
-- Read multiple files (`read_multiple_files`).
+- List directories (`list`).
+- Read file contents (`read`).
+- Write file contents (`write`).
+- Create directories (`mkdir`).
+- Get file information (`info`).
+- Edit files (`edit`).
+- Move files (`move`).
+- Delete files (`remove`).
+- Search files (`search`).
+- Read multiple files (`read_batch`).
 - Binary file operations (with `format="bytes"` parameter).
 
 ## Examples

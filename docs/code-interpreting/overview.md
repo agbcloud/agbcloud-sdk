@@ -36,7 +36,7 @@ if not create_result.success:
     raise SystemExit(f"Session creation failed: {create_result.error_message}")
 
 session = create_result.session
-exec_result = session.code.run_code("print('Hello, AGB!')", "python")
+exec_result = session.code.run("print('Hello, AGB!')", "python")
 if not exec_result.success:
     raise SystemExit(f"Execution failed: {exec_result.error.value}")
 
@@ -52,7 +52,7 @@ agb.delete(session)
 ### Read rich outputs (HTML / PNG / SVG / JSON)
 
 ```python
-exec_result = session.code.run_code(
+exec_result = session.code.run(
     "import matplotlib.pyplot as plt; plt.plot([1,2,3]); plt.title('demo'); plt.show()",
     "python",
 )
@@ -100,7 +100,7 @@ if exec_result.success and exec_result.logs:
 ### Increase timeout for long-running code
 
 ```python
-session.code.run_code("import time; time.sleep(100)", "python", timeout_s=120)
+session.code.run("import time; time.sleep(100)", "python", timeout_s=120)
 ```
 
 ## Best practices

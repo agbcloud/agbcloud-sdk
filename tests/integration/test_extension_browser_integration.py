@@ -644,7 +644,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
 
 
 
-            ls_result = session.command.execute_command("ls -la /tmp/extensions/")
+            ls_result = session.command.execute("ls -la /tmp/extensions/")
             if not ls_result.success:
                 print("    ❌ Extensions directory not found")
                 return False
@@ -932,7 +932,7 @@ console.log('Content script fully initialized for {manifest['name']} on', window
         """
         try:
             # Check extensions directory exists and is readable
-            ls_result = session.command.execute_command("ls -la /tmp/extensions/")
+            ls_result = session.command.execute("ls -la /tmp/extensions/")
             if not ls_result.success:
                 print("    ❌ Extensions directory not found")
                 return False
@@ -946,12 +946,12 @@ console.log('Content script fully initialized for {manifest['name']} on', window
                 base_ext_id = ext_id.rsplit('.', 1)[0] if '.' in ext_id else ext_id
 
                 # Check if extension folder exists
-                folder_check = session.command.execute_command(f"test -d /tmp/extensions/{base_ext_id}")
+                folder_check = session.command.execute(f"test -d /tmp/extensions/{base_ext_id}")
                 if folder_check.success:
                     print(f"    ✅ Found extension folder: {base_ext_id}")
 
                     # Check if manifest.json exists in the folder
-                    manifest_check = session.command.execute_command(f"test -f /tmp/extensions/{base_ext_id}/manifest.json")
+                    manifest_check = session.command.execute(f"test -f /tmp/extensions/{base_ext_id}/manifest.json")
                     if manifest_check.success:
                         print(f"      ✅ Contains manifest.json")
                         found_extensions += 1

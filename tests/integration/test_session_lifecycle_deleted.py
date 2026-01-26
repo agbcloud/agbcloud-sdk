@@ -14,7 +14,7 @@ class TestSessionLifecycleDeleted:
         assert api_key, "AGB_API_KEY environment variable is required"
         return AGB(api_key=api_key)
 
-    def test_run_code_on_deleted_session(self, agb):
+    def test_run_on_deleted_session(self, agb):
         # 1. Create a session
         print("\n1. Creating session...")
         params = CreateSessionParams(image_id="agb-browser-use-1")
@@ -32,7 +32,7 @@ class TestSessionLifecycleDeleted:
             assert delete_result.success, f"Failed to delete session: {delete_result.error_message}"
             print("Session deleted successfully")
 
-            # 3. Use previous session id to call run_code
+            # 3. Use previous session id to call run
             print("3. Attempting to run code with deleted session ID...")
 
             # Manually instantiate a session object with the deleted ID
@@ -41,10 +41,10 @@ class TestSessionLifecycleDeleted:
 
             # Try to run code
             code = "print('Hello from deleted session')"
-            result = stale_session.code.run_code(code, language="python")
+            result = stale_session.code.run(code, language="python")
 
             # 4. Print the result
-            print("\n=== Result of run_code on deleted session ===")
+            print("\n=== Result of run on deleted session ===")
             print(f"Success: {result.success}")
             for res in result.logs.stdout:
                 print(f"Result: {result.logs.stdout}")
@@ -52,7 +52,7 @@ class TestSessionLifecycleDeleted:
             print("=============================================")
 
             # Expectation: It should fail
-            assert not result.success, "run_code should fail on a deleted session"
+            assert not result.success, "run should fail on a deleted session"
             assert result.error_message, "Error message should be present"
 
         except Exception as e:

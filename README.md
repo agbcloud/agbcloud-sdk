@@ -36,16 +36,16 @@ if result.success:
     session = result.session
 
     # Execute Python code
-    code_result = session.code.run_code("print('Hello AGB!')", "python")
+    code_result = session.code.run("print('Hello AGB!')", "python")
     print(code_result.result)
 
     # Execute shell command
-    cmd_result = session.command.execute_command("ls -la")
+    cmd_result = session.command.execute("ls -la")
     print(cmd_result.output)
 
     # Work with files
-    session.file_system.write_file("/tmp/test.txt", "Hello World!")
-    file_result = session.file_system.read_file("/tmp/test.txt")
+    session.file.write("/tmp/test.txt", "Hello World!")
+    file_result = session.file.read("/tmp/test.txt")
     print(file_result.content)
 
     # Clean up

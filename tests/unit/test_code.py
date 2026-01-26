@@ -87,7 +87,7 @@ class TestCode(unittest.TestCase):
         self.session = DummySession()
         self.code = Code(self.session)
 
-    def test_run_code_success_python(self):
+    def test_run_success_python(self):
         """Test successful Python code execution."""
         # Mock the _call_mcp_tool response with raw API data
         mock_api_response = {
@@ -105,7 +105,7 @@ class TestCode(unittest.TestCase):
         self.code._call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Execute code
-        result = self.code.run_code("print('Hello, World!')", "python", timeout_s=60)
+        result = self.code.run("print('Hello, World!')", "python", timeout_s=60)
 
         # Assertions
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
@@ -122,7 +122,7 @@ class TestCode(unittest.TestCase):
             {"code": "print('Hello, World!')", "language": "python", "timeout_s": 60}
         )
 
-    def test_run_code_success_javascript(self):
+    def test_run_success_javascript(self):
         """Test successful JavaScript code execution."""
         mock_api_response = {
             "result": [{"text/plain": "42"}],
@@ -138,14 +138,14 @@ class TestCode(unittest.TestCase):
         )
         self.code._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.code.run_code("console.log(42)", "javascript", timeout_s=30)
+        result = self.code.run("console.log(42)", "javascript", timeout_s=30)
 
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.request_id, "req-456")
         self.assertEqual(result.results[0].text, "42")
 
-    def test_run_code_success_java(self):
+    def test_run_success_java(self):
         """Test successful Java code execution."""
         mock_api_response = {
             "result": [{"text/plain": "Java output"}],
@@ -161,13 +161,13 @@ class TestCode(unittest.TestCase):
         )
         self.code._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.code.run_code("System.out.println('test')", "java", timeout_s=120)
+        result = self.code.run("System.out.println('test')", "java", timeout_s=120)
 
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.results[0].text, "Java output")
 
-    def test_run_code_success_r(self):
+    def test_run_success_r(self):
         """Test successful R code execution."""
         mock_api_response = {
             "result": [{"text/plain": "[1] 1 2 3"}],
@@ -183,13 +183,13 @@ class TestCode(unittest.TestCase):
         )
         self.code._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.code.run_code("c(1, 2, 3)", "r", timeout_s=90)
+        result = self.code.run("c(1, 2, 3)", "r", timeout_s=90)
 
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertTrue(result.success)
         self.assertEqual(result.results[0].text, "[1] 1 2 3")
 
-    def test_run_code_case_insensitive_language(self):
+    def test_run_case_insensitive_language(self):
         """Test that language parameter is case-insensitive."""
         mock_api_response = {
             "result": [{"text/plain": "output"}],
@@ -205,7 +205,7 @@ class TestCode(unittest.TestCase):
         )
         self.code._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.code.run_code("print('test')", "PYTHON", timeout_s=60)
+        result = self.code.run("print('test')", "PYTHON", timeout_s=60)
 
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertTrue(result.success)
@@ -213,9 +213,9 @@ class TestCode(unittest.TestCase):
         call_args = self.code._call_mcp_tool.call_args
         self.assertEqual(call_args[0][1]["language"], "python")
 
-    def test_run_code_unsupported_language(self):
+    def test_run_unsupported_language(self):
         """Test execution with unsupported language."""
-        result = self.code.run_code("print('test')", "ruby", timeout_s=60)
+        result = self.code.run("print('test')", "ruby", timeout_s=60)
 
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertFalse(result.success)
@@ -223,7 +223,7 @@ class TestCode(unittest.TestCase):
         self.assertIn("Unsupported language", result.error_message)
         self.assertIn("ruby", result.error_message)
 
-    def test_run_code_api_failure(self):
+    def test_run_api_failure(self):
         """Test code execution when API returns failure."""
         mock_result = OperationResult(
             request_id="req-fail-1",
@@ -233,7 +233,7 @@ class TestCode(unittest.TestCase):
         )
         self.code._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.code.run_code("print('test')", "python", timeout_s=60)
+        result = self.code.run("print('test')", "python", timeout_s=60)
 
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertFalse(result.success)
@@ -241,7 +241,7 @@ class TestCode(unittest.TestCase):
         self.assertIsNotNone(result.error_message)
         self.assertEqual(result.error_message, "API error occurred")
 
-    def test_run_code_api_failure_no_error_message(self):
+    def test_run_api_failure_no_error_message(self):
         """Test code execution when API fails without error message."""
         mock_result = OperationResult(
             request_id="req-fail-2",
@@ -250,18 +250,18 @@ class TestCode(unittest.TestCase):
         )
         self.code._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.code.run_code("print('test')", "python", timeout_s=60)
+        result = self.code.run("print('test')", "python", timeout_s=60)
 
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertFalse(result.success)
         self.assertIsNotNone(result.error_message)
         self.assertEqual(result.error_message, "Failed to run code")
 
-    def test_run_code_exception_handling(self):
+    def test_run_exception_handling(self):
         """Test exception handling during code execution."""
         self.code._call_mcp_tool = MagicMock(side_effect=Exception("Network error"))
 
-        result = self.code.run_code("print('test')", "python", timeout_s=60)
+        result = self.code.run("print('test')", "python", timeout_s=60)
 
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertFalse(result.success)
@@ -269,7 +269,7 @@ class TestCode(unittest.TestCase):
         self.assertIn("Failed to run code", result.error_message)
         self.assertIn("Network error", result.error_message)
 
-    def test_run_code_default_timeout(self):
+    def test_run_default_timeout(self):
         """Test code execution with default timeout."""
         mock_api_response = {
             "result": [{"text/plain": "output"}],
@@ -285,7 +285,7 @@ class TestCode(unittest.TestCase):
         )
         self.code._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.code.run_code("print('test')", "python")
+        result = self.code.run("print('test')", "python")
 
         self.assertIsInstance(result, EnhancedCodeExecutionResult)
         self.assertTrue(result.success)
@@ -293,7 +293,7 @@ class TestCode(unittest.TestCase):
         call_args = self.code._call_mcp_tool.call_args
         self.assertEqual(call_args[0][1]["timeout_s"], 60)
 
-    def test_run_code_language_aliases(self):
+    def test_run_language_aliases(self):
         """Test language aliases support."""
         mock_api_response = {
             "result": [{"text/plain": "output"}],
@@ -310,13 +310,13 @@ class TestCode(unittest.TestCase):
         self.code._call_mcp_tool = MagicMock(return_value=mock_result)
 
         # Test python3 -> python
-        result = self.code.run_code("print('test')", "python3", timeout_s=60)
+        result = self.code.run("print('test')", "python3", timeout_s=60)
         call_args = self.code._call_mcp_tool.call_args
         self.assertEqual(call_args[0][1]["language"], "python")
 
         # Test js -> javascript
         self.code._call_mcp_tool.reset_mock()
-        result = self.code.run_code("console.log('test')", "js", timeout_s=60)
+        result = self.code.run("console.log('test')", "js", timeout_s=60)
         call_args = self.code._call_mcp_tool.call_args
         self.assertEqual(call_args[0][1]["language"], "javascript")
 

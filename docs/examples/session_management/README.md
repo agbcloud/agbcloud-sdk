@@ -16,6 +16,10 @@ This directory contains examples demonstrating the complete lifecycle of AGB ses
 - For high-throughput applications, creating a new session for every request is inefficient.
 - Maintaining a pool of "warm" sessions allows for faster execution and better resource utilization.
 
+### Session Metrics
+- Use `session.get_metrics()` to retrieve real-time resource usage information.
+- Metrics include CPU usage, memory usage, disk usage, and network statistics.
+- Useful for monitoring session performance and resource consumption.
 
 ### Cleanup
 - Always call `agb.delete(session)` in a `finally` block or when the session is no longer needed to avoid unnecessary charges.
@@ -37,17 +41,13 @@ Implementation of a thread-safe session pool for high-concurrency applications.
 
 <<< ./session_pool.py
 
+### Session Metrics
+Demonstrates how to retrieve real-time session metrics including CPU, memory, disk, and network usage.
 
-## How to Run
+<<< ./get_metrics.py
 
-1. **Set your API Key**:
-   ```bash
-   export AGB_API_KEY="your_api_key_here"
-   ```
+### MCP Tools
+Demonstrates how to list and call MCP (Model Context Protocol) tools available in a session.
 
-2. **Run Examples**:
-   ```bash
-   python docs/examples/session_management/create_session.py
-   python docs/examples/session_management/get_session.py
-   python docs/examples/session_management/session_pool.py
-   ```
+<<< ./mcp_tools.py
+

@@ -2,7 +2,7 @@
 
 ## What you’ll do
 
-Read a file as **raw bytes** using `session.file_system.read_file(..., format="bytes")`, then save/inspect the data on the client side.
+Read a file as **raw bytes** using `session.file.read(..., format="bytes")`, then save/inspect the data on the client side.
 
 ## Prerequisites
 
@@ -27,7 +27,7 @@ try:
     # Pick a binary file that exists in most Linux images (ELF binary)
     remote_path = "/bin/ls"
 
-    read_result = session.file_system.read_file(remote_path, format="bytes")
+    read_result = session.file.read(remote_path, format="bytes")
     if not read_result.success:
         raise SystemExit(f"Read failed: {read_result.error_message}")
 
@@ -44,7 +44,7 @@ finally:
 ### Read an image and save it locally
 
 ```python
-read_result = session.file_system.read_file("/tmp/image.png", format="bytes")
+read_result = session.file.read("/tmp/image.png", format="bytes")
 if not read_result.success:
     raise RuntimeError(read_result.error_message)
 
@@ -54,7 +54,7 @@ with open("image.png", "wb") as f:
 
 ### Prefer download for large files
 
-`read_file(..., format="bytes")` returns the whole file content to the client. For large artifacts, prefer download APIs:
+`read(..., format="bytes")` returns the whole file content to the client. For large artifacts, prefer download APIs:
 
 - See: [`docs/file-system/upload-and-download.md`](upload-and-download.md)
 
@@ -69,7 +69,7 @@ with open("image.png", "wb") as f:
 ### Read succeeds but content is empty
 
 - **Likely cause**: the file is empty (size = 0).
-- **Fix**: check `get_file_info()` and verify the file was created/written as expected.
+- **Fix**: check `info()` and verify the file was created/written as expected.
 
 ### Permission denied
 
@@ -79,7 +79,7 @@ with open("image.png", "wb") as f:
 ### Out of memory (client)
 
 - **Likely cause**: reading a very large file into memory.
-- **Fix**: use download instead of `read_file(..., format="bytes")`.
+- **Fix**: use download instead of `read(..., format="bytes")`.
 
 ## Related
 

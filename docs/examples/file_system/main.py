@@ -47,7 +47,7 @@ def main():
 
     try:
         # Get the FileSystem interface
-        fs = session.file_system
+        fs = session.file
 
         # ===== BASIC FILE OPERATIONS =====
         print("\n===== BASIC FILE OPERATIONS =====")
@@ -60,7 +60,7 @@ def main():
         )
         test_file_path = "/tmp/test_file.txt"
 
-        result = fs.write_file(test_file_path, test_content, "overwrite")
+        result = fs.write(test_file_path, test_content, "overwrite")
         print(f"File write successful: {result.success}")
         if not result.success:
             print(f"Error: {result.error_message}")
@@ -68,7 +68,7 @@ def main():
 
         # Example 2: Read the file
         print("\nExample 2: Reading the file...")
-        result = fs.read_file(test_file_path)
+        result = fs.read(test_file_path)
         if result.success:
             content = result.content
             print(f"File content ({len(content)} bytes):")
@@ -81,14 +81,14 @@ def main():
         # Example 3: Append to the file
         print("\nExample 3: Appending to the file...")
         append_content = "\nThis is an appended line."
-        result = fs.write_file(test_file_path, append_content, "append")
+        result = fs.write(test_file_path, append_content, "append")
         print(f"File append successful: {result.success}")
         if not result.success:
             print(f"Error: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
         # Read the file again to verify append
-        result = fs.read_file(test_file_path)
+        result = fs.read(test_file_path)
         if result.success:
             updated_content = result.content
             print(f"Updated file content ({len(updated_content)} bytes):")
@@ -106,7 +106,7 @@ def main():
         # Example 4: Create a directory
         print("\nExample 4: Creating a directory...")
         test_dir_path = "/tmp/test_directory"
-        result = fs.create_directory(test_dir_path)
+        result = fs.mkdir(test_dir_path)
         print(f"Directory creation successful: {result.success}")
         if not result.success:
             print(f"Error: {result.error_message}")
@@ -114,7 +114,7 @@ def main():
 
         # Example 5: List directory contents
         print("\nExample 5: Listing directory contents...")
-        result = fs.list_directory("/tmp")
+        result = fs.list("/tmp")
         if result.success:
             entries = result.entries
             print(f"Found {len(entries)} entries in /tmp:")
@@ -130,7 +130,7 @@ def main():
 
         # Example 6: Get file information
         print("\nExample 6: Getting file information...")
-        result = fs.get_file_info(test_file_path)
+        result = fs.info(test_file_path)
         if result.success:
             file_info = result.file_info
             print(f"File information for {test_file_path}:")
@@ -151,14 +151,14 @@ def main():
                 "newText": "This line has been edited.",
             }
         ]
-        result = fs.edit_file(test_file_path, edits)
+        result = fs.edit(test_file_path, edits)
         print(f"File edit successful: {result.success}")
         if not result.success:
             print(f"Error: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
         # Read the file again to verify edit
-        result = fs.read_file(test_file_path)
+        result = fs.read(test_file_path)
         if result.success:
             edited_content = result.content
             print(f"Edited file content ({len(edited_content)} bytes):")
@@ -174,14 +174,14 @@ def main():
         print("\nExample 8: Moving a file...")
         source_path = "/tmp/test_file.txt"
         dest_path = "/tmp/test_directory/moved_file.txt"
-        result = fs.move_file(source_path, dest_path)
+        result = fs.move(source_path, dest_path)
         print(f"File move successful: {result.success}")
         if not result.success:
             print(f"Error: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
         # Verify the file was moved
-        result = fs.read_file(dest_path)
+        result = fs.read(dest_path)
         if result.success:
             moved_content = result.content
             print(f"Moved file content length: {len(moved_content)} bytes")
@@ -200,14 +200,14 @@ def main():
         delete_test_file = "/tmp/delete_test.txt"
         delete_content = "This is a test file created for deletion testing.\nIt will be deleted shortly."
         
-        result = fs.write_file(delete_test_file, delete_content, "overwrite")
+        result = fs.write(delete_test_file, delete_content, "overwrite")
         if result.success:
             print(f"✅ Created test file for deletion: {delete_test_file}")
         else:
             print(f"❌ Failed to create test file: {result.error_message}")
             
         # Verify the file exists before deletion
-        result = fs.get_file_info(delete_test_file)
+        result = fs.info(delete_test_file)
         if result.success:
             print(f"File exists before deletion: {delete_test_file}")
             print(f"File size: {result.file_info.get('size', 'unknown')} bytes")
@@ -215,14 +215,14 @@ def main():
             print(f"File does not exist: {delete_test_file}")
 
         # Delete the file
-        result = fs.delete_file(delete_test_file)
+        result = fs.remove(delete_test_file)
         print(f"File deletion successful: {result.success}")
         if not result.success:
             print(f"Error: {result.error_message}")
         print(f"Request ID: {result.request_id}")
 
         # Verify the file was deleted
-        result = fs.get_file_info(delete_test_file)
+        result = fs.info(delete_test_file)
         if not result.success:
             print(f"✅ File successfully deleted - file no longer exists")
         else:
@@ -230,23 +230,23 @@ def main():
 
         # ===== FILE SEARCHING =====
         print("\n===== FILE SEARCHING =====")
-        create_direction = fs.create_directory("/tmp/test_directory")
+        create_direction = fs.mkdir("/tmp/test_directory")
         if(create_direction.success):
             print(f"✅ Created test directory: {create_direction.request_id}")
         else:
             print(f"❌ Failed to create test directory: {create_direction.error_message}")
         # Create some files for searching
-        fs.write_file(
+        fs.write(
             "/tmp/test_directory/file1.txt",
             "This file contains the word SEARCHABLE",
             "overwrite",
         )
-        fs.write_file(
+        fs.write(
             "/tmp/test_directory/file2.txt",
             "This file does not contain the keyword",
             "overwrite",
         )
-        fs.write_file(
+        fs.write(
             "/tmp/test_directory/file3.txt",
             "This file also contains SEARCHABLE term",
             "overwrite",
@@ -254,7 +254,7 @@ def main():
 
         # Example 9: Search for files
         print("\nExample 9: Searching for files...")
-        result = fs.search_files("/tmp/test_directory", "file*")
+        result = fs.search("/tmp/test_directory", "file*")
         if result.success:
             search_results = result.matches
             print(f"Found {len(search_results)} files matching the search pattern:")
@@ -274,7 +274,7 @@ def main():
             "/tmp/test_directory/file2.txt",
             "/tmp/test_directory/file3.txt",
         ]
-        result = fs.read_multiple_files(file_paths)
+        result = fs.read_batch(file_paths)
         if result.success:
             multi_file_contents = result.contents
             print(f"Read {len(multi_file_contents)} files:")
@@ -299,7 +299,7 @@ def main():
         binary_file_path = "/tmp/test_binary.dat"
         
         # Write binary data to file
-        result = fs.write_file(binary_file_path, binary_data.decode('latin-1'), "overwrite")
+        result = fs.write(binary_file_path, binary_data.decode('latin-1'), "overwrite")
         print(f"Binary file write successful: {result.success}")
         if not result.success:
             print(f"Error: {result.error_message}")
@@ -307,7 +307,7 @@ def main():
         
         # Read binary file using format="bytes"
         print("\nReading binary file with format='bytes'...")
-        result = fs.read_file(binary_file_path, format="bytes")
+        result = fs.read(binary_file_path, format="bytes")
         if result.success:
             read_binary_data = result.content
             print(f"Binary file read successful")
@@ -322,7 +322,7 @@ def main():
         
         # Example 12: Read the same file as text (for comparison)
         print("\nReading the same file as text (format='text')...")
-        result = fs.read_file(binary_file_path, format="text")
+        result = fs.read(binary_file_path, format="text")
         if result.success:
             text_content = result.content
             print(f"Text file read successful")
@@ -348,7 +348,7 @@ def main():
 
         # Write the large file (automatically handles chunking)
         start_time = time.time()
-        result = fs.write_file(test_file_path, large_content)
+        result = fs.write(test_file_path, large_content)
         write_time = time.time() - start_time
 
         print(f"Write operation completed in {write_time:.2f} seconds")
@@ -361,7 +361,7 @@ def main():
         print("\nExample 16: Reading the large file (automatically chunked)...")
 
         start_time = time.time()
-        result = fs.read_file(test_file_path)
+        result = fs.read(test_file_path)
         read_time = time.time() - start_time
 
         if result.success:
@@ -379,7 +379,7 @@ def main():
         test_file_path2 = "/tmp/large_file2.txt"
 
         start_time = time.time()
-        result = fs.write_file(test_file_path2, large_content)
+        result = fs.write(test_file_path2, large_content)
         write_time = time.time() - start_time
 
         print(f"Write operation completed in {write_time:.2f} seconds")
@@ -392,7 +392,7 @@ def main():
         print("\nExample 18: Reading the second large file...")
 
         start_time = time.time()
-        result = fs.read_file(test_file_path2)
+        result = fs.read(test_file_path2)
         read_time = time.time() - start_time
 
         if result.success:

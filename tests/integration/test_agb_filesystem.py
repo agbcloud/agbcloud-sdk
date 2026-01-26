@@ -1,480 +1,216 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-AGB filesystem test code
+"""Integration tests for AGB FileSystem module.
+
+This file was refactored to pytest style so that each capability is covered by an
+independent test function (no cross-test dependencies).
 """
 
+from __future__ import annotations
+
+from collections.abc import Iterator
 import os
-import sys
 import time
+import uuid
 
-# Add project root directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pytest
 
-# Direct import, completely bypass __init__.py
-import importlib.util
-
-from agb.agb import AGB
+from agb import AGB
+from agb.session import Session
 from agb.session_params import CreateSessionParams
 
 
-def get_api_key():
-    """Get API Key from environment variables"""
-    api_key = os.getenv("AGB_API_KEY")
+def _err(result) -> str:
+    msg = getattr(result, "error_message", None)
+    rid = getattr(result, "request_id", None)
+    return f"error_message={msg!r}, request_id={rid!r}"
+
+
+def _assert_success(result, action: str) -> None:
+    assert getattr(result, "success", False), f"{action} failed: {_err(result)}"
+
+
+@pytest.fixture(scope="module")
+def agb_client() -> AGB:
+    api_key = os.environ.get("AGB_API_KEY")
     if not api_key:
-        raise ValueError(
-            "AGB_API_KEY environment variable not set. Please set the environment variable:\n"
-        )
-
-    return api_key
+        pytest.skip("AGB_API_KEY environment variable not set")
+    return AGB(api_key=api_key)
 
 
-def test_create_session():
-    """Test creating AGB session"""
+@pytest.fixture(scope="module")
+def test_session(agb_client) -> Iterator[Session]:
+    """Create a shared session for this module.
 
-    # API key
-    api_key = get_api_key()
-    print(f"Using API Key: {api_key}")
-
+    Tests are still independent because they each use isolated paths under /tmp.
+    """
+    params = CreateSessionParams(image_id="agb-code-space-2")
+    result = agb_client.create(params)
+    if not result.success:
+        pytest.fail(f"Session creation failed: {_err(result)}")
+    assert result.session is not None, "Session object is None"
+    session = result.session
+    yield session
     try:
-        print("Initializing AGB client...")
-
-        # Create AGB instance
-        agb = AGB(api_key=api_key)
-        print(f"✅ AGB client initialized successfully")
-        print(f"   Endpoint: {agb.endpoint}")
-        print(f"   Timeout: {agb.timeout_ms}ms")
-
-        print("\nCreating session...")
-
-        params = CreateSessionParams(image_id="agb-code-space-2")
-        result = agb.create(params)
-
-        # Check result
-        if result.success:
-            print("✅ Session created successfully!")
-            print(f"   Request ID: {result.request_id}")
-            print(f"   Session ID: {result.session.session_id}")
-            if hasattr(result.session, "resource_url") and result.session.resource_url:
-                print(f"   Resource URL: {result.session.resource_url}")
-            if hasattr(result.session, "image_id") and result.session.image_id:
-                print(f"   Image ID: {result.session.image_id}")
-        else:
-            print("❌ Session creation failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-
-        return result, agb
-
+        agb_client.delete(session)
     except Exception as e:
-        print(f"❌ Error occurred during test: {e}")
-        import traceback
-
-        traceback.print_exc()
-        return None, None
+        # Don't fail teardown; we just surface the info.
+        print(f"Warning: failed to delete session in teardown: {e}")
 
 
-def test_filesystem_operations(session):
-    """Test filesystem operation functionality"""
-    print("\n" + "=" * 60)
-    print("Testing Filesystem Operation Functionality")
-    print("=" * 60)
-
+@pytest.fixture
+def test_dir(test_session) -> Iterator[str]:
+    """Create a unique directory for each test and clean it up afterwards."""
+    dirname = f"/tmp/agb_fs_test_{int(time.time() * 1000)}_{uuid.uuid4().hex[:8]}"
+    r = test_session.file.mkdir(dirname)
+    _assert_success(r, f"create_directory({dirname})")
+    yield dirname
+    # Best-effort cleanup
     try:
-        # Test directory operations
-        print("1. Testing directory operations...")
-
-        # Create test directory
-        test_dir = "/tmp/"
-        print(f"\nCreating directory: {test_dir}")
-        result = session.file_system.create_directory(test_dir)
-        if result.success:
-            print("✅ Directory created successfully!")
-            print(f"   Request ID: {result.request_id}")
-        else:
-            print("❌ Directory creation failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-
-        # List directory contents
-        print(f"\nListing directory contents: {test_dir}")
-        result = session.file_system.list_directory(test_dir)
-        if result.success:
-            print("✅ Directory listing successful!")
-            print(f"   Request ID: {result.request_id}")
-            if result.entries:
-                print(f"   Directory contents:")
-                for entry in result.entries:
-                    print(
-                        f"     - {entry.get('name', 'Unknown')} ({entry.get('type', 'Unknown')})"
-                    )
-            else:
-                print("   Directory is empty")
-        else:
-            print("❌ Directory listing failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-
-        # Test file operations
-        print("\n2. Testing file operations...")
-
-        # Write file
-        test_file = f"{test_dir}/test.txt"
-        test_content = "Hello AGB! This is a test file.\nCreated at: " + str(
-            os.popen("date").read().strip()
-        )
-
-        print(f"\nWriting file: {test_file}")
-        result = session.file_system.write_file(
-            test_file, test_content, mode="overwrite"
-        )
-        if result.success:
-            print("✅ File written successfully!")
-            print(f"   Request ID: {result.request_id}")
-        else:
-            print("❌ File writing failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-
-        # Read file
-        print(f"\nReading file: {test_file}")
-        result = session.file_system.read_file(test_file)
-        if result.success:
-            print("✅ File read successfully!")
-            print(f"   Request ID: {result.request_id}")
-            print(f"   File content:\n{result.content}")
-        else:
-            print("❌ File reading failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-
-        # Get file info
-        print(f"\nGetting file info: {test_file}")
-        result = session.file_system.get_file_info(test_file)
-        if result.success:
-            print("✅ File info retrieved successfully!")
-            print(f"   Request ID: {result.request_id}")
-            if result.file_info:
-                print(f"   File info:")
-                for key, value in result.file_info.items():
-                    print(f"     {key}: {value}")
-        else:
-            print("❌ File info retrieval failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-
-        # Test file editing
-        print("\n3. Testing file editing...")
-
-        edits = [
-            {"action": "append", "content": "\nThis line was appended."},
-            {"action": "prepend", "content": "This line was prepended.\n"},
-        ]
-
-        print(f"\nEditing file: {test_file}")
-        result = session.file_system.edit_file(test_file, edits, dry_run=False)
-        if result.success:
-            print("✅ File edited successfully!")
-            print(f"   Request ID: {result.request_id}")
-
-            # Re-read file to see editing results
-            print(f"\nRe-reading edited file: {test_file}")
-            result = session.file_system.read_file(test_file)
-            if result.success:
-                print("✅ Edited file read successfully!")
-                print(f"   File content:\n{result.content}")
-            else:
-                print("❌ Edited file reading failed!")
-        else:
-            print("❌ File editing failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-
-        # Test file search
-        print("\n4. Testing file search...")
-
-        search_pattern = "*.txt"
-        print(f"\nSearching files in {test_dir} directory for {search_pattern}")
-        result = session.file_system.search_files(test_dir, search_pattern)
-        if result.success:
-            print("✅ File search successful!")
-            print(f"   Request ID: {result.request_id}")
-            if result.matches:
-                print(f"   Found files:")
-                for match in result.matches:
-                    print(f"     - {match}")
-            else:
-                print("   No matching files found")
-        else:
-            print("❌ File search failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-
-        # Test large file operations
-        print("\n5. Testing large file operations...")
-
-        large_file = f"{test_dir}/large_file.txt"
-        large_content = "This is a large file content.\n" * 1000  # Approx 30KB
-
-        print(f"\nCreating large file: {large_file}")
-        result = session.file_system.write_file(large_file, large_content)
-        if result.success:
-            print("✅ Large file created successfully!")
-            print(f"   Request ID: {result.request_id}")
-
-            # Read large file
-            print(f"\nReading large file: {large_file}")
-            result = session.file_system.read_file(large_file)
-            if result.success:
-                print("✅ Large file read successfully!")
-                print(f"   Request ID: {result.request_id}")
-                print(f"   File size: {len(result.content)} characters")
-                print(f"   First 100 characters: {result.content[:100]}...")
-            else:
-                print("❌ Large file reading failed!")
-        else:
-            print("❌ Large file creation failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-
-        # Test multiple file operations
-        print("\n6. Testing multiple file operations...")
-
-        # Create multiple test files
-        test_files = [
-            f"{test_dir}/file1.txt",
-            f"{test_dir}/file2.txt",
-            f"{test_dir}/file3.txt",
-        ]
-
-        for i, file_path in enumerate(test_files):
-            content = f"This is test file {i+1}\nContent: {i+1} * {i+1} = {(i+1)**2}"
-            result = session.file_system.write_file(file_path, content)
-            if result.success:
-                print(f"✅ File {file_path} created successfully")
-            else:
-                print(f"❌ File {file_path} creation failed: {result.error_message}")
-
-        # Batch read multiple files
-        print(f"\nBatch reading multiple files")
-        result = session.file_system.read_multiple_files(test_files)
-        if result.success:
-            print("✅ Multiple file reading successful!")
-            print(f"   Request ID: {result.request_id}")
-            if result.contents:
-                print(f"   Read files:")
-                for file_path, content in result.contents.items():
-                    print(f"     {file_path}: {content.strip()}")
-            else:
-                print("   No file contents read")
-        else:
-            print("❌ Multiple file reading failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-
-        # Test file move
-        print("\n7. Testing file move...")
-
-        source_file = f"{test_dir}/file1.txt"
-        dest_file = f"{test_dir}/moved_file.txt"
-
-        print(f"\nMoving file: {source_file} -> {dest_file}")
-        result = session.file_system.move_file(source_file, dest_file)
-        if result.success:
-            print("✅ File moved successfully!")
-            print(f"   Request ID: {result.request_id}")
-
-            # Verify move result
-            if session.file_system.read_file(dest_file).success:
-                print("✅ Destination file exists and is readable")
-            else:
-                print("❌ Destination file does not exist or is not readable")
-        else:
-            print("❌ File move failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-
-        # Clean up test files
-        print("\n8. Cleaning up test files...")
-
-        cleanup_files = [
-            f"{test_dir}/test.txt",
-            f"{test_dir}/file2.txt",
-            f"{test_dir}/file3.txt",
-            f"{test_dir}/moved_file.txt",
-            f"{test_dir}/large_file.txt",
-        ]
-
-        for file_path in cleanup_files:
-            try:
-                # Use command to delete file (as filesystem module does not have a delete method)
-                session.command.execute_command(f"rm -f {file_path}", timeout_ms=5000)
-                print(f"✅ Cleaning up file: {file_path}")
-            except Exception as e:
-                print(f"⚠️   Failed to clean up file: {file_path}, Error: {e}")
-
-        # Delete test directory
-        try:
-            session.command.execute_command(f"rmdir {test_dir}", timeout_ms=5000)
-            print(f"✅ Cleaning up directory: {test_dir}")
-        except Exception as e:
-            print(f"⚠️   Failed to clean up directory: {test_dir}, Error: {e}")
-
-        return True
-
+        test_session.command.execute(f"rm -rf {dirname}", timeout_ms=10000)
     except Exception as e:
-        print(f"❌ Error occurred during filesystem test: {e}")
-        import traceback
-
-        traceback.print_exc()
-        return False
-
-def test_delete_file_operations(session):
-    """Test delete_file operation functionality"""
-    print("\n" + "=" * 60)
-    print("Testing Delete File Operation Functionality")
-    print("=" * 60)
-
-    try:
-        # Test delete_file operations
-        print("1. Testing delete_file operations...")
-
-        # Create a test file first
-        test_file = f"/tmp/agb_delete_test_{int(time.time())}.txt"
-        test_content = "Hello AGB! This is a test file for delete operation.\nCreated for delete testing."
-
-        print(f"\nCreating test file: {test_file}")
-        result = session.file_system.write_file(test_file, test_content, mode="overwrite")
-        if result.success:
-            print("✅ Test file created successfully!")
-            print(f"   Request ID: {result.request_id}")
-        else:
-            print("❌ Test file creation failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-            return False
-
-        # Verify file exists before deletion
-        print(f"\nVerifying file exists before deletion: {test_file}")
-        result = session.file_system.get_file_info(test_file)
-        if result.success:
-            print("✅ File exists and info retrieved successfully!")
-            print(f"   Request ID: {result.request_id}")
-            if result.file_info:
-                print(f"   File info:")
-                for key, value in result.file_info.items():
-                    print(f"     {key}: {value}")
-        else:
-            print("❌ File info retrieval failed!")
-            print(f"   Error message: {result.error_message}")
-            return False
-
-        # Delete the file
-        print(f"\nDeleting file: {test_file}")
-        result = session.file_system.delete_file(test_file)
-        if result.success:
-            print("✅ File deleted successfully!")
-            print(f"   Request ID: {result.request_id}")
-        else:
-            print("❌ File deletion failed!")
-            print(f"   Error message: {result.error_message}")
-            if result.request_id:
-                print(f"   Request ID: {result.request_id}")
-            return False
-
-        # Verify file no longer exists after deletion
-        print(f"\nVerifying file no longer exists after deletion: {test_file}")
-        result = session.file_system.get_file_info(test_file)
-        if not result.success:
-            print("✅ File successfully deleted - file info retrieval failed as expected!")
-            print(f"   Request ID: {result.request_id}")
-            print(f"   Expected error message: {result.error_message}")
-        else:
-            print("❌ File still exists after deletion - this should not happen!")
-            print(f"   File info: {result.file_info}")
-            return False
-        print("\n✅ All delete_file operations completed successfully!")
-        return True
-
-    except Exception as e:
-        print(f"❌ Error occurred during delete_file test: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+        print(f"Warning: failed to cleanup test dir {dirname}: {e}")
 
 
-def main():
-    """Main function"""
-    print("=" * 60)
-    print("AGB Filesystem Test")
-    print("=" * 60)
-
-    # Test session creation
-    result, agb = test_create_session()
-
-    exit_code = 0
-    if result and result.success and agb:
-        # Test filesystem operation functionality
-        filesystem_test_success = test_filesystem_operations(result.session)
-        if not filesystem_test_success:
-            exit_code = 1
-
-        # Test delete_file operation functionality
-        delete_file_test_success = test_delete_file_operations(result.session)
-        if not delete_file_test_success:
-            exit_code = 1
-
-        # Optional: Test deleting session
-        print("\n" + "=" * 60)
-        print("Testing session deletion...")
-        try:
-            # Check if running in interactive mode (has stdin)
-            import sys
-            if sys.stdin.isatty():
-                print("Do you want to delete the recently created session? (y/n): ", end="")
-                choice = input().strip().lower()
-                should_delete = choice in ["y", "yes"]
-            else:
-                # In non-interactive mode (CI/automated tests), automatically delete session
-                print("Running in non-interactive mode, automatically deleting session...")
-                should_delete = True
-
-            if should_delete:
-                print("Deleting session...")
-                delete_result = agb.delete(result.session)
-                print("delete_result =", delete_result)
-                if delete_result.success:
-                    print("✅ Session deleted successfully!")
-                else:
-                    print(f"❌ Session deletion failed: {delete_result.error_message}")
-                    exit_code = 1
-            else:
-                print("Session deletion skipped by user choice.")
-        except (KeyboardInterrupt, EOFError):
-            print("\nUser cancelled deletion operation or no input available")
-    else:
-        exit_code = 1
-
-    print("\n" + "=" * 60)
-    if exit_code == 0:
-        print("Test completed successfully")
-    else:
-        print("Test failed")
-    print("=" * 60)
-    sys.exit(exit_code)
+def test_directory_list_empty(test_session, test_dir: str):
+    result = test_session.file.list(test_dir)
+    _assert_success(result, f"list({test_dir})")
 
 
-if __name__ == "__main__":
-    main()
+def test_write_and_read(test_session, test_dir: str):
+    path = f"{test_dir}/test.txt"
+    content = f"Hello AGB!\nCreated at: {int(time.time())}\n"
+    r = test_session.file.write(path, content, mode="overwrite")
+    _assert_success(r, f"write({path})")
+
+    rr = test_session.file.read(path)
+    _assert_success(rr, f"read({path})")
+    assert rr.content == content
+
+
+def test_get_file_info(test_session, test_dir: str):
+    path = f"{test_dir}/info.txt"
+    content = "info\n"
+    r = test_session.file.write(path, content, mode="overwrite")
+    _assert_success(r, f"write({path})")
+
+    info = test_session.file.info(path)
+    _assert_success(info, f"get_file_info({path})")
+    assert info.file_info is not None
+    assert int(info.file_info.get("size", 0)) > 0
+
+
+def test_edit_file_prepend_append(test_session, test_dir: str):
+    path = f"{test_dir}/edit.txt"
+    base = "base\n"
+    r = test_session.file.write(path, base, mode="overwrite")
+    _assert_success(r, f"write({path})")
+
+    # edit_file expects oldText and newText format for text replacement
+    # For append: replace the base content with base + appended content
+    # For prepend: replace the base content with prepended + base content
+    # We need to read the file first to get the exact content for replacement
+    read_result = test_session.file.read(path)
+    _assert_success(read_result, f"read({path}) before edit")
+    current_content = read_result.content
+
+    # Append: replace current content with current + appended
+    edits = [
+        {"oldText": current_content, "newText": current_content + "appended\n"},
+    ]
+    er = test_session.file.edit(path, edits, dry_run=False)
+    _assert_success(er, f"edit_file({path}) - append")
+
+    # Read again to get updated content for prepend
+    read_result = test_session.file.read(path)
+    _assert_success(read_result, f"read({path}) after append")
+    current_content = read_result.content
+
+    # Prepend: replace current content with prepended + current
+    edits = [
+        {"oldText": current_content, "newText": "prepended\n" + current_content},
+    ]
+    er = test_session.file.edit(path, edits, dry_run=False)
+    _assert_success(er, f"edit_file({path}) - prepend")
+
+    rr = test_session.file.read(path)
+    _assert_success(rr, f"read({path})")
+    # Verify final content has both prepended and appended text
+    assert rr.content.startswith("prepended\n")
+    assert "appended\n" in rr.content
+
+
+def test_search_files(test_session, test_dir: str):
+    # Create a few files
+    paths = [f"{test_dir}/a.txt", f"{test_dir}/b.txt", f"{test_dir}/c.log"]
+    for p in paths:
+        r = test_session.file.write(p, f"{p}\n", mode="overwrite")
+        _assert_success(r, f"write({p})")
+
+    sr = test_session.file.search(test_dir, "*.txt")
+    _assert_success(sr, f"search_files({test_dir}, *.txt)")
+    matches = sr.matches or []
+    assert any(m.endswith("/a.txt") for m in matches)
+    assert any(m.endswith("/b.txt") for m in matches)
+
+
+def test_large_file_read(test_session, test_dir: str):
+    path = f"{test_dir}/large_file.txt"
+    content = "This is a large file content.\n" * 1000
+    r = test_session.file.write(path, content, mode="overwrite")
+    _assert_success(r, f"write({path})")
+
+    rr = test_session.file.read(path)
+    _assert_success(rr, f"read({path})")
+    assert rr.content == content
+
+
+def test_read_multiple_files(test_session, test_dir: str):
+    files = [
+        f"{test_dir}/file1.txt",
+        f"{test_dir}/file2.txt",
+        f"{test_dir}/file3.txt",
+    ]
+    expected = {}
+    for i, p in enumerate(files, start=1):
+        content = f"This is test file {i}\nContent: {i} * {i} = {i**2}\n"
+        expected[p] = content
+        r = test_session.file.write(p, content, mode="overwrite")
+        _assert_success(r, f"write({p})")
+
+    rr = test_session.file.read_batch(files)
+    _assert_success(rr, "read_multiple_files([...])")
+    assert rr.contents is not None
+    for p, content in expected.items():
+        actual = rr.contents.get(p)
+        # Handle potential trailing newline differences
+        assert actual is not None, f"Content for {p} is None"
+        # Normalize by stripping and comparing, or compare directly
+        assert actual == content or actual.rstrip() == content.rstrip(), \
+            f"Content mismatch for {p}: expected {content!r}, got {actual!r}"
+
+
+def test_move_file(test_session, test_dir: str):
+    src = f"{test_dir}/src.txt"
+    dst = f"{test_dir}/dst.txt"
+    content = f"move-{uuid.uuid4().hex}\n"
+    r = test_session.file.write(src, content, mode="overwrite")
+    _assert_success(r, f"write({src})")
+
+    mr = test_session.file.move(src, dst)
+    _assert_success(mr, f"move_file({src} -> {dst})")
+
+    rr = test_session.file.read(dst)
+    _assert_success(rr, f"read({dst})")
+    assert rr.content == content
+
+
+def test_remove(test_session, test_dir: str):
+    path = f"{test_dir}/delete_me.txt"
+    r = test_session.file.write(path, "bye\n", mode="overwrite")
+    _assert_success(r, f"write({path})")
+
+    dr = test_session.file.remove(path)
+    _assert_success(dr, f"remove({path})")
+
+    # After deletion, file info should fail (or at least not be successful).
+    info = test_session.file.info(path)
+    assert not info.success

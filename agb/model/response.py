@@ -2,7 +2,7 @@
 API response models for AGB SDK.
 """
 
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from agb.session import Session
@@ -532,3 +532,201 @@ class SessionStatusResult(ApiResponse):
         self.success = success
         self.status = status
         self.error_message = error_message
+
+
+class McpTool:
+    """MCP tool information model"""
+
+    def __init__(
+        self,
+        name: str = "",
+        description: str = "",
+        input_schema: Optional[Dict[str, Any]] = None,
+        server: str = "",
+        tool: str = "",
+    ):
+        """
+        Initialize an McpTool.
+
+        Args:
+            name: Tool name
+            description: Tool description
+            input_schema: Input parameters JSON Schema
+            server: MCP server name
+            tool: Tool type
+        """
+        self.name = name
+        self.description = description
+        self.input_schema = input_schema or {}
+        self.server = server
+        self.tool = tool
+
+
+class McpToolResult(ApiResponse):
+    """MCP tool call result"""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        data: Optional[str] = None,
+        error_message: str = "",
+    ):
+        """
+        Initialize an McpToolResult.
+
+        Args:
+            request_id: Request ID
+            success: Whether the operation was successful
+            data: Tool return data in JSON string format
+            error_message: Error message
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.data = data
+        self.error_message = error_message
+
+
+class McpToolsResult(ApiResponse):
+    """MCP tools list query result"""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        tools: Optional[List["McpTool"]] = None,
+        error_message: str = "",
+    ):
+        """
+        Initialize an McpToolsResult.
+
+        Args:
+            request_id: Request ID
+            success: Whether the operation was successful
+            tools: List of tools
+            error_message: Error message
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.tools = tools or []
+        self.error_message = error_message
+
+class SessionMetrics:
+    """Structured metrics for session monitoring."""
+
+    def __init__(
+        self,
+        cpu_count: int = 0,
+        cpu_used_pct: float = 0.0,
+        disk_total: int = 0,
+        disk_used: int = 0,
+        mem_total: int = 0,
+        mem_used: int = 0,
+        rx_rate_kbyte_per_s: float = 0.0,
+        tx_rate_kbyte_per_s: float = 0.0,
+        rx_used_kbyte: float = 0.0,
+        tx_used_kbyte: float = 0.0,
+        timestamp: str = "",
+        # Backward-compatible aliases (deprecated):
+        rx_rate_kbps: Optional[float] = None,
+        tx_rate_kbps: Optional[float] = None,
+        rx_used_kb: Optional[float] = None,
+        tx_used_kb: Optional[float] = None,
+    ):
+        """
+        Initialize SessionMetrics.
+
+        Args:
+            cpu_count (int): CPU core count. Defaults to 0.
+            cpu_used_pct (float): CPU usage percentage. Defaults to 0.0.
+            disk_total (int): Total disk capacity. Defaults to 0.
+            disk_used (int): Used disk capacity. Defaults to 0.
+            mem_total (int): Total memory. Defaults to 0.
+            mem_used (int): Used memory. Defaults to 0.
+            rx_rate_kbyte_per_s (float): Receive rate in KB/s. Defaults to 0.0.
+            tx_rate_kbyte_per_s (float): Transmit rate in KB/s. Defaults to 0.0.
+            rx_used_kbyte (float): Total received data in KB. Defaults to 0.0.
+            tx_used_kbyte (float): Total transmitted data in KB. Defaults to 0.0.
+            timestamp (str): Timestamp of the metrics. Defaults to "".
+            rx_rate_kbps (Optional[float]): Deprecated alias for rx_rate_kbyte_per_s.
+            tx_rate_kbps (Optional[float]): Deprecated alias for tx_rate_kbyte_per_s.
+            rx_used_kb (Optional[float]): Deprecated alias for rx_used_kbyte.
+            tx_used_kb (Optional[float]): Deprecated alias for tx_used_kbyte.
+        """
+        self.cpu_count = cpu_count
+        self.cpu_used_pct = cpu_used_pct
+        self.disk_total = disk_total
+        self.disk_used = disk_used
+        self.mem_total = mem_total
+        self.mem_used = mem_used
+        self.rx_rate_kbyte_per_s = (
+            rx_rate_kbyte_per_s if rx_rate_kbyte_per_s is not None else 0.0
+        )
+        self.tx_rate_kbyte_per_s = (
+            tx_rate_kbyte_per_s if tx_rate_kbyte_per_s is not None else 0.0
+        )
+        self.rx_used_kbyte = rx_used_kbyte if rx_used_kbyte is not None else 0.0
+        self.tx_used_kbyte = tx_used_kbyte if tx_used_kbyte is not None else 0.0
+
+        # Backward-compatible aliases (deprecated): allow old args to fill new fields
+        if rx_rate_kbps is not None and self.rx_rate_kbyte_per_s == 0.0:
+            self.rx_rate_kbyte_per_s = float(rx_rate_kbps)
+        if tx_rate_kbps is not None and self.tx_rate_kbyte_per_s == 0.0:
+            self.tx_rate_kbyte_per_s = float(tx_rate_kbps)
+        if rx_used_kb is not None and self.rx_used_kbyte == 0.0:
+            self.rx_used_kbyte = float(rx_used_kb)
+        if tx_used_kb is not None and self.tx_used_kbyte == 0.0:
+            self.tx_used_kbyte = float(tx_used_kb)
+        self.timestamp = timestamp
+
+    # Backward-compatible properties (deprecated)
+    @property
+    def rx_rate_kbps(self) -> float:
+        """Deprecated: Use rx_rate_kbyte_per_s instead."""
+        return float(self.rx_rate_kbyte_per_s)
+
+    @property
+    def tx_rate_kbps(self) -> float:
+        """Deprecated: Use tx_rate_kbyte_per_s instead."""
+        return float(self.tx_rate_kbyte_per_s)
+
+    @property
+    def rx_used_kb(self) -> float:
+        """Deprecated: Use rx_used_kbyte instead."""
+        return float(self.rx_used_kbyte)
+
+    @property
+    def tx_used_kb(self) -> float:
+        """Deprecated: Use tx_used_kbyte instead."""
+        return float(self.tx_used_kbyte)
+
+class SessionMetricsResult(ApiResponse):
+    """Result of session get_metrics() operation."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        metrics: Optional[SessionMetrics] = None,
+        error_message: str = "",
+        raw: Optional[dict] = None,
+    ):
+        """
+        Initialize a SessionMetricsResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request.
+                Defaults to "".
+            success (bool, optional): Whether the operation was successful.
+                Defaults to False.
+            metrics (Optional[SessionMetrics], optional): Session metrics data.
+                Defaults to None.
+            error_message (str, optional): Error message if the operation failed.
+                Defaults to "".
+            raw (Optional[dict], optional): Raw response data. Defaults to None.
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.metrics = metrics
+        self.error_message = error_message
+        self.raw = raw or {}

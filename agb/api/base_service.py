@@ -55,7 +55,7 @@ class BaseService:
 
         Args:
             name (str): The name of the tool to call.
-            args (Dict[str, Any]): The arguments to pass to the tool (can include auto_gen_session).
+            args (Dict[str, Any]): The arguments to pass to the tool.
             read_timeout (Optional[int]): Read timeout in milliseconds.
             connect_timeout (Optional[int]): Connect timeout in milliseconds.
 

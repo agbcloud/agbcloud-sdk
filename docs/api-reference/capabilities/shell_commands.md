@@ -28,13 +28,13 @@ class Command(BaseService)
 
 Handles command execution operations in the AGB cloud environment.
 
-### execute\_command
+### execute
 
 ```python
-def execute_command(command: str,
-                    timeout_ms: int = 1000,
-                    cwd: Optional[str] = None,
-                    envs: Optional[Dict[str, str]] = None) -> CommandResult
+def execute(command: str,
+            timeout_ms: int = 1000,
+            cwd: Optional[str] = None,
+            envs: Optional[Dict[str, str]] = None) -> CommandResult
 ```
 
 Execute a shell command with optional working directory and environment variables.
@@ -69,7 +69,7 @@ user permissions in a Linux shell environment.
 **Example**:
 
 session = agb.create().session
-result = session.command.execute_command("echo 'Hello, World!'")
+result = session.command.execute("echo 'Hello, World!'")
 print(result.output)
 print(result.exit_code)
 session.delete()
@@ -77,7 +77,7 @@ session.delete()
 
 **Example**:
 
-result = session.command.execute_command(
+result = session.command.execute(
 "pwd",
 timeout_ms=5000,
 cwd="/tmp",

@@ -18,11 +18,11 @@ from agb.context_sync import ContextSync, SyncPolicy
 class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
-        # Skip if no API key is available or in CI environment
+        # Fail if no API key is available
         api_key = os.environ.get("AGB_API_KEY")
-        if not api_key or os.environ.get("CI"):
-            raise unittest.SkipTest(
-                "Skipping integration test: No API key available or running in CI"
+        if not api_key:
+            raise AssertionError(
+                "Integration test failed: No API key available"
             )
 
         # Initialize AGB client
@@ -34,7 +34,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
         # Create a context
         context_result = cls.agb.context.get(cls.context_name, create=True)
         if not context_result.success or not context_result.context:
-            raise unittest.SkipTest("Failed to create context")
+            raise AssertionError("Failed to create context")
 
         cls.context = context_result.context
         print(f"Created context: {cls.context.name} (ID: {cls.context.id})")
@@ -63,7 +63,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
 
         session_result = self.agb.create(session_params)
         if not session_result.success or not session_result.session:
-            self.skipTest("Failed to create session for test")
+            self.fail("Failed to create session for test")
 
         session = session_result.session
         print(f"Created session: {session.session_id}")
@@ -120,7 +120,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
 
         session_result = self.agb.create(session_params)
         if not session_result.success or not session_result.session:
-            self.skipTest("Failed to create session for test")
+            self.fail("Failed to create session for test")
 
         session = session_result.session
         print(f"Created session: {session.session_id}")
@@ -192,7 +192,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
 
         session_result = self.agb.create(session_params)
         if not session_result.success or not session_result.session:
-            self.skipTest("Failed to create session for test")
+            self.fail("Failed to create session for test")
 
         session = session_result.session
         print(f"Created session: {session.session_id}")
@@ -243,7 +243,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
 
         context = context_result.context
         if not context:
-            self.skipTest("Failed to create context")
+            self.fail("Failed to create context")
         print(f"Created context: {context.name} (ID: {context.id})")
 
         try:
@@ -262,12 +262,12 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
             # Create first session
             session_result = self.agb.create(session_params)
             if not session_result.success or not session_result.session:
-                self.skipTest(f"Failed to create first session: {session_result.error_message}")
+                self.fail(f"Failed to create first session: {session_result.error_message}")
 
             session1 = session_result.session
 
             if not session1:
-                self.skipTest("Failed to create first session")
+                self.fail("Failed to create first session")
 
             print(f"Created first session: {session1.session_id}")
 
@@ -304,7 +304,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
 
                 # Create directory first
                 print(f"Creating directory: {sync_path}")
-                dir_result = session1.file_system.create_directory(sync_path)
+                dir_result = session1.file.mkdir(sync_path)
                 self.assertTrue(dir_result.success, "Error creating directory")
 
                 # Create a 1GB file using dd command
@@ -312,7 +312,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
                 print(f"Creating 1GB file at {test_file_path}")
                 create_file_cmd = f"dd if=/dev/zero of={test_file_path} bs=1M count=1024 2>&1"
                 # Use a longer timeout for large file creation (5 minutes = 300000ms)
-                cmd_result = session1.command.execute_command(create_file_cmd, timeout_ms=300000)
+                cmd_result = session1.command.execute(create_file_cmd, timeout_ms=300000)
                 if not cmd_result.success:
                     error_msg = f"Error creating 1GB file: {cmd_result.error_message or 'Unknown error'}"
                     if cmd_result.output:
@@ -374,11 +374,11 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
 
                 session_result = self.agb.create(session_params)
                 if not session_result.success or not session_result.session:
-                    self.skipTest(f"Failed to create second session: {session_result.error_message}")
+                    self.fail(f"Failed to create second session: {session_result.error_message}")
 
                 session2 = session_result.session
                 if not session2:
-                    self.skipTest("Failed to create second session")
+                    self.fail("Failed to create second session")
                 print(f"Created second session: {session2.session_id}")
 
                 try:
@@ -450,14 +450,14 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
                     for i in range(10):  # Retry up to 10 times
                         # Check file size using ls command
                         check_file_cmd = f"ls -la {test_file_path}"
-                        file_info_result = session2.command.execute_command(check_file_cmd, timeout_ms=10000)
+                        file_info_result = session2.command.execute(check_file_cmd, timeout_ms=10000)
 
                         if file_info_result.success:
                             print(f"File info (attempt {i+1}): {file_info_result.output}")
 
                             # Verify file exists and has expected size (approximately 1GB)
                             file_exists_cmd = f"test -f {test_file_path} && echo 'File exists'"
-                            exists_result = session2.command.execute_command(file_exists_cmd, timeout_ms=10000)
+                            exists_result = session2.command.execute(file_exists_cmd, timeout_ms=10000)
 
                             if exists_result.success and "File exists" in exists_result.output:
                                 file_verified = True
@@ -486,7 +486,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
 
                         # Check if directory exists
                         dir_check_cmd = f"ls -la {sync_path}"
-                        dir_result = session2.command.execute_command(dir_check_cmd, timeout_ms=10000)
+                        dir_result = session2.command.execute(dir_check_cmd, timeout_ms=10000)
                         print(f"Directory listing result: success={dir_result.success}")
                         if dir_result.success:
                             print(f"Directory contents: {dir_result.output}")
@@ -496,7 +496,7 @@ class TestContextSyncIntegration(unittest.IsolatedAsyncioTestCase):
                         # Check parent directory
                         parent_dir = os.path.dirname(test_file_path)
                         parent_check_cmd = f"ls -la {parent_dir}"
-                        parent_result = session2.command.execute_command(parent_check_cmd, timeout_ms=10000)
+                        parent_result = session2.command.execute(parent_check_cmd, timeout_ms=10000)
                         print(f"Parent directory listing: success={parent_result.success}")
                         if parent_result.success:
                             print(f"Parent directory contents: {parent_result.output}")
@@ -563,11 +563,11 @@ class TestContextGetIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up test fixtures."""
-        # Skip if no API key is available or in CI environment
+        # Fail if no API key is available
         api_key = os.environ.get("AGB_API_KEY")
-        if not api_key or os.environ.get("CI"):
-            raise unittest.SkipTest(
-                "Skipping integration test: No API key available or running in CI"
+        if not api_key:
+            raise AssertionError(
+                "Integration test failed: No API key available"
             )
 
         # Initialize AGB client
@@ -579,7 +579,7 @@ class TestContextGetIntegration(unittest.TestCase):
         # Create a context
         context_result = cls.agb.context.get(cls.context_name, create=True)
         if not context_result.success or not context_result.context:
-            raise unittest.SkipTest("Failed to create context for testing")
+            raise AssertionError("Failed to create context for testing")
 
         cls.context = context_result.context
         print(f"Created context: {cls.context.name} (ID: {cls.context.id})")

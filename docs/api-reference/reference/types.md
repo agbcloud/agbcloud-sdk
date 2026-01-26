@@ -96,11 +96,11 @@ Result of operations returning a boolean value
 
 ### API Methods Using This Response Type
 
-- `session.file_system.create_directory()`
-- `session.file_system.edit_file()`
-- `session.file_system.move_file()`
-- `session.file_system.delete_file()`
-- `session.file_system.write_file()`
+- `session.file.mkdir()`
+- `session.file.edit()`
+- `session.file.move()`
+- `session.file.remove()`
+- `session.file.write()`
 - `session.computer.click_mouse()`
 - `session.computer.move_mouse()`
 - `session.computer.drag_mouse()`
@@ -170,7 +170,7 @@ Result of file info operations
 
 ### API Methods Using This Response Type
 
-- `session.file_system.get_file_info()`
+- `session.file.info()`
 
 ### Properties
 
@@ -196,8 +196,7 @@ Result of file read operations
 
 ### API Methods Using This Response Type
 
-- `session.file_system.read_file()`
-- `session.file_system.read()`
+- `session.file.read()`
 
 ### Properties
 
@@ -223,7 +222,7 @@ Result of multiple file read operations
 
 ### API Methods Using This Response Type
 
-- `session.file_system.read_multiple_files()`
+- `session.file.read_batch()`
 
 ### Properties
 
@@ -249,7 +248,7 @@ Result of directory listing operations
 
 ### API Methods Using This Response Type
 
-- `session.file_system.list_directory()`
+- `session.file.list()`
 
 ### Properties
 
@@ -275,7 +274,7 @@ Result of file search operations
 
 ### API Methods Using This Response Type
 
-- `session.file_system.search_files()`
+- `session.file.search()`
 
 ### Properties
 

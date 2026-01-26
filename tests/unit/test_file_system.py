@@ -86,7 +86,7 @@ class TestFileSystem(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.session = DummySession()
-        self.file_system = FileSystem(self.session)
+        self.file = FileSystem(self.session)
 
     def test_create_directory_success(self):
         """Test successful directory creation."""
@@ -95,13 +95,13 @@ class TestFileSystem(unittest.TestCase):
             success=True,
             data=True,
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.create_directory("/tmp/test_dir")
+        result = self.file.mkdir("/tmp/test_dir")
 
         self.assertTrue(result.success)
         self.assertTrue(result.data)
-        self.file_system._call_mcp_tool.assert_called_once_with(
+        self.file._call_mcp_tool.assert_called_once_with(
             "create_directory", {"path": "/tmp/test_dir"}
         )
 
@@ -112,18 +112,18 @@ class TestFileSystem(unittest.TestCase):
             success=False,
             error_message="Directory already exists",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.create_directory("/tmp/existing_dir")
+        result = self.file.mkdir("/tmp/existing_dir")
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "Directory already exists")
 
     def test_create_directory_exception(self):
         """Test directory creation exception handling."""
-        self.file_system._call_mcp_tool = MagicMock(side_effect=Exception("Network error"))
+        self.file._call_mcp_tool = MagicMock(side_effect=Exception("Network error"))
 
-        result = self.file_system.create_directory("/tmp/test_dir")
+        result = self.file.mkdir("/tmp/test_dir")
 
         self.assertFalse(result.success)
         self.assertIn("Failed to create directory", result.error_message)
@@ -135,13 +135,13 @@ class TestFileSystem(unittest.TestCase):
             success=True,
             data=True,
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
         edits = [{"oldText": "old", "newText": "new"}]
-        result = self.file_system.edit_file("/tmp/test.txt", edits)
+        result = self.file.edit("/tmp/test.txt", edits)
 
         self.assertTrue(result.success)
-        self.file_system._call_mcp_tool.assert_called_once_with(
+        self.file._call_mcp_tool.assert_called_once_with(
             "edit_file",
             {"path": "/tmp/test.txt", "edits": edits, "dryRun": False},
         )
@@ -153,13 +153,13 @@ class TestFileSystem(unittest.TestCase):
             success=True,
             data=True,
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
         edits = [{"oldText": "old", "newText": "new"}]
-        result = self.file_system.edit_file("/tmp/test.txt", edits, dry_run=True)
+        result = self.file.edit("/tmp/test.txt", edits, dry_run=True)
 
         self.assertTrue(result.success)
-        call_args = self.file_system._call_mcp_tool.call_args
+        call_args = self.file._call_mcp_tool.call_args
         self.assertTrue(call_args[0][1]["dryRun"])
 
     def test_edit_file_failure(self):
@@ -169,10 +169,10 @@ class TestFileSystem(unittest.TestCase):
             success=False,
             error_message="File not found",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
         edits = [{"oldText": "old", "newText": "new"}]
-        result = self.file_system.edit_file("/tmp/nonexistent.txt", edits)
+        result = self.file.edit("/tmp/nonexistent.txt", edits)
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "File not found")
@@ -184,9 +184,9 @@ class TestFileSystem(unittest.TestCase):
             success=True,
             data="name: test.txt\nsize: 1024\nisDirectory: false",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.get_file_info("/tmp/test.txt")
+        result = self.file.info("/tmp/test.txt")
 
         self.assertTrue(result.success)
         self.assertEqual(result.file_info["name"], "test.txt")
@@ -200,23 +200,23 @@ class TestFileSystem(unittest.TestCase):
             success=False,
             error_message="File not found",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.get_file_info("/tmp/nonexistent.txt")
+        result = self.file.info("/tmp/nonexistent.txt")
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "File not found")
 
-    def test_list_directory_success(self):
+    def test_list_success(self):
         """Test successful directory listing."""
         mock_result = OperationResult(
             request_id="req-list-1",
             success=True,
             data="[DIR] folder1\n[FILE] file1.txt\n[DIR] folder2",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.list_directory("/tmp")
+        result = self.file.list("/tmp")
 
         self.assertTrue(result.success)
         self.assertEqual(len(result.entries), 3)
@@ -225,16 +225,16 @@ class TestFileSystem(unittest.TestCase):
         self.assertFalse(result.entries[1]["isDirectory"])
         self.assertEqual(result.entries[1]["name"], "file1.txt")
 
-    def test_list_directory_failure(self):
+    def test_list_failure(self):
         """Test directory listing failure."""
         mock_result = OperationResult(
             request_id="req-list-2",
             success=False,
             error_message="Directory not found",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.list_directory("/nonexistent")
+        result = self.file.list("/nonexistent")
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "Directory not found")
@@ -246,12 +246,12 @@ class TestFileSystem(unittest.TestCase):
             success=True,
             data=True,
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.move_file("/tmp/src.txt", "/tmp/dst.txt")
+        result = self.file.move("/tmp/src.txt", "/tmp/dst.txt")
 
         self.assertTrue(result.success)
-        self.file_system._call_mcp_tool.assert_called_once_with(
+        self.file._call_mcp_tool.assert_called_once_with(
             "move_file",
             {"source": "/tmp/src.txt", "destination": "/tmp/dst.txt"},
         )
@@ -263,84 +263,84 @@ class TestFileSystem(unittest.TestCase):
             success=False,
             error_message="Source file not found",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.move_file("/tmp/nonexistent.txt", "/tmp/dst.txt")
+        result = self.file.move("/tmp/nonexistent.txt", "/tmp/dst.txt")
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "Source file not found")
 
-    def test_delete_file_success(self):
+    def test_remove_success(self):
         """Test successful file deletion."""
         mock_result = OperationResult(
             request_id="req-delete-1",
             success=True,
             data=True,
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.delete_file("/tmp/test.txt")
+        result = self.file.remove("/tmp/test.txt")
 
         self.assertTrue(result.success)
         self.assertTrue(result.data)
-        self.file_system._call_mcp_tool.assert_called_once_with(
-            "delete_file", {"path": "/tmp/test.txt"}
+        self.file._call_mcp_tool.assert_called_once_with(
+            "delete_file", {"path": "/tmp/test.txt"}  # MCP tool name unchanged
         )
 
-    def test_delete_file_failure(self):
+    def test_remove_failure(self):
         """Test file deletion failure."""
         mock_result = OperationResult(
             request_id="req-delete-2",
             success=False,
             error_message="File not found",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.delete_file("/tmp/nonexistent.txt")
+        result = self.file.remove("/tmp/nonexistent.txt")
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "File not found")
 
-    def test_delete_file_exception(self):
+    def test_remove_exception(self):
         """Test file deletion exception handling."""
-        self.file_system._call_mcp_tool = MagicMock(side_effect=Exception("Network error"))
+        self.file._call_mcp_tool = MagicMock(side_effect=Exception("Network error"))
 
-        result = self.file_system.delete_file("/tmp/test.txt")
+        result = self.file.remove("/tmp/test.txt")
 
         self.assertFalse(result.success)
         self.assertIn("Failed to delete file", result.error_message)
 
-    def test_delete_file_permission_denied(self):
+    def test_remove_permission_denied(self):
         """Test file deletion with permission denied."""
         mock_result = OperationResult(
             request_id="req-delete-3",
             success=False,
             error_message="Permission denied",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.delete_file("/root/protected.txt")
+        result = self.file.remove("/root/protected.txt")
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "Permission denied")
 
-    def test_delete_file_directory_error(self):
+    def test_remove_directory_error(self):
         """Test file deletion when path is a directory."""
         mock_result = OperationResult(
             request_id="req-delete-4",
             success=False,
-            error_message="Cannot delete directory with delete_file",
+            error_message="Cannot delete directory with remove",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.delete_file("/tmp/directory")
+        result = self.file.remove("/tmp/directory")
 
         self.assertFalse(result.success)
         self.assertIn("directory", result.error_message.lower())
 
-    @patch.object(FileSystem, "get_file_info")
+    @patch.object(FileSystem, "info")
     @patch.object(FileSystem, "_read_file_chunk")
-    def test_read_file_success_text_format(self, mock_read_chunk, mock_get_info):
+    def test_read_success_text_format(self, mock_read_file_chunk, mock_get_info):
         """Test successful file read with text format (default)."""
         # Mock file info
         mock_info_result = FileInfoResult(
@@ -356,17 +356,17 @@ class TestFileSystem(unittest.TestCase):
             success=True,
             content="Hello, World!",
         )
-        mock_read_chunk.return_value = mock_chunk_result
+        mock_read_file_chunk.return_value = mock_chunk_result
 
-        result = self.file_system.read_file("/tmp/test.txt")
+        result = self.file.read("/tmp/test.txt")
 
         self.assertTrue(result.success)
         self.assertEqual(result.content, "Hello, World!")
         self.assertIsInstance(result, FileContentResult)
 
-    @patch.object(FileSystem, "get_file_info")
+    @patch.object(FileSystem, "info")
     @patch.object(FileSystem, "_read_file_chunk")
-    def test_read_file_success_text_format_explicit(self, mock_read_chunk, mock_get_info):
+    def test_read_success_text_format_explicit(self, mock_read_file_chunk, mock_get_info):
         """Test successful file read with explicit text format."""
         # Mock file info
         mock_info_result = FileInfoResult(
@@ -382,18 +382,18 @@ class TestFileSystem(unittest.TestCase):
             success=True,
             content="Text file content",
         )
-        mock_read_chunk.return_value = mock_chunk_result
+        mock_read_file_chunk.return_value = mock_chunk_result
 
-        result = self.file_system.read_file("/tmp/test.txt", format="text")
+        result = self.file.read("/tmp/test.txt", format="text")
 
         self.assertTrue(result.success)
         self.assertEqual(result.content, "Text file content")
         self.assertIsInstance(result, FileContentResult)
         self.assertIsInstance(result.content, str)
 
-    @patch.object(FileSystem, "get_file_info")
+    @patch.object(FileSystem, "info")
     @patch.object(FileSystem, "_read_file_chunk")
-    def test_read_file_success_bytes_format(self, mock_read_chunk, mock_get_info):
+    def test_read_success_bytes_format(self, mock_read_file_chunk, mock_get_info):
         """Test successful file read with bytes format."""
         # Mock file info
         mock_info_result = FileInfoResult(
@@ -410,18 +410,18 @@ class TestFileSystem(unittest.TestCase):
             success=True,
             content=test_binary_content,
         )
-        mock_read_chunk.return_value = mock_chunk_result
+        mock_read_file_chunk.return_value = mock_chunk_result
 
-        result = self.file_system.read_file("/tmp/binary.dat", format="bytes")
+        result = self.file.read("/tmp/binary.dat", format="bytes")
 
         self.assertTrue(result.success)
         self.assertEqual(result.content, test_binary_content)
         self.assertIsInstance(result, BinaryFileContentResult)
         self.assertIsInstance(result.content, bytes)
 
-    @patch.object(FileSystem, "get_file_info")
+    @patch.object(FileSystem, "info")
     @patch.object(FileSystem, "_read_file_chunk")
-    def test_read_file_bytes_format_failure(self, mock_read_chunk, mock_get_info):
+    def test_read_bytes_format_failure(self, mock_read_file_chunk, mock_get_info):
         """Test file read with bytes format failure."""
         # Mock file info
         mock_info_result = FileInfoResult(
@@ -438,17 +438,17 @@ class TestFileSystem(unittest.TestCase):
             content=b"",
             error_message="Failed to read binary file",
         )
-        mock_read_chunk.return_value = mock_chunk_result
+        mock_read_file_chunk.return_value = mock_chunk_result
 
-        result = self.file_system.read_file("/tmp/binary.dat", format="bytes")
+        result = self.file.read("/tmp/binary.dat", format="bytes")
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "Failed to read binary file")
         self.assertIsInstance(result, BinaryFileContentResult)
         self.assertEqual(result.content, b"")
 
-    @patch.object(FileSystem, "get_file_info")
-    def test_read_file_bytes_format_file_not_found(self, mock_get_info):
+    @patch.object(FileSystem, "info")
+    def test_read_bytes_format_file_not_found(self, mock_get_info):
         """Test file read with bytes format when file doesn't exist."""
         mock_info_result = FileInfoResult(
             request_id="req-info-bytes-404",
@@ -457,15 +457,15 @@ class TestFileSystem(unittest.TestCase):
         )
         mock_get_info.return_value = mock_info_result
 
-        result = self.file_system.read_file("/tmp/nonexistent.dat", format="bytes")
+        result = self.file.read("/tmp/nonexistent.dat", format="bytes")
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "File not found")
         self.assertIsInstance(result, BinaryFileContentResult)
         self.assertEqual(result.content, b"")
 
-    @patch.object(FileSystem, "get_file_info")
-    def test_read_file_bytes_format_is_directory(self, mock_get_info):
+    @patch.object(FileSystem, "info")
+    def test_read_bytes_format_is_directory(self, mock_get_info):
         """Test file read with bytes format when path is a directory."""
         mock_info_result = FileInfoResult(
             request_id="req-info-bytes-dir",
@@ -475,14 +475,14 @@ class TestFileSystem(unittest.TestCase):
         )
         mock_get_info.return_value = mock_info_result
 
-        result = self.file_system.read_file("/tmp/directory", format="bytes")
+        result = self.file.read("/tmp/directory", format="bytes")
 
         self.assertFalse(result.success)
         self.assertIn("is a directory", result.error_message)
         self.assertIsInstance(result, BinaryFileContentResult)
 
-    @patch.object(FileSystem, "get_file_info")
-    def test_read_file_bytes_format_empty_file(self, mock_get_info):
+    @patch.object(FileSystem, "info")
+    def test_read_bytes_format_empty_file(self, mock_get_info):
         """Test reading an empty file with bytes format."""
         mock_info_result = FileInfoResult(
             request_id="req-info-bytes-empty",
@@ -491,28 +491,13 @@ class TestFileSystem(unittest.TestCase):
         )
         mock_get_info.return_value = mock_info_result
 
-        result = self.file_system.read_file("/tmp/empty.dat", format="bytes")
+        result = self.file.read("/tmp/empty.dat", format="bytes")
 
         self.assertTrue(result.success)
         self.assertEqual(result.content, b"")
         self.assertIsInstance(result, BinaryFileContentResult)
-    @patch.object(FileSystem, "read_file")
-    def test_read_alias_method_default(self, mock_read_file):
-        """Test that the read() alias method works correctly with default format."""
-        mock_result = FileContentResult(
-            request_id="req-read-alias",
-            success=True,
-            content="Test content",
-        )
-        mock_read_file.return_value = mock_result
-
-        result = self.file_system.read("/tmp/test.txt")
-
-        self.assertTrue(result.success)
-        self.assertEqual(result.content, "Test content")
-        mock_read_file.assert_called_once_with("/tmp/test.txt")
-    @patch.object(FileSystem, "get_file_info")
-    def test_read_file_not_found(self, mock_get_info):
+    @patch.object(FileSystem, "info")
+    def test_read_not_found(self, mock_get_info):
         """Test file read when file doesn't exist."""
         mock_info_result = FileInfoResult(
             request_id="req-info-404",
@@ -521,13 +506,13 @@ class TestFileSystem(unittest.TestCase):
         )
         mock_get_info.return_value = mock_info_result
 
-        result = self.file_system.read_file("/tmp/nonexistent.txt")
+        result = self.file.read("/tmp/nonexistent.txt")
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "File not found")
 
-    @patch.object(FileSystem, "get_file_info")
-    def test_read_file_is_directory(self, mock_get_info):
+    @patch.object(FileSystem, "info")
+    def test_read_is_directory(self, mock_get_info):
         """Test file read when path is a directory."""
         mock_info_result = FileInfoResult(
             request_id="req-info-dir",
@@ -536,13 +521,13 @@ class TestFileSystem(unittest.TestCase):
         )
         mock_get_info.return_value = mock_info_result
 
-        result = self.file_system.read_file("/tmp/directory")
+        result = self.file.read("/tmp/directory")
 
         self.assertFalse(result.success)
         self.assertIn("is a directory", result.error_message)
 
-    @patch.object(FileSystem, "get_file_info")
-    def test_read_file_empty(self, mock_get_info):
+    @patch.object(FileSystem, "info")
+    def test_read_empty(self, mock_get_info):
         """Test reading an empty file."""
         mock_info_result = FileInfoResult(
             request_id="req-info-empty",
@@ -551,28 +536,28 @@ class TestFileSystem(unittest.TestCase):
         )
         mock_get_info.return_value = mock_info_result
 
-        result = self.file_system.read_file("/tmp/empty.txt")
+        result = self.file.read("/tmp/empty.txt")
 
         self.assertTrue(result.success)
         self.assertEqual(result.content, "")
 
     @patch.object(FileSystem, "_write_file_chunk")
-    def test_write_file_success_small(self, mock_write_chunk):
+    def test_write_success_small(self, mock_write_file_chunk):
         """Test successful write of small file."""
         mock_write_result = BoolResult(
             request_id="req-write-1",
             success=True,
             data=True,
         )
-        mock_write_chunk.return_value = mock_write_result
+        mock_write_file_chunk.return_value = mock_write_result
 
-        result = self.file_system.write_file("/tmp/test.txt", "Hello, World!")
+        result = self.file.write("/tmp/test.txt", "Hello, World!")
 
         self.assertTrue(result.success)
-        mock_write_chunk.assert_called_once()
+        mock_write_file_chunk.assert_called_once()
 
     @patch.object(FileSystem, "_write_file_chunk")
-    def test_write_file_success_large(self, mock_write_chunk):
+    def test_write_success_large(self, mock_write_file_chunk):
         """Test successful write of large file (chunked)."""
         # Create content larger than DEFAULT_CHUNK_SIZE
         large_content = "x" * (FileSystem.DEFAULT_CHUNK_SIZE + 100)
@@ -582,13 +567,13 @@ class TestFileSystem(unittest.TestCase):
             success=True,
             data=True,
         )
-        mock_write_chunk.return_value = mock_write_result
+        mock_write_file_chunk.return_value = mock_write_result
 
-        result = self.file_system.write_file("/tmp/large.txt", large_content)
+        result = self.file.write("/tmp/large.txt", large_content)
 
         self.assertTrue(result.success)
         # Should be called multiple times for chunked write
-        self.assertGreater(mock_write_chunk.call_count, 1)
+        self.assertGreater(mock_write_file_chunk.call_count, 1)
 
     def test_read_multiple_files_success(self):
         """Test successful reading of multiple files."""
@@ -597,9 +582,9 @@ class TestFileSystem(unittest.TestCase):
             success=True,
             data="/tmp/file1.txt: Content 1\n\n---\n/tmp/file2.txt: Content 2",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.read_multiple_files(["/tmp/file1.txt", "/tmp/file2.txt"])
+        result = self.file.read_batch(["/tmp/file1.txt", "/tmp/file2.txt"])
 
         self.assertTrue(result.success)
         self.assertEqual(result.contents["/tmp/file1.txt"], "Content 1")
@@ -612,9 +597,9 @@ class TestFileSystem(unittest.TestCase):
             success=False,
             error_message="Some files not found",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.read_multiple_files(["/tmp/file1.txt", "/tmp/file2.txt"])
+        result = self.file.read_batch(["/tmp/file1.txt", "/tmp/file2.txt"])
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "Some files not found")
@@ -626,9 +611,9 @@ class TestFileSystem(unittest.TestCase):
             success=True,
             data="/tmp/file1.py\n/tmp/file2.py\n/tmp/subdir/file3.py",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.search_files("/tmp", pattern="*.py")
+        result = self.file.search("/tmp", pattern="*.py")
 
         self.assertTrue(result.success)
         self.assertEqual(len(result.matches), 3)
@@ -641,9 +626,9 @@ class TestFileSystem(unittest.TestCase):
             success=False,
             error_message="Search failed",
         )
-        self.file_system._call_mcp_tool = MagicMock(return_value=mock_result)
+        self.file._call_mcp_tool = MagicMock(return_value=mock_result)
 
-        result = self.file_system.search_files("/tmp", pattern="*.py")
+        result = self.file.search("/tmp", pattern="*.py")
 
         self.assertFalse(result.success)
         self.assertEqual(result.error_message, "Search failed")

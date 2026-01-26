@@ -94,7 +94,7 @@ def test_command_execution(session):
 
         for cmd in commands:
             print(f"\nExecuting command: {cmd}")
-            result = session.command.execute_command(cmd, timeout_ms=10000)
+            result = session.command.execute(cmd, timeout_ms=10000)
             if result.success:
                 print("✅ Command executed successfully!")
                 print(f"   Request ID: {result.request_id}")
@@ -116,7 +116,7 @@ def test_command_execution(session):
 
         for cmd in file_commands:
             print(f"\nExecuting command: {cmd}")
-            result = session.command.execute_command(cmd, timeout_ms=10000)
+            result = session.command.execute(cmd, timeout_ms=10000)
             if result.success:
                 print("✅ Command executed successfully!")
                 print(f"   Request ID: {result.request_id}")
@@ -138,7 +138,7 @@ def test_command_execution(session):
 
         for cmd in network_commands:
             print(f"\nExecuting command: {cmd}")
-            result = session.command.execute_command(cmd, timeout_ms=15000)
+            result = session.command.execute(cmd, timeout_ms=15000)
             if result.success:
                 print("✅ Command executed successfully!")
                 print(f"   Request ID: {result.request_id}")
@@ -160,7 +160,7 @@ def test_command_execution(session):
 
         for cmd in process_commands:
             print(f"\nExecuting command: {cmd}")
-            result = session.command.execute_command(cmd, timeout_ms=10000)
+            result = session.command.execute(cmd, timeout_ms=10000)
             if result.success:
                 print("✅ Command executed successfully!")
                 print(f"   Request ID: {result.request_id}")
@@ -182,7 +182,7 @@ def test_command_execution(session):
 
         for cmd in error_commands:
             print(f"\nExecuting command: {cmd}")
-            result = session.command.execute_command(cmd, timeout_ms=10000)
+            result = session.command.execute(cmd, timeout_ms=10000)
             if result.success:
                 print("⚠️  Error command unexpectedly executed successfully")
                 print(f"   Output: {result.output}")
@@ -204,7 +204,7 @@ def test_command_execution(session):
         try:
             # Test with working directory
             print("\nTesting with working directory (cwd)...")
-            result = session.command.execute_command("pwd", timeout_ms=10000, cwd="/tmp")
+            result = session.command.execute("pwd", timeout_ms=10000, cwd="/tmp")
             if result.success:
                 print("✅ Command executed successfully with cwd!")
                 print(f"   Request ID: {result.request_id}")
@@ -216,7 +216,7 @@ def test_command_execution(session):
             # Test with environment variables
             print("\nTesting with environment variables (envs)...")
             envs = {"TEST_VAR": "test_value", "ANOTHER_VAR": "12345"}
-            result = session.command.execute_command(
+            result = session.command.execute(
                 "echo $TEST_VAR $ANOTHER_VAR", timeout_ms=10000, envs=envs
             )
             if result.success:
@@ -229,7 +229,7 @@ def test_command_execution(session):
 
             # Test with both cwd and envs
             print("\nTesting with both cwd and envs...")
-            result = session.command.execute_command(
+            result = session.command.execute(
                 "pwd && echo $TEST_VAR",
                 timeout_ms=10000,
                 cwd="/tmp",
@@ -251,7 +251,7 @@ def test_command_execution(session):
         # Test new response format fields
         print("\n7. Testing new response format fields...")
         try:
-            result = session.command.execute_command("echo 'test output'", timeout_ms=10000)
+            result = session.command.execute("echo 'test output'", timeout_ms=10000)
             if result.success:
                 print("✅ Command executed successfully!")
                 print(f"   Request ID: {result.request_id}")

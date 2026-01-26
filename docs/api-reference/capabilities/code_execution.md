@@ -24,12 +24,12 @@ class Code(BaseService)
 
 Handles code execution operations in the AGB cloud environment.
 
-### run\_code
+### run
 
 ```python
-def run_code(code: str,
-             language: str,
-             timeout_s: int = 60) -> EnhancedCodeExecutionResult
+def run(code: str,
+        language: str,
+        timeout_s: int = 60) -> EnhancedCodeExecutionResult
 ```
 
 Execute code in the specified language with a timeout.

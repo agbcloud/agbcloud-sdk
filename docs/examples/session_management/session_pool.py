@@ -127,12 +127,13 @@ def main():
             try:
                 with pool.get_session() as session:
                     print(f"▶️  Running {task_name}...")
-                    result = session.code.run_code(
+                    result = session.code.run(
                         f"print('Hello from {task_name}')", "python"
                     )
                     # Simulate work holding the session
                     time.sleep(1)
-                    print(f"✅ {task_name} Result: {result.result.strip()}")
+                    output = result.results[0].text if result.success and result.results else ""
+                    print(f"✅ {task_name} Result: {output.strip()}")
             except Exception as e:
                 print(f"❌ {task_name} failed: {e}")
 

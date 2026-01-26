@@ -7,11 +7,11 @@ def process_multiple_files(session, file_data):
 
     for filename, content in file_data.items():
         # Write file
-        write_result = session.file_system.write_file(filename, content)
+        write_result = session.file.write(filename, content)
 
         if write_result.success:
             # Verify by reading back
-            read_result = session.file_system.read_file(filename)
+            read_result = session.file.read(filename)
             results.append({
                 "filename": filename,
                 "success": read_result.success,

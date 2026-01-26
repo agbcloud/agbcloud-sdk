@@ -1,5 +1,59 @@
 # Changelog
 
+## [0.9.0] - 2026-01-23
+
+### Breaking Changes
+- **API Naming Simplification**: Major API renaming for consistency and simplicity:
+  - `session.code.run_code()` → `session.code.run()`
+  - `session.command.execute_command()` → `session.command.execute()`
+  - `session.file_system` → `session.file` (backward compatibility alias maintained)
+  - `session.file.watch()` → `session.file.watch_dir()`
+  - `session.file.get_file_transfer_context_path()` → `session.file.transfer_path()`
+  - File system methods simplified: `read_file()` → `read()`, `write_file()` → `write()`, `delete_file()` → `remove()`, `list_directory()` → `list()`, `get_file_info()` → `info()`, `create_directory()` → `mkdir()`, `move_file()` → `move()`, `edit_file()` → `edit()`, `read_multiple_files()` → `read_batch()`, `search_files()` → `search()`
+
+### New Features
+- **Session Metrics**: Added session metrics tracking functionality to retrieve resource usage and performance metrics
+- **MCP Tool Calling**: Added MCP (Model Context Protocol) tool calling methods to Session class for direct tool invocation
+- **Multiple Results Support**: Enhanced code execution to support multiple result types with comprehensive documentation
+
+### Enhancements
+- **Error Handling**: Improved error handling for file transfer operations:
+  - Specific handling for `httpx.ConnectError` (network connection issues)
+  - Specific handling for `httpx.TimeoutException` (timeout issues)
+  - Clearer error messages for network-related failures
+- **File Transfer**: Improved error handling in `transfer_path()` method with better context initialization checks
+- **Documentation**:
+  - Added comprehensive MCP tool calling documentation and examples
+  - Updated API documentation to reflect new simplified method names
+  - Added session metrics documentation and examples
+  - Fixed code execution result field usage in documentation
+  - Updated MCP guide URLs to v2
+
+### Refactoring
+- **Session Class**: Removed unnecessary `BaseService` inheritance from Session class
+- **Test Infrastructure**: Optimized session creation in integration tests
+- **Code Cleanup**: Removed temporary API rename verification scripts
+
+### Testing & CI/CD
+- **Test Coverage**: Reached 80% unit test coverage gate
+- **Integration Tests**:
+  - Enhanced integration test infrastructure and reliability
+  - Added CI skip logic for integration tests
+  - Fixed false-pass tests and improved test stability
+  - Added integration test for session metrics retrieval
+  - Refactored filesystem integration tests
+- **Test Compatibility**: Made version_utils tests Python 3.10-compatible
+- **CI Improvements**: Improved CI skip logic for browser fingerprint tests
+
+### Bug Fixes
+- Fixed output log source to match result object structure in main.py
+- Fixed Java result output log variable reference errors
+- Fixed JavaScript execution result output logic errors
+- Fixed default `image_id` value for `list_mcp_tools` (now uses `agb-code-space-1`)
+- Fixed `conftest.py` being run as a test file
+- Fixed write_file on deleted session test and integration test issues
+- Optimized docstring and fixed default value of `list_mcp_tools`
+
 ## [0.8.0] - 2026-01-08
 
 ### New Features
@@ -100,7 +154,7 @@
 - Added integration test job to CI/CD pipeline with comprehensive test coverage
 - Improved test stability with proper wait times and resource cleanup
 - Added CI bot guard to prevent infinite loops and enhanced error detection
-- Fixed AONE documentation pipeline configuration and optimized documentation workflow
+- Fixed documentation pipeline configuration and optimized documentation workflow
 
 ## [0.5.0] - 2025-11-20
 

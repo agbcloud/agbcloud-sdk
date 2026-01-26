@@ -292,7 +292,7 @@ Log API response with key details at INFO level.
 def log_code_execution_output(request_id: str, raw_output: str) -> None
 ```
 
-Extract and log the actual code execution output from run_code response.
+Extract and log the actual code execution output from run response.
 
 **Arguments**:
 

@@ -1,4 +1,18 @@
-# AGB Python SDK
+<h1 align="center">AGB Python SDK</h1>
+
+---
+
+## 🔥 Moltbot (formerly Clawdbot) Quick Deployment
+
+You can use AGB SDK to spin up a prebuilt Moltbot cloud desktop in minutes, then open the Moltbot console inside the desktop browser.
+
+- **Cookbook (Discord):** [docs/examples/openclaw/openclaw_discord_config_example.py](docs/examples/openclaw/openclaw_discord_config_example.py) — create session, run openclaw config (Bailian/Discord), and get the cloud desktop URL.
+- **Cookbook (Slack):** [docs/examples/openclaw/openclaw_slack_config_example.py](docs/examples/openclaw/openclaw_slack_config_example.py) — create session, run openclaw config (Bailian/Slack), and get the cloud desktop URL.
+- **Cookbook (Telegram):** [docs/examples/openclaw/openclaw_telegram_config_example.py](docs/examples/openclaw/openclaw_telegram_config_example.py) — create session, run openclaw config (Bailian/Telegram), and get the cloud desktop URL.
+- **Cloud Desktop URL:** The example prints `session.resource_url` and pauses for hands-on exploration.
+- **Moltbot console:** Open `http://127.0.0.1:18789` inside the cloud desktop.
+
+---
 
 AGB Python SDK provides a convenient way to interact with the AGB cloud service.
 

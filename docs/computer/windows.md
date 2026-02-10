@@ -26,14 +26,17 @@ if not create_result.success:
 
 session = create_result.session
 
-start_result = session.computer.start_app("notepad.exe")
-if start_result.success:
-    time.sleep(2)
+start_result = session.computer.app.start("notepad.exe")
+if not start_result.success:
+    raise SystemExit(start_result.error_message)
+time.sleep(2)
 
-windows_result = session.computer.list_root_windows(timeout_ms=5000)
-if windows_result.success and windows_result.windows:
-    window_id = windows_result.windows[0].window_id
-    session.computer.activate_window(window_id)
+windows = session.computer.window.list_root_windows(timeout_ms=5000)
+if windows:
+    window_id = windows[0].window_id
+    result = session.computer.window.activate(window_id)
+    if not result.success:
+        raise SystemExit(result.error_message)
 
 agb.delete(session)
 ```
@@ -43,19 +46,17 @@ agb.delete(session)
 ### List root windows
 
 ```python
-result = session.computer.list_root_windows(timeout_ms=5000)
-if result.success:
-    for w in result.windows:
-        print(w.title, w.window_id, w.pname, w.pid)
+windows = session.computer.window.list_root_windows(timeout_ms=5000)
+for w in windows:
+    print(w.title, w.window_id, w.pname, w.pid)
 ```
 
 ### Get active window
 
 ```python
-result = session.computer.get_active_window()
-if result.success and result.window:
-    w = result.window
-    print(w.title, w.window_id, w.width, w.height)
+active_window = session.computer.window.get_active_window()
+if active_window:
+    print(active_window.title, active_window.window_id, active_window.width, active_window.height)
 ```
 
 ### Control windows
@@ -63,40 +64,58 @@ if result.success and result.window:
 Activate:
 
 ```python
-session.computer.activate_window(window_id)
+result = session.computer.window.activate(window_id)
+if not result.success:
+    raise SystemExit(result.error_message)
 ```
 
 Maximize / minimize / restore:
 
 ```python
-session.computer.maximize_window(window_id)
-session.computer.minimize_window(window_id)
-session.computer.restore_window(window_id)
+result = session.computer.window.maximize(window_id)
+if not result.success:
+    raise SystemExit(result.error_message)
+result = session.computer.window.minimize(window_id)
+if not result.success:
+    raise SystemExit(result.error_message)
+result = session.computer.window.restore(window_id)
+if not result.success:
+    raise SystemExit(result.error_message)
 ```
 
 Resize:
 
 ```python
-session.computer.resize_window(window_id, 800, 600)
+result = session.computer.window.resize(window_id, 800, 600)
+if not result.success:
+    raise SystemExit(result.error_message)
 ```
 
 Fullscreen:
 
 ```python
-session.computer.fullscreen_window(window_id)
+result = session.computer.window.fullscreen(window_id)
+if not result.success:
+    raise SystemExit(result.error_message)
 ```
 
 Close (use with caution):
 
 ```python
-session.computer.close_window(window_id)
+result = session.computer.window.close(window_id)
+if not result.success:
+    raise SystemExit(result.error_message)
 ```
 
 Focus mode:
 
 ```python
-session.computer.focus_mode(on=True)
-session.computer.focus_mode(on=False)
+result = session.computer.window.focus_mode(on=True)
+if not result.success:
+    raise SystemExit(result.error_message)
+result = session.computer.window.focus_mode(on=False)
+if not result.success:
+    raise SystemExit(result.error_message)
 ```
 
 ## Best practices

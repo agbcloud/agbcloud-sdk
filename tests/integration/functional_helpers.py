@@ -37,7 +37,7 @@ def validate_cursor_position(cursor_result, expected_x: int, expected_y: int, to
     Validate cursor position is within tolerance of expected position.
 
     Args:
-        cursor_result: Result from get_cursor_position()
+        cursor_result: Result from get_position() or tuple (x, y) from mouse.get_position()
         expected_x: Expected X coordinate
         expected_y: Expected Y coordinate
         tolerance: Allowed pixel difference (default: 5)
@@ -45,17 +45,22 @@ def validate_cursor_position(cursor_result, expected_x: int, expected_y: int, to
     Returns:
         bool: True if position is within tolerance
     """
-    if not cursor_result.success or not cursor_result.data:
-        return False
-
     try:
-        import json
-        cursor_data = cursor_result.data
-        if isinstance(cursor_data, str):
-            cursor_data = json.loads(cursor_data)
-
-        actual_x = cursor_data.get('x', 0)
-        actual_y = cursor_data.get('y', 0)
+        # Handle tuple from mouse.get_position()
+        if isinstance(cursor_result, tuple):
+            actual_x, actual_y = cursor_result
+        # Handle old OperationResult format
+        elif hasattr(cursor_result, 'success') and hasattr(cursor_result, 'data'):
+            if not cursor_result.success or not cursor_result.data:
+                return False
+            import json
+            cursor_data = cursor_result.data
+            if isinstance(cursor_data, str):
+                cursor_data = json.loads(cursor_data)
+            actual_x = cursor_data.get('x', 0)
+            actual_y = cursor_data.get('y', 0)
+        else:
+            return False
 
         x_diff = abs(actual_x - expected_x)
         y_diff = abs(actual_y - expected_y)
@@ -75,16 +80,12 @@ def get_screen_center(session):
         tuple: (center_x, center_y) coordinates, or (400, 300) as fallback
     """
     try:
-        screen_result = session.computer.get_screen_size()
-        if not screen_result.success or not screen_result.data:
+        size_result = session.computer.screen.get_size()
+        if not size_result.success or not size_result.data:
             print("⚠️ Failed to get screen size, using fallback center (400, 300)")
             return 400, 300
 
-        import json
-        screen_data = screen_result.data
-        if isinstance(screen_data, str):
-            screen_data = json.loads(screen_data)
-
+        screen_data = size_result.data
         width = screen_data.get('width', 800)
         height = screen_data.get('height', 600)
 

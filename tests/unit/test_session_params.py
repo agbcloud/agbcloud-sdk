@@ -237,6 +237,44 @@ class TestCreateSessionParams(unittest.TestCase):
 
         self.assertEqual(params.labels, {})
 
+    def test_create_session_params_with_policy_id(self):
+        """Test CreateSessionParams with policy_id."""
+        params = CreateSessionParams(policy_id="policy-123")
+
+        self.assertEqual(params.policy_id, "policy-123")
+        self.assertEqual(params.labels, {})
+        self.assertIsNone(params.image_id)
+
+    def test_create_session_params_with_all_parameters_including_policy_id(self):
+        """Test CreateSessionParams with all parameters including policy_id."""
+        labels = {"env": "prod", "team": "backend"}
+        sync_policy = SyncPolicy(
+            upload_policy=UploadPolicy(auto_upload=True),
+        )
+        context_sync = ContextSync(
+            context_id="ctx-full",
+            path="/tmp/full",
+            policy=sync_policy,
+        )
+        browser_ctx = BrowserContext(
+            context_id="browser-full",
+            auto_upload=True,
+        )
+
+        params = CreateSessionParams(
+            labels=labels,
+            image_id="image-full",
+            context_syncs=[context_sync],
+            browser_context=browser_ctx,
+            policy_id="policy-456",
+        )
+
+        self.assertEqual(params.labels, labels)
+        self.assertEqual(params.image_id, "image-full")
+        self.assertEqual(params.policy_id, "policy-456")
+        self.assertEqual(len(params.context_syncs), 1)
+        self.assertEqual(params.browser_context, browser_ctx)
+
     def test_create_session_params_multiple_context_syncs(self):
         """Test CreateSessionParams with multiple context syncs."""
         sync_policy = SyncPolicy(

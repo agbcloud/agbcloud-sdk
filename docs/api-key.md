@@ -4,7 +4,7 @@ This guide explains how to authenticate with the AGB SDK.
 
 ## Overview
 
-Authentication with the AGB SDK is done using an API key. This key is used to authenticate all requests to the AGB cloud environment.You can view and manage your API keys in the [API Keys](https://agb.ai/console/overview) page.
+Authentication with the AGB SDK is done using an API key. This key is used to authenticate all requests to the AGB cloud environment.You can view and manage your API keys in the [API Keys](https://agb.cloud/console/overview) page.
 
 ## Authentication Methods
 

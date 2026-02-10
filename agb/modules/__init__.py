@@ -1,6 +1,6 @@
 from .code import Code
 from .command import Command, CommandResult
-from .computer import Computer
+from .computer.computer import Computer
 from .file_system import BoolResult as FileSystemBoolResult
 from .file_system import (
     DirectoryListResult,

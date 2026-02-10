@@ -21,9 +21,15 @@ if not create_result.success:
     raise SystemExit(create_result.error_message)
 
 session = create_result.session
-session.computer.click_mouse(x=500, y=300, button=MouseButton.LEFT)
-session.computer.move_mouse(x=600, y=400)
-session.computer.scroll(x=500, y=500, direction=ScrollDirection.DOWN, amount=3)
+result = session.computer.mouse.click(x=500, y=300, button=MouseButton.LEFT)
+if not result.success:
+    raise SystemExit(result.error_message)
+result = session.computer.mouse.move(x=600, y=400)
+if not result.success:
+    raise SystemExit(result.error_message)
+result = session.computer.mouse.scroll(x=500, y=500, direction=ScrollDirection.DOWN, amount=3)
+if not result.success:
+    raise SystemExit(result.error_message)
 
 agb.delete(session)
 ```
@@ -35,10 +41,15 @@ agb.delete(session)
 ```python
 from agb import MouseButton
 
-session.computer.click_mouse(x=500, y=300, button=MouseButton.LEFT)
-session.computer.click_mouse(x=500, y=300, button=MouseButton.RIGHT)
-session.computer.click_mouse(x=500, y=300, button=MouseButton.MIDDLE)
-session.computer.click_mouse(x=500, y=300, button=MouseButton.DOUBLE_LEFT)
+result = session.computer.mouse.click(x=500, y=300, button=MouseButton.LEFT)
+if not result.success:
+    raise SystemExit(result.error_message)
+result = session.computer.mouse.click(x=500, y=300, button=MouseButton.RIGHT)
+if not result.success:
+    raise SystemExit(result.error_message)
+result = session.computer.mouse.click(x=500, y=300, button=MouseButton.MIDDLE)
+if not result.success:
+    raise SystemExit(result.error_message)
 ```
 
 Supported buttons:
@@ -46,19 +57,19 @@ Supported buttons:
 - `MouseButton.LEFT`
 - `MouseButton.RIGHT`
 - `MouseButton.MIDDLE`
-- `MouseButton.DOUBLE_LEFT`
 
 ### Move mouse / get cursor position
 
 ```python
-import json
+result = session.computer.mouse.move(x=600, y=400)
+if not result.success:
+    raise SystemExit(result.error_message)
 
-session.computer.move_mouse(x=600, y=400)
-
-cursor_result = session.computer.get_cursor_position()
-if cursor_result.success:
-    cursor_data = json.loads(cursor_result.data)
-    print(f"Cursor at x={cursor_data['x']}, y={cursor_data['y']}")
+# Get cursor position
+pos_result = session.computer.mouse.get_position()
+if pos_result.success and pos_result.data:
+    x, y = pos_result.data.get("x", 0), pos_result.data.get("y", 0)
+    print(f"Cursor at x={x}, y={y}")
 ```
 
 ### Drag operations
@@ -66,8 +77,12 @@ if cursor_result.success:
 ```python
 from agb import MouseButton
 
-session.computer.drag_mouse(from_x=100, from_y=100, to_x=200, to_y=200, button=MouseButton.LEFT)
-session.computer.drag_mouse(from_x=300, from_y=300, to_x=400, to_y=400, button=MouseButton.RIGHT)
+result = session.computer.mouse.drag(x1=100, y1=100, x2=200, y2=200, button=MouseButton.LEFT)
+if not result.success:
+    raise SystemExit(result.error_message)
+result = session.computer.mouse.drag(x1=300, y1=300, x2=400, y2=400, button=MouseButton.RIGHT)
+if not result.success:
+    raise SystemExit(result.error_message)
 ```
 
 Note: `MouseButton.DOUBLE_LEFT` is not supported for drag. Use `LEFT`, `RIGHT`, or `MIDDLE`.
@@ -77,10 +92,18 @@ Note: `MouseButton.DOUBLE_LEFT` is not supported for drag. Use `LEFT`, `RIGHT`, 
 ```python
 from agb import ScrollDirection
 
-session.computer.scroll(x=500, y=500, direction=ScrollDirection.UP, amount=3)
-session.computer.scroll(x=500, y=500, direction=ScrollDirection.DOWN, amount=5)
-session.computer.scroll(x=500, y=500, direction=ScrollDirection.LEFT, amount=2)
-session.computer.scroll(x=500, y=500, direction=ScrollDirection.RIGHT, amount=2)
+result = session.computer.mouse.scroll(x=500, y=500, direction=ScrollDirection.UP, amount=3)
+if not result.success:
+    raise SystemExit(result.error_message)
+result = session.computer.mouse.scroll(x=500, y=500, direction=ScrollDirection.DOWN, amount=5)
+if not result.success:
+    raise SystemExit(result.error_message)
+result = session.computer.mouse.scroll(x=500, y=500, direction=ScrollDirection.LEFT, amount=2)
+if not result.success:
+    raise SystemExit(result.error_message)
+result = session.computer.mouse.scroll(x=500, y=500, direction=ScrollDirection.RIGHT, amount=2)
+if not result.success:
+    raise SystemExit(result.error_message)
 ```
 
 Supported directions:

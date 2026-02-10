@@ -250,6 +250,7 @@ class CreateSessionParams:
         labels (Optional[Dict[str, str]]): Custom labels for the Session. These can be
             used for organizing and filtering sessions.
         image_id (Optional[str]): ID of the image to use for the session.
+        policy_id (Optional[str]): Policy ID for the session.
 
         context_syncs (Optional[List[ContextSync]]): List of context synchronization configurations.
         browser_context (Optional[BrowserContext]): Optional configuration for browser data synchronization.
@@ -259,6 +260,7 @@ class CreateSessionParams:
         self,
         labels: Optional[Dict[str, str]] = None,
         image_id: Optional[str] = None,
+        policy_id: Optional[str] = None,
         context_syncs: Optional[List["ContextSync"]] = None,
         browser_context: Optional[BrowserContext] = None,
     ):
@@ -268,6 +270,7 @@ class CreateSessionParams:
         Args:
             labels (Optional[Dict[str, str]]): Custom labels for the Session. Defaults to None.
             image_id (Optional[str]): ID of the image to use for the session.
+            policy_id (Optional[str]): Policy ID for the session. Defaults to None.
             context_syncs (Optional[List[ContextSync]]): List of context synchronization configurations. Defaults to None.
             browser_context (Optional[BrowserContext]): Browser context configuration.
                 If extension_ids are provided in BrowserContext, extension syncs will be
@@ -275,6 +278,7 @@ class CreateSessionParams:
         """
         self.labels = labels or {}
         self.image_id = image_id
+        self.policy_id = policy_id
         # Start with provided context_syncs
         all_context_syncs: List[ContextSync] = list(context_syncs or [])
         # Add extension context syncs from browser_context if available

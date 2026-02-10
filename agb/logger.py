@@ -451,9 +451,9 @@ def mask_sensitive_data(data: Any, fields: Optional[List[str]] = None) -> Any:
 # Compatibility functions for common logging patterns
 def log_api_call(api_name: str, request_data: str = "") -> None:
     """Log API call with consistent formatting."""
-    log.opt(depth=1).info(f"🔗 API Call: {api_name}")
+    log.opt(depth=1).debug(f"🔗 API Call: {api_name}")
     if request_data:
-        log.opt(depth=1).info(f"  └─ {request_data}")
+        log.opt(depth=1).debug(f"  └─ {request_data}")
 
 
 def log_api_response(response_data: str, success: bool = True) -> None:
@@ -495,7 +495,7 @@ def log_api_response_with_details(
             for key, value in key_fields.items():
                 # Add green color to parameter lines
                 param_line = f"{_COLOR_GREEN}  └─ {key}={value}{_COLOR_RESET}"
-                log.opt(depth=1).info(param_line)
+                log.opt(depth=1).debug(param_line)
 
         if full_response:
             log.opt(depth=1).debug(f"Full Response: {full_response}")

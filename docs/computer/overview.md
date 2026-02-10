@@ -26,10 +26,10 @@ if not create_result.success:
 
 session = create_result.session
 
-session.computer.click_mouse(x=500, y=300, button=MouseButton.LEFT)
-session.computer.input_text("Hello from AGB!")
-screenshot_result = session.computer.screenshot()
-print("Screenshot URL:", screenshot_result.data)
+session.computer.mouse.click(x=500, y=300, button=MouseButton.LEFT)
+session.computer.keyboard.type("Hello from AGB!")
+image_url = session.computer.screen.capture()
+print("Screenshot URL:", image_url)
 
 agb.delete(session)
 ```

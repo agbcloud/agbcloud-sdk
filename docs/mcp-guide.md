@@ -4,7 +4,7 @@ The AGB platform provides a unified interaction interface between AI models and 
 
 ## Prerequisites
 
-Please ensure that you have created an API Key, otherwise you will be missing necessary information in the operation steps. For more operations, please refer to [Create API Key](https://agb.ai/console/overview).
+Please ensure that you have created an API Key, otherwise you will be missing necessary information in the operation steps. For more operations, please refer to [Create API Key](https://agb.cloud/console/overview).
 
 ## Steps
 

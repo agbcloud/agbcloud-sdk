@@ -24,7 +24,7 @@ if not create_result.success:
 
 session = create_result.session
 try:
-    session.computer.click_mouse(100, 100)
+    session.computer.mouse.click(100, 100)
 finally:
     agb.delete(session)
 ```
@@ -46,7 +46,7 @@ def safe_automation_task() -> bool:
 
     session = result.session
     try:
-        click_result = session.computer.click_mouse(100, 100)
+        click_result = session.computer.mouse.click(100, 100)
         return click_result.success
     finally:
         agb.delete(session)
@@ -74,19 +74,21 @@ import json
 from agb import MouseButton
 
 def safe_click(session, x: int, y: int, button: MouseButton = MouseButton.LEFT) -> bool:
-    screen_result = session.computer.get_screen_size()
-    if not screen_result.success:
+    try:
+        size_result = session.computer.screen.get_size()
+        if not size_result.success or not size_result.data:
+            return False
+        screen_data = size_result.data
+        max_x = screen_data["width"]
+        max_y = screen_data["height"]
+    except Exception:
         return False
-
-    screen = json.loads(screen_result.data)
-    max_x = screen["width"]
-    max_y = screen["height"]
 
     if x < 0 or x >= max_x or y < 0 or y >= max_y:
         print(f"Invalid coordinates: ({x}, {y}). Screen size: {max_x}x{max_y}")
         return False
 
-    return session.computer.click_mouse(x=x, y=y, button=button).success
+    return session.computer.mouse.click(x=x, y=y, button=button).success
 ```
 
 ### Ensure application is ready
@@ -95,18 +97,23 @@ def safe_click(session, x: int, y: int, button: MouseButton = MouseButton.LEFT) 
 import time
 
 def ensure_application_ready(session, app_name: str, timeout_s: int = 30):
-    start_result = session.computer.start_app(app_name)
-    if not start_result.success:
+    try:
+        start_result = session.computer.app.start(app_name)
+        if not start_result.success or not start_result.data:
+            return None
+    except Exception as e:
         return None
 
     start_time = time.time()
     while time.time() - start_time < timeout_s:
-        windows_result = session.computer.list_root_windows()
-        if windows_result.success:
-            for window in windows_result.windows:
+        try:
+            windows = session.computer.window.list_root_windows()
+            for window in windows:
                 if getattr(window, "window_id", None):
-                    session.computer.activate_window(window.window_id)
+                    session.computer.window.activate(window.window_id)
                     return window
+        except Exception:
+            pass
         time.sleep(1)
     return None
 ```

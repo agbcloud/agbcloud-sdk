@@ -164,6 +164,10 @@ class AGB:
             request = CreateSessionRequest(authorization=f"Bearer {self.api_key}")
             request.image_id = params.image_id
 
+            # Add policy_id if provided
+            if params.policy_id:
+                request.mcp_policy_id = params.policy_id
+
             # Add labels if provided
             if params.labels:
                 # Convert labels to JSON string
@@ -190,12 +194,6 @@ class AGB:
                 needs_context_sync = True
 
             response: CreateSessionResponse = self.client.create_mcp_session(request)
-
-            try:
-                logger.info("Response body:")
-                logger.info(response.to_dict())
-            except Exception:
-                logger.info(f"Response: {response}")
 
             # Extract request ID
             request_id_attr = getattr(response, "request_id", "")
@@ -228,6 +226,9 @@ class AGB:
 
             logger.info(f"session_id = {session_id}")
             logger.info(f"resource_url = {resource_url}")
+            if response.data:
+                logger.info(f"appInstanceId = {response.data.app_instance_id}" )
+                logger.info(f"resourceId = {response.data.resource_id}")
 
             # Create Session object
             session = Session(self, session_id)

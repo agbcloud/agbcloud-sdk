@@ -55,6 +55,7 @@ class CreateSessionRequest:
         ] = None,
         session_id: str = "",
         sdk_stats: Optional[Dict[str, Any]] = None,
+        mcp_policy_id: Optional[str] = None,
     ):
         self.authorization = authorization
         self.context_id = context_id
@@ -63,6 +64,7 @@ class CreateSessionRequest:
         self.persistence_data_list = persistence_data_list
         self.session_id = session_id
         self.sdk_stats = sdk_stats
+        self.mcp_policy_id = mcp_policy_id
 
     def get_body(self) -> Dict[str, Any]:
         """Convert request object to dictionary format"""
@@ -81,6 +83,9 @@ class CreateSessionRequest:
 
         if self.labels:
             body["labels"] = self.labels
+
+        if self.mcp_policy_id:
+            body["mcpPolicyId"] = self.mcp_policy_id
 
         return body
 

@@ -117,7 +117,7 @@ class TestComputer(unittest.TestCase):
         """Test mouse click with invalid button."""
         with self.assertRaises(ValueError) as context:
             self.computer.click_mouse(100, 200, button="invalid")
-        
+
         self.assertIn("Invalid button", str(context.exception))
 
     def test_move_mouse_success(self):
@@ -186,7 +186,7 @@ class TestComputer(unittest.TestCase):
         """Test drag mouse with invalid button."""
         with self.assertRaises(ValueError) as context:
             self.computer.drag_mouse(100, 100, 200, 200, button="double_left")
-        
+
         self.assertIn("Invalid button", str(context.exception))
 
     def test_scroll_success(self):
@@ -245,7 +245,7 @@ class TestComputer(unittest.TestCase):
         """Test scroll with invalid direction."""
         with self.assertRaises(ValueError) as context:
             self.computer.scroll(100, 100, direction="invalid")
-        
+
         self.assertIn("Invalid direction", str(context.exception))
 
     def test_get_cursor_position_success(self):
@@ -712,7 +712,7 @@ class TestComputer(unittest.TestCase):
 
         self.assertTrue(result.success)
         self.computer._call_mcp_tool.assert_called_once_with(
-            "resize_window", 
+            "resize_window",
             {"window_id": "window_303", "width": 1024, "height": 768}
         )
 
@@ -835,7 +835,7 @@ class TestComputer(unittest.TestCase):
 
         self.assertTrue(result.success)
         self.computer._call_mcp_tool.assert_called_once_with(
-            "start_app", 
+            "start_app",
             {"start_cmd": "app.exe", "work_directory": "C:\\MyApp"}
         )
 

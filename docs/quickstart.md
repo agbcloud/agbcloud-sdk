@@ -10,7 +10,7 @@ export AGB_API_KEY="your_key"
 ```
 
 ### 2. First Example
-**Important**: When using AGB, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account. You can view and manage your available images in the [AGB Console Image Management](https://agb.ai/console/image-management) page.
+**Important**: When using AGB, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account. You can view and manage your available images in the [AGB Console Image Management](https://agb.cloud/console/image-management) page.
 
 ```python
 from agb import AGB

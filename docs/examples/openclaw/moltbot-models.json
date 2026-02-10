@@ -1,0 +1,30 @@
+{
+    "models": {
+        "mode": "merge",
+        "providers": {
+            "bailian": {
+                "baseUrl": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+                "apiKey": "sk-xxxxxxxxx",
+                "api": "openai-completions",
+                "models": [
+                    {
+                        "id": "qwen3-max-2026-01-23",
+                        "name": "通义千问 Max Thinking 版",
+                        "reasoning": false,
+                        "input": [
+                            "text"
+                        ],
+                        "cost": {
+                            "input": 0.0025,
+                            "output": 0.01,
+                            "cacheRead": 0,
+                            "cacheWrite": 0
+                        },
+                        "contextWindow": 262144,
+                        "maxTokens": 65536
+                    }
+                ]
+            }
+        }
+    }
+}

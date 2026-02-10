@@ -6,6 +6,7 @@ Provides HTTP communication functionality with AGB API
 
 import asyncio
 import json
+import ssl
 from typing import Any, Dict, Optional
 
 import aiohttp
@@ -555,13 +556,13 @@ class HTTPClient:
         # Determine timeout values
         if read_timeout is not None and connect_timeout is not None:
             # Use separate connect and read timeouts
-            timeout = (
-                connect_timeout / 1000,
-                read_timeout / 1000,
-            )  # Convert ms to seconds
+            # Ensure both timeouts are at least 1 second to avoid OSError(22, 'Invalid argument')
+            connect_timeout_sec = max(1, connect_timeout / 1000)
+            read_timeout_sec = max(1, read_timeout / 1000)
+            timeout = (connect_timeout_sec, read_timeout_sec)
             timeout_display = f"connect={connect_timeout}ms, read={read_timeout}ms"
         else:
-            # Use default timeout
+            # Use default timeout (already ensured to be at least 1 second in __init__)
             timeout = self.timeout
             timeout_display = f"{self.timeout} seconds"
 
@@ -760,83 +761,21 @@ class HTTPClient:
         log_api_call(f"{api_name} (async)", request_data_str)
 
         try:
-            # Create aiohttp session and execute request
+            # Create aiohttp session with explicit SSL context (fix certificate verify on macOS/Windows)
+            ssl_ctx = ssl.create_default_context()
+            try:
+                import certifi
+                ssl_ctx.load_verify_locations(certifi.where())
+            except ImportError:
+                pass
+            connector = aiohttp.TCPConnector(ssl=ssl_ctx)
             timeout = aiohttp.ClientTimeout(total=self.timeout)
-            # Pass the merged headers to aiohttp session
-            async with aiohttp.ClientSession(
-                timeout=timeout, headers=request_headers
-            ) as session:
-                if method.upper() == "GET":
-                    async with session.get(url, params=params) as response:
-                        response_text = await response.text()
-                        response_dict = {
-                            "status_code": response.status,
-                            "url": str(response.url),
-                            "headers": dict(response.headers),
-                            "text": response_text,
-                            "success": response.status < 400,
-                        }
-
-                        # Try to parse JSON response
-                        try:
-                            response_dict["json"] = await response.json()
-                            # Extract request_id from JSON response if available
-                            if (
-                                response_dict["json"]
-                                and "requestId" in response_dict["json"]
-                            ):
-                                response_dict["request_id"] = response_dict["json"][
-                                    "requestId"
-                                ]
-                        except:
-                            response_dict["json"] = None
-
-                        # Extract request_id from response headers if not found in JSON
-                        if "request_id" not in response_dict:
-                            response_dict["request_id"] = response.headers.get(
-                                "x-request-id", ""
-                            )
-
-                        # Prepare response data for logging
-                        response_success = response_dict["success"]
-                        request_id = response_dict.get("request_id", "")
-
-                        # Extract key fields from response for logging
-                        key_fields = {}
-                        if response_dict.get("json"):
-                            json_data = response_dict["json"]
-                            if isinstance(json_data, dict):
-                                key_fields["status_code"] = response_dict["status_code"]
-                                for key in ["code", "message", "data", "result"]:
-                                    if key in json_data:
-                                        key_fields[key] = json_data[key]
-
-                        # Prepare full response for debug logging
-                        full_response = ""
-                        if response_dict.get("json"):
-                            masked_response = mask_sensitive_data(response_dict["json"])
-                            full_response = json.dumps(
-                                masked_response, ensure_ascii=False
-                            )
-                        elif response_dict.get("text"):
-                            full_response = response_dict["text"]
-
-                        # Log API response using new logger function
-                        log_api_response_with_details(
-                            api_name=api_name,
-                            request_id=request_id,
-                            success=response_success,
-                            key_fields=key_fields if key_fields else None,
-                            full_response=full_response,
-                        )
-
-                        return response_dict
-
-                elif method.upper() == "POST":
-                    if json_data:
-                        async with session.post(
-                            url, params=params, json=json_data
-                        ) as response:
+            async with connector:
+                async with aiohttp.ClientSession(
+                    timeout=timeout, headers=request_headers, connector=connector
+                ) as session:
+                    if method.upper() == "GET":
+                        async with session.get(url, params=params) as response:
                             response_text = await response.text()
                             response_dict = {
                                 "status_code": response.status,
@@ -875,9 +814,7 @@ class HTTPClient:
                             if response_dict.get("json"):
                                 json_data = response_dict["json"]
                                 if isinstance(json_data, dict):
-                                    key_fields["status_code"] = response_dict[
-                                        "status_code"
-                                    ]
+                                    key_fields["status_code"] = response_dict["status_code"]
                                     for key in ["code", "message", "data", "result"]:
                                         if key in json_data:
                                             key_fields[key] = json_data[key]
@@ -885,9 +822,7 @@ class HTTPClient:
                             # Prepare full response for debug logging
                             full_response = ""
                             if response_dict.get("json"):
-                                masked_response = mask_sensitive_data(
-                                    response_dict["json"]
-                                )
+                                masked_response = mask_sensitive_data(response_dict["json"])
                                 full_response = json.dumps(
                                     masked_response, ensure_ascii=False
                                 )
@@ -904,79 +839,152 @@ class HTTPClient:
                             )
 
                             return response_dict
+
+                    elif method.upper() == "POST":
+                        if json_data:
+                            async with session.post(
+                                url, params=params, json=json_data
+                            ) as response:
+                                response_text = await response.text()
+                                response_dict = {
+                                    "status_code": response.status,
+                                    "url": str(response.url),
+                                    "headers": dict(response.headers),
+                                    "text": response_text,
+                                    "success": response.status < 400,
+                                }
+
+                                # Try to parse JSON response
+                                try:
+                                    response_dict["json"] = await response.json()
+                                    # Extract request_id from JSON response if available
+                                    if (
+                                        response_dict["json"]
+                                        and "requestId" in response_dict["json"]
+                                    ):
+                                        response_dict["request_id"] = response_dict["json"][
+                                            "requestId"
+                                        ]
+                                except:
+                                    response_dict["json"] = None
+
+                                # Extract request_id from response headers if not found in JSON
+                                if "request_id" not in response_dict:
+                                    response_dict["request_id"] = response.headers.get(
+                                        "x-request-id", ""
+                                    )
+
+                                # Prepare response data for logging
+                                response_success = response_dict["success"]
+                                request_id = response_dict.get("request_id", "")
+
+                                # Extract key fields from response for logging
+                                key_fields = {}
+                                if response_dict.get("json"):
+                                    json_data = response_dict["json"]
+                                    if isinstance(json_data, dict):
+                                        key_fields["status_code"] = response_dict[
+                                            "status_code"
+                                        ]
+                                        for key in ["code", "message", "data", "result"]:
+                                            if key in json_data:
+                                                key_fields[key] = json_data[key]
+
+                                # Prepare full response for debug logging
+                                full_response = ""
+                                if response_dict.get("json"):
+                                    masked_response = mask_sensitive_data(
+                                        response_dict["json"]
+                                    )
+                                    full_response = json.dumps(
+                                        masked_response, ensure_ascii=False
+                                    )
+                                elif response_dict.get("text"):
+                                    full_response = response_dict["text"]
+
+                                # Log API response using new logger function
+                                log_api_response_with_details(
+                                    api_name=api_name,
+                                    request_id=request_id,
+                                    success=response_success,
+                                    key_fields=key_fields if key_fields else None,
+                                    full_response=full_response,
+                                )
+
+                                return response_dict
+                        else:
+                            async with session.post(
+                                url, params=params, data=data
+                            ) as response:
+                                response_text = await response.text()
+                                response_dict = {
+                                    "status_code": response.status,
+                                    "url": str(response.url),
+                                    "headers": dict(response.headers),
+                                    "text": response_text,
+                                    "success": response.status < 400,
+                                }
+
+                                # Try to parse JSON response
+                                try:
+                                    response_dict["json"] = await response.json()
+                                    # Extract request_id from JSON response if available
+                                    if (
+                                        response_dict["json"]
+                                        and "requestId" in response_dict["json"]
+                                    ):
+                                        response_dict["request_id"] = response_dict["json"][
+                                            "requestId"
+                                        ]
+                                except:
+                                    response_dict["json"] = None
+
+                                # Extract request_id from response headers if not found in JSON
+                                if "request_id" not in response_dict:
+                                    response_dict["request_id"] = response.headers.get(
+                                        "x-request-id", ""
+                                    )
+
+                                # Prepare response data for logging
+                                response_success = response_dict["success"]
+                                request_id = response_dict.get("request_id", "")
+
+                                # Extract key fields from response for logging
+                                key_fields = {}
+                                if response_dict.get("json"):
+                                    json_data = response_dict["json"]
+                                    if isinstance(json_data, dict):
+                                        key_fields["status_code"] = response_dict[
+                                            "status_code"
+                                        ]
+                                        for key in ["code", "message", "data", "result"]:
+                                            if key in json_data:
+                                                key_fields[key] = json_data[key]
+
+                                # Prepare full response for debug logging
+                                full_response = ""
+                                if response_dict.get("json"):
+                                    masked_response = mask_sensitive_data(
+                                        response_dict["json"]
+                                    )
+                                    full_response = json.dumps(
+                                        masked_response, ensure_ascii=False
+                                    )
+                                elif response_dict.get("text"):
+                                    full_response = response_dict["text"]
+
+                                # Log API response using new logger function
+                                log_api_response_with_details(
+                                    api_name=api_name,
+                                    request_id=request_id,
+                                    success=response_success,
+                                    key_fields=key_fields if key_fields else None,
+                                    full_response=full_response,
+                                )
+
+                                return response_dict
                     else:
-                        async with session.post(
-                            url, params=params, data=data
-                        ) as response:
-                            response_text = await response.text()
-                            response_dict = {
-                                "status_code": response.status,
-                                "url": str(response.url),
-                                "headers": dict(response.headers),
-                                "text": response_text,
-                                "success": response.status < 400,
-                            }
-
-                            # Try to parse JSON response
-                            try:
-                                response_dict["json"] = await response.json()
-                                # Extract request_id from JSON response if available
-                                if (
-                                    response_dict["json"]
-                                    and "requestId" in response_dict["json"]
-                                ):
-                                    response_dict["request_id"] = response_dict["json"][
-                                        "requestId"
-                                    ]
-                            except:
-                                response_dict["json"] = None
-
-                            # Extract request_id from response headers if not found in JSON
-                            if "request_id" not in response_dict:
-                                response_dict["request_id"] = response.headers.get(
-                                    "x-request-id", ""
-                                )
-
-                            # Prepare response data for logging
-                            response_success = response_dict["success"]
-                            request_id = response_dict.get("request_id", "")
-
-                            # Extract key fields from response for logging
-                            key_fields = {}
-                            if response_dict.get("json"):
-                                json_data = response_dict["json"]
-                                if isinstance(json_data, dict):
-                                    key_fields["status_code"] = response_dict[
-                                        "status_code"
-                                    ]
-                                    for key in ["code", "message", "data", "result"]:
-                                        if key in json_data:
-                                            key_fields[key] = json_data[key]
-
-                            # Prepare full response for debug logging
-                            full_response = ""
-                            if response_dict.get("json"):
-                                masked_response = mask_sensitive_data(
-                                    response_dict["json"]
-                                )
-                                full_response = json.dumps(
-                                    masked_response, ensure_ascii=False
-                                )
-                            elif response_dict.get("text"):
-                                full_response = response_dict["text"]
-
-                            # Log API response using new logger function
-                            log_api_response_with_details(
-                                api_name=api_name,
-                                request_id=request_id,
-                                success=response_success,
-                                key_fields=key_fields if key_fields else None,
-                                full_response=full_response,
-                            )
-
-                            return response_dict
-                else:
-                    raise ValueError(f"Unsupported HTTP method: {method}")
+                        raise ValueError(f"Unsupported HTTP method: {method}")
 
         except asyncio.TimeoutError:
             # Log error response using new logger function

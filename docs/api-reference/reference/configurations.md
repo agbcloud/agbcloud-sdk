@@ -112,6 +112,7 @@ Parameters for creating a new session in the AGB cloud environment.
 - `labels` _Optional[Dict[str, str]]_ - Custom labels for the Session. These can be
   used for organizing and filtering sessions.
 - `image_id` _Optional[str]_ - ID of the image to use for the session.
+- `policy_id` _Optional[str]_ - Policy ID for the session.
 
 - `context_syncs` _Optional[List[ContextSync]]_ - List of context synchronization configurations.
 - `browser_context` _Optional[BrowserContext]_ - Optional configuration for browser data synchronization.

@@ -19,6 +19,38 @@ from agb.modules.browser.fingerprint import FingerprintFormat, BrowserFingerprin
 from agb.session_params import CreateSessionParams, BrowserContext
 from playwright.async_api import async_playwright
 
+# Retry and timeout for CDP connection (avoids flaky EBADF/WebSocket errors)
+CDP_CONNECT_MAX_RETRIES = 5
+CDP_CONNECT_TIMEOUT_MS = 90000
+CDP_CONNECT_INITIAL_DELAY_SEC = 5
+CDP_CONNECT_MAX_DELAY_SEC = 20
+BROWSER_READY_WAIT_SEC = 3
+SECOND_SESSION_CREATE_WAIT_SEC = 5
+SECOND_SESSION_CREATE_MAX_RETRIES = 5
+SECOND_SESSION_CREATE_RETRY_DELAY_SEC = 5
+
+
+async def connect_browser_with_retry(p, endpoint_url: str):
+    """Connect to browser CDP endpoint with retries and backoff. Handles EBADF/WebSocket flakiness."""
+    retry_delay = CDP_CONNECT_INITIAL_DELAY_SEC
+    last_error = None
+    for attempt in range(CDP_CONNECT_MAX_RETRIES):
+        try:
+            browser = await p.chromium.connect_over_cdp(
+                endpoint_url,
+                timeout=CDP_CONNECT_TIMEOUT_MS,
+            )
+            return browser
+        except Exception as e:
+            last_error = e
+            error_msg = str(e)
+            if "EBADF" in error_msg or "SSL" in error_msg or "certificate" in error_msg.lower():
+                retry_delay = 10
+            if attempt < CDP_CONNECT_MAX_RETRIES - 1:
+                await asyncio.sleep(retry_delay)
+                retry_delay = min(retry_delay + 5, CDP_CONNECT_MAX_DELAY_SEC)
+    raise last_error or RuntimeError("Failed to connect to browser after retries")
+
 
 def is_windows_user_agent(user_agent: str) -> bool:
     if not user_agent:
@@ -118,8 +150,9 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
 
             # Connect with playwright and test user agent
             print("Getting user agent via navigator.userAgent...")
+            await asyncio.sleep(BROWSER_READY_WAIT_SEC)
             async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+                browser = await connect_browser_with_retry(p, endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 context = browser.contexts[0] if browser.contexts else await browser.new_context()
 
@@ -187,8 +220,9 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
 
             # Step 4: Connect with playwright, test first session fingerprint
             print("Step 3: Getting user agent via navigator.userAgent...")
+            await asyncio.sleep(BROWSER_READY_WAIT_SEC)
             async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+                browser = await connect_browser_with_retry(p, endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 context = browser.contexts[0] if browser.contexts else await browser.new_context()
 
@@ -211,18 +245,31 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
         self.assertTrue(delete_result.success, "Failed to delete first session")
         print(f"First session deleted successfully (RequestID: {delete_result.request_id})")
 
-        # Wait for context sync to complete
-        time.sleep(3)
+        # Wait for context sync and backend to release resources (avoid concurrency limit)
+        time.sleep(SECOND_SESSION_CREATE_WAIT_SEC)
 
-        # Step 5: Create second session with same browser context and fingerprint context
+        # Step 5: Create second session with same browser context and fingerprint context (with retry)
         print(f"Step 5: Creating second session with same browser context ID: {self.context.id} "
               f"and fingerprint context ID: {self.fingerprint_context.id}")
         params2 = CreateSessionParams(
             image_id="agb-browser-use-1",
             browser_context=browser_context
         )
-        session_result2 = self.agb.create(params2)
-        self.assertTrue(session_result2.success, "Failed to create second session")
+        session_result2 = None
+        for create_attempt in range(SECOND_SESSION_CREATE_MAX_RETRIES):
+            session_result2 = self.agb.create(params2)
+            if session_result2.success and session_result2.session is not None:
+                break
+            if create_attempt < SECOND_SESSION_CREATE_MAX_RETRIES - 1:
+                err = getattr(session_result2, "error_message", None) or "unknown"
+                print(f"Create second session attempt {create_attempt + 1} failed: {err}, "
+                      f"retrying in {SECOND_SESSION_CREATE_RETRY_DELAY_SEC}s...")
+                time.sleep(SECOND_SESSION_CREATE_RETRY_DELAY_SEC)
+        self.assertTrue(
+            session_result2 and session_result2.success,
+            f"Failed to create second session after {SECOND_SESSION_CREATE_MAX_RETRIES} attempts: "
+            f"{getattr(session_result2, 'error_message', None) or 'unknown'}"
+        )
         self.assertIsNotNone(session_result2.session, "Second session should not be None")
 
         session2 = session_result2.session
@@ -248,8 +295,9 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
             print(f"Second session browser endpoint URL: {endpoint_url}")
 
             # Connect with playwright and test second session fingerprint
+            await asyncio.sleep(BROWSER_READY_WAIT_SEC)
             async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+                browser = await connect_browser_with_retry(p, endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser in second session")
 
                 context = browser.contexts[0] if browser.contexts else await browser.new_context()
@@ -321,8 +369,9 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
 
             # Connect with playwright and verify fingerprint sync
             print("Testing fingerprint sync by checking user agent via navigator...")
+            await asyncio.sleep(BROWSER_READY_WAIT_SEC)
             async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+                browser = await connect_browser_with_retry(p, endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 context = browser.contexts[0] if browser.contexts else await browser.new_context()
 
@@ -397,8 +446,9 @@ class TestBrowserFingerprintIntegration(unittest.TestCase):
 
             # Connect with playwright and verify constructed fingerprint
             print("Testing constructed fingerprint by checking user agent via navigator...")
+            await asyncio.sleep(BROWSER_READY_WAIT_SEC)
             async with async_playwright() as p:
-                browser = await p.chromium.connect_over_cdp(endpoint_url)
+                browser = await connect_browser_with_retry(p, endpoint_url)
                 self.assertIsNotNone(browser, "Failed to connect to browser")
                 context = browser.contexts[0] if browser.contexts else await browser.new_context()
 

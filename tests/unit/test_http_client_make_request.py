@@ -80,7 +80,9 @@ def test_make_request_timeout_tuple_when_separate_timeouts():
         connect_timeout=567,
     )
     *_prefix, timeout = c.session.calls[-1]
-    assert timeout == (0.567, 1.234)
+    # Timeouts are clamped to minimum 1 second to avoid OSError(22, 'Invalid argument')
+    # connect_timeout=567ms (0.567s) -> 1s, read_timeout=1234ms (1.234s) -> 1.234s
+    assert timeout == (1, 1.234)
 
 
 def test_make_request_post_uses_json_when_json_data_present():

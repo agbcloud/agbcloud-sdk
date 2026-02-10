@@ -23,14 +23,17 @@ if not create_result.success:
 
 session = create_result.session
 
-screenshot = session.computer.screenshot()
-print("Screenshot URL:", screenshot.data)
+capture_result = session.computer.screen.capture()
+if not capture_result.success:
+    raise SystemExit(capture_result.error_message)
+image_url = capture_result.data
+print("Screenshot URL:", image_url)
 
-size_result = session.computer.get_screen_size()
-if size_result.success:
-    screen = json.loads(size_result.data)
-    print("Screen:", screen["width"], "x", screen["height"])
-    print("DPI scale:", screen.get("dpiScalingFactor"))
+size_result = session.computer.screen.get_size()
+if size_result.success and size_result.data:
+    d = size_result.data
+    print("Screen:", d["width"], "x", d["height"])
+    print("DPI scale:", d.get("dpiScalingFactor"))
 
 agb.delete(session)
 ```
@@ -40,20 +43,21 @@ agb.delete(session)
 ### Take a screenshot
 
 ```python
-result = session.computer.screenshot()
-print(result.success, result.data)
+result = session.computer.screen.capture()
+if not result.success:
+    raise SystemExit(result.error_message)
+image_url = result.data
+print("Screenshot URL:", image_url)
 ```
 
 ### Get screen size
 
 ```python
-import json
-
-result = session.computer.get_screen_size()
-if result.success:
-    screen = json.loads(result.data)
-    print(f"Screen size: {screen['width']}x{screen['height']}")
-    print(f"DPI scaling: {screen.get('dpiScalingFactor')}")
+size_result = session.computer.screen.get_size()
+if size_result.success and size_result.data:
+    d = size_result.data
+    print(f"Screen size: {d['width']}x{d['height']}")
+    print(f"DPI scaling: {d.get('dpiScalingFactor')}")
 ```
 
 ## Best practices

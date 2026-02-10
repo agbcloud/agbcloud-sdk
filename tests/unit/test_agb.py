@@ -128,6 +128,50 @@ class TestAGB(unittest.TestCase):
 
     @patch("agb.agb.load_config")
     @patch("agb.agb.mcp_client")
+    def test_create_session_with_policy_id_maps_to_mcp_policy_id(self, mock_mcp_client, mock_load_config):
+        """Test that CreateSessionParams.policy_id is mapped to CreateSessionRequest.mcp_policy_id."""
+        mock_config = MagicMock()
+        mock_config.endpoint = "test.endpoint.com"
+        mock_config.timeout_ms = 30000
+        mock_load_config.return_value = mock_config
+
+        mock_client = MagicMock()
+        mock_response = MagicMock(spec=CreateSessionResponse)
+        mock_data = MagicMock(spec=SessionData)
+        mock_data.success = True
+        mock_data.session_id = "new-session-id"
+        mock_data.resource_url = "http://resource.url"
+        mock_data.app_instance_id = "app-instance-id"
+        mock_data.resource_id = "resource-id"
+        mock_response.data = mock_data
+        mock_response.request_id = "create-request-id"
+        mock_response.get_resource_url.return_value = "http://resource.url"
+        mock_response.get_error_message.return_value = None
+        mock_response.to_dict.return_value = {
+            "data": {
+                "sessionId": "new-session-id",
+                "resourceUrl": "http://resource.url",
+                "success": True
+            },
+            "requestId": "create-request-id"
+        }
+        mock_client.create_mcp_session.return_value = mock_response
+        mock_mcp_client.return_value = mock_client
+
+        agb = AGB(api_key="test-key")
+        params = CreateSessionParams(
+            image_id="agb-code-space-1",
+            policy_id="policy-123",
+        )
+        agb.create(params)
+
+        mock_client.create_mcp_session.assert_called_once()
+        call_args = mock_client.create_mcp_session.call_args
+        request = call_args[0][0]
+        self.assertEqual(request.mcp_policy_id, "policy-123")
+
+    @patch("agb.agb.load_config")
+    @patch("agb.agb.mcp_client")
     def test_create_session_invalid_response(self, mock_mcp_client, mock_load_config):
         """Test handling invalid response when creating a session"""
         # Mock configuration

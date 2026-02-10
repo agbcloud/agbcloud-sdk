@@ -21,8 +21,8 @@ if not create_result.success:
     raise SystemExit(create_result.error_message)
 
 session = create_result.session
-session.computer.input_text("Hello AGB!")
-session.computer.press_keys(keys=["Ctrl", "a"])
+session.computer.keyboard.type("Hello AGB!")
+session.computer.keyboard.press(["Ctrl", "a"])
 
 agb.delete(session)
 ```
@@ -32,23 +32,28 @@ agb.delete(session)
 ### Text input
 
 ```python
-result = session.computer.input_text("Hello, World!")
+result = session.computer.keyboard.type("Hello, World!")
 print(result.success, result.error_message)
 ```
 
 ### Key combinations
 
 ```python
-session.computer.press_keys(keys=["Ctrl", "a"])  # select all
-session.computer.press_keys(keys=["Ctrl", "c"])  # copy
-session.computer.press_keys(keys=["Ctrl", "v"])  # paste
+session.computer.keyboard.press(["Ctrl", "c"])  # copy
+session.computer.keyboard.press(["Ctrl", "v"])  # paste
+session.computer.keyboard.press(["Ctrl", "a"])  # select all
 ```
 
-### Hold and release keys
+### Press and release keys
 
 ```python
-session.computer.press_keys(keys=["Ctrl"], hold=True)
-session.computer.release_keys(keys=["Ctrl"])
+# Press keys normally (releases immediately)
+session.computer.keyboard.press(["Ctrl", "a"])
+
+# Press and hold keys (must manually release)
+session.computer.keyboard.press(["Shift"], hold=True)
+# ... perform other operations while Shift is held ...
+session.computer.keyboard.release(["Shift"])  # Remember to release!
 ```
 
 ## Best practices

@@ -25,9 +25,13 @@ if not create_result.success:
 
 session = create_result.session
 
-session.computer.start_app("notepad.exe")
+start_result = session.computer.app.start("notepad.exe")
+if not start_result.success:
+    raise SystemExit(start_result.error_message)
 time.sleep(2)
-session.computer.input_text("Hello from an automated workflow!")
+type_result = session.computer.keyboard.type("Hello from an automated workflow!")
+if not type_result.success:
+    raise SystemExit(type_result.error_message)
 
 agb.delete(session)
 ```
@@ -40,19 +44,24 @@ agb.delete(session)
 import time
 
 def manage_application_window(session, app_name: str) -> bool:
-    start_result = session.computer.start_app(app_name)
-    if not start_result.success:
-        print(f"Failed to start {app_name}")
+    try:
+        start_result = session.computer.app.start(app_name)
+        if not start_result.success or not start_result.data:
+            print(f"Failed to start {app_name}")
+            return False
+    except Exception as e:
+        print(f"Failed to start {app_name}: {e}")
         return False
 
     time.sleep(3)
-    windows_result = session.computer.list_root_windows()
-    if not windows_result.success:
-        print("Failed to list windows")
+    try:
+        windows = session.computer.window.list_root_windows()
+    except Exception as e:
+        print(f"Failed to list windows: {e}")
         return False
 
     target_window = None
-    for window in windows_result.windows:
+    for window in windows:
         if app_name.lower().replace(".exe", "") in window.title.lower():
             target_window = window
             break
@@ -62,13 +71,13 @@ def manage_application_window(session, app_name: str) -> bool:
         return False
 
     window_id = target_window.window_id
-    session.computer.activate_window(window_id)
+    session.computer.window.activate(window_id)
     time.sleep(1)
-    session.computer.maximize_window(window_id)
+    session.computer.window.maximize(window_id)
     time.sleep(1)
-    session.computer.resize_window(window_id, 1024, 768)
+    session.computer.window.resize(window_id, 1024, 768)
     time.sleep(1)
-    session.computer.restore_window(window_id)
+    session.computer.window.restore(window_id)
     return True
 ```
 
@@ -78,13 +87,14 @@ def manage_application_window(session, app_name: str) -> bool:
 import time
 
 def automated_text_editing_workflow(session) -> bool:
-    apps_result = session.computer.get_installed_apps()
-    if not apps_result.success:
-        print("Failed to get installed applications")
+    try:
+        apps = session.computer.app.list_installed()
+    except Exception as e:
+        print(f"Failed to get installed applications: {e}")
         return False
 
     first_app = None
-    for app in apps_result.data:
+    for app in apps:
         if "google chrome" in app.name.lower():
             first_app = app
             break
@@ -93,17 +103,21 @@ def automated_text_editing_workflow(session) -> bool:
         print("No suitable application found")
         return False
 
-    start_result = session.computer.start_app(first_app.start_cmd)
-    if not start_result.success:
-        print(f"Failed to start {first_app.name}")
+    try:
+        start_result = session.computer.app.start(first_app.start_cmd)
+        if not start_result.success or not start_result.data:
+            print(f"Failed to start {first_app.name}")
+            return False
+    except Exception as e:
+        print(f"Failed to start {first_app.name}: {e}")
         return False
 
     time.sleep(2)
-    session.computer.input_text("Hello from AGB Computer Automation!")
+    session.computer.keyboard.type("Hello from AGB Computer Automation!")
     time.sleep(1)
-    session.computer.press_keys(["Ctrl", "a"])
+    session.computer.keyboard.press(["Ctrl", "a"])
     time.sleep(0.5)
-    session.computer.press_keys(["Ctrl", "c"])
+    session.computer.keyboard.press(["Ctrl", "c"])
     time.sleep(0.5)
     return True
 ```

@@ -16,13 +16,16 @@ Start by checking screen size and taking a screenshot:
 ```python
 import json
 
-screen_result = session.computer.get_screen_size()
-if screen_result.success:
-    screen = json.loads(screen_result.data)
-    print("Screen:", screen["width"], "x", screen["height"], "DPI:", screen.get("dpiScalingFactor"))
+size_result = session.computer.screen.get_size()
+if size_result.success and size_result.data:
+    d = size_result.data
+    print("Screen:", d["width"], "x", d["height"], "DPI:", d.get("dpiScalingFactor"))
 
-screenshot = session.computer.screenshot()
-print("Screenshot URL:", screenshot.data)
+capture_result = session.computer.screen.capture()
+if not capture_result.success:
+    raise SystemExit(capture_result.error_message)
+image_url = capture_result.data
+print("Screenshot URL:", image_url)
 ```
 
 ## Common issues
@@ -37,9 +40,8 @@ Symptoms: clicks miss the target or land offset.
 ### Application not starting
 
 ```python
-apps_result = session.computer.get_installed_apps()
-if apps_result.success:
-    print("Available applications:", [app.name for app in apps_result.data])
+apps = session.computer.app.list_installed()
+print("Available applications:", [app.name for app in apps])
 ```
 
 - **Likely cause**: app isn’t installed or `start_cmd` is invalid for this image.
@@ -49,13 +51,13 @@ if apps_result.success:
 
 ```python
 def debug_windows(session):
-    result = session.computer.list_root_windows()
-    if result.success:
-        print(f"Found {len(result.windows)} windows:")
-        for i, window in enumerate(result.windows):
+    try:
+        windows = session.computer.window.list_root_windows()
+        print(f"Found {len(windows)} windows:")
+        for i, window in enumerate(windows):
             print(f\"{i+1}. Title: '{window.title}'  ID: {window.window_id}  Process: {window.pname}\")
-    else:
-        print(f\"Failed to list windows: {result.error_message}\")
+    except Exception as e:
+        print(f\"Failed to list windows: {e}\")
 
 debug_windows(session)
 ```
@@ -68,11 +70,11 @@ debug_windows(session)
 ```python
 import time
 
-session.computer.start_app("notepad.exe")
+session.computer.app.start("notepad.exe")
 time.sleep(3)
-session.computer.click_mouse(500, 300)
+session.computer.mouse.click(500, 300)
 time.sleep(0.5)
-session.computer.input_text("Hello")
+session.computer.keyboard.type("Hello")
 time.sleep(1)
 ```
 
@@ -80,11 +82,12 @@ time.sleep(1)
 
 ```python
 def check_session_health(session) -> bool:
-    result = session.computer.get_screen_size()
-    if result.success:
-        return True
-    print(f\"Session issue: {result.error_message}\")
-    return False
+    try:
+        size_result = session.computer.screen.get_size()
+        return size_result.success
+    except Exception as e:
+        print(f\"Session issue: {e}\")
+        return False
 
 print(\"Healthy:\", check_session_health(session))
 ```

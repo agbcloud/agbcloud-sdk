@@ -134,5 +134,5 @@ dmypy.json
 CLAUDE.md
 .DS_Store
 
-.history/API命名优化-执行清单.md
-API命名优化-执行清单.md
+# uv lockfile (only used when using uv; project uses venv)
+uv.lock

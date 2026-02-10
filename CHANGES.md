@@ -1,5 +1,70 @@
 # Changelog
 
+## [0.10.0] - 2026-02-09
+
+This release focuses on **API Naming Simplification Phase 2** in the Computer module, the new **policy_id** parameter for session creation, and **OpenClaw examples** for Slack, Discord, and Telegram.
+
+### Breaking Changes
+
+- **API Naming Simplification Phase 2 (Computer Module)**: Interfaces previously flat in `session.computer` are now organized by sub-module (`mouse`, `keyboard`, `screen`, `window`, `app`). The legacy single `computer.py` has been removed. API mapping:
+  - `session.computer.click_mouse(x, y)` → `session.computer.mouse.click(x, y)`
+  - `session.computer.move_mouse(x, y)` → `session.computer.mouse.move(x, y)`
+  - `session.computer.drag_mouse(x1, y1, x2, y2)` → `session.computer.mouse.drag(x1, y1, x2, y2)`
+  - `session.computer.scroll(x, y, direction, amount)` → `session.computer.mouse.scroll(x, y, direction, amount)`
+  - `session.computer.get_cursor_position()` → `session.computer.mouse.get_position()`
+  - `session.computer.input_text(text)` → `session.computer.keyboard.type(text)`
+  - `session.computer.press_keys(keys)` → `session.computer.keyboard.press(keys)`
+  - `session.computer.release_keys(keys)` → `session.computer.keyboard.release(keys)`
+  - `session.computer.list_root_windows()` → `session.computer.window.list_root_windows()`
+  - `session.computer.get_active_window()` → `session.computer.window.get_active_window()`
+  - `session.computer.activate_window(window_id)` → `session.computer.window.activate(window_id)`
+  - `session.computer.close_window(window_id)` → `session.computer.window.close(window_id)`
+  - `session.computer.maximize_window(window_id)` → `session.computer.window.maximize(window_id)`
+  - `session.computer.minimize_window(window_id)` → `session.computer.window.minimize(window_id)`
+  - `session.computer.restore_window(window_id)` → `session.computer.window.restore(window_id)`
+  - `session.computer.resize_window(window_id, w, h)` → `session.computer.window.resize(window_id, w, h)`
+  - `session.computer.fullscreen_window(window_id)` → `session.computer.window.fullscreen(window_id)`
+  - `session.computer.focus_mode(on=True)` → `session.computer.window.focus_mode(on=True)`
+  - `session.computer.get_installed_apps()` → `session.computer.app.list_installed()`
+  - `session.computer.list_visible_apps()` → `session.computer.app.get_visible()`
+  - `session.computer.start_app(name)` → `session.computer.app.start(name)`
+  - `session.computer.stop_app_by_pname(pname)` → `session.computer.app.stop_by_pname(pname)`
+  - `session.computer.stop_app_by_pid(pid)` → `session.computer.app.stop_by_pid(pid)`
+  - `session.computer.stop_app_by_cmd(stop_cmd)` → `session.computer.app.stop_by_cmd(stop_cmd)`
+  - `session.computer.get_screen_size()` → `session.computer.screen.get_size()`
+  - `session.computer.screenshot()` → `session.computer.screen.capture()`
+- Implementation aligned with original behavior: unified log operation names, restored return types, and corrected mouse button validation and screen capture return types.
+
+### New Features
+
+- **policy_id**: `CreateSessionParams` adds `policy_id`; the create-session request supports `mcpPolicyId` for policy-scoped sessions.
+- **OpenClaw examples**: Three example configurations for IM integrations:
+  - **Slack** – configuration and usage with OpenClaw
+  - **Discord** – configuration and usage with OpenClaw
+  - **Telegram** – configuration and usage with OpenClaw (including README mention)
+
+### Other Enhancements
+
+- API call log level changed from info to debug
+- aiohttp uses certifi for SSL context (macOS/Windows)
+- Screenshot examples add retry and better SSL error handling
+- Screen module: improved `result.data` parsing for string and dict
+- App/window error handling improved; `get_active_window` raises `RuntimeError` on failure; window JSON errors return None
+
+### Bug Fixes
+
+- Added missing `request_id` on `AppOperationResult` / `ApplicationManager`
+- Fixed example indentation and return types (`app.start()`, `screen.capture()`)
+- Keyboard `combo` letter keys normalized to lowercase
+- Fixed pytest imports (pythonpath, project root, `functional_helpers`)
+- Integration test fixes for `list_installed`, cursor validation, scroll API, and `window_operations.py` app selection
+
+### Documentation, Testing & Chore
+
+- Docs auto-generated and aligned with 26 API specification; example formatting and comments updated.
+- Browser fingerprint and computer integration tests improved; timeout test for 1s minimum; added Playwright connect test.
+- Website host changed to agb.cloud.
+
 ## [0.9.0] - 2026-01-23
 
 ### Breaking Changes
@@ -154,7 +219,7 @@
 - Added integration test job to CI/CD pipeline with comprehensive test coverage
 - Improved test stability with proper wait times and resource cleanup
 - Added CI bot guard to prevent infinite loops and enhanced error detection
-- Fixed AONE documentation pipeline configuration and optimized documentation workflow
+- Fixed documentation pipeline configuration and optimized documentation workflow
 
 ## [0.5.0] - 2025-11-20
 

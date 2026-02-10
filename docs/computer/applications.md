@@ -22,8 +22,11 @@ if not create_result.success:
 
 session = create_result.session
 
-apps_result = session.computer.get_installed_apps()
-print("Installed apps:", apps_result.success, len(apps_result.data) if apps_result.success else apps_result.error_message)
+apps_result = session.computer.app.list_installed()
+if not apps_result.success:
+    raise SystemExit(apps_result.error_message)
+apps = apps_result.data
+print("Installed apps:", len(apps))
 
 agb.delete(session)
 ```
@@ -33,66 +36,71 @@ agb.delete(session)
 ### Discover installed applications
 
 ```python
-result = session.computer.get_installed_apps(
-    start_menu=True,
-    desktop=False,
-    ignore_system_apps=True,
-)
-
-if result.success:
-    apps = result.data
-    print(f"Found {len(apps)} installed applications")
-    for app in apps[:5]:
-        print(f"Name: {app.name}")
-        print(f"Start Command: {app.start_cmd}")
-        print(f"Stop Command: {app.stop_cmd if app.stop_cmd else 'N/A'}")
-        print(f"Work Directory: {app.work_directory if app.work_directory else 'N/A'}")
-        print("---")
+apps_result = session.computer.app.list_installed()
+if not apps_result.success:
+    raise SystemExit(apps_result.error_message)
+apps = apps_result.data
+print(f"Found {len(apps)} installed applications")
+for app in apps[:5]:
+    print(f"Name: {app.name}")
+    print(f"Start Command: {app.start_cmd}")
+    print(f"Stop Command: {app.stop_cmd if app.stop_cmd else 'N/A'}")
+    print(f"Work Directory: {app.work_directory if app.work_directory else 'N/A'}")
+    print("---")
 ```
 
 ### Start an application
 
-Start by command:
+Start by name:
 
 ```python
-start_cmd = "notepad.exe"
-result = session.computer.start_app(start_cmd)
-print(result.success, result.error_message)
+result = session.computer.app.start("notepad.exe")
+if not result.success:
+    raise SystemExit(result.error_message)
+processes = result.data
+print(f"Started {len(processes)} processes")
 ```
 
 Start with a working directory:
 
 ```python
-start_cmd = "notepad.exe"
-work_directory = "C:\\Users\\Public\\Documents"
-result = session.computer.start_app(start_cmd=start_cmd, work_directory=work_directory)
-print(result.success, result.error_message)
+result = session.computer.app.start("notepad.exe", work_directory="C:\\Users\\Public\\Documents")
+if not result.success:
+    raise SystemExit(result.error_message)
+processes = result.data
+print(f"Started {len(processes)} processes")
 ```
 
 Start from the installed apps list:
 
 ```python
-apps_result = session.computer.get_installed_apps()
-if apps_result.success:
-    target_app = None
-    for app in apps_result.data:
-        if "google chrome" in app.name.lower():
-            target_app = app
-            break
+apps_result = session.computer.app.list_installed()
+if not apps_result.success:
+    raise SystemExit(apps_result.error_message)
+apps = apps_result.data
+target_app = None
+for app in apps:
+    if "google chrome" in app.name.lower():
+        target_app = app
+        break
 
-    if target_app:
-        session.computer.start_app(target_app.start_cmd)
+if target_app:
+    start_result = session.computer.app.start(target_app.start_cmd)
+    if not start_result.success:
+        raise SystemExit(start_result.error_message)
 ```
 
 ### List visible/running applications
 
 ```python
-result = session.computer.list_visible_apps()
-if result.success:
-    for app in result.data:
-        print(f"App: {app.pname} (PID: {app.pid})")
-        if app.cmdline:
-            print("Command:", app.cmdline)
+visible_result = session.computer.app.get_visible()
+if not visible_result.success:
+    raise SystemExit(visible_result.error_message)
+visible_apps = visible_result.data
+for app in visible_apps:
+    print(f"App: {app.pname} (PID: {app.pid})")
+    if app.cmdline:
+        print("Command:", app.cmdline)
 ```
 
 ### Stop an application
@@ -100,35 +108,35 @@ if result.success:
 Stop by process name:
 
 ```python
-result = session.computer.stop_app_by_pname("notepad.exe")
+result = session.computer.app.stop_by_pname("notepad.exe")
 print(result.success, result.error_message)
 ```
 
 Stop by PID:
 
 ```python
-start_result = session.computer.start_app("notepad.exe")
+start_result = session.computer.app.start("notepad.exe")
 if start_result.success and start_result.data:
     target_pid = start_result.data[0].pid
-    stop_result = session.computer.stop_app_by_pid(target_pid)
-    print(stop_result.success, stop_result.error_message)
+    result = session.computer.app.stop_by_pid(target_pid)
+    print(result.success, result.error_message)
 ```
 
-Stop by stop command:
+Stop by shell command (e.g. kill by PID):
 
 ```python
-apps_result = session.computer.get_installed_apps()
-if apps_result.success:
-    for app in apps_result.data:
-        if app.stop_cmd and "google chrome" in app.name.lower():
-            stop_result = session.computer.stop_app_by_cmd(app.stop_cmd)
-            print(stop_result.success, stop_result.error_message)
-            break
+# Get PID from the process started by app.start(), then run a kill command
+start_result = session.computer.app.start("notepad.exe")
+if start_result.success and start_result.data:
+    pid = start_result.data[0].pid
+    result = session.computer.app.stop_by_cmd(f"kill -9 {pid}")
+    print(result.success, result.error_message)
 ```
 
 ## Best practices
 
-- Use `get_installed_apps()` to find the right `start_cmd` instead of guessing.\n+- Add delays after `start_app()` to allow windows to appear.\n+
+- Use `app.list_installed()` to find the right `start_cmd` instead of guessing.
+- Add delays after `app.start()` to allow windows to appear.
 ## Troubleshooting
 
 ### Application not starting

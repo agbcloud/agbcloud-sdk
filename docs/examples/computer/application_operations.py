@@ -51,42 +51,43 @@ def main():
 
         # Get list of installed applications
         print("  Discovering installed applications...")
-        installed_apps_result = session.computer.get_installed_apps()
-        if installed_apps_result.success:
-            apps = installed_apps_result.data
-            print(f"  ✅ Found {len(apps)} installed applications")
-
-            # Display information about available applications
-            print("  📋 Available applications:")
-            for i, app in enumerate(apps[:10]):  # Show first 10 apps
-                app_name = getattr(app, "name", "Unknown")
-                start_cmd = getattr(app, "start_cmd", "N/A")
-                print(f"    {i+1}. {app_name} (Command: {start_cmd})")
-
-            if len(apps) > 10:
-                print(f"    ... and {len(apps) - 10} more applications")
-
-            # Select Google Chrome for demonstration
-            chrome_app = None
-
-            # Find Google Chrome application
-            for app in apps:
-                if hasattr(app, "name") and app.name == "Google Chrome":
-                    chrome_app = app
-                    print(f"  🎯 Selected Google Chrome for demonstration")
-                    break
-
-            if not chrome_app:
-                print("  ⚠️  Google Chrome not found in installed applications")
+        try:
+            apps_result = session.computer.app.list_installed()
+            if not apps_result.success:
+                print(f"  ❌ Failed to get installed apps: {apps_result.error_message}")
                 return
-
-            print(f"  🎯 Selected Google Chrome application for demonstration")
-
-        else:
-            print(
-                f"  ❌ Failed to get installed apps: {installed_apps_result.error_message}"
-            )
+            apps = apps_result.data
+            print(f"  ✅ Found {len(apps)} installed applications")
+        except Exception as e:
+            print(f"  ❌ Failed to get installed apps: {e}")
             return
+
+        # Display information about available applications
+        print("  📋 Available applications:")
+        for i, app in enumerate(apps[:10]):  # Show first 10 apps
+            app_name = getattr(app, "name", "Unknown")
+            start_cmd = getattr(app, "start_cmd", "N/A")
+            print(f"    {i+1}. {app_name} (Command: {start_cmd})")
+
+        if len(apps) > 10:
+            print(f"    ... and {len(apps) - 10} more applications")
+
+        # Select Google Chrome for demonstration
+        chrome_app = None
+
+        # Find Google Chrome application
+        for app in apps:
+            if hasattr(app, "name") and app.name == "Google Chrome":
+                chrome_app = app
+                print(f"  🎯 Selected Google Chrome for demonstration")
+                break
+
+        if not chrome_app:
+            print("  ⚠️  Google Chrome not found in installed applications")
+            return
+
+        print(f"  🎯 Selected Google Chrome application for demonstration")
+
 
         # Example 2: Application Starting
         print("\n🚀 Example 2: Application Starting")
@@ -100,12 +101,19 @@ def main():
         print(f"  Starting {app_name}...")
         print(f"    Command: {start_cmd}")
 
-        start_result = session.computer.start_app(start_cmd)
-        if start_result.success and len(start_result.data) > 0:
+        try:
+            start_result = session.computer.app.start(start_cmd)
+            if not start_result.success:
+                print(f"    ❌ Failed to start {app_name}: {start_result.error_message}")
+                return
+            if not start_result.data or not isinstance(start_result.data, list) or len(start_result.data) == 0:
+                print(f"    ❌ Failed to start {app_name}: no processes returned")
+                return
+            processes = start_result.data
             print(f"    ✅ {app_name} started successfully")
 
             # Store process information for later operations
-            for process in start_result.data:
+            for process in processes:
                 process_info = {
                     "app_name": app_name,
                     "pid": getattr(process, "pid", None),
@@ -116,8 +124,9 @@ def main():
                 print(
                     f"      Process: PID={process_info['pid']}, Name={process_info['pname']}"
                 )
-        else:
-            print(f"    ❌ Failed to start {app_name}: {start_result.error_message}")
+        except Exception as e:
+            print(f"    ❌ Failed to start {app_name}: {e}")
+            return
 
         time.sleep(2)  # Wait for app to start
 
@@ -128,8 +137,11 @@ def main():
 
         # List currently visible/running applications
         print("  Listing visible applications...")
-        visible_apps_result = session.computer.list_visible_apps()
-        if visible_apps_result.success:
+        try:
+            visible_apps_result = session.computer.app.get_visible()
+            if not visible_apps_result.success:
+                print(f"  ❌ Failed to list visible apps: {visible_apps_result.error_message}")
+                return
             visible_apps = visible_apps_result.data
             print(f"  ✅ Found {len(visible_apps)} visible applications")
 
@@ -160,10 +172,8 @@ def main():
                     print(
                         f"    ⚠️  {started_proc['app_name']} (PID: {started_proc['pid']}) not found in visible apps"
                     )
-        else:
-            print(
-                f"  ❌ Failed to list visible apps: {visible_apps_result.error_message}"
-            )
+        except Exception as e:
+            print(f"  ❌ Failed to list visible apps: {e}")
 
         # Example 4: Application Interaction and Validation
         print("\n🎯 Example 4: Application Interaction and Validation")
@@ -171,27 +181,37 @@ def main():
         if started_processes:
             # Get active window to see if our apps created windows
             print("  Checking active window...")
-            active_window_result = session.computer.get_active_window()
-            if active_window_result.success and active_window_result.window:
-                window_title = getattr(active_window_result.window, "title", "Unknown")
-                window_id = active_window_result.window.window_id
-                print(f"    ✅ Active window: '{window_title}' (ID: {window_id})")
-            else:
-                print("    ℹ️  No active window or failed to get active window")
+            try:
+                active_window_result = session.computer.window.get_active_window()
+                if not active_window_result.success:
+                    print(f"    ℹ️  Failed to get active window: {active_window_result.error_message}")
+                else:
+                    active_window = active_window_result.window
+                    if active_window:
+                        window_title = getattr(active_window, "title", "Unknown")
+                        window_id = active_window.window_id
+                        print(f"    ✅ Active window: '{window_title}' (ID: {window_id})")
+                    else:
+                        print("    ℹ️  No active window")
+            except Exception as e:
+                print(f"    ℹ️  Failed to get active window: {e}")
 
             # List all root windows to see application windows
             print("  Listing application windows...")
-            windows_result = session.computer.list_root_windows()
-            if windows_result.success:
-                windows = windows_result.windows
-                print(f"    ✅ Found {len(windows)} application windows")
+            try:
+                windows_result = session.computer.window.list_root_windows()
+                if not windows_result.success:
+                    print(f"    ❌ Failed to list windows: {windows_result.error_message}")
+                else:
+                    windows = windows_result.windows
+                    print(f"    ✅ Found {len(windows)} application windows")
 
-                for i, window in enumerate(windows[:10]):  # Show first 10 windows
-                    title = getattr(window, "title", "Untitled")
-                    window_id = window.window_id
-                    print(f"      {i+1}. '{title}' (ID: {window_id})")
-            else:
-                print(f"    ❌ Failed to list windows: {windows_result.error_message}")
+                    for i, window in enumerate(windows[:10]):  # Show first 10 windows
+                        title = getattr(window, "title", "Untitled")
+                        window_id = window.window_id
+                        print(f"      {i+1}. '{title}' (ID: {window_id})")
+            except Exception as e:
+                print(f"    ❌ Failed to list windows: {e}")
 
         time.sleep(3)  # Let applications fully initialize
 
@@ -209,7 +229,7 @@ def main():
             pid = process["pid"]
 
             print(f"  Stopping {app_name} by PID ({pid})...")
-            stop_result = session.computer.stop_app_by_pid(pid)
+            stop_result = session.computer.app.stop_by_pid(pid)
             if stop_result.success:
                 print(f"    ✅ {app_name} stopped successfully by PID")
 
@@ -235,32 +255,37 @@ def main():
 
             # Start application
             print("    Starting application...")
-            start_result = session.computer.start_app(start_cmd)
-            if start_result.success and len(start_result.data) > 0:
-                test_process = start_result.data[0]
-                test_pid = getattr(test_process, "pid", None)
-                test_pname = getattr(test_process, "pname", None)
+            try:
+                start_result = session.computer.app.start(start_cmd)
+                if not start_result.success:
+                    print(f"      ❌ Failed to start: {start_result.error_message}")
+                elif not start_result.data or not isinstance(start_result.data, list) or len(start_result.data) == 0:
+                    print(f"      ❌ Failed to start: no processes returned")
+                else:
+                    processes = start_result.data
+                    test_process = processes[0]
+                    test_pid = getattr(test_process, "pid", None)
+                    test_pname = getattr(test_process, "pname", None)
 
-                print(f"      ✅ Started: PID={test_pid}, Process={test_pname}")
+                    print(f"      ✅ Started: PID={test_pid}, Process={test_pname}")
 
-                # Wait for application to initialize
-                time.sleep(3)
-                # Clean up - stop the test application
-                print("    Cleaning up test application...")
-                if test_pname:
-                    cleanup_result = session.computer.stop_app_by_pname(test_pname)
-                    if cleanup_result.success:
-                        print("      ✅ Test application cleaned up successfully")
-                    else:
-                        print(
-                            f"      ⚠️  Cleanup failed: {cleanup_result.error_message}"
-                        )
+                    # Wait for application to initialize
+                    time.sleep(3)
+                    # Clean up - stop the test application
+                    print("    Cleaning up test application...")
+                    if test_pname:
+                        cleanup_result = session.computer.app.stop_by_pname(test_pname)
+                        if cleanup_result.success:
+                            print("      ✅ Test application cleaned up successfully")
+                        else:
+                            print(
+                                f"      ⚠️  Cleanup failed: {cleanup_result.error_message}"
+                            )
 
-                time.sleep(2)
-            else:
-                print(
-                    f"    ❌ Failed to start test application: {start_result.error_message}"
-                )
+                    time.sleep(2)
+            except Exception as e:
+                print(f"    ❌ Failed to start test application: {e}")
+
 
         print("\n📊 Application Operations Summary:")
         print("  • Application discovery and enumeration")

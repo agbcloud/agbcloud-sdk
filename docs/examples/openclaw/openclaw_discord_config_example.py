@@ -19,6 +19,12 @@ Prerequisites
 - AGB SDK installed: pip install agb
 - Valid AGB API key
 
+Long-running sessions
+---------------------
+If you need the sandbox to run for a long time, set ``policy_id`` to
+``"longDuration-policy"`` when creating the session. Otherwise the session
+may be released after a few minutes.
+
 Discord setup
 -------------
 If you use the Discord channel, follow the official Discord (Bot API) guide first:
@@ -273,8 +279,13 @@ def main() -> None:
 
     try:
         # --- Step 1: Create session ---
+        # Use policy_id="longDuration-policy" for long-running sandbox; otherwise
+        # the session may be released after a few minutes.
         print(f"Creating session (image: {IMAGE_ID})...")
-        params = CreateSessionParams(image_id=IMAGE_ID)
+        params = CreateSessionParams(
+            image_id=IMAGE_ID,
+            policy_id="longDuration-policy",
+        )
         session_result = agb_client.create(params)
 
         if not session_result.success or not session_result.session:

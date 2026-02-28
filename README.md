@@ -1,6 +1,9 @@
 <h1 align="center">AGB Python SDK</h1>
-
----
+<h4 align="center">
+  <a href="https://pypi.org/project/agbcloud-sdk/">
+    <img alt="Last 1 month downloads for the Python SDK" loading="lazy" decoding="async" style="color:transparent;width:170px;height:18px" src="https://static.pepy.tech/personalized-badge/agbcloud-sdk?period=monthly&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=PyPi%20Monthly%20Downloads">
+  </a>
+</h4>
 
 ## 🔥 Moltbot (formerly Clawdbot) Quick Deployment
 

@@ -10,16 +10,29 @@ Context sync policies control the synchronization behavior of data between local
 
 Controls file upload behavior and timing.
 
-```python
+::: code-group
+
+```python [Python]
 from agb.context_sync import UploadPolicy, UploadStrategy, UploadMode
 
-# Basic configuration
 upload_policy = UploadPolicy(
-    auto_upload=True,  # Enable automatic upload
-    upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,  # Upload strategy
-    upload_mode=UploadMode.FILE  # Upload mode（default）
+    auto_upload=True,
+    upload_strategy=UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
+    upload_mode=UploadMode.FILE,
 )
 ```
+
+```typescript [TypeScript]
+import { newUploadPolicy, UploadStrategy, UploadMode } from "agbcloud-sdk/context-sync";
+
+const uploadPolicy = newUploadPolicy({
+  autoUpload: true,
+  uploadStrategy: UploadStrategy.UPLOAD_BEFORE_RESOURCE_RELEASE,
+  uploadMode: UploadMode.FILE,
+});
+```
+
+:::
 
 **Parameters:**
 - `auto_upload` (bool): Whether to enable automatic upload
@@ -33,15 +46,27 @@ upload_policy = UploadPolicy(
 
 Controls file download behavior.
 
-```python
+::: code-group
+
+```python [Python]
 from agb.context_sync import DownloadPolicy, DownloadStrategy
 
-# Basic configuration
 download_policy = DownloadPolicy(
-    auto_download=True,  # Enable automatic download
-    download_strategy=DownloadStrategy.DOWNLOAD_ASYNC  # Async download
+    auto_download=True,
+    download_strategy=DownloadStrategy.DOWNLOAD_ASYNC,
 )
 ```
+
+```typescript [TypeScript]
+import { newDownloadPolicy, DownloadStrategy } from "agbcloud-sdk/context-sync";
+
+const downloadPolicy = newDownloadPolicy({
+  autoDownload: true,
+  downloadStrategy: DownloadStrategy.DOWNLOAD_ASYNC,
+});
+```
+
+:::
 
 **Parameters:**
 - `auto_download` (bool): Whether to enable automatic download
@@ -52,14 +77,21 @@ download_policy = DownloadPolicy(
 
 Controls file deletion sync behavior.
 
-```python
+::: code-group
+
+```python [Python]
 from agb.context_sync import DeletePolicy
 
-# Basic configuration
-delete_policy = DeletePolicy(
-    sync_local_file=True  # Sync local file deletion to cloud
-)
+delete_policy = DeletePolicy(sync_local_file=True)
 ```
+
+```typescript [TypeScript]
+import { newDeletePolicy } from "agbcloud-sdk/context-sync";
+
+const deletePolicy = newDeletePolicy({ syncLocalFile: true });
+```
+
+:::
 
 **Parameters:**
 - `sync_local_file` (bool): Whether to sync local file deletion to cloud
@@ -68,16 +100,25 @@ delete_policy = DeletePolicy(
 
 Controls file extraction and decompression behavior.
 
-```python
+::: code-group
+
+```python [Python]
 from agb.context_sync import ExtractPolicy
 
-# Basic configuration
 extract_policy = ExtractPolicy(
-    extract=True,  # Enable file extraction
-    delete_src_file=True,  # Delete source file after extraction
-    extract_current_folder=False  # Don't extract to current folder
+    extract=True, delete_src_file=True, extract_current_folder=False,
 )
 ```
+
+```typescript [TypeScript]
+import { newExtractPolicy } from "agbcloud-sdk/context-sync";
+
+const extractPolicy = newExtractPolicy({
+  extract: true, deleteSrcFile: true, extractCurrentFolder: false,
+});
+```
+
+:::
 
 **Parameters:**
 - `extract` (bool): Whether to enable file extraction
@@ -88,21 +129,33 @@ extract_policy = ExtractPolicy(
 
 Controls data retention and cleanup behavior.
 
-```python
+::: code-group
+
+```python [Python]
 from agb.context_sync import RecyclePolicy, Lifecycle
 
-# Basic configuration
 recycle_policy = RecyclePolicy(
-    lifecycle=Lifecycle.LIFECYCLE_30DAYS,  # Keep data for 30 days
-    paths=[""]
+    lifecycle=Lifecycle.LIFECYCLE_30DAYS, paths=[""],
 )
 
-# Advanced configuration with specific paths
 recycle_policy = RecyclePolicy(
-    lifecycle=Lifecycle.LIFECYCLE_7DAYS,
-    paths=["temp", "logs"]  # Apply only to specific paths (relative paths)
+    lifecycle=Lifecycle.LIFECYCLE_7DAYS, paths=["temp", "logs"],
 )
 ```
+
+```typescript [TypeScript]
+import { newRecyclePolicy, Lifecycle } from "agbcloud-sdk/context-sync";
+
+const recyclePolicy = newRecyclePolicy({
+  lifecycle: Lifecycle.LIFECYCLE_30DAYS, paths: [""],
+});
+
+const recyclePolicy2 = newRecyclePolicy({
+  lifecycle: Lifecycle.LIFECYCLE_7DAYS, paths: ["temp", "logs"],
+});
+```
+
+:::
 
 **Parameters:**
 - `lifecycle` (Lifecycle): Data retention period
@@ -125,31 +178,45 @@ recycle_policy = RecyclePolicy(
 
 Controls which file paths participate in sync.
 
-```python
+::: code-group
+
+```python [Python]
 from agb.context_sync import BWList, WhiteList
 
-# Create white list
 white_list = WhiteList(
-    path="/home/data",  # Include path
-    exclude_paths=["/home/data/temp", "/home/data/cache"]  # Exclude sub-paths
+    path="/home/data",
+    exclude_paths=["/home/data/temp", "/home/data/cache"],
 )
-
-# Create black/white list configuration
 bw_list = BWList(white_lists=[white_list])
 ```
+
+```typescript [TypeScript]
+const bwList = {
+  whiteLists: [
+    { path: "/home/data", excludePaths: ["/home/data/temp", "/home/data/cache"] },
+  ],
+};
+```
+
+:::
 
 ### 7. MappingPolicy
 
 Controls cross-Platform path mapping for data persistence.
 
-```python
+::: code-group
+
+```python [Python]
 from agb.context_sync import MappingPolicy
 
-# Basic configuration
-mapping_policy = MappingPolicy(
-    path="/tmp/mapping"  # Original path where data was stored
-)
+mapping_policy = MappingPolicy(path="/tmp/mapping")
 ```
+
+```typescript [TypeScript]
+const mappingPolicy = { path: "/tmp/mapping" };
+```
+
+:::
 
 **Parameters:**
 - `path` (str): The original Linux path where data was stored in the previous session

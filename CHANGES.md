@@ -1,5 +1,46 @@
 # Changelog
 
+## [0.11.0] - 2026-03-16
+
+### Breaking Changes
+
+- **listMcpTools (Python)**: Explicit `imageId` is now required (no silent default). Callers must pass `imageId` when listing MCP tools.
+
+### New Features
+
+- **TypeScript SDK**: Full TypeScript SDK for AGB (client, Session, Config, API layer, Command, Code, FileSystem, Browser, Computer, Extension, Context, exceptions, logger). API models split into 51 separate files.
+- **getCdpLink**: New API in Python and TypeScript; sessionId as query parameter. Browser `get_endpoint_url` uses getCdpLink in Python.
+- **BrowserAgent (TypeScript)**: `act`, `observe`, `extract`, `navigate`; async variants with time-based timeout; BrowserFingerprintGenerator and FingerprintFormat.
+- **Session lifecycle**: Idle release timeout (configurable); refresh session idle time API (keep-alive). Docs for lifecycle, keep-alive, and resource_url validity (30 min).
+- **Python**: `call_mcp_tool` delegated to BaseService to remove duplication; Session uses `_base_service`.
+- **Module parity (TypeScript)**: FileSystem upload/download via pre-signed URLs, `transferPath`, `watchDir`; Computer.Window fullscreen/focusMode; Computer.App `stopByCmd`/`getVisible`; Browser `getOption`/`isInitialized`; Session `getAgb()`; new file-transfer module for OSS and context sync.
+- **CI/CD**: TypeScript official release pipeline and script; npm build/publish pipeline; internal tnpm test publish; publish npm test to tnpm when patch is merged.
+- **Documentation**: Single root README (Python + TypeScript quick start, docs, development); website and Discord URLs; TypeScript code examples in VitePress code-group tabs; API reference merged into `docs/api-reference` with python/ and typescript/; Session docs split (lifecycle, info, labels, list, mcp-tools); Context expanded (concepts, best practices, FAQ); call-for-use and captcha docs.
+
+### Enhancements
+
+- **Filesystem (Python)**: FileInfo type; FileChangeEvent eventType/pathType; readFile with `{ format: "bytes" }`; writeFile `create_new` mode; watchDirectory with AbortSignal; sync fallback (awaitSync); waitForTask uses `res.items ?? res.contextStatusData`; OSS cleanup after upload/download. Unit tests aligned to DEFAULT_CHUNK_SIZE 50KB.
+- **Computer (Python/TS)**: MouseButton.DOUBLE_LEFT, drag(button); getPosition/getSize return CursorPosition/ScreenSize; get_installed_apps uses `ignore_system_app`. Browser: BrowserProxy managed type (user_id, isp, country, province, city).
+- **TypeScript**: Response models gained requestId and field parsing; getters (getTotalCount, getExpireTime, etc.); `toJSON()` on Session, AGB, BaseService, ContextService, ContextManager, Computer to avoid circular serialization; Browser screenshot Playwright-only (MCP screenshot removed); interface signatures aligned with Python (Keyboard press/release, App start/listInstalled, FileSystem progressCallback, Extension cleanup). `AGB.get()` returns `session: null` when session is deleted or missing (typed as `Session | null`).
+- **Project structure**: Python SDK moved under `python/` (agb/, tests/, pyproject.toml, etc.); CI, scripts, root README updated.
+
+### Bug Fixes
+
+- **MCP screenshot**: CallMcpToolResponse now extracts `type="image"` content when no text (screenshot tool returns image).
+- **Extension upload (TS)**: Use `fetch` instead of axios to fix 403 OSS upload.
+- **getCdpLink**: TypeScript sends empty JSON body and capitalized Authorization header; Python/TS tests fail explicitly instead of silent skip.
+- **Extension upload message (TS)**: Use `errorMessage` instead of `url` on failure.
+- **tsup (TS)**: Externalize playwright to fix ESM/CJS build (optional runtime dependency).
+- **Docs**: VitePress angle bracket escaping for TS generics; dead links fixed (tutorial depth, Related Resources, quickstart, browser links); tutorial link path generation for absolute-style paths; CI copy logic so api-reference/python/ does not get nested subdirs.
+- **Python**: mypy fixes (GetCdpLinkResponse, Browser/FileSystem __init__, Optional dicts, FileError duplicate, logging params, browser agent extract return types).
+- **CI**: Subshell `(cd python && ...)` to prevent path duplication; job outputs for pass/fail; summary decoupled from test jobs; correct image ID and AGB_ENDPOINT for TS integration tests; continue-on-error to avoid fast-fail cascade; clone retries and git HTTP tuning for push-docs-to-github.
+
+### Documentation, Testing & Chore
+
+- **Docs**: TypeScript API docs auto-generation in pipeline (TypeDoc); doc-metadata and computer overview generation (sub-modules before container, exclude_methods). Removed session best-practices.md, troubleshooting.md; keep-alive folded into lifecycle.
+- **Testing**: TypeScript unit tests (session, base-service, logger, api-response, command, code, filesystem, computer, browser, extension, context, context-manager, api models, http-client, client, file-transfer, agb, BrowserAgent, fingerprint); integration tests (all modules, browser, computer, file transfer, watchDir, MCP, advanced suites). Python unit coverage to ~83% (logger, code, computer submodules, file_system, context_manager); getCdpLink integration tests. Pre env uses agb-code-space-2; CICD script names optimized.
+- **Chore**: Removed unused session management methods and models; trimmed keep-alive use-case examples; docs/dev/ in .gitignore; code formatting (agb, browser). Pause and resume was added then removed in this cycle and is not part of the release.
+
 ## [0.10.0] - 2026-02-09
 
 This release focuses on **API Naming Simplification Phase 2** in the Computer module, the new **policy_id** parameter for session creation, and **OpenClaw examples** for Slack, Discord, and Telegram.

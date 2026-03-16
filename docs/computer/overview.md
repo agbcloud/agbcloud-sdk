@@ -14,10 +14,11 @@ Automate a desktop environment in an AGB session: mouse/keyboard actions, screen
 
 Minimal runnable example: create a computer session, click, type, take a screenshot, then clean up.
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
-from agb import MouseButton
 
 agb = AGB()
 create_result = agb.create(CreateSessionParams(image_id="agb-computer-use-ubuntu-2204"))
@@ -26,13 +27,38 @@ if not create_result.success:
 
 session = create_result.session
 
-session.computer.mouse.click(x=500, y=300, button=MouseButton.LEFT)
+# Open text editor and type text
+session.computer.app.start("gedit %U")
 session.computer.keyboard.type("Hello from AGB!")
-image_url = session.computer.screen.capture()
-print("Screenshot URL:", image_url)
+screen_capture_result = session.computer.screen.capture()
+print("Screenshot URL:", screen_capture_result.data)
 
 agb.delete(session)
 ```
+
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+import { MouseButton } from "agbcloud-sdk/modules/computer/computer";
+
+const agb = new AGB();
+const createResult = await agb.create(
+  new CreateSessionParams({ imageId: "agb-computer-use-ubuntu-2204" })
+);
+if (!createResult.success || !createResult.session) {
+  throw new Error(`Session creation failed: ${createResult.errorMessage}`);
+}
+
+const session = createResult.session;
+
+await session.computer.mouse.click(500, 300, MouseButton.LEFT);
+await session.computer.keyboard.type("Hello from AGB!");
+const imageUrl = await session.computer.screen.capture();
+console.log("Screenshot URL:", imageUrl);
+
+await agb.delete(session);
+```
+
+:::
 
 ## Common tasks
 
@@ -55,5 +81,5 @@ See: [`docs/computer/troubleshooting.md`](troubleshooting.md)
 
 ## Related
 
-- API reference: [`docs/api-reference/capabilities/computer.md`](../api-reference/capabilities/computer.md)
+- API reference: [`docs/api-reference/python/capabilities/computer.md`](../api-reference/python/capabilities/computer.md)
 - Examples: `docs/examples/computer/` (Python scripts)

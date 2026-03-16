@@ -11,38 +11,72 @@ Send text and key combinations to the active window in a computer session.
 
 ## Quickstart
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
 agb = AGB()
-create_result = agb.create(CreateSessionParams(image_id="agb-computer-use-ubuntu-2204"))
-if not create_result.success:
-    raise SystemExit(create_result.error_message)
+result = agb.create(CreateSessionParams(image_id="agb-computer-use-ubuntu-2204"))
+session = result.session
 
-session = create_result.session
 session.computer.keyboard.type("Hello AGB!")
 session.computer.keyboard.press(["Ctrl", "a"])
-
 agb.delete(session)
 ```
+
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+const result = await agb.create(
+  new CreateSessionParams({ imageId: "agb-computer-use-ubuntu-2204" })
+);
+const session = result.session!;
+
+await session.computer.keyboard.type("Hello AGB!");
+await session.computer.keyboard.press(["Ctrl", "a"]);
+await agb.delete(session);
+```
+
+:::
 
 ## Common tasks
 
 ### Text input
 
-```python
+::: code-group
+
+```python [Python]
 result = session.computer.keyboard.type("Hello, World!")
 print(result.success, result.error_message)
 ```
 
+```typescript [TypeScript]
+const result = await session.computer.keyboard.type("Hello, World!");
+console.log(result.success, result.errorMessage);
+```
+
+:::
+
 ### Key combinations
 
-```python
+::: code-group
+
+```python [Python]
 session.computer.keyboard.press(["Ctrl", "c"])  # copy
 session.computer.keyboard.press(["Ctrl", "v"])  # paste
 session.computer.keyboard.press(["Ctrl", "a"])  # select all
 ```
+
+```typescript [TypeScript]
+await session.computer.keyboard.press(["Ctrl", "c"]);  // copy
+await session.computer.keyboard.press(["Ctrl", "v"]);  // paste
+await session.computer.keyboard.press(["Ctrl", "a"]);  // select all
+```
+
+:::
 
 ### Press and release keys
 
@@ -71,5 +105,5 @@ session.computer.keyboard.release(["Shift"])  # Remember to release!
 ## Related
 
 - Window management: [`docs/computer/windows.md`](windows.md)
-- API reference: [`docs/api-reference/capabilities/computer.md`](../api-reference/capabilities/computer.md)
+- API reference: [`docs/api-reference/python/capabilities/computer.md`](../api-reference/python/capabilities/computer.md)
 

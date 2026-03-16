@@ -13,7 +13,9 @@ Delete a file in an AGB session using `session.file.remove(path)` and handle com
 
 Minimal runnable example: delete an existing file, then clean up.
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -24,27 +26,60 @@ if not create_result.success:
 
 session = create_result.session
 try:
-    # Assume the file already exists in the session.
-    # For example, it may have been produced by a previous step in your workflow.
-    path = "/tmp/to_delete.txt"
-
-    delete_result = session.file.remove(path)
+    delete_result = session.file.remove("/tmp/to_delete.txt")
     if not delete_result.success:
         raise SystemExit(f"Delete failed: {delete_result.error_message}")
 finally:
     agb.delete(session)
 ```
 
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+const createResult = await agb.create(
+  new CreateSessionParams({ imageId: "agb-code-space-1" })
+);
+if (!createResult.success || !createResult.session) {
+  throw new Error(`Session creation failed: ${createResult.errorMessage}`);
+}
+
+const session = createResult.session;
+try {
+  const deleteResult = await session.file.remove("/tmp/to_delete.txt");
+  if (!deleteResult.success) {
+    throw new Error(`Delete failed: ${deleteResult.errorMessage}`);
+  }
+} finally {
+  await agb.delete(session);
+}
+```
+
+:::
+
 ## Common tasks
 
 ### Delete multiple files under a directory
 
-```python
+::: code-group
+
+```python [Python]
 entries = session.file.list("/tmp").entries
 for e in entries:
     if e.is_file and e.name.endswith(".tmp"):
         session.file.remove(f"/tmp/{e.name}")
 ```
+
+```typescript [TypeScript]
+const listResult = await session.file.list("/tmp");
+for (const e of listResult.entries ?? []) {
+  if (e.type === "file" && e.name.endsWith(".tmp")) {
+    await session.file.remove(`/tmp/${e.name}`);
+  }
+}
+```
+
+:::
 
 ## Best practices
 
@@ -66,7 +101,7 @@ for e in entries:
 
 ## Related
 
-- API reference: [`docs/api-reference/capabilities/file_system.md`](../api-reference/capabilities/file_system.md)
+- API reference: [`docs/api-reference/python/capabilities/file_system.md`](../api-reference/python/capabilities/file_system.md)
 - Overview: [`docs/file-system/overview.md`](overview.md)
 - Directory management: [`docs/file-system/directory-management.md`](directory-management.md)
 

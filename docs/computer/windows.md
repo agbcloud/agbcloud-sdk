@@ -132,5 +132,5 @@ if not result.success:
 
 - Application management: [`docs/computer/applications.md`](applications.md)
 - Workflows: [`docs/computer/workflows.md`](workflows.md)
-- API reference: [`docs/api-reference/capabilities/computer.md`](../api-reference/capabilities/computer.md)
+- API reference: [`docs/api-reference/python/capabilities/computer.md`](../api-reference/python/capabilities/computer.md)
 

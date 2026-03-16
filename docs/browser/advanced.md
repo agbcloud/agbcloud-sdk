@@ -95,7 +95,7 @@ except BrowserError as e:
 ## Best practices
 
 - Keep extensions and fingerprints in their dedicated docs to avoid duplication.
-- Prefer internal pages during initialization (see [`docs/browser/configuration.md`](configuration.md)).
+- Prefer internal pages during initialization (see [Browser overview](overview.md)).
 
 ## Troubleshooting
 
@@ -107,7 +107,7 @@ except BrowserError as e:
 ## Related
 
 - Main guide: [`docs/browser/overview.md`](overview.md)
-- Configuration: [`docs/browser/configuration.md`](configuration.md)
+- Configuration: [Browser overview](overview.md)
 - Extensions: [`docs/browser/extension.md`](extension.md)
 - Fingerprint: [`docs/browser/fingerprint.md`](fingerprint.md)
 

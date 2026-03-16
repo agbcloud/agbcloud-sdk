@@ -14,7 +14,9 @@ Mount a Context into a session with `ContextSync`, trigger manual sync, and chec
 
 Create a session with a mounted context:
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.context_sync import ContextSync, SyncPolicy
 from agb.session_params import CreateSessionParams
@@ -23,20 +25,33 @@ agb = AGB()
 context = agb.context.get("test", create=True).context
 
 context_sync = ContextSync.new(
-    context_id=context.id,
-    path="/home/my-data",
-    policy=SyncPolicy(),
+    context_id=context.id, path="/home/my-data", policy=SyncPolicy(),
 )
 
 create_result = agb.create(
     CreateSessionParams(image_id="agb-code-space-1", context_syncs=[context_sync])
 )
-if not create_result.success:
-    raise SystemExit(create_result.error_message)
-
 session = create_result.session
 agb.delete(session)
 ```
+
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+import { ContextSync, newSyncPolicy } from "agbcloud-sdk/context-sync";
+
+const agb = new AGB();
+const context = (await agb.context.get("test", true)).context!;
+
+const ctxSync = ContextSync.new(context.id, "/home/my-data", newSyncPolicy());
+
+const createResult = await agb.create(
+  new CreateSessionParams({ imageId: "agb-code-space-1", contextSync: [ctxSync] })
+);
+const session = createResult.session!;
+await agb.delete(session);
+```
+
+:::
 
 ## Common tasks
 
@@ -44,7 +59,9 @@ agb.delete(session)
 
 `session.context.sync()` is an async method. Use it inside an async function:
 
-```python
+::: code-group
+
+```python [Python]
 import asyncio
 
 async def sync_now(session) -> None:
@@ -53,6 +70,13 @@ async def sync_now(session) -> None:
 
 asyncio.run(sync_now(session))
 ```
+
+```typescript [TypeScript]
+const syncResult = await session.context.sync();
+console.log(syncResult.success, syncResult.errorMessage);
+```
+
+:::
 
 ### Trigger sync in background (callback)
 
@@ -65,12 +89,23 @@ session.context.sync(callback=on_done)
 
 ### Monitor sync status
 
-```python
+::: code-group
+
+```python [Python]
 info_result = session.context.info()
 if info_result.success:
     for s in info_result.context_status_data:
         print(s.context_id, s.path, s.status, s.task_type, s.error_message)
 ```
+
+```typescript [TypeScript]
+const infoResult = await session.context.info();
+if (infoResult.success) {
+  console.log(infoResult.data);
+}
+```
+
+:::
 
 ## Best practices
 
@@ -88,5 +123,5 @@ if info_result.success:
 
 - Overview: [`docs/context/overview.md`](overview.md)
 - Sync policies: [`docs/context/sync-policies.md`](sync-policies.md)
-- API reference (sync): [`docs/api-reference/data_context/synchronization.md`](../api-reference/data_context/synchronization.md)
+- API reference (sync): [`docs/api-reference/python/data_context/synchronization.md`](../api-reference/python/data_context/synchronization.md)
 

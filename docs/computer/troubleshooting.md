@@ -95,5 +95,5 @@ print(\"Healthy:\", check_session_health(session))
 ## Related
 
 - Best practices: [`docs/computer/best-practices.md`](best-practices.md)
-- API reference: [`docs/api-reference/capabilities/computer.md`](../api-reference/capabilities/computer.md)
+- API reference: [`docs/api-reference/python/capabilities/computer.md`](../api-reference/python/capabilities/computer.md)
 

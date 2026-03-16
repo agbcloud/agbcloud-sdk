@@ -147,5 +147,5 @@ if start_result.success and start_result.data:
 ## Related
 
 - Window management: [`docs/computer/windows.md`](windows.md)
-- API reference: [`docs/api-reference/capabilities/computer.md`](../api-reference/capabilities/computer.md)
+- API reference: [`docs/api-reference/python/capabilities/computer.md`](../api-reference/python/capabilities/computer.md)
 

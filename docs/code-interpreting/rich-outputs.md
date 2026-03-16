@@ -13,9 +13,10 @@ Run code and consume **rich outputs** returned by `session.code.run(...)`, inclu
 
 Minimal runnable example: generate a matplotlib plot, then save the returned PNG output.
 
-```python
-import base64
+::: code-group
 
+```python [Python]
+import base64
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -42,11 +43,48 @@ try:
                 f.write(base64.b64decode(item.png))
             print("Saved: plot.png")
             break
-    else:
-        raise RuntimeError("No PNG output returned. Check image_id/runtime and the code.")
 finally:
     agb.delete(session)
 ```
+
+```typescript [TypeScript]
+import * as fs from "fs";
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+const createResult = await agb.create(
+  new CreateSessionParams({ imageId: "agb-code-space-1" })
+);
+if (!createResult.success || !createResult.session) {
+  throw new Error(`Session creation failed: ${createResult.errorMessage}`);
+}
+
+const session = createResult.session;
+try {
+  const execResult = await session.code.run(
+    "import matplotlib.pyplot as plt\n" +
+    "plt.plot([1, 2, 3], [1, 4, 9])\n" +
+    "plt.title('AGB rich output demo')\n" +
+    "plt.show()\n",
+    "python",
+  );
+  if (!execResult.success) {
+    throw new Error(`Execution failed: ${execResult.errorMessage}`);
+  }
+
+  for (const item of execResult.results ?? []) {
+    if (item.png) {
+      fs.writeFileSync("plot.png", Buffer.from(item.png, "base64"));
+      console.log("Saved: plot.png");
+      break;
+    }
+  }
+} finally {
+  await agb.delete(session);
+}
+```
+
+:::
 
 ## Common tasks
 
@@ -65,31 +103,39 @@ Each `ExecutionResult` may include:
 
 ### Detect what you received
 
-```python
+::: code-group
+
+```python [Python]
 for item in exec_result.results:
     if item.text:
         print("text")
     if item.html:
         print("html")
-    if item.markdown:
-        print("markdown")
     if item.png:
         print("png")
-    if item.jpeg:
-        print("jpeg")
     if item.svg:
         print("svg")
     if item.json is not None:
         print("json")
-    if item.latex:
-        print("latex")
-    if item.chart is not None:
-        print("chart")
 ```
+
+```typescript [TypeScript]
+for (const item of execResult.results ?? []) {
+  if (item.text) console.log("text");
+  if (item.html) console.log("html");
+  if (item.png) console.log("png");
+  if (item.svg) console.log("svg");
+  if (item.json != null) console.log("json");
+}
+```
+
+:::
 
 ### Save a returned PNG/JPEG to disk
 
-```python
+::: code-group
+
+```python [Python]
 import base64
 
 for item in exec_result.results:
@@ -101,9 +147,26 @@ for item in exec_result.results:
             f.write(base64.b64decode(item.jpeg))
 ```
 
+```typescript [TypeScript]
+import * as fs from "fs";
+
+for (const item of execResult.results ?? []) {
+  if (item.png) {
+    fs.writeFileSync("output.png", Buffer.from(item.png, "base64"));
+  }
+  if (item.jpeg) {
+    fs.writeFileSync("output.jpg", Buffer.from(item.jpeg, "base64"));
+  }
+}
+```
+
+:::
+
 ### Access stdout/stderr logs
 
-```python
+::: code-group
+
+```python [Python]
 if exec_result.logs:
     if exec_result.logs.stdout:
         print("STDOUT:", exec_result.logs.stdout)
@@ -111,11 +174,32 @@ if exec_result.logs:
         print("STDERR:", exec_result.logs.stderr)
 ```
 
+```typescript [TypeScript]
+if (execResult.logs) {
+  if (execResult.logs.stdout?.length) {
+    console.log("STDOUT:", execResult.logs.stdout);
+  }
+  if (execResult.logs.stderr?.length) {
+    console.log("STDERR:", execResult.logs.stderr);
+  }
+}
+```
+
+:::
+
 ### Increase timeout for long-running code
 
-```python
+::: code-group
+
+```python [Python]
 session.code.run("import time; time.sleep(100)", "python", timeout_s=120)
 ```
+
+```typescript [TypeScript]
+await session.code.run("import time; time.sleep(100)", "python", 120);
+```
+
+:::
 
 ## Best practices
 
@@ -138,6 +222,6 @@ session.code.run("import time; time.sleep(100)", "python", timeout_s=120)
 ## Related
 
 - Overview: [`docs/code-interpreting/overview.md`](overview.md)
-- API reference: [`docs/api-reference/capabilities/code_execution.md`](../api-reference/capabilities/code_execution.md)
+- API reference: [`docs/api-reference/python/capabilities/code_execution.md`](../api-reference/python/capabilities/code_execution.md)
 - Examples: [`docs/examples/code_execution/README.md`](../examples/code_execution/README.md)
 

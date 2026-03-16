@@ -35,8 +35,12 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
+# Dev temporary files (generated analysis, comparison docs, etc.)
+docs/dev/
+
 # Unit test / coverage reports
 htmlcov/
+coverage/
 .tox/
 .nox/
 .coverage
@@ -136,3 +140,8 @@ CLAUDE.md
 
 # uv lockfile (only used when using uv; project uses venv)
 uv.lock
+
+# Node.js / TypeScript
+node_modules/
+*.tsbuildinfo
+.history/

@@ -5,6 +5,8 @@
   </a>
 </h4>
 
+---
+
 ## 🔥 Moltbot (formerly Clawdbot) Quick Deployment
 
 You can use AGB SDK to spin up a prebuilt Moltbot cloud desktop in minutes, then open the Moltbot console inside the desktop browser.
@@ -17,24 +19,33 @@ You can use AGB SDK to spin up a prebuilt Moltbot cloud desktop in minutes, then
 
 ---
 
-AGB Python SDK provides a convenient way to interact with the AGB cloud service.
+AGB Cloud SDK provides client libraries for interacting with the AGB cloud service.
 
 ## Features
 
 - Create and manage sessions in the AGB cloud environment
-- Access session information
 - Work with file system, command execution, and code execution modules
 - Browser automation with AI-powered natural language operations
-- Advanced browser configuration (stealth mode, proxies, fingerprinting)
-- Structured data extraction from web pages
+- Persistent context management with sync policies
+
+### 🎯 Scenario-Based Features
+- **Computer Use** - Linux computer control (mouse, keyboard, window, application, screen)
+- **Browser Use** - Web automation, scraping, and browser control
+- **CodeSpace** - Code execution and development environment
 
 ## Installation
 
 ```bash
+# Python
 pip install agbcloud-sdk
+
+# TypeScript
+npm install agbcloud-sdk
 ```
 
 ## Quick Start
+
+### Python
 
 ```python
 from agb import AGB
@@ -71,6 +82,41 @@ else:
     print(f"Failed to create session: {result.error_message}")
 ```
 
+### TypeScript
+
+```typescript
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+// Initialize AGB with your API key
+const agb = new AGB({ apiKey: "your-api-key" });
+
+// Create a session
+const params = new CreateSessionParams({ imageId: "agb-code-space-1" });
+const result = await agb.create(params);
+
+if (result.success && result.session) {
+  const session = result.session;
+
+  // Execute Python code
+  const codeResult = await session.code.run("print('Hello AGB!')", "python");
+  console.log(codeResult.results[0]?.text);
+
+  // Execute shell command
+  const cmdResult = await session.command.execute("ls -la");
+  console.log(cmdResult.stdout);
+
+  // Work with files
+  await session.file.writeFile("/tmp/test.txt", "Hello World!");
+  const fileResult = await session.file.readFile("/tmp/test.txt");
+  console.log(fileResult.content);
+
+  // Clean up
+  await agb.delete(session);
+} else {
+  console.error(`Failed to create session: ${result.errorMessage}`);
+}
+```
+
 ## Documentation
 
 For comprehensive documentation, guides, and examples, visit:
@@ -84,29 +130,33 @@ For comprehensive documentation, guides, and examples, visit:
 
 ## Development
 
-### Prerequisites
+### Python
 
-- Python 3.10 or higher
-- pip
+```bash
+cd python
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -e ".[dev,test]"
+```
 
-### Setup
+### TypeScript
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/agbcloud/agbcloud-sdk.git
-   cd agbcloud-sdk
-   ```
+```bash
+cd typescript
+npm install
+npm run build
+npm test
+```
 
-2. Create a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+## Get Help
+- [GitHub Issues](https://github.com/agbcloud/agbcloud-sdk/issues)
 
-3. Install dependencies:
-   ```bash
-   pip install -e ."[dev,test]"
-   ```
+## Contact
+Welcome to visit our product website and join our community!
+
+- **AGB Product Website**: [https://agb.cloud/](https://agb.cloud/)
+- **AGB Console**: [https://agb.cloud/console/overview](https://agb.cloud/console/overview)
+- **Discord Community**: [Join on Discord](https://discord.gg/WQ2EHJxhy7)
 
 ## License
 

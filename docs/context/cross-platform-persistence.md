@@ -6,25 +6,34 @@ This guide explains how to use the **MappingPolicy** feature in AGB SDK to enabl
 
 ## Quick Reference
 
-```python
-from agb import AGB
+::: code-group
+
+```python [Python]
 from agb.context_sync import MappingPolicy, SyncPolicy, UploadPolicy, DownloadPolicy, DeletePolicy, ExtractPolicy
 
-# Create mapping policy for cross-platform access
 mapping_policy = MappingPolicy(path="/original/path")
-
-# Create sync policy with mapping
 sync_policy = SyncPolicy(
     upload_policy=UploadPolicy(),
     download_policy=DownloadPolicy(),
     delete_policy=DeletePolicy(),
     extract_policy=ExtractPolicy(),
-    mapping_policy=mapping_policy
+    mapping_policy=mapping_policy,
 )
-
-# Use in session creation
-session_params.add_context_sync(context_id, "/target/path", sync_policy)
 ```
+
+```typescript [TypeScript]
+import { newSyncPolicy, newUploadPolicy, newDownloadPolicy, newDeletePolicy, newExtractPolicy } from "agbcloud-sdk/context-sync";
+
+const syncPolicy = newSyncPolicy({
+  uploadPolicy: newUploadPolicy(),
+  downloadPolicy: newDownloadPolicy(),
+  deletePolicy: newDeletePolicy(),
+  extractPolicy: newExtractPolicy(),
+  mappingPolicy: { path: "/original/path" },
+});
+```
+
+:::
 
 ## Understanding the Problem
 
@@ -320,29 +329,39 @@ if __name__ == "__main__":
 
 ### Browser to Code Session Mapping
 
-```python
-# Original browser session path
+::: code-group
+
+```python [Python]
 browser_path = "/tmp/mapping"
-
-# Target code session path
 code_path = "/home/data"
-
-# Create mapping policy
 mapping_policy = MappingPolicy(path=browser_path)
 ```
 
+```typescript [TypeScript]
+const browserPath = "/tmp/mapping";
+const codePath = "/home/data";
+const mappingPolicy = { path: browserPath };
+```
+
+:::
+
 ### Code to Browser Session Mapping
 
-```python
-# Original code session path
+::: code-group
+
+```python [Python]
 code_path = "/home/project"
-
-# Target browser session path
 browser_path = "/tmp/workspace"
-
-# Create mapping policy
 mapping_policy = MappingPolicy(path=code_path)
 ```
+
+```typescript [TypeScript]
+const codePath = "/home/project";
+const browserPath = "/tmp/workspace";
+const mappingPolicy = { path: codePath };
+```
+
+:::
 
 ## Troubleshooting
 

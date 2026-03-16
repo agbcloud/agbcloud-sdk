@@ -13,7 +13,9 @@ Read a file as **raw bytes** using `session.file.read(..., format="bytes")`, the
 
 Minimal runnable example: read a binary file as bytes and save it locally, then clean up.
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -24,26 +26,51 @@ if not create_result.success:
 
 session = create_result.session
 try:
-    # Pick a binary file that exists in most Linux images (ELF binary)
-    remote_path = "/bin/ls"
-
-    read_result = session.file.read(remote_path, format="bytes")
+    read_result = session.file.read("/bin/ls", format="bytes")
     if not read_result.success:
         raise SystemExit(f"Read failed: {read_result.error_message}")
 
     with open("ls.bin", "wb") as f:
         f.write(read_result.content)
-
     print("Saved:", "ls.bin", "bytes=", len(read_result.content))
 finally:
     agb.delete(session)
 ```
 
+```typescript [TypeScript]
+import * as fs from "fs";
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+const createResult = await agb.create(
+  new CreateSessionParams({ imageId: "agb-code-space-1" })
+);
+if (!createResult.success || !createResult.session) {
+  throw new Error(`Session creation failed: ${createResult.errorMessage}`);
+}
+
+const session = createResult.session;
+try {
+  const readResult = await session.file.readBytes("/bin/ls");
+  if (!readResult.success) {
+    throw new Error(`Read failed: ${readResult.errorMessage}`);
+  }
+  fs.writeFileSync("ls.bin", readResult.content ?? "");
+  console.log("Saved: ls.bin");
+} finally {
+  await agb.delete(session);
+}
+```
+
+:::
+
 ## Common tasks
 
 ### Read an image and save it locally
 
-```python
+::: code-group
+
+```python [Python]
 read_result = session.file.read("/tmp/image.png", format="bytes")
 if not read_result.success:
     raise RuntimeError(read_result.error_message)
@@ -51,6 +78,16 @@ if not read_result.success:
 with open("image.png", "wb") as f:
     f.write(read_result.content)
 ```
+
+```typescript [TypeScript]
+const readResult = await session.file.readBytes("/tmp/image.png");
+if (!readResult.success) {
+  throw new Error(readResult.errorMessage ?? "Read failed");
+}
+fs.writeFileSync("image.png", readResult.content ?? "");
+```
+
+:::
 
 ### Prefer download for large files
 
@@ -83,7 +120,7 @@ with open("image.png", "wb") as f:
 
 ## Related
 
-- API reference: [`docs/api-reference/capabilities/file_system.md`](../api-reference/capabilities/file_system.md)
+- API reference: [`docs/api-reference/python/capabilities/file_system.md`](../api-reference/python/capabilities/file_system.md)
 - Read & write (text): [`docs/file-system/read-and-write.md`](read-and-write.md)
 - Upload & download: [`docs/file-system/upload-and-download.md`](upload-and-download.md)
 - Delete files: [`docs/file-system/delete-files.md`](delete-files.md)

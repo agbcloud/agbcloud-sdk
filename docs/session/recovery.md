@@ -6,28 +6,49 @@ In certain scenarios, you may need to recover a Session object using its session
 
 The `get` method is the recommended way to recover a session. It retrieves session information from the cloud and returns a ready-to-use Session object with the API request ID.
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 
-# Initialize the SDK
 agb = AGB()
 
-# Retrieve session using its ID
 session_id = "your_existing_session_id"
 get_result = agb.get(session_id)
 
 if get_result.success:
     session = get_result.session
     print(f"Retrieved session: {session.session_id}")
-    print(f"Request ID: {get_result.request_id}")
 
-    # You can now perform any session operations
     result = session.command.execute("echo 'Hello, World!'")
     if result.success:
         print(result.output)
 else:
     print(f"Failed to retrieve session: {get_result.error_message}")
 ```
+
+```typescript [TypeScript]
+import { AGB } from "agbcloud-sdk";
+
+const agb = new AGB();
+
+const sessionId = "your_existing_session_id";
+const getResult = await agb.get(sessionId);
+
+if (getResult.success && getResult.session) {
+  const session = getResult.session;
+  console.log("Retrieved session:", session.getSessionId());
+
+  const result = await session.command.execute("echo 'Hello, World!'");
+  if (result.success) {
+    console.log(result.output);
+  }
+} else {
+  console.error("Failed to retrieve session:", getResult.errorMessage);
+}
+```
+
+:::
 
 ## Important Considerations
 

@@ -18,7 +18,9 @@ Create, use, list, label, and delete **sessions** (isolated cloud environments) 
 
 Minimal runnable example: create a session, run one action, then delete it.
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -28,136 +30,37 @@ if not create_result.success:
     raise SystemExit(f"Session creation failed: {create_result.error_message}")
 
 session = create_result.session
-
-# Do something in the session
 session.code.run("print('Hello from AGB')", "python")
-
 agb.delete(session)
 ```
 
-## Common tasks
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
 
-### Create a session
+const agb = new AGB();
+const createResult = await agb.create(
+  new CreateSessionParams({ imageId: "agb-code-space-1" })
+);
+if (!createResult.success || !createResult.session) {
+  throw new Error(`Session creation failed: ${createResult.errorMessage}`);
+}
 
-```python
-from agb import AGB
-from agb.session_params import CreateSessionParams
-
-agb = AGB()
-result = agb.create(CreateSessionParams(image_id="agb-code-space-1"))
-if result.success:
-    session = result.session
-    print("Session created:", session.session_id)
-else:
-    print("Creation failed:", result.error_message)
+const session = createResult.session;
+await session.code.run("print('Hello from AGB')", "python");
+await agb.delete(session);
 ```
 
-### Get session info
+:::
 
-```python
-info_result = session.info()
-if info_result.success:
-    data = info_result.data
-    print("Session ID:", data.get("session_id", "N/A"))
-    print("Resource URL:", data.get("resource_url", "N/A"))
-```
+## Understand auto-release (timeout)
 
-### List active sessions
+Sessions are automatically released after a period of inactivity to free up resources.
 
-The `list()` method returns **active session IDs** for your account.
+- **`idle_release_timeout`**: Set at session creation to control how long a session can remain idle before auto-release. The timer starts from the last API request — any API call resets it.
+- **`keep_alive()`**: Call this method periodically to prevent auto-release during long-running tasks or when waiting for external events.
+- Released sessions will **not** appear in `agb.list()` and the session ID becomes invalid.
 
-```python
-from agb import AGB
-
-agb = AGB()
-result = agb.list()
-
-if result.success:
-    print("Total sessions:", result.total_count)
-    print("This page:", len(result.session_ids))
-    for session_id in result.session_ids:
-        print("Session ID:", session_id)
-else:
-    print("List failed:", result.error_message)
-```
-
-### Paginate session listing
-
-```python
-result = agb.list(labels={"project": "demo"}, page=2, limit=10)
-if result.success:
-    print("Total:", result.total_count)
-    print("Next token:", result.next_token)
-```
-
-### Set and get labels
-
-You can set labels on creation, or update them after creation.
-
-```python
-create_result = agb.create(
-    CreateSessionParams(
-        image_id="agb-code-space-1",
-        labels={"project": "demo", "environment": "testing", "team": "backend"},
-    )
-)
-```
-
-```python
-set_result = session.set_labels({"project": "demo", "environment": "production"})
-print("Set labels:", set_result.success, set_result.error_message)
-
-get_result = session.get_labels()
-if get_result.success:
-    print(get_result.data)
-```
-
-### Filter sessions by labels
-
-Filter works best after you consistently apply labels during creation and updates.
-
-```python
-result = agb.list(labels={"project": "demo", "environment": "testing"})
-if result.success:
-    for session_id in result.session_ids:
-        print("Session ID:", session_id)
-```
-
-### Call MCP tools
-
-You can call MCP (Model Context Protocol) tools directly from a session. This allows you to interact with various capabilities available in the AGB cloud environment.
-
-```python
-# List available MCP tools
-result = session.list_mcp_tools()
-if result.success:
-    print(f"Available tools: {len(result.tools)}")
-    for tool in result.tools:
-        print(f"  - {tool.name}: {tool.description}")
-
-# Call an MCP tool
-result = session.call_mcp_tool("tool_name", {"param1": "value1", "param2": "value2"})
-if result.success:
-    print("Tool executed successfully")
-    print("Result:", result.data)  # Result is in JSON string format
-else:
-    print("Tool call failed:", result.error_message)
-```
-
-**Note**: The available tools depend on the image type. For example, browser images may have UI interaction tools, while code images may have different tools. Use `list_mcp_tools()` to discover available tools for your session's image.
-
-### Delete a session (recommended)
-
-```python
-delete_result = agb.delete(session)
-print("Deleted:", delete_result.success, delete_result.error_message)
-```
-
-### Understand auto-release (timeout)
-
-- If you don’t delete a session, it may be automatically released after an inactivity timeout (configured in the AGB console).
-- Released/deleted sessions will **not** appear in `agb.list()` and the session ID becomes invalid.
-- Use Context sync if you need persistence across sessions: [`docs/context/overview.md`](../context/overview.md)
+For detailed lifecycle management, see [Session Lifecycle](./lifecycle.md).
 
 ## Best practices
 
@@ -172,6 +75,7 @@ print("Deleted:", delete_result.success, delete_result.error_message)
 ### Session creation failed
 
 - **Likely cause**: invalid `AGB_API_KEY`, invalid `image_id`, or missing permissions.
+- **Suggestion**: Check the `error_message` returned by the `create` API for specific error details.
 - **Fix**: verify credentials and image availability in the console.
 
 ### My session is not in `agb.list()`
@@ -186,7 +90,7 @@ print("Deleted:", delete_result.success, delete_result.error_message)
 
 ## Related
 
-- API reference: [`docs/api-reference/session.md`](../api-reference/session.md)
-- API reference (client): [`docs/api-reference/agb.md`](../api-reference/agb.md)
+- API reference: [`docs/api-reference/python/session.md`](../api-reference/python/session.md)
+- API reference (client): [`docs/api-reference/python/agb.md`](../api-reference/python/agb.md)
 - Examples: [`docs/examples/session_management/README.md`](../examples/session_management/README.md)
 - Persistence: [`docs/context/overview.md`](../context/overview.md)

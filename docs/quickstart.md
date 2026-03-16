@@ -4,15 +4,26 @@
 
 ### 1. Installation
 
-```bash
+::: code-group
+
+```bash [Python]
 pip install agbcloud-sdk
 export AGB_API_KEY="your_key"
 ```
 
+```bash [TypeScript]
+npm install agbcloud-sdk
+export AGB_API_KEY="your_key"
+```
+
+:::
+
 ### 2. First Example
 **Important**: When using AGB, you need to specify an appropriate `image_id`. Please ensure you use valid image IDs that are available in your account. You can view and manage your available images in the [AGB Console Image Management](https://agb.cloud/console/image-management) page.
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -21,16 +32,15 @@ agb = AGB()
 
 # Create code execution session
 params = CreateSessionParams(image_id="agb-code-space-1")
-result =agb .create(params)
+result = agb.create(params)
 if not result.success:
-    print(f"✅ Session created failed: {result.error_message}")
+    print(f"Session creation failed: {result.error_message}")
     exit(1)
 
 session = result.session
 
 # Execute code
 result = session.code.run("print('Hello AGB!')", "python")
-# Print execution results
 if result.success and result.results:
     for exec_result in result.results:
         if exec_result.text:
@@ -40,26 +50,50 @@ if result.success and result.results:
 agb.delete(session)
 ```
 
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+
+const params = new CreateSessionParams({ imageId: "agb-code-space-1" });
+const result = await agb.create(params);
+if (!result.success || !result.session) {
+  console.error("Session creation failed:", result.errorMessage);
+  process.exit(1);
+}
+
+const session = result.session;
+
+const execResult = await session.code.run("print('Hello AGB!')", "python");
+if (execResult.success && execResult.results) {
+  for (const item of execResult.results) {
+    if (item.text) console.log(item.text);
+  }
+}
+
+await agb.delete(session);
+```
+
+:::
+
 
 ### 3. Explore More Features
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
 agb = AGB()
 
-# Create session with custom image
-params = CreateSessionParams(
-    image_id="agb-code-space-1"
-)
+params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
 if not result.success:
     print(f"Session creation failed: {result.error_message}")
     exit(1)
 session = result.session
 
-# Use different modules
 # Code execution
 code_result = session.code.run("import os; print(os.getcwd())", "python")
 
@@ -70,15 +104,47 @@ cmd_result = session.command.execute("ls -la")
 session.file.write("/tmp/test.txt", "Hello World!")
 file_result = session.file.read("/tmp/test.txt")
 
-
-# Print results with proper handling
 if code_result.success and code_result.results:
-    print("Code output:", code_result.results[0].text if code_result.results else "No output")
+    print("Code output:", code_result.results[0].text)
 print("Command output:", cmd_result.output)
 print("File content:", file_result.content)
 
 agb.delete(session)
 ```
+
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+
+const params = new CreateSessionParams({ imageId: "agb-code-space-1" });
+const result = await agb.create(params);
+if (!result.success || !result.session) {
+  console.error("Session creation failed:", result.errorMessage);
+  process.exit(1);
+}
+const session = result.session;
+
+// Code execution
+const codeResult = await session.code.run("import os; print(os.getcwd())", "python");
+
+// Command execution
+const cmdResult = await session.command.execute("ls -la");
+
+// File operations
+await session.file.write("/tmp/test.txt", "Hello World!");
+const fileResult = await session.file.read("/tmp/test.txt");
+
+if (codeResult.success && codeResult.results?.length) {
+  console.log("Code output:", codeResult.results[0].text);
+}
+console.log("Command output:", cmdResult.output);
+console.log("File content:", fileResult.content);
+
+await agb.delete(session);
+```
+
+:::
 
 ### 4. Next Steps
 
@@ -91,13 +157,14 @@ agb.delete(session)
 
 ### Core Concepts
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
 agb = AGB()
 
-# Type-safe session creation
 params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
 if not result.success:
@@ -105,11 +172,30 @@ if not result.success:
     exit(1)
 session = result.session
 
-# Modules included in all sessions
-session.code.run(code, "python")           # Code execution
-session.command.execute("ls -la")       # Shell commands
-session.file.read("/path/file")     # File operations
+session.code.run(code, "python")       # Code execution
+session.command.execute("ls -la")      # Shell commands
+session.file.read("/path/file")        # File operations
 ```
+
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+
+const params = new CreateSessionParams({ imageId: "agb-code-space-1" });
+const result = await agb.create(params);
+if (!result.success || !result.session) {
+  console.error("Session creation failed:", result.errorMessage);
+  process.exit(1);
+}
+const session = result.session;
+
+await session.code.run(code, "python");       // Code execution
+await session.command.execute("ls -la");      // Shell commands
+await session.file.read("/path/file");        // File operations
+```
+
+:::
 
 ### Key Differences
 
@@ -126,17 +212,14 @@ session.file.read("/path/file")     # File operations
 
 ### Advanced Usage
 
-```python
-# Session management
-params = CreateSessionParams(
-    image_id="agb-code-space-1"
-)
+::: code-group
 
-# Error handling
+```python [Python]
+params = CreateSessionParams(image_id="agb-code-space-1")
+
 result = agb.create(params)
 if result.success:
     session = result.session
-    # Use session...
 else:
     print(f"Creation failed: {result.error_message}")
 
@@ -148,20 +231,46 @@ for i in range(3):
     if result.success:
         sessions.append(result.session)
 
-# Clean up all sessions
 for session in sessions:
     agb.delete(session)
 ```
 
+```typescript [TypeScript]
+const params = new CreateSessionParams({ imageId: "agb-code-space-1" });
+
+const result = await agb.create(params);
+if (result.success && result.session) {
+  const session = result.session;
+} else {
+  console.error("Creation failed:", result.errorMessage);
+}
+
+// Batch operations
+const sessions = [];
+for (let i = 0; i < 3; i++) {
+  const params = new CreateSessionParams({ imageId: "agb-code-space-1" });
+  const result = await agb.create(params);
+  if (result.success && result.session) {
+    sessions.push(result.session);
+  }
+}
+
+for (const session of sessions) {
+  await agb.delete(session);
+}
+```
+
+:::
+
 ### Production Environment Configuration
 
-```python
+::: code-group
+
+```python [Python]
 import os
 
-# Environment variable configuration
 agb = AGB()
 
-# Custom configuration
 from agb.config import Config
 config = Config(
     endpoint="your-custom-endpoint.com",
@@ -169,3 +278,16 @@ config = Config(
 )
 agb = AGB(cfg=config)
 ```
+
+```typescript [TypeScript]
+const agb = new AGB();
+
+const agbCustom = new AGB({
+  config: {
+    endpoint: "your-custom-endpoint.com",
+    timeoutMs: 60000,
+  },
+});
+```
+
+:::

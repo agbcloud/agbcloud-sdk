@@ -30,7 +30,7 @@ finally:
 
 During browser initialization, prefer Chrome internal pages (e.g. `chrome://version/`) or extension pages. Navigating to internet URLs during initialization may cause startup timeouts.
 
-See: [`docs/browser/configuration.md`](configuration.md)
+See: [Browser overview](overview.md)
 
 ### Make agent instructions robust
 

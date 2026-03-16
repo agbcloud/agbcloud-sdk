@@ -1,0 +1,10 @@
+[run]
+branch = False
+
+# Exclude auto-generated / schema-like model files and heavyweight browser runtime code
+# from coverage calculation. These are exercised via integration tests and are not
+# practical to cover in unit tests.
+omit =
+    agb/api/models/*
+    agb/modules/browser/*
+

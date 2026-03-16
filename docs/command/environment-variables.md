@@ -13,7 +13,9 @@ Provide environment variables for a command using the `envs` parameter, without 
 
 Minimal runnable example: pass env vars to a command, print output, then clean up.
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -35,28 +37,83 @@ finally:
     agb.delete(session)
 ```
 
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+const createResult = await agb.create(
+  new CreateSessionParams({ imageId: "agb-code-space-1" })
+);
+if (!createResult.success || !createResult.session) {
+  throw new Error(`Session creation failed: ${createResult.errorMessage}`);
+}
+
+const session = createResult.session;
+try {
+  const result = await session.command.execute(
+    "echo $GREETING $TARGET",
+    undefined, undefined,
+    { GREETING: "hello", TARGET: "world" },
+  );
+  if (!result.success) throw new Error(`Command failed: ${result.errorMessage}`);
+  console.log("Output:", result.output);
+} finally {
+  await agb.delete(session);
+}
+```
+
+:::
+
 ## Common tasks
 
 ### Set a single variable
 
-```python
+::: code-group
+
+```python [Python]
 session.command.execute("echo $FOO", envs={"FOO": "bar"})
 ```
 
+```typescript [TypeScript]
+await session.command.execute("echo $FOO", undefined, undefined, { FOO: "bar" });
+```
+
+:::
+
 ### Pass multiple variables
 
-```python
+::: code-group
+
+```python [Python]
 session.command.execute(
     "python -c 'import os; print(os.environ[\"A\"], os.environ[\"B\"])'",
     envs={"A": "1", "B": "2"},
 )
 ```
 
+```typescript [TypeScript]
+await session.command.execute(
+  "python -c 'import os; print(os.environ[\"A\"], os.environ[\"B\"])'",
+  undefined, undefined,
+  { A: "1", B: "2" },
+);
+```
+
+:::
+
 ### Legacy alternative: inline env vars (still works)
 
-```python
+::: code-group
+
+```python [Python]
 session.command.execute("FOO=bar echo $FOO")
 ```
+
+```typescript [TypeScript]
+await session.command.execute("FOO=bar echo $FOO");
+```
+
+:::
 
 Note: inline env vars can be fine for simple cases, but `envs` is easier to manage and less error-prone for complex values.
 
@@ -83,5 +140,5 @@ Note: inline env vars can be fine for simple cases, but `envs` is easier to mana
 - Overview: [`docs/command/overview.md`](./overview.md)
 - Working directory: [`docs/command/working-directory.md`](./working-directory.md)
 - Detailed results: [`docs/command/detailed-results.md`](./detailed-results.md)
-- API reference: [`docs/api-reference/capabilities/shell_commands.md`](../api-reference/capabilities/shell_commands.md)
+- API reference: [`docs/api-reference/python/capabilities/shell_commands.md`](../api-reference/python/capabilities/shell_commands.md)
 

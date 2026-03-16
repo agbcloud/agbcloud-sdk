@@ -12,36 +12,56 @@ The AGB SDK provides file transfer capabilities to upload files from your local 
 
 ## Quick Start
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
 agb = AGB()
-params = CreateSessionParams(image_id="agb-code-space-2")
-result = agb.create(params)
+result = agb.create(CreateSessionParams(image_id="agb-code-space-2"))
+session = result.session
 
-if result.success:
-    session = result.session
+context_path = session.file.transfer_path()
 
-    # Get the file transfer context path (context is auto-created on first use)
-    context_path = session.file.transfer_path()
+upload_result = session.file.upload(
+    local_path="/local/file.txt",
+    remote_path=context_path + "/remote_file.txt",
+)
 
-    # Upload a file
-    upload_result = session.file.upload(
-        local_path="/local/file.txt",
-        remote_path=context_path + "/remote_file.txt"
-    )
+download_result = session.file.download(
+    remote_path=context_path + "/remote_file.txt",
+    local_path="/local/downloaded_file.txt",
+)
 
-    # Download a file
-    download_result = session.file.download(
-        remote_path=context_path + "/remote_file.txt",
-        local_path="/local/downloaded_file.txt"
-    )
-
-    agb.delete(session)  # Context is automatically deleted when session ends
-else:
-    print(f"Failed to create session: {result.error_message}")
+agb.delete(session)
 ```
+
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+const result = await agb.create(
+  new CreateSessionParams({ imageId: "agb-code-space-2" })
+);
+const session = result.session!;
+
+const contextPath = await session.file.transferPath();
+
+const uploadResult = await session.file.upload(
+  "/local/file.txt",
+  contextPath + "/remote_file.txt",
+);
+
+const downloadResult = await session.file.download(
+  contextPath + "/remote_file.txt",
+  "/local/downloaded_file.txt",
+);
+
+await agb.delete(session);
+```
+
+:::
 
 ## Getting the Context Path
 

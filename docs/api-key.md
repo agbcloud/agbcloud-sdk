@@ -15,9 +15,9 @@ There are two main ways to provide your API key:
 
 ## Examples
 
-### Python
+::: code-group
 
-```python
+```python [Python]
 # Method 1: Direct initialization with API key
 api_key = "your_api_key_here"
 agb = AGB(api_key=api_key)
@@ -27,6 +27,18 @@ agb = AGB(api_key=api_key)
 # export AGB_API_KEY=your_api_key_here
 agb = AGB()
 ```
+
+```typescript [TypeScript]
+// Method 1: Direct initialization with API key
+const agb = new AGB({ apiKey: "your_api_key_here" });
+
+// Method 2: Using environment variable
+// First, set the environment variable:
+// export AGB_API_KEY=your_api_key_here
+const agb2 = new AGB();
+```
+
+:::
 
 ## Best Practices
 

@@ -1,0 +1,39 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "tsconfig": "tsconfig.json",
+    "entryPoints": [
+        "src/index.ts"
+    ],
+    "entryPointStrategy": "expand",
+    "out": ".typedoc-output",
+    "plugin": [
+        "typedoc-plugin-markdown"
+    ],
+    "theme": "markdown",
+    "readme": "none",
+    "exclude": [
+        "**/tests/**",
+        "**/node_modules/**",
+        "**/*.test.ts",
+        "**/*.spec.ts"
+    ],
+    "excludePrivate": true,
+    "excludeProtected": false,
+    "excludeExternals": true,
+    "excludeInternal": true,
+    "hideGenerator": true,
+    "disableSources": true,
+    "sort": [
+        "kind",
+        "alphabetical"
+    ],
+    "kindSortOrder": [
+        "Class",
+        "Interface",
+        "TypeAlias",
+        "Function",
+        "Variable",
+        "Enum",
+        "EnumMember"
+    ]
+}

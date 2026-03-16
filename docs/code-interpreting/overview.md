@@ -26,7 +26,9 @@ The enhanced code execution API can return rich outputs in multiple formats:
 
 Minimal runnable example: create a session, run code, print text output, then clean up.
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -47,11 +49,39 @@ for item in exec_result.results:
 agb.delete(session)
 ```
 
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+const createResult = await agb.create(
+  new CreateSessionParams({ imageId: "agb-code-space-1" })
+);
+if (!createResult.success || !createResult.session) {
+  throw new Error(`Session creation failed: ${createResult.errorMessage}`);
+}
+
+const session = createResult.session;
+const execResult = await session.code.run("print('Hello, AGB!')", "python");
+if (!execResult.success) {
+  throw new Error(`Execution failed: ${execResult.errorMessage}`);
+}
+
+for (const item of execResult.results ?? []) {
+  if (item.text) console.log(item.text);
+}
+
+await agb.delete(session);
+```
+
+:::
+
 ## Common tasks
 
 ### Read rich outputs (HTML / PNG / SVG / JSON)
 
-```python
+::: code-group
+
+```python [Python]
 exec_result = session.code.run(
     "import matplotlib.pyplot as plt; plt.plot([1,2,3]); plt.title('demo'); plt.show()",
     "python",
@@ -65,31 +95,37 @@ if exec_result.success:
             print("HTML output available")
         if item.png:
             print("PNG image available (base64)")
-        if item.jpeg:
-            print("JPEG image available (base64)")
         if item.svg:
             print("SVG output available")
-        if item.json:
-            print("JSON output available")
 else:
     print(exec_result.error.value)
-
-### Read Markdown / LaTeX / chart outputs
-
-```python
-for item in exec_result.results:
-    if item.markdown:
-        print("Markdown output available")
-    if item.latex:
-        print("LaTeX output available")
-    if item.chart:
-        print("Chart output available")
 ```
+
+```typescript [TypeScript]
+const execResult = await session.code.run(
+  "import matplotlib.pyplot as plt; plt.plot([1,2,3]); plt.title('demo'); plt.show()",
+  "python",
+);
+
+if (execResult.success) {
+  for (const item of execResult.results ?? []) {
+    if (item.text) console.log(item.text);
+    if (item.html) console.log("HTML output available");
+    if (item.png) console.log("PNG image available (base64)");
+    if (item.svg) console.log("SVG output available");
+  }
+} else {
+  console.error(execResult.errorMessage);
+}
 ```
+
+:::
 
 ### Access logs (stdout / stderr)
 
-```python
+::: code-group
+
+```python [Python]
 if exec_result.success and exec_result.logs:
     if exec_result.logs.stdout:
         print("STDOUT:", exec_result.logs.stdout)
@@ -97,11 +133,32 @@ if exec_result.success and exec_result.logs:
         print("STDERR:", exec_result.logs.stderr)
 ```
 
+```typescript [TypeScript]
+if (execResult.success && execResult.logs) {
+  if (execResult.logs.stdout?.length) {
+    console.log("STDOUT:", execResult.logs.stdout);
+  }
+  if (execResult.logs.stderr?.length) {
+    console.log("STDERR:", execResult.logs.stderr);
+  }
+}
+```
+
+:::
+
 ### Increase timeout for long-running code
 
-```python
+::: code-group
+
+```python [Python]
 session.code.run("import time; time.sleep(100)", "python", timeout_s=120)
 ```
+
+```typescript [TypeScript]
+await session.code.run("import time; time.sleep(100)", "python", 120);
+```
+
+:::
 
 ## Best practices
 
@@ -124,5 +181,5 @@ session.code.run("import time; time.sleep(100)", "python", timeout_s=120)
 
 ## Related
 
-- API reference: [`docs/api-reference/capabilities/code_execution.md`](../api-reference/capabilities/code_execution.md)
+- API reference: [`docs/api-reference/python/capabilities/code_execution.md`](../api-reference/python/capabilities/code_execution.md)
 - Examples: [`docs/examples/code_execution/README.md`](../examples/code_execution/README.md)

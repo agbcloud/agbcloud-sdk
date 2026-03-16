@@ -19,7 +19,9 @@ The Command Execution API also supports:
 
 Minimal runnable example: create a session, run a command, print output, then clean up.
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -33,20 +35,42 @@ cmd_result = session.command.execute("ls -la /tmp")
 
 if cmd_result.success:
     print("Output:", cmd_result.output)
-    # Access new fields for more detailed information
     if cmd_result.exit_code is not None:
         print("Exit code:", cmd_result.exit_code)
     if cmd_result.stdout:
         print("Stdout:", cmd_result.stdout)
-    if cmd_result.stderr:
-        print("Stderr:", cmd_result.stderr)
 else:
     print("Error:", cmd_result.error_message)
-    if cmd_result.exit_code is not None:
-        print("Exit code:", cmd_result.exit_code)
 
 agb.delete(session)
 ```
+
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+const createResult = await agb.create(
+  new CreateSessionParams({ imageId: "agb-code-space-1" })
+);
+if (!createResult.success || !createResult.session) {
+  throw new Error(`Session creation failed: ${createResult.errorMessage}`);
+}
+
+const session = createResult.session;
+const cmdResult = await session.command.execute("ls -la /tmp");
+
+if (cmdResult.success) {
+  console.log("Output:", cmdResult.output);
+  console.log("Exit code:", cmdResult.exitCode);
+  console.log("Stdout:", cmdResult.stdout);
+} else {
+  console.error("Error:", cmdResult.errorMessage);
+}
+
+await agb.delete(session);
+```
+
+:::
 
 ## Common tasks
 
@@ -60,34 +84,54 @@ agb.delete(session)
 
 Use the `cwd` parameter to set the working directory for a command:
 
-```python
-# Using cwd parameter (recommended)
+::: code-group
+
+```python [Python]
 result = session.command.execute("pwd", cwd="/tmp")
 print(result.output)  # Output: /tmp
 
-# Alternative: command chaining (still works)
 session.command.execute("cd /tmp && pwd")
 ```
+
+```typescript [TypeScript]
+const result = await session.command.execute("pwd", undefined, "/tmp");
+console.log(result.output); // Output: /tmp
+
+await session.command.execute("cd /tmp && pwd");
+```
+
+:::
 
 ### Set environment variables with `envs` parameter
 
 Use the `envs` parameter to set environment variables for a command:
 
-```python
-# Using envs parameter (recommended)
+::: code-group
+
+```python [Python]
 result = session.command.execute(
     "echo $TEST_VAR $ANOTHER_VAR",
     envs={"TEST_VAR": "hello", "ANOTHER_VAR": "world"}
 )
 print(result.output)  # Output: hello world
-
-# Alternative: inline env vars (still works)
-session.command.execute("TEST_VAR=hello echo $TEST_VAR")
 ```
+
+```typescript [TypeScript]
+const result = await session.command.execute(
+  "echo $TEST_VAR $ANOTHER_VAR",
+  undefined, undefined,
+  { TEST_VAR: "hello", ANOTHER_VAR: "world" }
+);
+console.log(result.output); // Output: hello world
+```
+
+:::
 
 ### Combine `cwd` and `envs` parameters
 
-```python
+::: code-group
+
+```python [Python]
 result = session.command.execute(
     "pwd && echo $MY_VAR",
     cwd="/tmp",
@@ -95,11 +139,23 @@ result = session.command.execute(
 )
 ```
 
+```typescript [TypeScript]
+const result = await session.command.execute(
+  "pwd && echo $MY_VAR",
+  undefined, "/tmp",
+  { MY_VAR: "test_value" }
+);
+```
+
+:::
+
 ### Access detailed command results
 
 The command result includes separate `stdout`, `stderr`, and `exit_code` fields:
 
-```python
+::: code-group
+
+```python [Python]
 result = session.command.execute("ls /nonexistent")
 
 if result.exit_code == 0:
@@ -109,9 +165,22 @@ else:
     print(f"Command failed with exit code: {result.exit_code}")
     print("Stdout:", result.stdout)
     print("Stderr:", result.stderr)
-    if result.trace_id:
-        print("Trace ID:", result.trace_id)
 ```
+
+```typescript [TypeScript]
+const result = await session.command.execute("ls /nonexistent");
+
+if (result.exitCode === 0) {
+  console.log("Success!");
+  console.log("Output:", result.stdout);
+} else {
+  console.log(`Command failed with exit code: ${result.exitCode}`);
+  console.log("Stdout:", result.stdout);
+  console.log("Stderr:", result.stderr);
+}
+```
+
+:::
 
 ### Run multiple operations in one command (legacy approach)
 
@@ -122,35 +191,77 @@ Each `execute` call runs in a **new, isolated shell session**. That means:
 
 You can still use command chaining (though using `cwd` and `envs` parameters is recommended):
 
-```python
+::: code-group
+
+```python [Python]
 session.command.execute("cd /tmp && ls -la")
 session.command.execute("cd /tmp && ls -la && cat file.txt")
 ```
 
+```typescript [TypeScript]
+await session.command.execute("cd /tmp && ls -la");
+await session.command.execute("cd /tmp && ls -la && cat file.txt");
+```
+
+:::
+
 ### Run diagnostics (CPU / memory / disk)
 
-```python
+::: code-group
+
+```python [Python]
 session.command.execute("free -h")
 session.command.execute("df -h")
 ```
 
+```typescript [TypeScript]
+await session.command.execute("free -h");
+await session.command.execute("df -h");
+```
+
+:::
+
 ### Do advanced file operations with CLI tools
 
-```python
+::: code-group
+
+```python [Python]
 session.command.execute("tar -czf logs.tar.gz /var/log/*.log")
 ```
 
+```typescript [TypeScript]
+await session.command.execute("tar -czf logs.tar.gz /var/log/*.log");
+```
+
+:::
+
 ### Install packages (if permitted by the image)
 
-```python
+::: code-group
+
+```python [Python]
 session.command.execute("apt-get update && apt-get install -y jq", timeout_ms=30000)
 ```
 
+```typescript [TypeScript]
+await session.command.execute("apt-get update && apt-get install -y jq", 30000);
+```
+
+:::
+
 ### Increase timeout for long-running commands
 
-```python
+::: code-group
+
+```python [Python]
 session.command.execute("wget large-file.zip", timeout_ms=60000)
 ```
+
+```typescript [TypeScript]
+await session.command.execute("wget large-file.zip", 60000);
+```
+
+:::
 
 ## Best practices
 
@@ -187,9 +298,9 @@ session.command.execute("wget large-file.zip", timeout_ms=60000)
 
 ## Related
 
-- API reference: [`docs/api-reference/capabilities/shell_commands.md`](../api-reference/capabilities/shell_commands.md)
+- API reference: [`docs/api-reference/python/capabilities/shell_commands.md`](../api-reference/python/capabilities/shell_commands.md)
 - Examples: [`docs/examples/command_execution/README.md`](../examples/command_execution/README.md)
-- Sessions: [`docs/api-reference/session.md`](../api-reference/session.md)
+- Sessions: [`docs/api-reference/python/session.md`](../api-reference/python/session.md)
 - Working directory (`cwd`): [`docs/command/working-directory.md`](./working-directory.md)
 - Environment variables (`envs`): [`docs/command/environment-variables.md`](./environment-variables.md)
 - Detailed results: [`docs/command/detailed-results.md`](./detailed-results.md)

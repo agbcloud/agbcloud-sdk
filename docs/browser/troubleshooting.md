@@ -29,7 +29,7 @@ print("Browser initialized:", ok)
 ### Browser initialization fails
 
 - **Likely cause**: wrong `image_id`, missing permissions, or slow/blocked navigation during init.
-- **Fix**: use a valid browser image and prefer internal pages during initialization (see [`docs/browser/configuration.md`](configuration.md)).
+- **Fix**: use a valid browser image and prefer internal pages during initialization (see [Browser overview](overview.md)).
 
 ### CDP connection issues
 

@@ -25,26 +25,43 @@ Understanding the lifecycle of a session is crucial for resource management and 
 3.  **Timeout (Auto-Shutdown)**: Sessions are automatically reclaimed after **30 minutes** of inactivity by default to prevent runaway costs.
 4.  **Deletion**: Explicitly deleting a session releases resources immediately.
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
 agb = AGB()
 
-# Example: Create a Code Execution Session
 code_params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(code_params)
 
 if result.success:
     code_session = result.session
-
     # ... perform operations ...
-
-    # Clean up
     agb.delete(code_session)
 else:
     print(f"Failed to create session: {result.error_message}")
 ```
+
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+
+const codeParams = new CreateSessionParams({ imageId: "agb-code-space-1" });
+const result = await agb.create(codeParams);
+
+if (result.success && result.session) {
+  const codeSession = result.session;
+  // ... perform operations ...
+  await agb.delete(codeSession);
+} else {
+  console.error("Failed to create session:", result.errorMessage);
+}
+```
+
+:::
 
 ### Key Capabilities
 

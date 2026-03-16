@@ -16,17 +16,17 @@ Create a browser session in AGB, connect via CDP (Playwright/Puppeteer), and aut
 
 Minimal runnable example: create a browser session, initialize browser, connect via CDP, open a page, then clean up.
 
-```python
-import os
+::: code-group
+
+```python [Python]
 import asyncio
 from agb import AGB
 from agb.session_params import CreateSessionParams
 from agb.modules.browser import BrowserOption
 from playwright.async_api import async_playwright
 
-
 async def main() -> None:
-    agb = AGB(api_key=os.getenv("AGB_API_KEY"))
+    agb = AGB()
     create_result = agb.create(CreateSessionParams(image_id="agb-browser-use-1"))
     if not create_result.success:
         raise SystemExit(f"Session creation failed: {create_result.error_message}")
@@ -47,16 +47,43 @@ async def main() -> None:
     finally:
         agb.delete(session)
 
-
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(main())
 ```
+
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+import { chromium } from "playwright";
+
+const agb = new AGB();
+const createResult = await agb.create(
+  new CreateSessionParams({ imageId: "agb-browser-use-1" })
+);
+if (!createResult.success || !createResult.session) {
+  throw new Error(`Session creation failed: ${createResult.errorMessage}`);
+}
+
+const session = createResult.session;
+try {
+  const ok = await session.browser.initialize({});
+  if (!ok) throw new Error("Browser initialization failed");
+
+  const endpointUrl = session.browser.getEndpointUrl();
+  const browser = await chromium.connectOverCDP(endpointUrl);
+  const page = await browser.newPage();
+  await page.goto("https://example.com");
+  console.log("Title:", await page.title());
+  await browser.close();
+} finally {
+  await agb.delete(session);
+}
+```
+
+:::
 
 ## Common tasks
 
 This topic is large. The detailed content has been split into smaller pages:
 
-- Browser configuration (`BrowserOption`, proxy, viewport, cmd args): [`docs/browser/configuration.md`](configuration.md)
 - AI Agent operations (Act/Observe/Extract): [`docs/browser/agent.md`](agent.md)
 - Advanced features (stealth/fingerprint/extensions): [`docs/browser/advanced.md`](advanced.md)
 
@@ -70,7 +97,7 @@ See: [`docs/browser/troubleshooting.md`](troubleshooting.md)
 
 ## Related
 
-- API reference: [`docs/api-reference/capabilities/browser.md`](../api-reference/capabilities/browser.md)
+- API reference: [`docs/api-reference/python/capabilities/browser.md`](../api-reference/python/capabilities/browser.md)
 - Fingerprint: [`docs/browser/fingerprint.md`](fingerprint.md)
 - Extensions: [`docs/browser/extension.md`](extension.md)
 - Examples: [`docs/examples/browser/README.md`](../examples/browser/README.md)

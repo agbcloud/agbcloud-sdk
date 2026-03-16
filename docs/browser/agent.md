@@ -99,5 +99,5 @@ if success and data:
 ## Related
 
 - Main guide: [`docs/browser/overview.md`](overview.md)
-- API reference: [`docs/api-reference/capabilities/browser.md`](../api-reference/capabilities/browser.md)
+- API reference: [`docs/api-reference/python/capabilities/browser.md`](../api-reference/python/capabilities/browser.md)
 

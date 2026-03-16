@@ -13,7 +13,9 @@ Run commands in a specific working directory using the `cwd` parameter, without 
 
 Minimal runnable example: create a session, run a command in `/tmp`, then clean up.
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -32,27 +34,74 @@ finally:
     agb.delete(session)
 ```
 
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+const createResult = await agb.create(
+  new CreateSessionParams({ imageId: "agb-code-space-1" })
+);
+if (!createResult.success || !createResult.session) {
+  throw new Error(`Session creation failed: ${createResult.errorMessage}`);
+}
+
+const session = createResult.session;
+try {
+  const result = await session.command.execute("pwd && ls -la", undefined, "/tmp");
+  if (!result.success) throw new Error(`Command failed: ${result.errorMessage}`);
+  console.log("Output:", result.output);
+} finally {
+  await agb.delete(session);
+}
+```
+
+:::
+
 ## Common tasks
 
 ### Run a command relative to a directory
 
-```python
+::: code-group
+
+```python [Python]
 session.command.execute("ls -la", cwd="/var/log")
 ```
 
+```typescript [TypeScript]
+await session.command.execute("ls -la", undefined, "/var/log");
+```
+
+:::
+
 ### Create files in a directory without `cd`
 
-```python
+::: code-group
+
+```python [Python]
 session.command.execute("mkdir -p demo && echo hello > demo/hello.txt", cwd="/tmp")
 ```
+
+```typescript [TypeScript]
+await session.command.execute("mkdir -p demo && echo hello > demo/hello.txt", undefined, "/tmp");
+```
+
+:::
 
 ### Legacy alternative: command chaining (still works)
 
 Each `execute()` call runs in a new shell session, so `cd` does not persist between calls. You can still chain commands in one call:
 
-```python
+::: code-group
+
+```python [Python]
 session.command.execute("cd /tmp && pwd && ls -la")
 ```
+
+```typescript [TypeScript]
+await session.command.execute("cd /tmp && pwd && ls -la");
+```
+
+:::
 
 ## Best practices
 
@@ -76,5 +125,5 @@ session.command.execute("cd /tmp && pwd && ls -la")
 
 - Overview: [`docs/command/overview.md`](./overview.md)
 - Environment variables: [`docs/command/environment-variables.md`](./environment-variables.md)
-- API reference: [`docs/api-reference/capabilities/shell_commands.md`](../api-reference/capabilities/shell_commands.md)
+- API reference: [`docs/api-reference/python/capabilities/shell_commands.md`](../api-reference/python/capabilities/shell_commands.md)
 

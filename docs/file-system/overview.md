@@ -13,7 +13,9 @@ Use `session.file` to read, write, and manage files/directories inside an AGB se
 
 Minimal runnable example: create a session, write a file, read it back, then clean up.
 
-```python
+::: code-group
+
+```python [Python]
 from agb import AGB
 from agb.session_params import CreateSessionParams
 
@@ -32,21 +34,63 @@ finally:
     agb.delete(session)
 ```
 
+```typescript [TypeScript]
+import { AGB, CreateSessionParams } from "agbcloud-sdk";
+
+const agb = new AGB();
+const createResult = await agb.create(
+  new CreateSessionParams({ imageId: "agb-code-space-1" })
+);
+if (!createResult.success || !createResult.session) {
+  throw new Error(`Session creation failed: ${createResult.errorMessage}`);
+}
+
+const session = createResult.session;
+
+try {
+  await session.file.write("/tmp/hello.txt", "Hello World!");
+  const result = await session.file.read("/tmp/hello.txt");
+  console.log(result.content);
+} finally {
+  await agb.delete(session);
+}
+```
+
+:::
+
 ## Common tasks
 
 ### Create and list directories
 
-```python
+::: code-group
+
+```python [Python]
 session.file.mkdir("/tmp/trash/")
 entries = session.file.list("/tmp").entries
 print([e.name for e in entries])
 ```
 
+```typescript [TypeScript]
+await session.file.mkdir("/tmp/trash/");
+const listResult = await session.file.list("/tmp");
+console.log(listResult.entries?.map(e => e.name));
+```
+
+:::
+
 ### Move files
 
-```python
+::: code-group
+
+```python [Python]
 session.file.move("/tmp/hello.txt", "/tmp/trash/hello.txt")
 ```
+
+```typescript [TypeScript]
+await session.file.move("/tmp/hello.txt", "/tmp/trash/hello.txt");
+```
+
+:::
 
 ### Upload / download files
 
@@ -89,7 +133,7 @@ See:
 - **Fix**: create directories first (`mkdir`) and use `list` to verify paths.
 ## Related
 
-- API reference: [`docs/api-reference/capabilities/file_system.md`](../api-reference/capabilities/file_system.md)
+- API reference: [`docs/api-reference/python/capabilities/file_system.md`](../api-reference/python/capabilities/file_system.md)
 - Examples: [`docs/examples/file_system/README.md`](../examples/file_system/README.md)
 - Read & write: [`docs/file-system/read-and-write.md`](read-and-write.md)
 - Read binary (bytes): [`docs/file-system/read-binary-files.md`](read-binary-files.md)

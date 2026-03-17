@@ -47,11 +47,11 @@ numbers = [x**2 for x in range(5)]
 print(f"Squares: {numbers}")
 """
         py_result = session.code.run(python_code, "python")
-        if py_result.success:
+        if py_result.success and py_result.logs and py_result.logs.stdout:
             print("Output:")
             for stdout_item in py_result.logs.stdout:
                 print(stdout_item)
-        else:
+        elif not py_result.success:
             print(f"Error: {py_result.error_message}")
 
         # 4. JavaScript Execution
@@ -63,11 +63,11 @@ console.log(`Sum of [${numbers}] is ${sum}`);
 console.log(`User Agent: ${navigator.userAgent}`);
 """
         js_result = session.code.run(js_code, "javascript")
-        if js_result.success:
+        if js_result.success and js_result.logs and js_result.logs.stdout:
             print("Output:")
             for stdout_item in js_result.logs.stdout:
                 print(stdout_item)
-        else:
+        elif not js_result.success:
             print(f"Error: {js_result.error_message}")
 
         # 5. Java Execution
@@ -83,11 +83,11 @@ for(int i : arr) sum += i;
 System.out.println("Array sum: " + sum);
 """
         java_result = session.code.run(java_code, "java")
-        if java_result.success:
+        if java_result.success and java_result.logs and java_result.logs.stdout:
             print("Output:")
             for stdout_item in java_result.logs.stdout:
                 print(stdout_item)
-        else:
+        elif not java_result.success:
             print(f"Error: {java_result.error_message}")
 
         # 6. R Execution
@@ -99,11 +99,11 @@ cat("Mean:", mean(data), "\\n")
 cat("SD:", sd(data), "\\n")
 """
         r_result = session.code.run(r_code, "r")
-        if r_result.success:
+        if r_result.success and r_result.logs and r_result.logs.stdout:
             print("Output:")
             for stdout_item in r_result.logs.stdout:
                 print(stdout_item)
-        else:
+        elif not r_result.success:
             print(f"Error: {r_result.error_message}")
 
     finally:

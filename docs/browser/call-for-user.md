@@ -148,7 +148,7 @@ if session_result.success:
 
 - [CAPTCHA Resolution](captcha.md) - Automatic CAPTCHA handling
 - [Session Management](../session/overview.md) - Session lifecycle and configuration
-- [Browser Use Overview](../README.md) - Complete browser automation features
+- [Browser Use Overview](./overview.md) - Complete browser automation features
 
 ## 🆘 Getting Help
 

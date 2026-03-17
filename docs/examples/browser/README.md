@@ -1,6 +1,6 @@
 # Browser Automation Examples
 
-This directory contains examples for controlling a headless browser within the AGB session.
+This directory contains examples for controlling a remote browser within the AGB session.
 
 ## Examples
 

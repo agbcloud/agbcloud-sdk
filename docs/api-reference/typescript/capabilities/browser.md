@@ -16,7 +16,7 @@ and web scraping workflows with support for proxy configuration, fingerprinting,
 - Requires `agb-browser-use-1` image for browser automation features
 
 Browser module for web automation: navigate, click, type, screenshot, and extract content.
-Requires initialization with browser options (e.g. headless, viewport). Use session.browser.agent for high-level tasks.
+Requires initialization with browser options (e.g. stealth, viewport, fingerprint). Use session.browser.agent for high-level tasks.
 
 ## Hierarchy
 

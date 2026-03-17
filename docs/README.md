@@ -13,7 +13,7 @@ Unlike other sandboxes that only support code execution, AGB provides specialize
 | Environment Type | Image ID Pattern | Key Capabilities | Ideal For |
 | :--- | :--- | :--- | :--- |
 | **Code Space** | `agb-code-space-*` | - Python, Node.js, Java, R runtimes<br>- Shell access & File system<br>- Pre-installed data science libs | Data analysis, Code interpretation, Math solving, Backend logic. |
-| **Browser Use** | `agb-browser-use-*` | - **Headless Browser** automation<br>- AI-driven navigation & extraction<br>- Chrome Extension support | Web scraping, UI testing, Web-browsing agents, Data extraction. |
+| **Browser Use** | `agb-browser-use-*` | - **Remote Browser** automation<br>- AI-driven navigation & extraction<br>- Chrome Extension support | Web scraping, UI testing, Web-browsing agents, Data extraction. |
 | **Computer Use** | *(Beta)* | - coordinate-based mouse/keyboard control<br>- window/app management<br>- screenshot capture | Desktop application operations, Software automation testing, Document processing tasks. |
 
 ### Session Lifecycle

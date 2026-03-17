@@ -84,12 +84,23 @@ if current_option:
 from agb.exceptions import BrowserError
 from agb.modules.browser import BrowserOption
 
-try:
-    ok = await session.browser.initialize_async(BrowserOption())
-    if not ok:
-        raise BrowserError("Failed to initialize browser")
-except BrowserError as e:
-    print("Browser error:", e)
+# For async code (with asyncio/playwright async)
+async def init_browser_async(session):
+    try:
+        ok = await session.browser.initialize_async(BrowserOption())
+        if not ok:
+            raise BrowserError("Failed to initialize browser")
+    except BrowserError as e:
+        print("Browser error:", e)
+
+# For sync code (with playwright sync)
+def init_browser_sync(session):
+    try:
+        ok = session.browser.initialize(BrowserOption())
+        if not ok:
+            raise BrowserError("Failed to initialize browser")
+    except BrowserError as e:
+        print("Browser error:", e)
 ```
 
 ## Best practices

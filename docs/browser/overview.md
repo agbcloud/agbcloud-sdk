@@ -64,7 +64,7 @@ if (!createResult.success || !createResult.session) {
 
 const session = createResult.session;
 try {
-  const ok = await session.browser.initialize({});
+  const ok = await session.browser.initialize(); // Uses default options
   if (!ok) throw new Error("Browser initialization failed");
 
   const endpointUrl = session.browser.getEndpointUrl();

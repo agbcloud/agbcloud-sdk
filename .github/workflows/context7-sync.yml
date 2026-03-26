@@ -1,0 +1,17 @@
+on:
+  push:
+    branches:
+      - main
+      - release/*
+
+jobs:
+  my_job:
+    name: Update Context7 Documentation
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update Context7 Documentation
+        uses: rennf93/upsert-context7@v1
+        with:
+          operation: refresh

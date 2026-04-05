@@ -23,6 +23,42 @@ logger = get_logger("extension")
 EXTENSIONS_BASE_PATH = "/tmp/extensions"
 
 
+def _validate_local_path(local_path: str) -> str:
+    """
+    Validate that *local_path* refers to a regular file and not a symbolic link.
+
+    Resolving symlinks before uploading prevents an attacker from supplying a
+    symlink that points at an arbitrary sensitive file (e.g. ``/etc/shadow``),
+    which would otherwise be silently read and uploaded to the cloud context.
+
+    Args:
+        local_path: The caller-supplied filesystem path.
+
+    Returns:
+        The *resolved* (real) path of the file.
+
+    Raises:
+        ValueError: If the path is a symbolic link.
+        FileNotFoundError: If the resolved path does not exist or is not a regular file.
+    """
+    # Reject symbolic links explicitly so the caller gets a clear error.
+    if os.path.islink(local_path):
+        raise ValueError(
+            f"Symbolic links are not allowed for security reasons: {local_path}"
+        )
+
+    # Canonicalise to catch remaining edge-cases (e.g. intermediate symlink
+    # components) and ensure we are looking at a real regular file.
+    real_path = os.path.realpath(local_path)
+
+    if not os.path.isfile(real_path):
+        raise FileNotFoundError(
+            f"The specified local file was not found: {local_path}"
+        )
+
+    return real_path
+
+
 # ==============================================================================
 # 1. Data Models
 # ==============================================================================
@@ -296,12 +332,11 @@ class ExtensionsService:
 
         Raises:
             FileNotFoundError: If the local file does not exist.
-            ValueError: If the file format is not supported.
+            ValueError: If the file format is not supported or path is a symlink.
         """
-        if not os.path.exists(local_path):
-            raise FileNotFoundError(
-                f"The specified local file was not found: {local_path}"
-            )
+        # Validate the path is a regular file (reject symlinks to prevent
+        # exfiltration of arbitrary files — see CWE-22).
+        local_path = _validate_local_path(local_path)
 
         # Determine the ID and cloud path before uploading
         # Validate file type - only ZIP format is supported
@@ -334,12 +369,11 @@ class ExtensionsService:
 
         Raises:
             FileNotFoundError: If the new local file does not exist.
-            ValueError: If the extension ID is not found.
+            ValueError: If the extension ID is not found or path is a symlink.
         """
-        if not os.path.exists(new_local_path):
-            raise FileNotFoundError(
-                f"The specified new local file was not found: {new_local_path}"
-            )
+        # Validate the path is a regular file (reject symlinks to prevent
+        # exfiltration of arbitrary files — see CWE-22).
+        new_local_path = _validate_local_path(new_local_path)
 
         # Validate that the extension exists by checking the file list
         existing_extensions = {ext.id: ext for ext in self.list()}

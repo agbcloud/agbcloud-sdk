@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import os
+import stat
+import tempfile
 import concurrent.futures
 from typing import Dict, Any
 from playwright.async_api import async_playwright
@@ -148,6 +150,8 @@ class LocalBrowser(Browser):
         self._cdp_port = 9222
         self.agent: LocalPageAgent = LocalPageAgent(session, self)
         self._worker_thread = None
+        self._cdp_ports_path = None
+        self._user_data_dir = None
 
     async def initialize_async(self, options: BrowserOption) -> bool:
         if (self._worker_thread is None):
@@ -158,11 +162,26 @@ class LocalBrowser(Browser):
                     logger.info("Start launching local browser")
                     try:
                         async with async_playwright() as p:
-                            # Define CDP port
-                            # Recreate /tmp/chrome_cdp_ports.json with the required content
-                            chrome_cdp_ports_path = "/tmp/chrome_cdp_ports.json"
-                            with open(chrome_cdp_ports_path, "w") as f:
-                                json.dump({"chrome": str(self._cdp_port), "router": str(self._cdp_port)}, f)
+                            # Create a secure per-session temporary directory
+                            # for browser data (owner-only permissions)
+                            self._user_data_dir = tempfile.mkdtemp(
+                                prefix="browser_user_data_"
+                            )
+                            os.chmod(self._user_data_dir, stat.S_IRWXU)
+
+                            # Write CDP port config to a secure temporary file
+                            # using mkstemp to avoid symlink attacks (CWE-377)
+                            fd, self._cdp_ports_path = tempfile.mkstemp(
+                                prefix="chrome_cdp_ports_", suffix=".json"
+                            )
+                            try:
+                                with os.fdopen(fd, "w") as f:
+                                    json.dump({"chrome": str(self._cdp_port), "router": str(self._cdp_port)}, f)
+                            except Exception:
+                                os.close(fd)
+                                raise
+                            # Restrict file permissions to owner-only read/write
+                            os.chmod(self._cdp_ports_path, stat.S_IRUSR | stat.S_IWUSR)
 
                             # Launch headless browser and create a page for all tests
                             self._browser = await p.chromium.launch_persistent_context(
@@ -171,7 +190,7 @@ class LocalBrowser(Browser):
                                 args=[
                                     f'--remote-debugging-port={self._cdp_port}',
                                 ],
-                                user_data_dir="/tmp/browser_user_data")
+                                user_data_dir=self._user_data_dir)
 
                             logger.info("Local browser launched successfully:")
                             success = True

@@ -60,15 +60,13 @@ class Code(BaseService):
                     execution_count=None,
                     execution_time=0.0
                 )
-            log_operation_start("Code.run", f"Language={language}, TimeoutS={timeout_s}, Code={code}")
+            log_operation_start("Code.run", f"Language={language}, TimeoutS={timeout_s}, CodeLength={len(code)}")
             args = {"code": code, "language": canonical_language, "timeout_s": timeout_s}
             result = self._call_mcp_tool("run_code", args)
             
             if result.success:
-                # result_msg = f"RequestId={result.request_id}, ResultLength={result.data if result.data else 0}"
-                # log_operation_success("Code.run", result_msg)
-                # Parse the run specific result format
-                log_operation_success("Code.run", f"ResponseData={result.data}")
+                result_msg = f"RequestId={result.request_id}"
+                log_operation_success("Code.run", result_msg)
                 parsed_result = self._parse_run_code_result(result.data, result.request_id)
                 return parsed_result
             else:

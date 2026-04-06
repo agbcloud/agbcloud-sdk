@@ -7,6 +7,7 @@ import json
 import os
 import time
 from pathlib import PurePosixPath
+from urllib.parse import urlsplit
 from typing import Callable, Dict, Optional, Tuple
 
 import httpx
@@ -22,6 +23,12 @@ from agb.model.response import UploadResult, DownloadResult
 
 # Initialize logger for this module
 logger = get_logger("file_transfer")
+
+
+def _sanitize_url(url: str) -> str:
+    """Return URL with query string removed to avoid leaking pre-signed tokens."""
+    parts = urlsplit(url)
+    return parts._replace(query="", fragment="").geturl()
 
 
 class FileTransfer:
@@ -222,7 +229,7 @@ class FileTransfer:
         upload_url = url_res.url
         req_id_upload = getattr(url_res, "request_id", None)
 
-        logger.info(f"Uploading {local_path} to OSS (URL: {upload_url})")
+        logger.info(f"Uploading {local_path} to OSS (URL: {_sanitize_url(upload_url)})")
 
         # 2. PUT upload to pre-signed URL
         try:
@@ -483,7 +490,7 @@ class FileTransfer:
                     error_message=f"Destination exists and overwrite=False: {local_path}",
                 )
 
-            logger.info(f"Downloading from OSS to {local_path} (URL: {download_url})")
+            logger.info(f"Downloading from OSS to {local_path} (URL: {_sanitize_url(download_url)})")
             http_status, bytes_received = self._get_file_sync(
                 download_url,
                 local_path,

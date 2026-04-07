@@ -94,9 +94,9 @@ System.out.println("Array sum: " + sum);
         print("\n=== Executing R Code ===")
         r_code = """
 data <- c(10, 20, 30, 40, 50)
-cat("Data:", data, "\\n")
-cat("Mean:", mean(data), "\\n")
-cat("SD:", sd(data), "\\n")
+cat("Data:", data, "\n")
+cat("Mean:", mean(data), "\n")
+cat("SD:", sd(data), "\n")
 """
         r_result = session.code.run(r_code, "r")
         if r_result.success and r_result.logs and r_result.logs.stdout:
@@ -106,8 +106,45 @@ cat("SD:", sd(data), "\\n")
         elif not r_result.success:
             print(f"Error: {r_result.error_message}")
 
+        # 7. Streaming Execution (Real-time output)
+        print("\n=== Streaming Execution (Real-time Output) ===")
+        print("Executing long-running code with real-time streaming...")
+
+        def on_stdout(chunk: str) -> None:
+            """Callback for each stdout chunk during streaming."""
+            print(f"[STREAM] {chunk}", end="")
+
+        def on_stderr(chunk: str) -> None:
+            """Callback for each stderr chunk during streaming."""
+            print(f"[STREAM-ERR] {chunk}", end="")
+
+        def on_error(error) -> None:
+            """Callback for streaming errors."""
+            print(f"[STREAM-ERROR] {error}")
+
+        streaming_code = """
+import time
+print("Starting long computation...")
+for i in range(5):
+    print(f"Progress: {i+1}/5")
+    time.sleep(0.5)
+print("Done!")
+"""
+        stream_result = session.code.run(
+            streaming_code,
+            "python",
+            stream_beta=True,
+            on_stdout=on_stdout,
+            on_stderr=on_stderr,
+            on_error=on_error,
+        )
+        if stream_result.success:
+            print(f"\nStreaming execution completed in {stream_result.execution_time:.2f}s")
+        else:
+            print(f"Streaming error: {stream_result.error_message}")
+
     finally:
-        # 7. Cleanup
+        # 8. Cleanup
         print("\nCleaning up...")
         agb.delete(session)
         print("Session deleted")

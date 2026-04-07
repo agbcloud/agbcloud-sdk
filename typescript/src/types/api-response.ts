@@ -26,6 +26,10 @@ export interface GetSessionData {
     success: boolean;
     resourceUrl: string;
     status: string;
+    linkUrl?: string;
+    wsUrl?: string;
+    token?: string;
+    toolList?: string;
 }
 
 export interface GetSessionResult extends ApiResponse {
@@ -155,11 +159,18 @@ export interface ExecutionLogs {
     stderr: string[];
 }
 
+export interface ExecutionError {
+    name: string;
+    value: string;
+    traceback: string;
+}
+
 export interface EnhancedCodeExecutionResult extends ApiResponse {
     executionCount?: number;
     executionTime: number;
     logs: ExecutionLogs;
     results: ExecutionResult[];
+    error?: ExecutionError;
     errorMessage: string;
     success: boolean;
 }
@@ -273,6 +284,21 @@ export interface ScreenSize extends ApiResponse {
     width: number;
     height: number;
     dpiScalingFactor: number;
+}
+
+export interface ScreenshotResult extends ApiResponse {
+    success: boolean;
+    errorMessage?: string;
+    /** Screenshot type from backend (e.g., "screenshot") */
+    type?: string;
+    /** Raw binary image data */
+    data?: Buffer;
+    /** MIME type (e.g., "image/png", "image/jpeg") */
+    mimeType?: string;
+    /** Image width in pixels */
+    width?: number;
+    /** Image height in pixels */
+    height?: number;
 }
 
 export interface WindowInfo {

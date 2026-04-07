@@ -6,6 +6,10 @@ export interface GetSessionSessionData {
     resourceId?: string;
     resourceUrl?: string;
     status?: string;
+    linkUrl?: string;
+    wsUrl?: string;
+    token?: string;
+    toolList?: string;
 }
 
 export class GetSessionResponse {
@@ -40,6 +44,10 @@ export class GetSessionResponse {
                     resourceId: dataObj.resourceId as string | undefined,
                     resourceUrl: dataObj.resourceUrl as string | undefined,
                     status: dataObj.status as string | undefined,
+                    linkUrl: dataObj.linkUrl as string | undefined,
+                    wsUrl: dataObj.wsUrl as string | undefined,
+                    token: dataObj.token as string | undefined,
+                    toolList: dataObj.toolList as string | undefined,
                 }
                 : undefined;
         }

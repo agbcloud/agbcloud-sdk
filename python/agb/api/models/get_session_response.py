@@ -11,12 +11,20 @@ class SessionData:
         resource_id: Optional[str] = None,
         resource_url: Optional[str] = None,
         status: Optional[str] = None,
+        link_url: Optional[str] = None,
+        ws_url: Optional[str] = None,
+        token: Optional[str] = None,
+        tool_list: Optional[str] = None,
     ):
         self.session_id = session_id
         self.app_instance_id = app_instance_id
         self.resource_id = resource_id
         self.resource_url = resource_url
         self.status = status
+        self.link_url = link_url
+        self.ws_url = ws_url
+        self.token = token
+        self.tool_list = tool_list
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SessionData":
@@ -27,6 +35,10 @@ class SessionData:
             resource_id=data.get("resourceId"),
             resource_url=data.get("resourceUrl"),
             status=data.get("status"),
+            link_url=data.get("linkUrl") if "linkUrl" in data else data.get("LinkUrl"),
+            ws_url=data.get("wsUrl") if "wsUrl" in data else data.get("WsUrl"),
+            token=data.get("token") if "token" in data else data.get("Token"),
+            tool_list=data.get("toolList") if "toolList" in data else data.get("ToolList"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -37,6 +49,10 @@ class SessionData:
             "resourceId": self.resource_id,
             "resourceUrl": self.resource_url,
             "status": self.status,
+            "linkUrl": self.link_url,
+            "wsUrl": self.ws_url,
+            "token": self.token,
+            "toolList": self.tool_list,
         }
 
 

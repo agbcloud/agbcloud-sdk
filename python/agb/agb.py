@@ -44,6 +44,7 @@ from agb.logger import (
     log_warning,
 )
 from agb.version_utils import get_sdk_version, is_release_version
+from agb.model.response import McpTool
 
 logger = get_logger(__name__)
 
@@ -143,6 +144,41 @@ class AGB:
                     )
                 )
         return persistence_data_list
+
+    def _parse_tool_list_to_mcp_tools(self, tool_list) -> list:
+        """
+        Parse backend ToolList field into a list of McpTool objects.
+
+        Backend may return ToolList as a JSON string or a list of dicts.
+        """
+        if not tool_list:
+            return []
+
+        items = tool_list
+        if isinstance(tool_list, str):
+            try:
+                items = json.loads(tool_list)
+            except Exception as e:
+                logger.warning(f"Failed to parse ToolList JSON: {e}")
+                return []
+
+        if not isinstance(items, list):
+            return []
+
+        tools = []
+        for item in items:
+            if isinstance(item, McpTool):
+                tools.append(item)
+                continue
+            if not isinstance(item, dict):
+                continue
+            tools.append(
+                McpTool(
+                    name=item.get("name", "") or item.get("Name", "") or "",
+                    server=item.get("server", "") or item.get("serverName", "") or item.get("Server", "") or "",
+                )
+            )
+        return tools
 
     def create(self, params: Optional[CreateSessionParams] = None) -> SessionResult:
         """
@@ -283,6 +319,10 @@ class AGB:
             if response.data:
                 session.app_instance_id = response.data.app_instance_id or ""
                 session.resource_id = response.data.resource_id or ""
+                session.link_url = response.data.link_url or ""
+                session.ws_url = response.data.ws_url or ""
+                session.token = response.data.token or ""
+                session.tool_list = self._parse_tool_list_to_mcp_tools(response.data.tool_list) or ""
 
             # Store image_id used for this session
             session.image_id = params.image_id or ""
@@ -625,6 +665,10 @@ class AGB:
                     success=True,
                     resource_url=response.data.resource_url or "",
                     status=response.data.status or "",
+                    link_url=getattr(response.data, "link_url", "") or "",
+                    ws_url=getattr(response.data, "ws_url", "") or "",
+                    token=getattr(response.data, "token", "") or "",
+                    tool_list=getattr(response.data, "tool_list", "") or "",
                 )
 
             # Log API response with key details
@@ -696,6 +740,10 @@ class AGB:
             # Store additional session data - set attributes directly
             session.app_instance_id = get_result.data.app_instance_id or ""
             session.resource_id = get_result.data.resource_id or ""
+            session.link_url = get_result.data.link_url or ""
+            session.ws_url = get_result.data.ws_url or ""
+            session.token = get_result.data.token or ""
+            session.tool_list = self._parse_tool_list_to_mcp_tools(get_result.data.tool_list) or ""
 
         result_msg = f"SessionId={session_id}, RequestId={get_result.request_id}"
         log_operation_success("AGB.get", result_msg)

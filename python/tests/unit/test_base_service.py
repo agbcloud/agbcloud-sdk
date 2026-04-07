@@ -80,7 +80,9 @@ def _install_agb_stubs():
 
 # Import these modules by file path (and with stubs) to avoid importing `agb` package
 # which may pull optional runtime deps (aiohttp, loguru, etc.) in some local envs.
-_BASE_DIR = __file__.rsplit("/tests/unit/", 1)[0]
+# Use os.path to handle both Windows and Unix path separators correctly
+import os
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def _import_by_path(module_name: str, path: str):
     spec = importlib.util.spec_from_file_location(module_name, path)
@@ -94,11 +96,11 @@ _install_agb_stubs()
 
 base_service_mod = _import_by_path(
     "_agb_api_base_service",
-    f"{_BASE_DIR}/agb/api/base_service.py",
+    os.path.join(_BASE_DIR, "agb", "api", "base_service.py"),
 )
 call_resp_mod = _import_by_path(
     "_agb_api_models_call_mcp_tool_response",
-    f"{_BASE_DIR}/agb/api/models/call_mcp_tool_response.py",
+    os.path.join(_BASE_DIR, "agb", "api", "models", "call_mcp_tool_response.py"),
 )
 
 BaseService = base_service_mod.BaseService

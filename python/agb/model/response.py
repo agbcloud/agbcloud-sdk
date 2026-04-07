@@ -141,7 +141,7 @@ class BoolResult(ApiResponse):
 
 
 class GetSessionData:
-    """Data returned by GetSession API."""
+    """Session data from GetSession API"""
 
     def __init__(
         self,
@@ -151,24 +151,21 @@ class GetSessionData:
         success: bool = False,
         resource_url: str = "",
         status: str = "",
+        link_url: str = "",
+        ws_url: str = "",
+        token: str = "",
+        tool_list: str = "",
     ):
-        """
-        Initialize GetSessionData.
-
-        Args:
-            app_instance_id (str): Application instance ID.
-            resource_id (str): Resource ID.
-            session_id (str): Session ID.
-            success (bool): Success status.
-            resource_url (str): Resource URL for accessing the session.
-            status (str): Status of the session.
-        """
         self.app_instance_id = app_instance_id
         self.resource_id = resource_id
         self.session_id = session_id
         self.success = success
         self.resource_url = resource_url
         self.status = status
+        self.link_url = link_url
+        self.ws_url = ws_url
+        self.token = token
+        self.tool_list = tool_list
 
 
 class GetSessionResult(ApiResponse):
@@ -451,6 +448,28 @@ class ExecutionLogs:
         self.stderr = stderr or []
 
 
+class ExecutionError:
+    """Detailed error information for code execution."""
+
+    def __init__(
+        self,
+        name: str = "",
+        value: str = "",
+        traceback: str = "",
+    ):
+        """
+        Initialize an ExecutionError.
+
+        Args:
+            name (str): Error name/type
+            value (str): Error message/value
+            traceback (str): Error traceback or additional context
+        """
+        self.name = name
+        self.value = value
+        self.traceback = traceback
+
+
 class BinaryFileContentResult(ApiResponse):
     """Result of binary file read operations."""
 
@@ -492,6 +511,7 @@ class EnhancedCodeExecutionResult(ApiResponse):
         execution_time: float = 0.0,
         logs: Optional[ExecutionLogs] = None,
         results: Optional[List[ExecutionResult]] = None,
+        error: Optional[ExecutionError] = None,
         error_message: str = "",
         success: bool = True,
     ):
@@ -504,7 +524,8 @@ class EnhancedCodeExecutionResult(ApiResponse):
             execution_time (float): Execution time in seconds
             logs (Optional[ExecutionLogs]): Execution logs
             results (Optional[List[ExecutionResult]]): Execution results
-            error_message (str): Error message if any
+            error (Optional[ExecutionError]): Detailed error information
+            error_message (str): Error message if any (backward compatibility)
             success (bool): Whether execution was successful
         """
         super().__init__(request_id)
@@ -512,8 +533,26 @@ class EnhancedCodeExecutionResult(ApiResponse):
         self.execution_time = execution_time
         self.logs = logs or ExecutionLogs()
         self.results = results or []
+        self.error = error
         self.error_message = error_message or ""
         self.success = success
+
+    @property
+    def result(self) -> str:
+        """Backward compatible text result."""
+        # Search for main result first
+        for res in self.results:
+            if res.is_main_result and res.text:
+                return res.text
+        # Fallback to first result text
+        if self.results and self.results[0].text:
+            return self.results[0].text
+
+        # If no result text, check logs
+        if self.logs.stdout:
+            return "".join(self.logs.stdout)
+
+        return ""
 
 
 class SessionStatusResult(ApiResponse):
@@ -734,3 +773,43 @@ class SessionMetricsResult(ApiResponse):
         self.metrics = metrics
         self.error_message = error_message
         self.raw = raw or {}
+
+
+class ScreenshotResult(ApiResponse):
+    """Result of screenshot operations with raw binary data."""
+
+    def __init__(
+        self,
+        request_id: str = "",
+        success: bool = False,
+        error_message: str = "",
+        type: str = "",
+        data: Optional[bytes] = None,
+        mime_type: str = "",
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+    ):
+        """
+        Initialize a ScreenshotResult.
+
+        Args:
+            request_id (str, optional): Unique identifier for the API request.
+                Defaults to "".
+            success (bool, optional): Whether the operation was successful.
+                Defaults to False.
+            error_message (str, optional): Error message if the operation failed.
+                Defaults to "".
+            type (str, optional): Screenshot type from backend. Defaults to "".
+            data (Optional[bytes], optional): Raw binary image data. Defaults to None.
+            mime_type (str, optional): MIME type of the image. Defaults to "".
+            width (Optional[int], optional): Image width in pixels. Defaults to None.
+            height (Optional[int], optional): Image height in pixels. Defaults to None.
+        """
+        super().__init__(request_id)
+        self.success = success
+        self.error_message = error_message
+        self.type = type
+        self.data = data
+        self.mime_type = mime_type
+        self.width = width
+        self.height = height

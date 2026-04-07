@@ -1,6 +1,6 @@
 # Run code in the cloud (rich outputs)
 
-## What you’ll do
+## What you'll do
 
 Run Python/JavaScript/Java/R code in an AGB session and read **rich execution outputs** (text/HTML/images/JSON) returned by the SDK.
 
@@ -15,6 +15,38 @@ The enhanced code execution API can return rich outputs in multiple formats:
 - Markdown content
 - LaTeX expressions
 - JSON data
+
+## Real-time streaming
+
+For long-running code, you can enable **WebSocket streaming** to receive stdout/stderr output in real-time instead of waiting for execution to complete:
+
+::: code-group
+
+```python [Python]
+def on_stdout(chunk: str) -> None:
+    print(f"[OUT] {chunk}", end="")
+
+exec_result = session.code.run(
+    "import time\nfor i in range(5):\n    print(f'Progress: {i+1}/5')\n    time.sleep(1)",
+    "python",
+    stream_beta=True,
+    on_stdout=on_stdout,
+)
+```
+
+```typescript [TypeScript]
+const execResult = await session.code.run(
+  "import time\nfor i in range(5):\n    print(f'Progress: {i+1}/5')\n    time.sleep(1)",
+  "python",
+  60,
+  true, // stream_beta
+  (chunk: string) => console.log(`[OUT] ${chunk}`)
+);
+```
+
+:::
+
+For detailed streaming usage, see [Real-time streaming](stream-outputs.md).
 
 ## Prerequisites
 

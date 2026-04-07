@@ -40,11 +40,15 @@ code: [`Code`](capabilities/code_execution.md)
 command: [`Command`](capabilities/shell_commands.md)
 computer: [`Computer`](capabilities/computer.md)
 context: [`ContextManager`](data_context/context_manager.md)
-enableBrowserReplay: `boolean` = `false`
 file: [`FileSystem`](capabilities/file_system.md)
 imageId: `string` = `""`
+linkUrl: `string` = `""`
+mcpTools: ``McpTool``[] = `[]`
 resourceId: `string` = `""`
 resourceUrl: `string` = `""`
+token: `string` = `""`
+toolList: `string` = `""`
+wsUrl: `string` = `""`
 ```
 
 
@@ -54,18 +58,28 @@ resourceUrl: `string` = `""`
 
 ▸ **callMcpTool**(`toolName`, `args`, `readTimeout?`, `connectTimeout?`): `Promise`\&lt;``McpToolResult``\&gt;
 
+Call an MCP tool with intelligent routing.
+
+This method routes the call to either:
+1. LinkUrl route (direct HTTP) - when linkUrl, token, and serverName are available
+2. Traditional API route - fallback method
+
+The routing logic is implemented in BaseService.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `toolName` | `string` |
-| `args` | `Record`\&lt;`string`, `unknown`\&gt; |
-| `readTimeout?` | `number` |
-| `connectTimeout?` | `number` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `toolName` | `string` | Name of the MCP tool to call |
+| `args` | `Record`\&lt;`string`, `unknown`\&gt; | Arguments to pass to the tool |
+| `readTimeout?` | `number` | Read timeout in milliseconds |
+| `connectTimeout?` | `number` | Connect timeout in milliseconds |
 
 #### Returns
 
 `Promise`\&lt;``McpToolResult``\&gt;
+
+Promise resolving to McpToolResult
 
 ___
 

@@ -496,7 +496,12 @@ Watch a directory for file changes and call the callback function when changes o
 **Returns**:
 
     threading.Thread: The monitoring thread. Call thread.start() to begin monitoring.
-  Use the thread's stop_event attribute to stop monitoring.
+  The thread has two event attributes:
+
+  - ``stop_event`` – set this to stop monitoring.
+  - ``ready_event`` – wait on this after calling ``start()`` to
+  ensure the filesystem baseline has been established before
+  performing any file operations.
 
 ## Best Practices
 

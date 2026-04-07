@@ -16,7 +16,7 @@ and web scraping workflows with support for proxy configuration, fingerprinting,
 - Requires `agb-browser-use-1` image for browser automation features
 
 Browser module for web automation: navigate, click, type, screenshot, and extract content.
-Requires initialization with browser options (e.g. stealth, viewport, fingerprint). Use session.browser.agent for high-level tasks.
+Requires initialization with browser options. Use session.browser.agent for high-level tasks.
 
 ## Hierarchy
 
@@ -29,59 +29,21 @@ Requires initialization with browser options (e.g. stealth, viewport, fingerprin
 
 ### Properties
 
-- [session](#session)
 
 ### Methods
 
-- [callMcpTool](#callmcptool)
 - [destroy](#destroy)
-- [handleError](#handleerror)
 - [initialize](#initialize)
 - [initializeAsync](#initializeasync)
 - [isInitialized](#isinitialized)
 - [screenshot](#screenshot)
-- [toJSON](#tojson)
 
 ## Properties
 
 ```typescript
 agent: ``BrowserAgent``
 ```
-
-
-### session
-
-• `Protected` **session**: ``SessionLike``
-
-#### Inherited from
-
-`BaseService`.`session`
-
 ## Methods
-
-### callMcpTool
-
-▸ **callMcpTool**(`name`, `args`, `readTimeout?`, `connectTimeout?`): `Promise`\&lt;``OperationResult``\&gt;
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `name` | `string` |
-| `args` | `Record`\&lt;`string`, `unknown`\&gt; |
-| `readTimeout?` | `number` |
-| `connectTimeout?` | `number` |
-
-#### Returns
-
-`Promise`\&lt;``OperationResult``\&gt;
-
-#### Inherited from
-
-`BaseService`.`callMcpTool`
-
-___
-
 ### destroy
 
 ▸ **destroy**(): `Promise`\&lt;``BoolResult``\&gt;
@@ -89,27 +51,6 @@ ___
 #### Returns
 
 `Promise`\&lt;``BoolResult``\&gt;
-
-### handleError
-
-▸ **handleError**(`e`): `unknown`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `e` | `unknown` |
-
-#### Returns
-
-`unknown`
-
-#### Inherited from
-
-`BaseService`.`handleError`
-
-___
-
 ### initialize
 
 ▸ **initialize**(`option`): `Promise`\&lt;`boolean`\&gt;
@@ -191,20 +132,6 @@ Screenshot data as Uint8Array.
 **`Throws`**
 
 If browser is not initialized.
-
-___
-
-### toJSON
-
-▸ **toJSON**(): `Record`\&lt;`string`, `unknown`\&gt;
-
-#### Returns
-
-`Record`\&lt;`string`, `unknown`\&gt;
-
-#### Inherited from
-
-`BaseService`.`toJSON`
 
 ## Best Practices
 

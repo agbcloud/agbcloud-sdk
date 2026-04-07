@@ -9,6 +9,7 @@ from .file_system import (
     FileSystem,
     MultipleFileContentResult,
 )
+from .ws import WsClient
 
 __all__ = [
     # Code execution
@@ -25,4 +26,5 @@ __all__ = [
     "FileContentResult",
     "MultipleFileContentResult",
     "FileSystemBoolResult",
+    "WsClient"
 ]

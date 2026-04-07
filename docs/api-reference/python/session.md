@@ -20,6 +20,18 @@ class Session()
 
 Session represents a session in the AGB cloud environment.
 
+### get\_link\_url
+
+```python
+def get_link_url() -> str
+```
+
+### get\_token
+
+```python
+def get_token() -> str
+```
+
 ### set\_labels
 
 ```python
@@ -182,6 +194,10 @@ def call_mcp_tool(tool_name: str,
 ```
 
 Call the specified MCP tool.
+
+This method intelligently routes the call to either:
+1. LinkUrl route (direct HTTP) - when link_url, token, and server_name are available
+2. Traditional API route - fallback method
 
 **Arguments**:
 

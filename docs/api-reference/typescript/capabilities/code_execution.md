@@ -27,106 +27,34 @@ Code execution module for running code in the session (Python, JavaScript, Java,
 
 ### Properties
 
-- [session](#session)
 
 ### Methods
 
-- [callMcpTool](#callmcptool)
-- [handleError](#handleerror)
 - [run](#run)
-- [toJSON](#tojson)
 
 ## Properties
-
-```typescript
-execute: (`code`: `string`, `language`: `string`, `timeoutS`: `number`) => `Promise`<``EnhancedCodeExecutionResult``>
-```
-
-
-#### Type declaration
-
-▸ (`code`, `language`, `timeoutS?`): `Promise`\&lt;``EnhancedCodeExecutionResult``\&gt;
-
-##### Parameters
-
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `code` | `string` | `undefined` |
-| `language` | `string` | `undefined` |
-| `timeoutS` | `number` | `60` |
-
-##### Returns
-
-`Promise`\&lt;``EnhancedCodeExecutionResult``\&gt;
-
-___
-
-### session
-
-• `Protected` **session**: ``SessionLike``
-
-#### Inherited from
-
-`BaseService`.`session`
-
 ## Methods
-
-### callMcpTool
-
-▸ **callMcpTool**(`name`, `args`, `readTimeout?`, `connectTimeout?`): `Promise`\&lt;``OperationResult``\&gt;
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `name` | `string` |
-| `args` | `Record`\&lt;`string`, `unknown`\&gt; |
-| `readTimeout?` | `number` |
-| `connectTimeout?` | `number` |
-
-#### Returns
-
-`Promise`\&lt;``OperationResult``\&gt;
-
-#### Inherited from
-
-`BaseService`.`callMcpTool`
-
-___
-
-### handleError
-
-▸ **handleError**(`e`): `unknown`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `e` | `unknown` |
-
-#### Returns
-
-`unknown`
-
-#### Inherited from
-
-`BaseService`.`handleError`
-
-___
-
 ### run
 
-▸ **run**(`code`, `language`, `timeoutS?`): `Promise`\&lt;``EnhancedCodeExecutionResult``\&gt;
+▸ **run**(`code`, `language`, `timeoutS?`, `options?`): `Promise`\&lt;``EnhancedCodeExecutionResult``\&gt;
 
-Run code in the session.
+Execute code in the specified language with a timeout.
+
+This is the primary public method for code execution. For real-time
+streaming output, set streamBeta=true and provide callback functions.
 
 #### Parameters
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
 | `code` | `string` | `undefined` | Source code to execute |
-| `language` | `string` | `undefined` | Language identifier (e.g. "python", "javascript", "java", "r") |
+| `language` | `string` | `undefined` | Language identifier. Case-insensitive. Supported values: 'python', 'javascript', 'java', 'r'. Aliases: 'py' -&gt; 'python', 'js'/'node' -&gt; 'javascript'. |
 | `timeoutS` | `number` | `60` | Timeout in seconds (default 60) |
+| `options?` | `Object` | `undefined` | Optional streaming parameters |
+| `options.onError?` | (`err`: `unknown`) =&gt; `void` | `undefined` | Callback invoked when an error occurs during streaming |
+| `options.onStderr?` | (`chunk`: `string`) =&gt; `void` | `undefined` | Callback invoked with each stderr chunk during streaming |
+| `options.onStdout?` | (`chunk`: `string`) =&gt; `void` | `undefined` | Callback invoked with each stdout chunk during streaming |
+| `options.streamBeta?` | `boolean` | `undefined` | If true, use WebSocket streaming for real-time output |
 
 #### Returns
 
@@ -134,19 +62,21 @@ Run code in the session.
 
 Promise resolving to EnhancedCodeExecutionResult with results and logs
 
-___
+**`Example`**
 
-### toJSON
+```typescript
+// Simple execution
+const result = await session.code.run("print('Hello')", "python");
+console.log(result.results);
 
-▸ **toJSON**(): `Record`\&lt;`string`, `unknown`\&gt;
-
-#### Returns
-
-`Record`\&lt;`string`, `unknown`\&gt;
-
-#### Inherited from
-
-`BaseService`.`toJSON`
+// Streaming execution for long-running code
+const result = await session.code.run(
+  "import time\nfor i in range(5):\n    print(f'Progress: {i+1}/5')\n    time.sleep(1)",
+  "python",
+  60,
+  { streamBeta: true, onStdout: (chunk) => console.log(chunk) }
+);
+```
 
 ## Best Practices
 

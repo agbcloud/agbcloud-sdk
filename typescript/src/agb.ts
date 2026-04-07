@@ -32,6 +32,7 @@ import type {
     GetSessionResult,
     GetSessionData,
     SessionListResult,
+    McpTool,
 } from "./types/api-response";
 import { Session } from "./session";
 import type { CreateSessionParams } from "./session-params";
@@ -160,6 +161,65 @@ export class AGB {
         return list;
     }
 
+    private parseToolListToMcpTools(toolList: string | unknown): McpTool[] {
+        /**
+         * Parse backend ToolList field into a list of McpTool objects.
+         * Backend may return ToolList as a JSON string or a list of objects.
+         */
+        if (!toolList) {
+            return [];
+        }
+
+        let items: unknown = toolList;
+        if (typeof toolList === "string") {
+            try {
+                items = JSON.parse(toolList);
+            } catch (e) {
+                logDebug(`Failed to parse ToolList JSON: ${e}`);
+                return [];
+            }
+        }
+
+        if (!Array.isArray(items)) {
+            return [];
+        }
+
+        /** Type-safe string getter: returns the first string-typed value among candidate keys. */
+        const getString = (obj: Record<string, unknown>, ...keys: string[]): string => {
+            for (const key of keys) {
+                if (typeof obj[key] === "string") {
+                    return obj[key] as string;
+                }
+            }
+            return "";
+        };
+
+        /** Type-safe object getter: returns the value only if it is a plain object. */
+        const getObject = (obj: Record<string, unknown>, key: string): Record<string, unknown> => {
+            const val = obj[key];
+            if (typeof val === "object" && val !== null && !Array.isArray(val)) {
+                return val as Record<string, unknown>;
+            }
+            return {};
+        };
+
+        const tools: McpTool[] = [];
+        for (const item of items) {
+            if (typeof item !== "object" || item === null) {
+                continue;
+            }
+            const itemObj = item as Record<string, unknown>;
+            tools.push({
+                name: getString(itemObj, "name", "Name"),
+                description: getString(itemObj, "description"),
+                inputSchema: getObject(itemObj, "inputSchema"),
+                server: getString(itemObj, "server", "serverName", "Server"),
+                tool: getString(itemObj, "tool"),
+            });
+        }
+        return tools;
+    }
+
     /**
      * Create a new session in the AGB cloud environment.
      *
@@ -263,6 +323,12 @@ export class AGB {
             if (data) {
                 session.appInstanceId = data.appInstanceId ?? "";
                 session.resourceId = data.resourceId ?? "";
+                session.linkUrl = (data as { linkUrl?: string }).linkUrl ?? "";
+                session.wsUrl = (data as { wsUrl?: string }).wsUrl ?? "";
+                session.token = (data as { token?: string }).token ?? "";
+                session.toolList = (data as { toolList?: string }).toolList ?? "";
+                // Parse tool_list into McpTool objects
+                session.mcpTools = this.parseToolListToMcpTools((data as { toolList?: string }).toolList);
             }
 
             if (needsContextSync) {
@@ -544,6 +610,10 @@ export class AGB {
                     success: true,
                     resourceUrl: data.resourceUrl ?? "",
                     status: data.status ?? "",
+                    linkUrl: data.linkUrl ?? "",
+                    wsUrl: data.wsUrl ?? "",
+                    token: data.token ?? "",
+                    toolList: data.toolList ?? "",
                 };
             }
 
@@ -605,6 +675,12 @@ export class AGB {
             session.resourceUrl = getResult.data.resourceUrl || "";
             session.appInstanceId = getResult.data.appInstanceId || "";
             session.resourceId = getResult.data.resourceId || "";
+            session.linkUrl = getResult.data.linkUrl || "";
+            session.wsUrl = getResult.data.wsUrl || "";
+            session.token = getResult.data.token || "";
+            session.toolList = getResult.data.toolList || "";
+            // Parse tool_list into McpTool objects
+            session.mcpTools = this.parseToolListToMcpTools(getResult.data.toolList);
         }
 
         logOperationSuccess(

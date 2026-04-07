@@ -71,9 +71,11 @@ class AGBLogger:
         if os.getenv("DISABLE_COLORS") == "1":
             return False
 
-        # Priority 2: Explicit enable via FORCE_COLOR
+        # Priority 2: Explicit enable/disable via FORCE_COLOR
         force_color = os.getenv("FORCE_COLOR", "")
-        if force_color and force_color != "0":
+        if force_color == "0":
+            return False
+        if force_color:
             return True
 
         # Priority 3: TTY detection

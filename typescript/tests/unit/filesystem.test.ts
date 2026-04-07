@@ -4,6 +4,11 @@ const mockSession = {
     getApiKey: () => "test-key",
     getSessionId: () => "test-session",
     getClient: () => ({}),
+    callMcpTool: jest.fn().mockResolvedValue({
+        requestId: "mock-request-id",
+        success: true,
+        data: "{}",
+    }),
 };
 
 describe("FileSystem", () => {

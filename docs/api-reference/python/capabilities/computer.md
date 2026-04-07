@@ -710,6 +710,42 @@ Gets the screen size and DPI scaling factor.
   - DPI scaling factor affects coordinate calculations on high-DPI displays
   - Use this to determine valid coordinate ranges for mouse operations
 
+### beta\_take\_screenshot
+
+```python
+def beta_take_screenshot(format: str = "png") -> ScreenshotResult
+```
+
+Takes a screenshot of the Computer and returns raw binary image data.
+
+This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+binary image data. The backend also returns the captured image dimensions
+(width/height in pixels), which are exposed on `ScreenshotResult.width`
+and `ScreenshotResult.height`. The backend metadata fields `type` and
+`mime_type` are exposed on `ScreenshotResult.type` and `ScreenshotResult.mime_type`.
+
+**Arguments**:
+
+    format: The desired image format (default: "png"). Supported: "png", "jpeg", "jpg".
+
+
+**Returns**:
+
+    ScreenshotResult: Object containing the screenshot image data (bytes) and metadata
+  including `type`, `mime_type`, `width`, and `height` when provided by the backend.
+
+
+**Raises**:
+
+    ScreenError: If screenshot fails or response cannot be decoded.
+    ValueError: If `format` is invalid.
+
+
+**Notes**:
+
+  This method only works in environments with link_url (e.g., Browser Use images).
+  For other environments, use `capture()` instead.
+
 Computer module main class - container for all computer automation controllers.
 
 ## Computer

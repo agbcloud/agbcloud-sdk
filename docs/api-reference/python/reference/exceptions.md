@@ -79,6 +79,14 @@ class ClearanceTimeoutError(AGBError)
 
 Raised when the clearance task times out.
 
+## ScreenError
+
+```python
+class ScreenError(AGBError)
+```
+
+Raised for errors related to screen operations.
+
 ---
 
 *Documentation generated automatically from source code using pydoc-markdown.*

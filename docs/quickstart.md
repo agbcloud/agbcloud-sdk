@@ -262,6 +262,40 @@ for (const session of sessions) {
 
 :::
 
+### Real-time Streaming
+
+For long-running code, use WebSocket streaming to receive output in real-time:
+
+::: code-group
+
+```python [Python]
+# Streaming: receive output chunks in real-time
+def on_stdout(chunk: str):
+    print(f"[OUT] {chunk}", end="")
+
+result = session.code.run(
+    "import time\nfor i in range(5):\n    print(f'Progress: {i+1}/5')\n    time.sleep(1)",
+    "python",
+    stream_beta=True,
+    on_stdout=on_stdout,
+)
+```
+
+```typescript [TypeScript]
+// Streaming: receive output chunks in real-time
+const result = await session.code.run(
+  "import time\nfor i in range(5):\n    print(f'Progress: {i+1}/5')\n    time.sleep(1)",
+  "python",
+  60,
+  true, // stream_beta
+  (chunk: string) => console.log(`[OUT] ${chunk}`)
+);
+```
+
+:::
+
+For more details, see [Real-time Streaming](/code-interpreting/stream-outputs.md).
+
 ### Production Environment Configuration
 
 ::: code-group

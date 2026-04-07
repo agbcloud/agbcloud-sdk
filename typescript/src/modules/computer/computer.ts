@@ -7,6 +7,7 @@ import type {
     CursorPosition,
     OperationResult,
     ScreenSize,
+    ScreenshotResult,
     WindowListResult,
     WindowInfoResult,
     AppOperationResult,
@@ -21,6 +22,7 @@ import {
     logOperationSuccess,
     logOperationError,
 } from "../../logger";
+import { ScreenError } from "../../exceptions";
 
 export enum MouseButton {
     LEFT = "left",
@@ -654,6 +656,22 @@ export class ApplicationManager extends BaseService {
 export class ScreenController extends BaseService {
     async capture(): Promise<OperationResult> {
         logOperationStart("ScreenController.capture", "");
+
+        // Check if this environment supports direct screenshot
+        const linkUrl = this.session.linkUrl ?? ""
+        if (linkUrl) {
+            const errorMsg =
+                "This cloud environment does not support `screen.capture()`. " +
+                "Please use `beta_take_screenshot()` instead.";
+            logOperationError("ScreenController.capture", errorMsg);
+            return {
+                requestId: "",
+                success: false,
+                data: undefined,
+                errorMessage: errorMsg,
+            };
+        }
+
         const result = await this.callMcpTool("system_screenshot", {});
         if (result.success) {
             logOperationSuccess(
@@ -731,6 +749,168 @@ export class ScreenController extends BaseService {
             width,
             height,
             dpiScalingFactor,
+        };
+    }
+
+    /**
+     * Takes a screenshot of the Computer and returns raw binary image data.
+     *
+     * This API uses the MCP tool `screenshot` (wuying_capture) and returns raw
+     * binary image data. The backend also returns the captured image dimensions
+     * (width/height in pixels), which are exposed on `ScreenshotResult.width`
+     * and `ScreenshotResult.height`. The backend metadata fields `type` and
+     * `mime_type` are exposed on `ScreenshotResult.type` and `ScreenshotResult.mimeType`.
+     *
+     * @param format - The desired image format (default: "png"). Supported: "png", "jpeg", "jpg".
+     * @returns ScreenshotResult containing the screenshot image data (Buffer) and metadata.
+     * @throws ScreenError if screenshot fails or response cannot be decoded.
+     * @throws Error if format is invalid.
+     *
+     * Note: This method only works in environments with linkUrl (e.g., Browser Use images).
+     * For other environments, use `capture()` instead.
+     */
+    async betaTakeScreenshot(format: string = "png"): Promise<ScreenshotResult> {
+        logOperationStart("ScreenController.betaTakeScreenshot", `format=${format}`);
+
+        // Check if this environment supports betaTakeScreenshot
+        const linkUrl = this.session.linkUrl ?? "";
+        if (!linkUrl) {
+            throw new ScreenError(
+                "This cloud environment does not support `betaTakeScreenshot()`. " +
+                "Please use `capture()` instead."
+            );
+        }
+
+        // Validate format
+        let fmt = (format || "").trim().toLowerCase();
+        if (fmt === "jpg") {
+            fmt = "jpeg";
+        }
+        if (fmt !== "png" && fmt !== "jpeg") {
+            throw new Error("Invalid format: must be 'png', 'jpeg', or 'jpg'");
+        }
+
+        // Call MCP tool
+        const args = { format: fmt };
+        const result = await this.callMcpTool("screenshot", args);
+
+        if (!result.success) {
+            const errorMsg = `Failed to take screenshot via MCP tool 'screenshot': ${result.errorMessage}`;
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        if (typeof result.data !== "string" || !result.data.trim()) {
+            const errorMsg = "Screenshot tool returned empty data";
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        const text = result.data.trim();
+
+        // Backend contract: screenshot tool returns a JSON object string with
+        // top-level field "data" containing base64.
+        if (!text.startsWith("{")) {
+            const errorMsg = "Screenshot tool returned non-JSON data";
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        let obj: Record<string, unknown>;
+        try {
+            obj = JSON.parse(text) as Record<string, unknown>;
+        } catch (e) {
+            const errorMsg = `Invalid screenshot JSON: ${e}`;
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        if (typeof obj !== "object" || obj === null) {
+            const errorMsg = "Invalid screenshot JSON: expected object";
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        const shotType = obj.type as string | undefined;
+        const mimeType = obj.mime_type as string | undefined;
+        const b64 = obj.data as string | undefined;
+
+        if (typeof b64 !== "string" || !b64.trim()) {
+            const errorMsg = "Screenshot JSON missing base64 field";
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        if (typeof shotType !== "string" || !shotType.trim()) {
+            const errorMsg = "Invalid screenshot JSON: expected non-empty string 'type'";
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        if (typeof mimeType !== "string" || !mimeType.trim()) {
+            const errorMsg = "Invalid screenshot JSON: expected non-empty string 'mime_type'";
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        const width = obj.width as number | undefined;
+        const height = obj.height as number | undefined;
+
+        if (width !== undefined && typeof width !== "number") {
+            const errorMsg = "Invalid screenshot JSON: expected integer 'width'";
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        if (height !== undefined && typeof height !== "number") {
+            const errorMsg = "Invalid screenshot JSON: expected integer 'height'";
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        // Decode base64 data
+        let raw: Buffer;
+        try {
+            raw = Buffer.from(b64, "base64");
+        } catch (e) {
+            const errorMsg = `Failed to decode screenshot data: ${e}`;
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        // Verify magic bytes
+        const pngMagic = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+        const jpegMagic = Buffer.from([0xff, 0xd8, 0xff]);
+        const expectedMagic = fmt === "jpeg" ? jpegMagic : pngMagic;
+
+        if (!raw.subarray(0, expectedMagic.length).equals(expectedMagic)) {
+            const errorMsg = `Screenshot data does not match expected format '${fmt}'`;
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        // Verify MIME type
+        const expectedMimeType = fmt === "png" ? "image/png" : "image/jpeg";
+        if (mimeType.trim().toLowerCase() !== expectedMimeType) {
+            const errorMsg = `Screenshot JSON mime_type does not match expected format: expected '${expectedMimeType}', got '${mimeType}'`;
+            logOperationError("ScreenController.betaTakeScreenshot", errorMsg);
+            throw new ScreenError(errorMsg);
+        }
+
+        logOperationSuccess(
+            "ScreenController.betaTakeScreenshot",
+            `RequestId=${result.requestId ?? ""}, Size=${raw.length} bytes, Dimensions=${width}x${height}, Format=${fmt}`
+        );
+
+        return {
+            requestId: result.requestId ?? "",
+            success: true,
+            errorMessage: "",
+            type: shotType,
+            data: raw,
+            mimeType: mimeType,
+            width: width,
+            height: height,
         };
     }
 }

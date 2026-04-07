@@ -1,5 +1,5 @@
 import json
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from agb.api.models import (
     GetMcpResourceRequest,
@@ -22,6 +22,7 @@ from agb.model.response import (
     SessionMetrics,
     SessionMetricsResult,
 )
+from agb.modules.ws import WsClient
 from agb.modules.browser import Browser
 from agb.modules.code import Code
 from agb.modules.command import Command
@@ -56,6 +57,11 @@ class Session:
         self.image_id = ""
         self.app_instance_id = ""
         self.resource_id = ""
+        self.link_url = ""
+        self.ws_url = ""
+        self.token = ""
+        self.tool_list: Union[List[Any], str] = []
+        self._ws_client = None
 
         # Initialize all modules
         self._init_modules()
@@ -73,6 +79,12 @@ class Session:
 
         # Internal base service for shared MCP tool call logic
         self._base_service = BaseService(self)
+
+    def get_link_url(self) -> str:
+        return self.link_url
+
+    def get_token(self) -> str:
+        return self.token
 
     def get_api_key(self) -> str:
         """
@@ -100,6 +112,27 @@ class Session:
             Client: The HTTP client instance.
         """
         return self.agb.client
+
+    def _get_ws_client(self):
+        """
+        Internal: get or create a session-scoped WS client.
+
+        This method is internal API by convention.
+
+        Returns:
+            WsClient: The WebSocket client instance.
+
+        Raises:
+            SessionError: If ws_url or token is not available.
+        """
+        if not self.ws_url:
+            raise SessionError("ws_url is not available for this session")
+        if not self.token:
+            raise SessionError("token is not available for WS connection")
+
+        if self._ws_client is None:
+            self._ws_client = WsClient(ws_url=self.ws_url, ws_token=self.token)
+        return self._ws_client
 
     def _validate_labels(self, labels: Dict[str, str]) -> Optional[OperationResult]:
         """
@@ -658,6 +691,14 @@ class Session:
                 success=False,
                 error_message=f"Failed to delete session {self.session_id}: {e}",
             )
+        finally:
+            ws_client = self._ws_client
+            self._ws_client = None
+            if ws_client is not None:
+                try:
+                    ws_client.close()
+                except Exception:
+                    pass
 
     def get_status(self) -> "SessionStatusResult":
         """
@@ -779,6 +820,10 @@ class Session:
         """
         Call the specified MCP tool.
 
+        This method intelligently routes the call to either:
+        1. LinkUrl route (direct HTTP) - when link_url, token, and server_name are available
+        2. Traditional API route - fallback method
+
         Args:
             tool_name (str): Tool name (e.g., "tap", "get_ui_elements").
             args (Dict[str, Any]): Tool arguments dictionary.
@@ -811,31 +856,42 @@ class Session:
             f"SessionId={self.session_id}, ToolName={tool_name}",
         )
 
-        result = self._base_service._call_mcp_tool(
-            tool_name, args, read_timeout=read_timeout, connect_timeout=connect_timeout
-        )
-
-        if result.success:
-            log_operation_success(
-                "Session.call_mcp_tool",
-                f"SessionId={self.session_id}, RequestId={result.request_id}, ToolName={tool_name}",
-            )
-        elif result.error_message:
-            log_warning(
-                f"Session.call_mcp_tool failed: {result.error_message}, RequestId={result.request_id}"
-            )
-        else:
-            log_operation_error(
-                "Session.call_mcp_tool",
-                result.error_message or "Unknown error",
+        try:
+            # Delegate to BaseService which handles intelligent routing
+            result = self._base_service._call_mcp_tool(
+                tool_name, args, read_timeout=read_timeout, connect_timeout=connect_timeout
             )
 
-        return McpToolResult(
-            request_id=result.request_id,
-            success=result.success,
-            data=result.data,
-            error_message=result.error_message,
-        )
+            if result.success:
+                log_operation_success(
+                    "Session.call_mcp_tool",
+                    f"SessionId={self.session_id}, RequestId={result.request_id}, ToolName={tool_name}",
+                )
+            elif result.error_message:
+                log_warning(
+                    f"Session.call_mcp_tool failed: {result.error_message}, RequestId={result.request_id}"
+                )
+            else:
+                log_operation_error(
+                    "Session.call_mcp_tool",
+                    result.error_message or "Unknown error",
+                )
+            return McpToolResult(
+                request_id=result.request_id,
+                success=result.success,
+                data=result.data,
+                error_message=result.error_message,
+            )
+        except Exception as e:
+            error_msg = f"Failed to call MCP tool {tool_name}: {e}"
+            log_operation_error("Session.call_mcp_tool",
+                                error_msg, exc_info=True)
+            return McpToolResult(
+                request_id="",
+                success=False,
+                data="",
+                error_message=error_msg
+            )
 
     def list_mcp_tools(self, image_id: Optional[str] = None) -> McpToolsResult:
         """

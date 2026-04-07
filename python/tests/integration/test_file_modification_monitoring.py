@@ -47,7 +47,7 @@ def test_watch_directory_file_modification():
         pytest.fail(f"Failed to initialize AGB client: {e}")
 
     # Create session with specified ImageId
-    session_params = CreateSessionParams(image_id="agb-code-space-2")
+    session_params = CreateSessionParams(image_id="agb-browser-use-1")
     session_result = agb.create(session_params)
 
     assert session_result.success and session_result.session is not None, (
@@ -171,7 +171,7 @@ def test_watch_directory_file_modification():
             print(f"  Valid events: {valid_events}")
 
             if valid_events >= 2: # Requiring at least 2 valid events
-                print("✅ File modification monitoring test passed!")
+                print(f"✅ File modification monitoring test passed! {valid_events}")
                 test_passed = True
             else:
                 print("❌ No valid modification events detected")

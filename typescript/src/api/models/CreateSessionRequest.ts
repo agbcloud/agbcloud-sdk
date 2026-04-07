@@ -9,6 +9,10 @@ export interface SessionData {
     sessionId?: string;
     taskId?: string;
     networkInterfaceIp?: string;
+    linkUrl?: string;
+    wsUrl?: string;
+    token?: string;
+    toolList?: string;
 }
 
 export class CreateSessionRequest {

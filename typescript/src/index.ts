@@ -20,6 +20,7 @@ export {
     SessionError,
     ApplicationError,
     BrowserError,
+    ScreenError,
     ClearanceTimeoutError,
 } from "./exceptions";
 
@@ -128,6 +129,7 @@ export type {
     CommandResult,
     ExecutionResult,
     ExecutionLogs,
+    ExecutionError,
     EnhancedCodeExecutionResult,
     FileContentResult,
     BinaryFileContentResult,
@@ -142,6 +144,7 @@ export type {
     DownloadResult,
     CursorPosition,
     ScreenSize,
+    ScreenshotResult,
     WindowInfo,
     WindowInfoResult,
     WindowListResult,

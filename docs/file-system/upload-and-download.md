@@ -19,7 +19,7 @@ from agb import AGB
 from agb.session_params import CreateSessionParams
 
 agb = AGB()
-result = agb.create(CreateSessionParams(image_id="agb-code-space-2"))
+result = agb.create(CreateSessionParams(image_id="agb-code-space-1"))
 session = result.session
 
 context_path = session.file.transfer_path()
@@ -42,7 +42,7 @@ import { AGB, CreateSessionParams } from "agbcloud-sdk";
 
 const agb = new AGB();
 const result = await agb.create(
-  new CreateSessionParams({ imageId: "agb-code-space-2" })
+  new CreateSessionParams({ imageId: "agb-code-space-1" })
 );
 const session = result.session!;
 
@@ -72,7 +72,7 @@ from agb import AGB
 from agb.session_params import CreateSessionParams
 
 agb = AGB()
-params = CreateSessionParams(image_id="agb-code-space-2")
+params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
 
 if result.success:
@@ -103,7 +103,7 @@ from agb import AGB
 from agb.session_params import CreateSessionParams
 
 agb = AGB()
-params = CreateSessionParams(image_id="agb-code-space-2")
+params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
 
 if result.success:
@@ -148,7 +148,7 @@ from agb import AGB
 from agb.session_params import CreateSessionParams
 
 agb = AGB()
-params = CreateSessionParams(image_id="agb-code-space-2")
+params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
 
 if result.success:
@@ -197,7 +197,7 @@ from agb import AGB
 from agb.session_params import CreateSessionParams
 
 agb = AGB()
-params = CreateSessionParams(image_id="agb-code-space-2")
+params = CreateSessionParams(image_id="agb-code-space-1")
 result = agb.create(params)
 
 if result.success:

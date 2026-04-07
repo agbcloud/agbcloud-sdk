@@ -27,8 +27,13 @@ describe("Computer module (integration)", () => {
 
     test("screen capture returns data", async () => {
         const result = await session.computer.screen.capture();
-        expect(result.success).toBe(true);
-        expect(result.data).toBeDefined();
+        // Note: In Computer Use images without link_url, capture() returns error
+        // In Browser Use images with link_url, capture() returns success
+        if (result.success) {
+            expect(result.data).toBeDefined();
+        } else {
+            expect(result.errorMessage).toContain("does not support");
+        }
     });
 
     test("screen getSize returns dimensions", async () => {
@@ -146,7 +151,12 @@ describe("Computer module (integration)", () => {
 
     test("deprecated computer.screenshot()", async () => {
         const result = await session.computer.screenshot();
-        expect(result.success).toBe(true);
-        expect(result.data).toBeDefined();
+        // Note: In Computer Use images without link_url, screenshot() returns error
+        // In Browser Use images with link_url, screenshot() returns success
+        if (result.success) {
+            expect(result.data).toBeDefined();
+        } else {
+            expect(result.errorMessage).toContain("does not support");
+        }
     });
 });

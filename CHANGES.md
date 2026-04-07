@@ -1,5 +1,46 @@
 # Changelog
 
+## [0.12.0] - 2026-04-07
+
+### New Features
+
+- **WebSocket**: New websocket client module (`ws`) with integration tests; session-level websocket client initialization and cleanup with improved logging on deletion.
+- **MCP Tools**: Add support for MCP tools in session — tool list parsing, `callMcpTool` routing, session URL handling, and additional session fields.
+- **Screenshot (Python)**: `beta_take_screenshot` method in Screen module with fixed import order.
+- **Screenshot (TypeScript)**: Sync `betaTakeScreenshot` API with unit and integration tests.
+- **Execution Context**: New documentation for execution context module.
+
+### Enhancements
+
+- **MCP Routing**: MCP tool invocation smart routing pushed down to `BaseService`, aligning Python and TypeScript implementations.
+- **TypeScript Exceptions**: Refactor exception classes with factory functions to eliminate duplicate code.
+- **TypeScript**: Remove `enableBrowserReplay` feature; add union types for tool list and improve imports handling.
+- **FileSystem Monitoring**: Enhance directory monitoring logic with ready event, baseline establishment flag, and execution error handling.
+- **WebSocket**: Update ws exceptions with extra params; simplify ws client logic and error creation pattern.
+- **API Consistency**: Rename `run_code` to `_run_code` and update related methods and docs across modules; update method calls for consistency across Python and TypeScript.
+- **MIME Handling**: Improve MIME type handling and add default stream target.
+- **Data Retrieval**: Improve data retrieval logic and add helper functions for type safety.
+- **Testing**: Update session creation params and image ID for testing consistency across languages.
+
+### Bug Fixes
+
+- **Dependencies**: `websockets` is now a required dependency (was missing from install_requires).
+- **Screenshot**: Fix `screen.beta_take_screenshot` integration test error; fix unit and integration test errors in code and screenshot modules.
+- **TypeScript**: Add `callMcpTool` to mock sessions for `SessionLike` interface compliance; fix API doc generation error; add ws dependency and improve logging in TypeScript modules.
+- **Tool List**: Handle empty tool list and improve content check logic.
+- **Timeout**: Add timeout parameters to future results in sync client; improve exception handling in TypeScript modules.
+- **FileSystem**: Correct parameter name for stop event in directory monitoring example.
+- **Scripts**: Remove wrong option in CI script.
+
+### Documentation, Testing & Chore
+
+- **Release Automation**: Add release SOP, automation scripts, unified CI release pipeline, and GitHub Actions auto-release workflow.
+- **Docs**: Add real-time streaming and websocket documentation; use "remote browser" wording and document stealth option in TypeScript API.
+- **Docs Fixes**: Fix documentation issues found during review (dead links, formatting).
+- **Testing**: Add websockets dependency for testing.
+- **API Docs**: Auto-generated API reference documentation updated.
+- **CI/CD**: Add pipeline for SDK sync to GitHub; unified release pipeline, changelog generation, version bump, and doc-check automation scripts.
+
 ## [0.11.0] - 2026-03-16
 
 ### Breaking Changes

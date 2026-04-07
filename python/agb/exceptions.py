@@ -63,3 +63,10 @@ class ClearanceTimeoutError(AGBError):
 
     def __init__(self, message="Clearance task timed out", *args, **kwargs):
         super().__init__(message, *args, **kwargs)
+
+
+class ScreenError(AGBError):
+    """Raised for errors related to screen operations."""
+
+    def __init__(self, message="Screen operation error", *args, **kwargs):
+        super().__init__(message, *args, **kwargs)

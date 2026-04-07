@@ -6,6 +6,7 @@ import { FileSystem } from "./modules/filesystem";
 import { Browser } from "./modules/browser/browser";
 import { Computer } from "./modules/computer/computer";
 import { ContextManager } from "./context-manager";
+import { WsClient } from "./modules/ws";
 import {
     SetLabelRequest,
     GetLabelRequest,
@@ -26,8 +27,7 @@ import type {
     SessionMetricsResult,
     SessionMetrics,
 } from "./types/api-response";
-import { logInfo, logOperationError } from "./logger";
-
+import { logOperationError, logDebug, logOperationSuccess, logOperationStart } from "./logger";
 /**
  * Minimal AGB client interface used by Session for API calls.
  */
@@ -48,7 +48,11 @@ export class Session {
     imageId: string = "";
     appInstanceId: string = "";
     resourceId: string = "";
-    enableBrowserReplay: boolean = false;
+    linkUrl: string = "";
+    wsUrl: string = "";
+    token: string = "";
+    toolList: string = "";
+    mcpTools: McpTool[] = [];
 
     /** Execute shell commands in the session. */
     command!: Command;
@@ -76,6 +80,7 @@ export class Session {
     }
 
     private _baseService!: BaseService;
+    private _wsClient: WsClient | null = null;
 
     private _initModules(): void {
         this.command = new Command(this);
@@ -110,6 +115,37 @@ export class Session {
     /** @internal */
     getAgb(): AGB {
         return this._agb;
+    }
+
+    /**
+     * Get (or lazily create) the session-scoped WebSocket client.
+     *
+     * Requires `wsUrl` and `token` to be set on the session (populated after
+     * session creation when the server returns WebSocket connection info).
+     *
+     * @throws Error if wsUrl or token is not available
+     * @internal
+     */
+    _getWsClient(): WsClient {
+        if (!this.wsUrl) {
+            throw new Error(
+                "wsUrl is not set on this session. " +
+                "Ensure the session was created with WebSocket support enabled."
+            );
+        }
+        if (!this.token) {
+            throw new Error(
+                "token is not set on this session. " +
+                "Ensure the session was created with WebSocket support enabled."
+            );
+        }
+
+        if (this._wsClient === null) {
+            this._wsClient = new WsClient(this.wsUrl, this.token);
+            logDebug(`[Session] Created WsClient for session ${this._sessionId}`);
+        }
+
+        return this._wsClient;
     }
 
     /**
@@ -358,70 +394,83 @@ export class Session {
      * @returns Promise resolving to DeleteResult
      */
     async delete(syncContext: boolean = false): Promise<DeleteResult> {
-        if (syncContext) {
-            await this.context.sync();
-        }
+        try {
+            if (syncContext) {
+                await this.context.sync();
+            }
 
-        const request = new DeleteSessionAsyncRequest(
-            `Bearer ${this.getApiKey()}`,
-            this._sessionId
-        );
+            const request = new DeleteSessionAsyncRequest(
+                `Bearer ${this.getApiKey()}`,
+                this._sessionId
+            );
 
-        const response = await this.getClient().deleteSessionAsync(request);
+            const response = await this.getClient().deleteSessionAsync(request);
 
-        const requestId =
-            (response as { requestId?: string }).requestId ??
-            (response as { body?: { requestId?: string } }).body?.requestId ??
-            "";
+            const requestId =
+                (response as { requestId?: string }).requestId ??
+                (response as { body?: { requestId?: string } }).body?.requestId ??
+                "";
 
-        if (!response.isSuccessful()) {
-            const body = response as { body?: { code?: string; message?: string } };
-            const errorMessage = `[${body.body?.code ?? "Unknown"}] ${body.body?.message ?? "Failed to delete session"
-                }`;
-            return {
-                requestId,
-                success: false,
-                errorMessage,
-            };
-        }
-
-        const pollTimeout = 300000;
-        const pollInterval = 1000;
-        const pollStartTime = Date.now();
-
-        while (true) {
-            const elapsed = Date.now() - pollStartTime;
-            if (elapsed >= pollTimeout) {
+            if (!response.isSuccessful()) {
+                const body = response as { body?: { code?: string; message?: string } };
+                const errorMessage = `[${body.body?.code ?? "Unknown"}] ${body.body?.message ?? "Failed to delete session"
+                    }`;
                 return {
                     requestId,
                     success: false,
-                    errorMessage: `Timeout waiting for session deletion after ${pollTimeout / 1000}s`,
+                    errorMessage,
                 };
             }
 
-            const statusResult = await this.getStatus();
+            const pollTimeout = 300000;
+            const pollInterval = 1000;
+            const pollStartTime = Date.now();
 
-            if (!statusResult.success) {
-                const errorCode = statusResult.code ?? "";
-                const errorMessage = statusResult.errorMessage ?? "";
-                const httpStatusCode = statusResult.httpStatusCode ?? 0;
+            while (true) {
+                const elapsed = Date.now() - pollStartTime;
+                if (elapsed >= pollTimeout) {
+                    return {
+                        requestId,
+                        success: false,
+                        errorMessage: `Timeout waiting for session deletion after ${pollTimeout / 1000}s`,
+                    };
+                }
 
-                const isNotFound =
-                    errorCode === "InvalidMcpSession.NotFound" ||
-                    (httpStatusCode === 400 &&
-                        (errorMessage.toLowerCase().includes("not found") ||
-                            errorMessage.includes("NotFound") ||
-                            errorCode.toLowerCase().includes("not found"))) ||
-                    errorMessage.toLowerCase().includes("not found");
+                const statusResult = await this.getStatus();
 
-                if (isNotFound) {
+                if (!statusResult.success) {
+                    const errorCode = statusResult.code ?? "";
+                    const errorMessage = statusResult.errorMessage ?? "";
+                    const httpStatusCode = statusResult.httpStatusCode ?? 0;
+
+                    const isNotFound =
+                        errorCode === "InvalidMcpSession.NotFound" ||
+                        (httpStatusCode === 400 &&
+                            (errorMessage.toLowerCase().includes("not found") ||
+                                errorMessage.includes("NotFound") ||
+                                errorCode.toLowerCase().includes("not found"))) ||
+                        errorMessage.toLowerCase().includes("not found");
+
+                    if (isNotFound) {
+                        return { requestId, success: true };
+                    }
+                } else if (statusResult.status === "FINISH") {
                     return { requestId, success: true };
                 }
-            } else if (statusResult.status === "FINISH") {
-                return { requestId, success: true };
-            }
 
-            await new Promise((resolve) => setTimeout(resolve, pollInterval));
+                await new Promise((resolve) => setTimeout(resolve, pollInterval));
+            }
+        } finally {
+            // Close WsClient to stop reconnect timers and release resources
+            const wsClient = this._wsClient;
+            this._wsClient = null;
+            if (wsClient !== null) {
+                try {
+                    await wsClient.close();
+                } catch {
+                    // ignore close errors
+                }
+            }
         }
     }
 
@@ -484,25 +533,69 @@ export class Session {
         };
     }
 
+    /**
+     * Call an MCP tool with intelligent routing.
+     *
+     * This method routes the call to either:
+     * 1. LinkUrl route (direct HTTP) - when linkUrl, token, and serverName are available
+     * 2. Traditional API route - fallback method
+     *
+     * The routing logic is implemented in BaseService.
+     *
+     * @param toolName - Name of the MCP tool to call
+     * @param args - Arguments to pass to the tool
+     * @param readTimeout - Read timeout in milliseconds
+     * @param connectTimeout - Connect timeout in milliseconds
+     * @returns Promise resolving to McpToolResult
+     */
     async callMcpTool(
         toolName: string,
         args: Record<string, unknown>,
         readTimeout?: number,
         connectTimeout?: number
     ): Promise<McpToolResult> {
-        const result = await this._baseService.callMcpTool(
-            toolName,
-            args,
-            readTimeout,
-            connectTimeout
+        logOperationStart(
+            "Session.callMcpTool",
+            `SessionId=${this._sessionId}, ToolName=${toolName}`
         );
 
-        return {
-            requestId: result.requestId,
-            success: result.success,
-            data: result.data as string | undefined,
-            errorMessage: result.errorMessage,
-        };
+        try {
+            // Delegate to BaseService which handles intelligent routing
+            const result = await this._baseService.callMcpTool(
+                toolName,
+                args,
+                readTimeout,
+                connectTimeout
+            );
+
+            if (result.success) {
+                logOperationSuccess(
+                    "Session.callMcpTool",
+                    `SessionId=${this._sessionId}, RequestId=${result.requestId ?? ""}, ToolName=${toolName}`
+                );
+            } else {
+                logOperationError(
+                    "Session.callMcpTool",
+                    result.errorMessage ?? "Unknown error"
+                );
+            }
+
+            return {
+                requestId: result.requestId,
+                success: result.success,
+                data: result.data as string | undefined,
+                errorMessage: result.errorMessage,
+            };
+        } catch (e) {
+            const errorMsg = `Failed to call MCP tool ${toolName}: ${e}`;
+            logOperationError("Session.callMcpTool", errorMsg);
+            return {
+                requestId: "",
+                success: false,
+                data: "",
+                errorMessage: errorMsg,
+            };
+        }
     }
 
     async listMcpTools(imageId?: string): Promise<McpToolsResult> {

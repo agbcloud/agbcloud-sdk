@@ -81,10 +81,10 @@ class TestAGB(unittest.TestCase):
 
         # Mock client and response
         mock_client = MagicMock()
-        mock_response = MagicMock(spec=CreateSessionResponse)
+        mock_response = MagicMock()
 
         # Mock response data
-        mock_data = MagicMock(spec=SessionData)
+        mock_data = MagicMock()
         mock_data.success = True
         mock_data.session_id = "new-session-id"
         mock_data.resource_url = "http://resource.url"
@@ -136,8 +136,8 @@ class TestAGB(unittest.TestCase):
         mock_load_config.return_value = mock_config
 
         mock_client = MagicMock()
-        mock_response = MagicMock(spec=CreateSessionResponse)
-        mock_data = MagicMock(spec=SessionData)
+        mock_response = MagicMock()
+        mock_data = MagicMock()
         mock_data.success = True
         mock_data.session_id = "new-session-id"
         mock_data.resource_url = "http://resource.url"
@@ -182,7 +182,7 @@ class TestAGB(unittest.TestCase):
 
         # Mock client and invalid response
         mock_client = MagicMock()
-        mock_response = MagicMock(spec=CreateSessionResponse)
+        mock_response = MagicMock()
         mock_response.data = None  # Invalid Data field
         mock_response.request_id = "error-request-id"
         mock_response.get_session_id.return_value = None
@@ -215,10 +215,10 @@ class TestAGB(unittest.TestCase):
 
         # Mock client and failure response
         mock_client = MagicMock()
-        mock_response = MagicMock(spec=CreateSessionResponse)
+        mock_response = MagicMock()
 
         # Mock response data with failure
-        mock_data = MagicMock(spec=SessionData)
+        mock_data = MagicMock()
         mock_data.success = False
         mock_data.err_msg = "Session creation failed"
         mock_response.data = mock_data
@@ -282,7 +282,7 @@ class TestAGB(unittest.TestCase):
         from agb.api.models.list_session_response import ListSessionResponse
 
         # Create mock response
-        mock_response = MagicMock(spec=ListSessionResponse)
+        mock_response = MagicMock()
         mock_response.is_successful.return_value = True
         mock_response.get_session_data.return_value = [
             MagicMock(session_id="session-1", session_status="RUNNING"),
@@ -332,7 +332,7 @@ class TestAGB(unittest.TestCase):
         from agb.api.models.list_session_response import ListSessionResponse
 
         # Create mock response for first page (page=1, direct call)
-        mock_response_page1 = MagicMock(spec=ListSessionResponse)
+        mock_response_page1 = MagicMock()
         mock_response_page1.is_successful.return_value = True
         mock_response_page1.get_session_data.return_value = [
             MagicMock(session_id="session-1", session_status="RUNNING"),
@@ -348,14 +348,14 @@ class TestAGB(unittest.TestCase):
         # 2. Second call to get actual page 2 data
 
         # Mock response for getting next_token (internal call)
-        mock_response_get_token = MagicMock(spec=ListSessionResponse)
+        mock_response_get_token = MagicMock()
         mock_response_get_token.is_successful.return_value = True
         mock_response_get_token.get_next_token.return_value = "next-token-123"
         mock_response_get_token.get_count.return_value = 5
         mock_response_get_token.request_id = "internal-request-id"
 
         # Mock response for actual page 2 data
-        mock_response_page2 = MagicMock(spec=ListSessionResponse)
+        mock_response_page2 = MagicMock()
         mock_response_page2.is_successful.return_value = True
         mock_response_page2.get_session_data.return_value = [
             MagicMock(session_id="session-3", session_status="RUNNING"),

@@ -28,6 +28,11 @@ describe("BaseService", () => {
         getApiKey: () => "test-key",
         getSessionId: () => "test-session-id",
         getClient: () => mockClient,
+        callMcpTool: jest.fn().mockResolvedValue({
+            requestId: "mock-request-id",
+            success: true,
+            data: "{}",
+        }),
     };
 
     let service: TestableBaseService;

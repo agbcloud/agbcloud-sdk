@@ -24,23 +24,19 @@ Supports text and binary files, directory listing, search, upload/download, and 
 ### Properties
 
 - [DEFAULT\_CHUNK\_SIZE](#default_chunk_size)
-- [session](#session)
 
 ### Methods
 
-- [callMcpTool](#callmcptool)
 - [createDirectory](#createdirectory)
 - [deleteFile](#deletefile)
 - [download](#download)
 - [editFile](#editfile)
-- [handleError](#handleerror)
 - [listDirectory](#listdirectory)
 - [moveFile](#movefile)
 - [read](#read)
 - [readFile](#readfile)
 - [readMultipleFiles](#readmultiplefiles)
 - [searchFiles](#searchfiles)
-- [toJSON](#tojson)
 - [transferPath](#transferpath)
 - [upload](#upload)
 - [watchDir](#watchdir)
@@ -159,60 +155,7 @@ ___
 ##### Returns
 
 `Promise`\&lt;``BoolResult``\&gt;
-
-___
-
-### session
-
-• `Protected` **session**: ``SessionLike``
-
-#### Inherited from
-
-`BaseService`.`session`
-
-___
-
-#### Type declaration
-
-▸ (`path`, `content`, `mode?`): `Promise`\&lt;``BoolResult``\&gt;
-
-##### Parameters
-
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `path` | `string` | `undefined` |
-| `content` | `string` | `undefined` |
-| `mode` | ``"overwrite"`` \| ``"append"`` \| ``"create_new"`` | `"overwrite"` |
-
-##### Returns
-
-`Promise`\&lt;``BoolResult``\&gt;
-
 ## Methods
-
-### callMcpTool
-
-▸ **callMcpTool**(`name`, `args`, `readTimeout?`, `connectTimeout?`): `Promise`\&lt;``OperationResult``\&gt;
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `name` | `string` |
-| `args` | `Record`\&lt;`string`, `unknown`\&gt; |
-| `readTimeout?` | `number` |
-| `connectTimeout?` | `number` |
-
-#### Returns
-
-`Promise`\&lt;``OperationResult``\&gt;
-
-#### Inherited from
-
-`BaseService`.`callMcpTool`
-
-___
-
 ### createDirectory
 
 ▸ **createDirectory**(`path`): `Promise`\&lt;``BoolResult``\&gt;
@@ -283,27 +226,6 @@ ___
 #### Returns
 
 `Promise`\&lt;``BoolResult``\&gt;
-
-### handleError
-
-▸ **handleError**(`e`): `unknown`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `e` | `unknown` |
-
-#### Returns
-
-`unknown`
-
-#### Inherited from
-
-`BaseService`.`handleError`
-
-___
-
 ### listDirectory
 
 ▸ **listDirectory**(`path`): `Promise`\&lt;``DirectoryListResult``\&gt;
@@ -456,23 +378,6 @@ ___
 #### Returns
 
 `Promise`\&lt;``FileSearchResult``\&gt;
-
-___
-
-### toJSON
-
-▸ **toJSON**(): `Record`\&lt;`string`, `unknown`\&gt;
-
-#### Returns
-
-`Record`\&lt;`string`, `unknown`\&gt;
-
-#### Inherited from
-
-`BaseService`.`toJSON`
-
-___
-
 ### transferPath
 
 ▸ **transferPath**(): `Promise`\&lt;`undefined` \| `string`\&gt;
@@ -512,23 +417,21 @@ ___
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `dirPath` | `string` | `undefined` |
-| `callback` | (`events`: ``FileChangeEvent``[]) =&gt; `void` | `undefined` |
-| `interval` | `number` | `1000` |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `dirPath` | `string` | `undefined` | - |
+| `callback` | (`events`: ``FileChangeEvent``[]) =&gt; `void` | `undefined` | Callback function called with file change events |
+| `interval` | `number` | `1000` | Polling interval in milliseconds (default: 1000ms = 1s) |
 
 #### Returns
 
 `Object`
 
+Object with stop method to stop monitoring
+
 | Name | Type |
 | :------ | :------ |
 | `stop` | () =&gt; `void` |
-
-**`Deprecated`**
-
-Use watchDirectory instead
 
 ___
 

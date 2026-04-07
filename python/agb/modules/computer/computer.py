@@ -66,7 +66,8 @@ class Computer(BaseService):
             button = kwargs.get("button", MouseButton.LEFT)
 
         # Call MCP tool directly for backward compatibility
-        button_str = button.value if isinstance(button, MouseButton) else button
+        button_str = button.value if isinstance(
+            button, MouseButton) else button
         valid_buttons = [b.value for b in MouseButton]
         if button_str not in valid_buttons:
             error_msg = f"Invalid button '{button_str}'. Must be one of {valid_buttons}"
@@ -450,7 +451,8 @@ class Computer(BaseService):
             log_operation_error,
         )
 
-        log_operation_start("Computer.activate_window", f"WindowId={window_id}")
+        log_operation_start("Computer.activate_window",
+                            f"WindowId={window_id}")
         try:
             args = {"window_id": window_id}
             result = self._call_mcp_tool("activate_window", args)
@@ -949,7 +951,8 @@ class Computer(BaseService):
             args = {}
             result = self._call_mcp_tool("get_screen_size", args)
             if result.success:
-                screen_data = result.data if isinstance(result.data, dict) else {}
+                screen_data = result.data if isinstance(
+                    result.data, dict) else {}
                 log_operation_success(
                     "Computer.get_screen_size",
                     f"Width={screen_data.get('width', 'N/A')}, Height={screen_data.get('height', 'N/A')}, RequestId={result.request_id}",
@@ -972,11 +975,6 @@ class Computer(BaseService):
 
     def screenshot(self, **kwargs):
         """Deprecated: Use computer.screen.capture() instead."""
-        warnings.warn(
-            "computer.screenshot() is deprecated. Use computer.screen.capture() instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
         from agb.model.response import OperationResult
         from agb.logger import (
             log_operation_start,
@@ -984,10 +982,34 @@ class Computer(BaseService):
             log_operation_error,
         )
 
+        warnings.warn(
+            "computer.screenshot() is deprecated. Use computer.screen.capture() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         log_operation_start("Computer.screenshot", "")
+
+        link_url = ""
         try:
-            args = {}
-            result = self._call_mcp_tool("system_screenshot", args)
+            link_url = self.session.get_link_url() or ""
+        except Exception:
+            link_url = getattr(self.session, "link_url", "") or ""
+        if link_url:
+            error_msg = (
+                "This cloud environment does not support `screenshot()`. "
+                "Please use `beta_take_screenshot()` instead."
+            )
+            log_operation_error("Computer.screenshot", error_msg)
+            return OperationResult(
+                request_id="",
+                success=False,
+                data=None,
+                error_message=error_msg,
+            )
+
+        try:
+            result = self._call_mcp_tool("system_screenshot", {})
             if result.success:
                 log_operation_success(
                     "Computer.screenshot",

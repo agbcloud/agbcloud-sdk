@@ -33,7 +33,11 @@ function createMockSession(initResult?: ReturnType<typeof mockInitBrowserRespons
         getApiKey: () => "test-key",
         getSessionId: () => "test-session",
         getClient: () => client,
-        enableBrowserReplay: false,
+        callMcpTool: jest.fn().mockResolvedValue({
+            requestId: "mock-request-id",
+            success: true,
+            data: "{}",
+        }),
     };
 }
 
@@ -317,6 +321,7 @@ describe("Browser", () => {
         const session = createMockSession();
         const browser = new Browser(session);
         await browser.initialize({});
+        // Mock browser's callMcpTool (inherited from BaseService), not session's
         const spy = jest.spyOn(browser as any, "callMcpTool").mockResolvedValue({
             requestId: "req-stop", success: true, data: "true",
         });
@@ -333,6 +338,7 @@ describe("Browser", () => {
         const session = createMockSession();
         const browser = new Browser(session);
         await browser.initialize({});
+        // Mock browser's callMcpTool (inherited from BaseService), not session's
         jest.spyOn(browser as any, "callMcpTool").mockResolvedValue({
             requestId: "req-stopf", success: false, errorMessage: "Stop failed",
         });
@@ -413,12 +419,4 @@ describe("Browser", () => {
         await expect(browser.screenshot(null as any)).rejects.toThrow("cannot be null");
     });
 
-    test("enableBrowserReplay is passed as enableRecord", async () => {
-        const session = createMockSession();
-        session.enableBrowserReplay = true;
-        const browser = new Browser(session);
-        await browser.initialize({});
-        const call = session.getClient().initBrowser.mock.calls[0][0];
-        expect(call.browserOption?.enableRecord).toBe(true);
-    });
 });

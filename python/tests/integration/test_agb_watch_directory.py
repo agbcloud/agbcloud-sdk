@@ -44,7 +44,7 @@ def test_watch_directory():
         pytest.fail(f"Failed to initialize AGB client: {e}")
 
     # Create session with specified ImageId
-    session_params = CreateSessionParams(image_id="agb-code-space-2")
+    session_params = CreateSessionParams(image_id="agb-browser-use-1")
     session_result = agb.create(session_params)
 
     assert session_result.success and session_result.session is not None, (
@@ -196,7 +196,7 @@ def test_watch_directory_no_deduplication():
         pytest.fail(f"Failed to initialize AGB client: {e}")
 
     # Create session with specified ImageId
-    session_params = CreateSessionParams(image_id="agb-code-space-2")
+    session_params = CreateSessionParams(image_id="agb-browser-use-1")
     session_result = agb.create(session_params)
 
     assert session_result.success and session_result.session is not None, (
@@ -347,7 +347,7 @@ def test_watch_directory_file_modification():
         pytest.fail(f"Failed to initialize AGB client: {e}")
 
     # Create session with specified ImageId
-    session_params = CreateSessionParams(image_id="agb-code-space-2")
+    session_params = CreateSessionParams(image_id="agb-browser-use-1")
     session_result = agb.create(session_params)
 
     assert session_result.success and session_result.session is not None, (

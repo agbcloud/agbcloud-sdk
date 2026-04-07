@@ -175,7 +175,8 @@ async def main():
             page = await context_p.new_page()
 
             # Navigate to test URL first (required before setting cookies)
-            await page.goto(test_url)
+            res = await page.goto(test_url)
+            print(f"Navigation to {test_url} completed with status code: {res.status}")
             print(f"Navigated to {test_url}")
             await page.wait_for_timeout(2000)
 

@@ -4,9 +4,8 @@ Unit tests for AGB logger module.
 
 import json
 import os
-import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -73,38 +72,45 @@ class TestColorizeLogMessage:
 class TestAGBLoggerColorDetection:
     """Test color detection logic."""
 
-    @patch.dict(os.environ, {"DISABLE_COLORS": "1"})
-    def test_should_use_colors_disabled(self):
+    @patch("sys.stderr.isatty", return_value=False)
+    @patch.dict(os.environ, {"DISABLE_COLORS": "1"}, clear=True)
+    def test_should_use_colors_disabled(self, mock_isatty):
         """Test colors are disabled when DISABLE_COLORS=1."""
         assert AGBLogger._should_use_colors() is False
 
-    @patch.dict(os.environ, {"FORCE_COLOR": "1"})
-    def test_should_use_colors_forced(self):
+    @patch("sys.stderr.isatty", return_value=False)
+    @patch.dict(os.environ, {"FORCE_COLOR": "1"}, clear=True)
+    def test_should_use_colors_forced(self, mock_isatty):
         """Test colors are enabled when FORCE_COLOR=1."""
         assert AGBLogger._should_use_colors() is True
 
-    @patch.dict(os.environ, {"FORCE_COLOR": "0"})
-    def test_should_use_colors_forced_disabled(self):
+    @patch("sys.stderr.isatty", return_value=False)
+    @patch.dict(os.environ, {"FORCE_COLOR": "0"}, clear=True)
+    def test_should_use_colors_forced_disabled(self, mock_isatty):
         """Test colors are disabled when FORCE_COLOR=0."""
         assert AGBLogger._should_use_colors() is False
 
     @patch("sys.stderr.isatty", return_value=True)
+    @patch.dict(os.environ, {}, clear=True)
     def test_should_use_colors_tty(self, mock_isatty):
         """Test colors are enabled for TTY output."""
         assert AGBLogger._should_use_colors() is True
 
-    @patch.dict(os.environ, {"TERM_PROGRAM": "vscode"})
-    def test_should_use_colors_vscode(self):
+    @patch("sys.stderr.isatty", return_value=False)
+    @patch.dict(os.environ, {"TERM_PROGRAM": "vscode"}, clear=True)
+    def test_should_use_colors_vscode(self, mock_isatty):
         """Test colors are enabled for VS Code."""
         assert AGBLogger._should_use_colors() is True
 
-    @patch.dict(os.environ, {"GOLAND": "true"})
-    def test_should_use_colors_goland(self):
+    @patch("sys.stderr.isatty", return_value=False)
+    @patch.dict(os.environ, {"GOLAND": "true"}, clear=True)
+    def test_should_use_colors_goland(self, mock_isatty):
         """Test colors are enabled for GoLand."""
         assert AGBLogger._should_use_colors() is True
 
-    @patch.dict(os.environ, {"IDEA_INITIAL_DIRECTORY": "/path"})
-    def test_should_use_colors_intellij(self):
+    @patch("sys.stderr.isatty", return_value=False)
+    @patch.dict(os.environ, {"IDEA_INITIAL_DIRECTORY": "/path"}, clear=True)
+    def test_should_use_colors_intellij(self, mock_isatty):
         """Test colors are enabled for IntelliJ."""
         assert AGBLogger._should_use_colors() is True
 
@@ -152,9 +158,9 @@ class TestAGBLoggerSetup:
         )
         assert AGBLogger._initialized is True
 
-    def test_setup_file_only(self):
+    def test_setup_file_only(self, tmp_path):
         """Test setup with file logging only."""
-        temp_log = Path("/tmp/test_agb.log")
+        temp_log = tmp_path / "test_agb.log"
         AGBLogger.setup(
             level="INFO",
             enable_console=False,
@@ -164,24 +170,18 @@ class TestAGBLoggerSetup:
         )
         assert AGBLogger._initialized is True
         assert AGBLogger._log_file == temp_log
-        # Clean up
-        if temp_log.exists():
-            temp_log.unlink()
 
-    def test_setup_with_custom_log_file(self):
+    def test_setup_with_custom_log_file(self, tmp_path):
         """Test setup with custom log file path."""
-        temp_log = Path("/tmp/custom_agb.log")
+        temp_log = tmp_path / "custom_agb.log"
         AGBLogger.setup(
             level="INFO", log_file=temp_log, force_reinit=True
         )
         assert AGBLogger._log_file == temp_log
-        # Clean up
-        if temp_log.exists():
-            temp_log.unlink()
 
-    def test_setup_with_rotation(self):
+    def test_setup_with_rotation(self, tmp_path):
         """Test setup with log rotation."""
-        temp_log = Path("/tmp/rotated_agb.log")
+        temp_log = tmp_path / "rotated_agb.log"
         AGBLogger.setup(
             level="INFO",
             log_file=temp_log,
@@ -190,9 +190,6 @@ class TestAGBLoggerSetup:
             force_reinit=True,
         )
         assert AGBLogger._initialized is True
-        # Clean up
-        if temp_log.exists():
-            temp_log.unlink()
 
     def test_setup_with_colorize(self):
         """Test setup with explicit colorize setting."""
@@ -474,14 +471,10 @@ class TestLoggerFileHandling:
     def teardown_method(self):
         """Clean up after each test."""
         AGBLogger._initialized = False
-        # Clean up test log files
-        for log_file in Path("/tmp").glob("test_agb_*.log"):
-            if log_file.exists():
-                log_file.unlink()
 
-    def test_log_file_creation(self):
+    def test_log_file_creation(self, tmp_path):
         """Test that log file is created."""
-        temp_log = Path("/tmp/test_agb_creation.log")
+        temp_log = tmp_path / "test_agb_creation.log"
         AGBLogger.setup(
             level="INFO",
             log_file=temp_log,
@@ -495,9 +488,9 @@ class TestLoggerFileHandling:
         # Check file exists
         assert temp_log.exists()
 
-    def test_log_file_directory_creation(self):
+    def test_log_file_directory_creation(self, tmp_path):
         """Test that log file directory is created if it doesn't exist."""
-        temp_log = Path("/tmp/test_agb_dir/subdir/test.log")
+        temp_log = tmp_path / "test_agb_dir" / "subdir" / "test.log"
         AGBLogger.setup(
             level="INFO",
             log_file=temp_log,
@@ -507,10 +500,6 @@ class TestLoggerFileHandling:
         )
         # Check directory exists
         assert temp_log.parent.exists()
-        # Clean up
-        import shutil
-        if temp_log.parent.parent.exists():
-            shutil.rmtree(temp_log.parent.parent)
 
     def test_default_log_file_path(self):
         """Test default log file path."""

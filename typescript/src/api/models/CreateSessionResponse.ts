@@ -36,6 +36,10 @@ export class CreateSessionResponse {
                     sessionId: dataObj.sessionId as string | undefined,
                     taskId: dataObj.taskId as string | undefined,
                     networkInterfaceIp: dataObj.networkInterfaceIp as string | undefined,
+                    linkUrl: dataObj.linkUrl as string | undefined,
+                    wsUrl: dataObj.wsUrl as string | undefined,
+                    token: dataObj.token as string | undefined,
+                    toolList: dataObj.toolList as string | undefined,
                 }
                 : undefined;
         }

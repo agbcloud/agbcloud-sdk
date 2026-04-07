@@ -62,6 +62,22 @@ Sessions are automatically released after a period of inactivity to free up reso
 
 For detailed lifecycle management, see [Session Lifecycle](./lifecycle.md).
 
+## WebSocket long connection
+
+Sessions support **WebSocket long connections** for real-time streaming capabilities:
+
+- **`ws_url`**: WebSocket endpoint URL
+- **`token`**: Authentication token for WebSocket
+- **`link_url`**: Direct HTTP endpoint for long-polling
+
+These properties are automatically populated when a session is created and enable:
+
+- **Real-time code streaming**: Receive stdout/stderr output as code executes
+- **Live progress monitoring**: Track long-running computations in real-time
+- **Lower latency**: Direct connection bypasses traditional API polling
+
+For streaming code execution, see [Real-time Streaming](../code-interpreting/stream-outputs.md).
+
 ## Best practices
 
 - Always delete sessions when done (including error paths).

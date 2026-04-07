@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+import json
 import pytest
 
 from agb import AGB
@@ -57,12 +58,22 @@ def test_get_success_creates_session_object(monkeypatch):
     agb = AGB(api_key="test-key")
 
     # Stub get_session() to hit the success path in AGB.get()
+    _tool_list_json = json.dumps([
+        {"name": "run_code", "server": "wuying_codespace"},
+        {"name": "execute_command", "server": "wuying_codespace"},
+        {"name": "read_file", "server": "wuying_codespace"},
+    ])
+
     def _fake_get_session(session_id):
         data = SimpleNamespace(
             app_instance_id="app-1",
             resource_id="r-1",
             session_id=session_id,
             resource_url="https://example.com",
+            link_url="https://example.com/link",
+            ws_url="wss://example.com/ws",
+            token="token",
+            tool_list=_tool_list_json,
             status="running",
         )
         return SimpleNamespace(success=True, request_id="rid", data=data, error_message="")
@@ -74,6 +85,15 @@ def test_get_success_creates_session_object(monkeypatch):
     assert res.session is not None
     assert res.session.session_id == "s-1"
     assert res.session.resource_url == "https://example.com"
+    assert res.session.link_url == "https://example.com/link"
+    assert res.session.ws_url == "wss://example.com/ws"
+    assert res.session.token == "token"
+    assert isinstance(res.session.tool_list, list)
+    assert len(res.session.tool_list) == 3
+    assert res.session.tool_list[0].name == "run_code"
+    assert res.session.tool_list[0].server == "wuying_codespace"
+    assert res.session.tool_list[1].name == "execute_command"
+    assert res.session.tool_list[2].name == "read_file"
 
 
 def test_get_returns_error_when_get_session_fails(monkeypatch):

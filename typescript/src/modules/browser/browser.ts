@@ -535,7 +535,7 @@ export class BrowserOptionClass implements BrowserOption {
 
 /**
  * Browser module for web automation: navigate, click, type, screenshot, and extract content.
- * Requires initialization with browser options (e.g. headless, viewport). Use session.browser.agent for high-level tasks.
+ * Requires initialization with browser options. Use session.browser.agent for high-level tasks.
  */
 export class Browser extends BaseService {
     private _initialized = false;
@@ -574,13 +574,6 @@ export class Browser extends BaseService {
 
         const browserOptionMap = browserOption.toMap();
 
-        const sessionWithReplay = this.session as unknown as {
-            enableBrowserReplay?: boolean;
-        };
-        if (sessionWithReplay.enableBrowserReplay !== undefined) {
-            browserOptionMap.enableRecord =
-                sessionWithReplay.enableBrowserReplay;
-        }
 
         return { browserOption, browserOptionMap };
     }

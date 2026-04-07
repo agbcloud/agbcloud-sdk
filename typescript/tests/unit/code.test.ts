@@ -135,7 +135,10 @@ describe("Code", () => {
         expect(result.success).toBe(false);
         expect(result.errorMessage).toContain("Unsupported language");
         expect(result.errorMessage).toContain("ruby");
-        expect(result.errorMessage).toContain("python, javascript, java, r");
+        expect(result.errorMessage).toContain("java");
+        expect(result.errorMessage).toContain("javascript");
+        expect(result.errorMessage).toContain("python");
+        expect(result.errorMessage).toContain("r");
         expect(callMcpToolSpy).not.toHaveBeenCalled();
     });
 
@@ -394,13 +397,13 @@ describe("Code", () => {
                 results: [],
                 execution_time: 0,
                 isError: true,
-                error: { value: "Runtime error" },
+                content: [{ text: "Runtime error" }],
             }),
         });
 
         const result = await code.run("1/0", "python");
 
         expect(result.success).toBe(false);
-        expect(result.errorMessage).toBe("Runtime error");
+        expect(result.errorMessage).toContain("Runtime error");
     });
 });

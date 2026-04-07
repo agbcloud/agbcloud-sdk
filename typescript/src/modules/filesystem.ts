@@ -882,16 +882,25 @@ export class FileSystem extends BaseService {
         interval = 1000,
         signal?: AbortSignal,
     ): Promise<void> {
+        let baselineEstablished = false;
+
         while (!signal?.aborted) {
             try {
                 const result = await this.getFileChange(path);
-                if (result.success && result.events.length > 0) {
+
+                // Mark baseline as established after first fetch
+                if (!baselineEstablished) {
+                    baselineEstablished = true;
+                }
+
+                if (result.success) {
+                    // Always call callback with current events (no deduplication, aligns with Python)
                     try {
                         callback(result.events);
                     } catch (e: unknown) {
                         logWarn(`Error in watchDirectory callback: ${e instanceof Error ? e.message : String(e)}`);
                     }
-                } else if (!result.success) {
+                } else {
                     const errorMsg = (result.errorMessage ?? "").toLowerCase();
                     if (errorMsg.includes("session") && (errorMsg.includes("expired") || errorMsg.includes("invalid"))) {
                         break;
@@ -903,6 +912,8 @@ export class FileSystem extends BaseService {
                     break;
                 }
             }
+
+            // Wait for next poll with abort support
             await new Promise<void>((resolve) => {
                 const timeoutId = setTimeout(resolve, interval);
                 signal?.addEventListener("abort", () => {
@@ -913,7 +924,12 @@ export class FileSystem extends BaseService {
         }
     }
 
-    /** @deprecated Use watchDirectory instead */
+    /**
+     * @param path - The directory path to monitor
+     * @param callback - Callback function called with file change events
+     * @param interval - Polling interval in milliseconds (default: 1000ms = 1s)
+     * @returns Object with stop method to stop monitoring
+     */
     watchDir(
         dirPath: string,
         callback: (events: FileChangeEvent[]) => void,

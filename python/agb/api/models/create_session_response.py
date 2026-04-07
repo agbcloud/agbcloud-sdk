@@ -14,6 +14,10 @@ class SessionData:
         session_id: Optional[str] = None,
         task_id: Optional[str] = None,
         network_interface_ip: Optional[str] = None,
+        link_url: Optional[str] = None,
+        ws_url: Optional[str] = None,
+        token: Optional[str] = None,
+        tool_list: Optional[str] = None,
     ):
         self.app_instance_id = app_instance_id
         self.resource_id = resource_id
@@ -23,6 +27,10 @@ class SessionData:
         self.session_id = session_id
         self.task_id = task_id
         self.network_interface_ip = network_interface_ip
+        self.link_url = link_url
+        self.ws_url = ws_url
+        self.token = token
+        self.tool_list = tool_list
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SessionData":
@@ -36,6 +44,10 @@ class SessionData:
             session_id=data.get("sessionId"),
             task_id=data.get("taskId"),
             network_interface_ip=data.get("networkInterfaceIp"),
+            link_url=data.get("linkUrl"),
+            ws_url=data.get("wsUrl"),
+            token=data.get("token"),
+            tool_list=data.get("toolList"),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -49,6 +61,10 @@ class SessionData:
             "sessionId": self.session_id,
             "taskId": self.task_id,
             "networkInterfaceIp": self.network_interface_ip,
+            "linkUrl": self.link_url,
+            "wsUrl": self.ws_url,
+            "token": self.token,
+            "toolList": self.tool_list,
         }
 
 
@@ -87,6 +103,7 @@ class CreateSessionResponse:
                 if json_data.get("data")
                 else None
             )
+            
         else:
             self.api_success = False
             self.code = None

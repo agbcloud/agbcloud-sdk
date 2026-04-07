@@ -1,0 +1,60 @@
+# Automatically create a GitHub Release when a version tag is pushed.
+# Extracts the changelog section for the tagged version from CHANGES.md.
+
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Releasing: $TAG (version $VERSION)"
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Extract the section between ## [VERSION] and the next ## [
+          BODY=$(awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) exit
+              if (index($0, "[" ver "]")) { found=1; next }
+            }
+            found { print }
+          ' CHANGES.md)
+
+          if [ -z "$BODY" ]; then
+            BODY="Release ${{ steps.version.outputs.tag }}"
+            echo "Warning: No changelog entry found for version $VERSION"
+          fi
+
+          # Write to file to preserve newlines
+          echo "$BODY" > /tmp/release-body.md
+          echo "body_file=/tmp/release-body.md" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          body_path: ${{ steps.changelog.outputs.body_file }}
+          draft: false
+          prerelease: false

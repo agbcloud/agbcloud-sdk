@@ -22,14 +22,10 @@ Command module for executing shell commands in the session.
 
 ### Properties
 
-- [session](#session)
 
 ### Methods
 
-- [callMcpTool](#callmcptool)
 - [execute](#execute)
-- [handleError](#handleerror)
-- [toJSON](#tojson)
 
 ## Properties
 
@@ -78,42 +74,7 @@ ___
 ##### Returns
 
 `Promise`\&lt;``CommandResult``\&gt;
-
-___
-
-### session
-
-• `Protected` **session**: ``SessionLike``
-
-#### Inherited from
-
-`BaseService`.`session`
-
 ## Methods
-
-### callMcpTool
-
-▸ **callMcpTool**(`name`, `args`, `readTimeout?`, `connectTimeout?`): `Promise`\&lt;``OperationResult``\&gt;
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `name` | `string` |
-| `args` | `Record`\&lt;`string`, `unknown`\&gt; |
-| `readTimeout?` | `number` |
-| `connectTimeout?` | `number` |
-
-#### Returns
-
-`Promise`\&lt;``OperationResult``\&gt;
-
-#### Inherited from
-
-`BaseService`.`callMcpTool`
-
-___
-
 ### execute
 
 ▸ **execute**(`command`, `timeoutMs?`, `cwd?`, `envs?`): `Promise`\&lt;``CommandResult``\&gt;
@@ -134,40 +95,6 @@ Execute a shell command in the session.
 `Promise`\&lt;``CommandResult``\&gt;
 
 Promise resolving to CommandResult with stdout, stderr, exitCode
-
-___
-
-### handleError
-
-▸ **handleError**(`e`): `unknown`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `e` | `unknown` |
-
-#### Returns
-
-`unknown`
-
-#### Inherited from
-
-`BaseService`.`handleError`
-
-___
-
-### toJSON
-
-▸ **toJSON**(): `Record`\&lt;`string`, `unknown`\&gt;
-
-#### Returns
-
-`Record`\&lt;`string`, `unknown`\&gt;
-
-#### Inherited from
-
-`BaseService`.`toJSON`
 
 ## Best Practices
 

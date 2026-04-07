@@ -496,7 +496,8 @@ class FileSystem(BaseService):
         args = {"path": path}
         try:
             result = self._call_mcp_tool("create_directory", args)
-            logger.debug(f"Response from CallMcpTool - create_directory: {result}")
+            logger.debug(
+                f"Response from CallMcpTool - create_directory: {result}")
             if result.success:
                 result_msg = f"Path={path}, RequestId={result.request_id}"
                 log_operation_success("FileSystem.mkdir", result_msg)
@@ -599,7 +600,8 @@ class FileSystem(BaseService):
                     # Convert numeric values
                     try:
                         if isinstance(value, str):
-                            value = float(value) if "." in value else int(value)
+                            value = float(
+                                value) if "." in value else int(value)
                     except ValueError:
                         pass
 
@@ -907,23 +909,27 @@ class FileSystem(BaseService):
                     )
         except FileError as e:
             if format_type == "binary":
-                log_operation_error("FileSystem.read.binary", str(e), exc_info=True)
+                log_operation_error("FileSystem.read.binary",
+                                    str(e), exc_info=True)
                 return BinaryFileContentResult(
                     request_id="", success=False, content=b"", error_message=str(e)
                 )
             else:
-                log_operation_error("FileSystem.read.text", str(e), exc_info=True)
+                log_operation_error("FileSystem.read.text",
+                                    str(e), exc_info=True)
                 return FileContentResult(
                     request_id="", success=False, error_message=str(e)
                 )
         except Exception as e:
             if format_type == "binary":
-                log_operation_error("FileSystem.read.binary", str(e), exc_info=True)
+                log_operation_error("FileSystem.read.binary",
+                                    str(e), exc_info=True)
                 return BinaryFileContentResult(
                     request_id="", success=False, content=b"", error_message=str(e)
                 )
             else:
-                log_operation_error("FileSystem.read.text", str(e), exc_info=True)
+                log_operation_error("FileSystem.read.text",
+                                    str(e), exc_info=True)
                 return FileContentResult(
                     request_id="", success=False, error_message=str(e)
                 )
@@ -975,7 +981,8 @@ class FileSystem(BaseService):
     def read(self, path: str) -> FileContentResult: ...
 
     @overload
-    def read(self, path: str, *, format: Literal["text"]) -> FileContentResult: ...
+    def read(self, path: str, *,
+             format: Literal["text"]) -> FileContentResult: ...
 
     @overload
     def read(
@@ -1260,7 +1267,7 @@ class FileSystem(BaseService):
 
                     # If there's content on the same line after the colon, add it
                     if len(line) > path_end + 1:
-                        content_start = line[path_end + 1 :].strip()
+                        content_start = line[path_end + 1:].strip()
                         if content_start:
                             current_content.append(content_start)
 
@@ -1268,7 +1275,8 @@ class FileSystem(BaseService):
                 elif line.strip() == "---":
                     # Save the current file content
                     if current_path:
-                        result[current_path] = "\n".join(current_content).strip()
+                        result[current_path] = "\n".join(
+                            current_content).strip()
                         current_path = None
                         current_content = []
 
@@ -1404,12 +1412,14 @@ class FileSystem(BaseService):
                             event = FileChangeEvent.from_dict(event_dict)
                             events.append(event)
                 else:
-                    logger.warning(f"Expected list but got {type(change_data)}")
+                    logger.warning(
+                        f"Expected list but got {type(change_data)}")
             except json.JSONDecodeError as e:
                 logger.warning(f"Failed to parse JSON data: {e}")
                 logger.warning(f"Raw data: {raw_data}")
             except Exception as e:
-                logger.warning(f"Unexpected error parsing file change data: {e}")
+                logger.warning(
+                    f"Unexpected error parsing file change data: {e}")
 
             return events
 
@@ -1469,49 +1479,211 @@ class FileSystem(BaseService):
 
         Returns:
             threading.Thread: The monitoring thread. Call thread.start() to begin monitoring.
-                Use the thread's stop_event attribute to stop monitoring.
+                The thread has two event attributes:
+
+                - ``stop_event`` – set this to stop monitoring.
+                - ``ready_event`` – wait on this after calling ``start()`` to
+                  ensure the filesystem baseline has been established before
+                  performing any file operations.
         """
+        import random as _random
+
+        # Get LinkUrl config for direct HTTP calls
+        link_url = getattr(self.session, "link_url", "") or ""
+        token = getattr(self.session, "token", "") or ""
+        server_name = ""
+        for t in getattr(self.session, "tool_list", None) or []:
+            try:
+                if getattr(t, "name", None) == "get_file_change":
+                    server_name = getattr(t, "server", "") or ""
+                    break
+            except Exception:
+                pass
+
+        has_link_url = bool(link_url and token and server_name)
+
+        ready_event = threading.Event()
+
+        # Create stop event if not provided
+        if stop_event is None:
+            stop_event = threading.Event()
+
+        def _poll_file_change() -> FileChangeResult:
+            """Fetch file changes, using LinkUrl if available."""
+            if has_link_url:
+                return _poll_file_change_via_http()
+            return self._get_file_change(path)
+
+        def _poll_file_change_via_http() -> FileChangeResult:
+            """Direct HTTP call to LinkUrl endpoint."""
+            req_id = f"link-{int(time.time() * 1000)}-{_random.randint(0, 999999999):09d}"
+            url = link_url.rstrip("/") + "/callTool"
+            payload = {
+                "args": {"path": path},
+                "server": server_name,
+                "requestId": req_id,
+                "tool": "get_file_change",
+                "token": token,
+            }
+            try:
+                import httpx
+
+                resp = httpx.post(
+                    url,
+                    json=payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "X-Access-Token": token,
+                    },
+                    timeout=30,
+                )
+                if resp.status_code < 200 or resp.status_code >= 300:
+                    return FileChangeResult(
+                        request_id=req_id,
+                        success=False,
+                        error_message=f"HTTP {resp.status_code}",
+                    )
+                outer = resp.json()
+                data_field = outer.get("data")
+                if data_field is None:
+                    return FileChangeResult(
+                        request_id=req_id,
+                        success=False,
+                        error_message="No data field in response",
+                    )
+                if isinstance(data_field, str):
+                    parsed_data = json.loads(data_field)
+                elif isinstance(data_field, dict):
+                    parsed_data = data_field
+                else:
+                    return FileChangeResult(
+                        request_id=req_id,
+                        success=False,
+                        error_message="Invalid data field type",
+                    )
+                result_field = parsed_data.get("result", {})
+                if not isinstance(result_field, dict):
+                    return FileChangeResult(
+                        request_id=req_id,
+                        success=False,
+                        error_message="No result field in response data",
+                    )
+                is_error = bool(result_field.get("isError", False))
+                content = result_field.get("content", [])
+                text_content = ""
+                if isinstance(content, list) and content:
+                    first = content[0]
+                    if isinstance(first, str):
+                        text_content = first
+                    elif isinstance(first, dict):
+                        text_content = (
+                            first.get("text")
+                            or first.get("blob")
+                            or first.get("data")
+                            or ""
+                        )
+                if is_error:
+                    return FileChangeResult(
+                        request_id=req_id,
+                        success=False,
+                        error_message=str(text_content),
+                    )
+                events: List[FileChangeEvent] = []
+                try:
+                    change_data = json.loads(text_content)
+                    if isinstance(change_data, list):
+                        for ed in change_data:
+                            if isinstance(ed, dict):
+                                events.append(FileChangeEvent.from_dict(ed))
+                except (json.JSONDecodeError, TypeError):
+                    pass
+                return FileChangeResult(
+                    request_id=req_id,
+                    success=True,
+                    events=events,
+                    raw_data=text_content,
+                )
+            except Exception as e:
+                return FileChangeResult(
+                    request_id=req_id,
+                    success=False,
+                    error_message=f"HTTP request failed: {e}",
+                )
 
         def _monitor_directory():
             """Internal function to monitor directory changes."""
             logger.info(f"Starting directory monitoring for: {path}")
             logger.info(f"Polling interval: {interval} seconds")
+            baseline_established = False
 
             while not stop_event.is_set():
                 try:
-                    # Get current file changes
-                    result = self._get_file_change(path)
+                    # Check session expiration proactively
+                    if (
+                        hasattr(self.session, "_is_expired")
+                        and self.session._is_expired()
+                    ):
+                        logger.warning(
+                            f"Session expired, stopping directory monitoring for: {path}"
+                        )
+                        stop_event.set()
+                        break
+
+                    result = _poll_file_change()
+
+                    # Establish baseline before reporting changes
+                    if not baseline_established:
+                        baseline_established = True
+                        ready_event.set()
+                        stop_event.wait(interval)
+                        continue
 
                     if result.success:
                         current_events = result.events
 
-                        # Always call callback with current events (no deduplication)
-                        logger.debug(f"Detected {len(current_events)} file changes:")
-                        for event in current_events:
-                            logger.debug(f"  - {event}")
+                        if current_events:
+                            logger.info(
+                                f"Detected {len(current_events)} file changes:")
+                            for event in current_events:
+                                logger.debug(f"  - {event}")
 
-                        try:
-                            callback(current_events)
-                        except Exception as e:
-                            logger.error(f"Error in callback function: {e}")
+                            try:
+                                callback(current_events)
+                            except Exception as e:
+                                logger.error(
+                                    f"Error in callback function: {e}")
 
                     else:
+                        error_msg = result.error_message or ""
+                        if "session" in error_msg.lower() and (
+                            "expired" in error_msg.lower()
+                            or "invalid" in error_msg.lower()
+                        ):
+                            logger.warning(
+                                f"Session expired, stopping directory monitoring for: {path}"
+                            )
+                            stop_event.set()
+                            break
                         logger.error(
-                            f"Error monitoring directory: {result.error_message}"
-                        )
+                            f"Error monitoring directory: {result.error_message}")
 
-                    # Wait for the next poll
                     stop_event.wait(interval)
 
                 except Exception as e:
-                    logger.error(f"Unexpected error in directory monitoring: {e}")
+                    logger.error(
+                        f"Unexpected error in directory monitoring: {e}")
+                    error_str = str(e).lower()
+                    if "session" in error_str and (
+                        "expired" in error_str or "invalid" in error_str
+                    ):
+                        logger.warning(
+                            f"Session expired, stopping directory monitoring for: {path}"
+                        )
+                        stop_event.set()
+                        break
                     stop_event.wait(interval)
 
             logger.info(f"Stopped monitoring directory: {path}")
-
-        # Create stop event if not provided
-        if stop_event is None:
-            stop_event = threading.Event()
 
         # Create and configure the monitoring thread
         monitor_thread = threading.Thread(
@@ -1520,6 +1692,7 @@ class FileSystem(BaseService):
             daemon=True,
         )
 
-        # Add stop_event as an attribute to the thread for easy access
-        setattr(monitor_thread, "stop_event", stop_event)
+        # Add stop_event and ready_event as attributes for easy access
+        monitor_thread.stop_event = stop_event  # type: ignore[attr-defined]
+        monitor_thread.ready_event = ready_event  # type: ignore[attr-defined]
         return monitor_thread

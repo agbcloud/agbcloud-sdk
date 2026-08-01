@@ -335,6 +335,37 @@ SUPPORTED_MODELS = {
 		'base_url': 'https://api.deepseek.com/v1',
 		'api_key_env': 'DEEPSEEK_API_KEY',
 	},
+	# MiniMax
+	'MiniMax-M3': {
+		'provider': 'openai_compatible',
+		'model_name': 'MiniMax-M3',
+		'base_url': 'https://api.minimax.io/v1',
+		'api_key_env': 'MINIMAX_API_KEY',
+		'context_window': 1000000,
+		'pricing_usd_per_million_tokens': {
+			'input': 0.6,
+			'output': 2.4,
+			'cache_read': 0.12,
+			'cache_write': None,
+		},
+		'input_modalities': ['text', 'image', 'video'],
+		'thinking': ['adaptive', 'disabled'],
+	},
+	'MiniMax-M2.7': {
+		'provider': 'openai_compatible',
+		'model_name': 'MiniMax-M2.7',
+		'base_url': 'https://api.minimax.io/v1',
+		'api_key_env': 'MINIMAX_API_KEY',
+		'context_window': 204800,
+		'pricing_usd_per_million_tokens': {
+			'input': 0.3,
+			'output': 1.2,
+			'cache_read': 0.06,
+			'cache_write': 0.375,
+		},
+		'input_modalities': ['text'],
+		'thinking': ['always_on'],
+	},
 	# Google
 	'gemini-1.5-flash': {'provider': 'google', 'model_name': 'gemini-1.5-flash-latest', 'api_key_env': 'GEMINI_API_KEY'},
 	'gemini-2.0-flash-lite': {'provider': 'google', 'model_name': 'gemini-2.0-flash-lite', 'api_key_env': 'GEMINI_API_KEY'},
